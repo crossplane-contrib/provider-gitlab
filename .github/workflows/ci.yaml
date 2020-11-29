@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches:
+        - master
+  pull_request:
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install QEMU
+        run: DEBIAN_FRONTEND=noninteractive sudo apt-get install -yq --no-install-recommends binfmt-support qemu-user-static
+
+      - name: Register QEMU with Docker
+        run: docker run --rm --privileged hypriot/qemu-register
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Fetch History
+        run: git fetch --prune --unshallow
+
+      - name: Check Dirty
+        run: ./build/run make check-diff
+
+      - name: Vendor Check
+        run: ./build/run make vendor.check
+
+      - name: Build
+        run: ./build/run make build.all
+
+      - name: Unit Tests
+        run: ./build/run make test
+
+      - name: E2E
+        run: ./build/run make e2e USE_HELM3=true
