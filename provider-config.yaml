@@ -1,0 +1,12 @@
+apiVersion: aws.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: iat-430116132710
+spec:
+  credentials:
+    secretRef:
+      key: credentials
+      name: iat-430116132710-creds
+      namespace: crossplane-system
+    source: Secret
+
