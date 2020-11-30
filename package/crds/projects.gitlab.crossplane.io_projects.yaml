@@ -1,0 +1,600 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.4
+  creationTimestamp: null
+  name: projects.projects.gitlab.crossplane.io
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.conditions[?(@.type=='Ready')].status
+    name: READY
+    type: string
+  - JSONPath: .status.conditions[?(@.type=='Synced')].status
+    name: SYNCED
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
+  group: projects.gitlab.crossplane.io
+  names:
+    categories:
+    - crossplane
+    - managed
+    - gitlab
+    kind: Project
+    listKind: ProjectList
+    plural: projects
+    singular: project
+  scope: Cluster
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: A Project is a managed resource that represents an AWS Elastic Kubernetes Service Project.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: A ProjectSpec defines the desired state of a Gitlab Project.
+          properties:
+            deletionPolicy:
+              description: DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted - either "Delete" or "Orphan" the external resource. The "Delete" policy is the default when no policy is specified.
+              enum:
+              - Orphan
+              - Delete
+              type: string
+            forProvider:
+              description: ProjectParameters define the desired state of an AWS Elastic Kubernetes Service Project.
+              properties:
+                approvalsBeforeMerge:
+                  type: integer
+                autoCancelPendingPipelines:
+                  type: string
+                autoDevopsDeployStrategy:
+                  type: string
+                autoDevopsEnabled:
+                  type: boolean
+                autocloseReferencedIssues:
+                  type: boolean
+                buildCoverageRegex:
+                  type: string
+                buildGitStrategy:
+                  type: string
+                buildTimeout:
+                  type: integer
+                buildsAccessLevel:
+                  description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                  type: string
+                ciConfigPath:
+                  type: string
+                ciForwardDeploymentEnabled:
+                  type: boolean
+                containerRegistryEnabled:
+                  type: boolean
+                defaultBranch:
+                  type: string
+                description:
+                  type: string
+                emailsDisabled:
+                  type: boolean
+                externalAuthorizationClassificationLabel:
+                  type: string
+                forkingAccessLevel:
+                  description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                  type: string
+                groupWithProjectTemplatesId:
+                  type: integer
+                importUrl:
+                  type: string
+                initializeWithReadme:
+                  type: boolean
+                issuesAccessLevel:
+                  description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                  type: string
+                lfsEnabled:
+                  type: boolean
+                mergeMethod:
+                  description: "MergeMethodValue represents a project merge type within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html#project-merge-method"
+                  type: string
+                mergeRequestsAccessLevel:
+                  description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                  type: string
+                mirror:
+                  type: boolean
+                mirrorTriggerBuilds:
+                  type: boolean
+                namespaceId:
+                  type: integer
+                onlyAllowMergeIfAllDiscussionsAreResolved:
+                  type: boolean
+                onlyAllowMergeIfPipelineSucceeds:
+                  type: boolean
+                packagesEnabled:
+                  type: boolean
+                pagesAccessLevel:
+                  description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                  type: string
+                path:
+                  type: string
+                printingMergeRequestLinkEnabled:
+                  type: boolean
+                publicBuilds:
+                  type: boolean
+                removeSourceBranchAfterMerge:
+                  type: boolean
+                repositoryAccessLevel:
+                  description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                  type: string
+                requestAccessEnabled:
+                  type: boolean
+                resolveOutdatedDiffDiscussions:
+                  type: boolean
+                serviceDeskEnabled:
+                  type: boolean
+                sharedRunnersEnabled:
+                  type: boolean
+                snippetsAccessLevel:
+                  description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                  type: string
+                tagList:
+                  items:
+                    type: string
+                  type: array
+                templateName:
+                  type: string
+                templateProjectId:
+                  type: integer
+                useCustomTemplate:
+                  type: boolean
+                visibility:
+                  description: "VisibilityValue represents a visibility level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/api/"
+                  type: string
+                wikiAccessLevel:
+                  description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                  type: string
+              type: object
+            providerConfigRef:
+              description: ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured.
+              properties:
+                name:
+                  description: Name of the referenced object.
+                  type: string
+              required:
+              - name
+              type: object
+            providerRef:
+              description: 'ProviderReference specifies the provider that will be used to create, observe, update, and delete this managed resource. Deprecated: Please use ProviderConfigReference, i.e. `providerConfigRef`'
+              properties:
+                name:
+                  description: Name of the referenced object.
+                  type: string
+              required:
+              - name
+              type: object
+            writeConnectionSecretToRef:
+              description: WriteConnectionSecretToReference specifies the namespace and name of a Secret to which any connection details for this managed resource should be written. Connection details frequently include the endpoint, username, and password required to connect to the managed resource.
+              properties:
+                name:
+                  description: Name of the secret.
+                  type: string
+                namespace:
+                  description: Namespace of the secret.
+                  type: string
+              required:
+              - name
+              - namespace
+              type: object
+          required:
+          - forProvider
+          type: object
+        status:
+          description: A ProjectStatus represents the observed state of a Gitlab Project.
+          properties:
+            atProvider:
+              description: ProjectObservation is the observed state of a Project.
+              properties:
+                archived:
+                  type: boolean
+                ciDefaultGitDepth:
+                  type: integer
+                complianceFrameworks:
+                  items:
+                    type: string
+                  type: array
+                createdAt:
+                  format: date-time
+                  type: string
+                creatorId:
+                  type: integer
+                customAttributes:
+                  items:
+                    description: "CustomAttribute struct is used to unmarshal response to api calls. \n GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html"
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                    required:
+                    - key
+                    - value
+                    type: object
+                  type: array
+                forkedFromProject:
+                  description: ForkParent represents the parent project when this is a fork.
+                  properties:
+                    httpUrlToRepo:
+                      type: string
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    nameWithNamespace:
+                      type: string
+                    path:
+                      type: string
+                    pathWithNamespace:
+                      type: string
+                    webUrl:
+                      type: string
+                  required:
+                  - httpUrlToRepo
+                  - id
+                  - name
+                  - nameWithNamespace
+                  - path
+                  - pathWithNamespace
+                  - webUrl
+                  type: object
+                forksCount:
+                  type: integer
+                httpUrlToRepo:
+                  type: string
+                id:
+                  type: integer
+                importError:
+                  type: string
+                importStatus:
+                  type: string
+                issuesEnabled:
+                  type: boolean
+                jobsEnabled:
+                  type: boolean
+                lastActivityAt:
+                  format: date-time
+                  type: string
+                links:
+                  description: Links represents a project web links for self, issues, mergeRequests, repoBranches, labels, events, members.
+                  properties:
+                    events:
+                      type: string
+                    issues:
+                      type: string
+                    labels:
+                      type: string
+                    members:
+                      type: string
+                    mergeRequests:
+                      type: string
+                    repoBranches:
+                      type: string
+                    self:
+                      type: string
+                  required:
+                  - events
+                  - issues
+                  - labels
+                  - members
+                  - mergeRequests
+                  - repoBranches
+                  - self
+                  type: object
+                markedForDeletionAt:
+                  format: date-time
+                  type: string
+                mergeRequestsEnabled:
+                  type: boolean
+                mirrorOverwritesDivergedBranches:
+                  type: boolean
+                mirrorUserId:
+                  type: integer
+                namespace:
+                  description: ProjectNamespace represents a project namespace.
+                  properties:
+                    avatarUrl:
+                      type: string
+                    fullPath:
+                      type: string
+                    id:
+                      type: integer
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    path:
+                      type: string
+                    webUrl:
+                      type: string
+                  required:
+                  - avatarUrl
+                  - fullPath
+                  - id
+                  - kind
+                  - name
+                  - path
+                  - webUrl
+                  type: object
+                onlyMirrorProtectedBranches:
+                  type: boolean
+                openIssuesCount:
+                  type: integer
+                owner:
+                  description: "User represents a GitLab user. \n GitLab API docs: https://docs.gitlab.com/ee/api/users.html"
+                  properties:
+                    avatarUrl:
+                      type: string
+                    bio:
+                      type: string
+                    canCreateGroup:
+                      type: boolean
+                    canCreateProject:
+                      type: boolean
+                    colorSchemeId:
+                      type: integer
+                    confirmedAt:
+                      format: date-time
+                      type: string
+                    createdAt:
+                      format: date-time
+                      type: string
+                    currentSignInAt:
+                      format: date-time
+                      type: string
+                    customAttributes:
+                      items:
+                        description: "CustomAttribute struct is used to unmarshal response to api calls. \n GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html"
+                        properties:
+                          key:
+                            type: string
+                          value:
+                            type: string
+                        required:
+                        - key
+                        - value
+                        type: object
+                      type: array
+                    email:
+                      type: string
+                    externUid:
+                      type: string
+                    external:
+                      type: boolean
+                    id:
+                      type: integer
+                    identities:
+                      items:
+                        description: UserIdentity represents a user identity.
+                        properties:
+                          externUid:
+                            type: string
+                          provider:
+                            type: string
+                        required:
+                        - externUid
+                        - provider
+                        type: object
+                      type: array
+                    isAdmin:
+                      type: boolean
+                    lastActivityOn:
+                      format: date-time
+                      type: string
+                    lastSignInAt:
+                      format: date-time
+                      type: string
+                    linkedin:
+                      type: string
+                    location:
+                      type: string
+                    name:
+                      type: string
+                    organization:
+                      type: string
+                    privateProfile:
+                      type: boolean
+                    projectsLimit:
+                      type: integer
+                    provider:
+                      type: string
+                    publicEmail:
+                      type: string
+                    sharedRunnersMinutesLimit:
+                      type: integer
+                    skype:
+                      type: string
+                    state:
+                      type: string
+                    themeId:
+                      type: integer
+                    twitter:
+                      type: string
+                    twoFactorEnabled:
+                      type: boolean
+                    username:
+                      type: string
+                    webUrl:
+                      type: string
+                    websiteUrl:
+                      type: string
+                  required:
+                  - avatarUrl
+                  - bio
+                  - canCreateGroup
+                  - canCreateProject
+                  - colorSchemeId
+                  - confirmedAt
+                  - createdAt
+                  - currentSignInAt
+                  - customAttributes
+                  - email
+                  - externUid
+                  - external
+                  - id
+                  - identities
+                  - isAdmin
+                  - lastActivityOn
+                  - lastSignInAt
+                  - linkedin
+                  - location
+                  - name
+                  - organization
+                  - privateProfile
+                  - projectsLimit
+                  - provider
+                  - publicEmail
+                  - sharedRunnersMinutesLimit
+                  - skype
+                  - state
+                  - themeId
+                  - twitter
+                  - twoFactorEnabled
+                  - username
+                  - webUrl
+                  - websiteUrl
+                  type: object
+                pathWithNamespace:
+                  type: string
+                permissions:
+                  description: Permissions represents permissions.
+                  properties:
+                    groupAccess:
+                      description: GroupAccess represents group access.
+                      properties:
+                        accessLevel:
+                          description: "AccessLevelValue represents a permission level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
+                          type: integer
+                        notificationLevel:
+                          description: NotificationLevelValue represents a notification level.
+                          type: integer
+                      required:
+                      - accessLevel
+                      - notificationLevel
+                      type: object
+                    projectAccess:
+                      description: ProjectAccess represents project access.
+                      properties:
+                        accessLevel:
+                          description: "AccessLevelValue represents a permission level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
+                          type: integer
+                        notificationLevel:
+                          description: NotificationLevelValue represents a notification level.
+                          type: integer
+                      required:
+                      - accessLevel
+                      - notificationLevel
+                      type: object
+                  required:
+                  - groupAccess
+                  - projectAccess
+                  type: object
+                public:
+                  type: boolean
+                readmeUrl:
+                  type: string
+                runnersToken:
+                  type: string
+                sharedWithGroups:
+                  items:
+                    properties:
+                      groupAccessLevel:
+                        type: integer
+                      groupId:
+                        type: integer
+                      groupName:
+                        type: string
+                    type: object
+                  type: array
+                snippetsEnabled:
+                  type: boolean
+                sshUrlToRepo:
+                  type: string
+                starCount:
+                  type: integer
+                statistics:
+                  description: ProjectStatistics represents a statistics record for a project.
+                  properties:
+                    commitCount:
+                      type: integer
+                    jobArtifactsSize:
+                      format: int64
+                      type: integer
+                    lfsObjectsSize:
+                      format: int64
+                      type: integer
+                    repositorySize:
+                      format: int64
+                      type: integer
+                    storageSize:
+                      format: int64
+                      type: integer
+                  required:
+                  - commitCount
+                  - jobArtifactsSize
+                  - lfsObjectsSize
+                  - repositorySize
+                  - storageSize
+                  type: object
+                webUrl:
+                  type: string
+                wikiEnabled:
+                  type: boolean
+              type: object
+            conditions:
+              description: Conditions of the resource.
+              items:
+                description: A Condition that may apply to a resource.
+                properties:
+                  lastTransitionTime:
+                    description: LastTransitionTime is the last time this condition transitioned from one status to another.
+                    format: date-time
+                    type: string
+                  message:
+                    description: A Message containing details about this condition's last transition from one status to another, if any.
+                    type: string
+                  reason:
+                    description: A Reason for this condition's last transition from one status to another.
+                    type: string
+                  status:
+                    description: Status of this condition; is it currently True, False, or Unknown?
+                    type: string
+                  type:
+                    description: Type of this condition. At most one of each condition type may apply to a resource at any point in time.
+                    type: string
+                required:
+                - lastTransitionTime
+                - reason
+                - status
+                - type
+                type: object
+              type: array
+          type: object
+      required:
+      - spec
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
