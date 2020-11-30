@@ -7,7 +7,7 @@ metadata:
   namespace: crossplane-system
 type: Opaque
 data:
-  token: <REPLACEME>
+  token: GxCBLDzA94uH1hYETyKY
 ---
 # Gitlab provider that references the secret credentials
 apiVersion: gitlab.crossplane.io/v1beta1
