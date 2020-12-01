@@ -1,0 +1,9 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: Project
+metadata:
+  name: example-project
+spec:
+  forProvider:
+    description: "my awesome gitlab project"
+  providerConfigRef:
+    name: gitlab-provider
