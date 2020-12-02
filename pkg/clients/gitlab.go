@@ -19,7 +19,7 @@ package clients
 import (
 	"context"
 	"fmt"
-
+	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/go-ini/ini"
 	"github.com/pkg/errors"
@@ -122,4 +122,40 @@ func UseProviderSecret(_ context.Context, data []byte, section string) (*Config,
 	}
 
 	return &Config{Token: token.Value(), BaseURL: baseURL.Value()}, nil
+}
+
+// LateInitializeStringRef returns `from` if `in` is nil and `from` is non-empty,
+// in other cases it returns `in`.
+func LateInitializeStringPtr(in *string, from string) *string {
+	if in == nil && from != "" {
+		return &from
+	}
+	return in
+}
+
+// LateInitializeAccessControlValue returns in if it's non-nil, otherwise returns from
+// which is the backup for the cases in is nil.
+func LateInitializeAccessControlValue(in *v1alpha1.AccessControlValue, from gitlab.AccessControlValue) *v1alpha1.AccessControlValue {
+	if in == nil && from != "" {
+		return (*v1alpha1.AccessControlValue)(&from)
+	}
+	return in
+}
+
+// LateInitializeAccessControlValue returns in if it's non-nil, otherwise returns from
+// which is the backup for the cases in is nil.
+func LateInitializeVisibilityValue(in *v1alpha1.VisibilityValue, from gitlab.VisibilityValue) *v1alpha1.VisibilityValue {
+	if in == nil && from != "" {
+		return (*v1alpha1.VisibilityValue)(&from)
+	}
+	return in
+}
+
+// LateInitializeAccessControlValue returns in if it's non-nil, otherwise returns from
+// which is the backup for the cases in is nil.
+func LateInitializeMergeMethodValue(in *v1alpha1.MergeMethodValue, from gitlab.MergeMethodValue) *v1alpha1.MergeMethodValue {
+	if in == nil && from != "" {
+		return (*v1alpha1.MergeMethodValue)(&from)
+	}
+	return in
 }

@@ -1,9 +1,13 @@
 apiVersion: projects.gitlab.crossplane.io/v1alpha1
 kind: Project
 metadata:
-  name: example-project
+  name: provider-aws
+  annotations:
+    crossplane.io/external-name: "cnp/core/provider-aws"
 spec:
-  forProvider:
-    description: "my awesome gitlab project"
+  forProvider: {}
+  writeConnectionSecretToRef:
+    namespace: crossplane-system
+    name: gitlab-project-provider-aws
   providerConfigRef:
     name: gitlab-provider
