@@ -112,8 +112,7 @@ type User struct {
 	CustomAttributes          []*CustomAttribute `json:"customAttributes"`
 }
 
-// ProjectParameters define the desired state of an AWS Elastic Kubernetes
-// Service Project.
+// ProjectParameters define the desired state of a Gitlab Project
 type ProjectParameters struct {
 	// +optional
 	Path *string `json:"path,omitempty"`
@@ -231,8 +230,8 @@ type ProjectNamespace struct {
 
 // Permissions represents permissions.
 type Permissions struct {
-	ProjectAccess *ProjectAccess `json:"projectAccess"`
-	GroupAccess   *GroupAccess   `json:"groupAccess"`
+	ProjectAccess *ProjectAccess `json:"projectAccess,omitempty"`
+	GroupAccess   *GroupAccess   `json:"groupAccess,omitempty"`
 }
 
 // AccessLevelValue represents a permission level within GitLab.

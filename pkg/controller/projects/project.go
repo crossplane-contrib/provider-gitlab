@@ -18,9 +18,11 @@ package projects
 
 import (
 	"context"
-
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/meta"
+	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	"github.com/xanzy/go-gitlab"
+	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -31,10 +33,13 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
 )
 
 const (
-	errNotProject = "managed resource is not a Gitlab project custom resource"
+	errNotProject       = "managed resource is not a Gitlab project custom resource"
+	errGetFailed        = "cannot get Gitlab project"
+	errKubeUpdateFailed = "cannot update Gitlab project custom resource"
 )
 
 // SetupProject adds a controller that reconciles Projects.
@@ -46,7 +51,7 @@ func SetupProject(mgr ctrl.Manager, l logging.Logger) error {
 		For(&v1alpha1.Project{}).
 		Complete(managed.NewReconciler(mgr,
 			resource.ManagedKind(v1alpha1.ProjectGroupVersionKind),
-			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: clients.NewClient}),
+			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProjectClient}),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient()), managed.NewNameAsExternalName(mgr.GetClient())),
 			// managed.WithReferenceResolver(managed.NewAPISimpleReferenceResolver(mgr.GetClient())),
 			managed.WithLogger(l.WithValues("controller", name)),
@@ -55,7 +60,7 @@ func SetupProject(mgr ctrl.Manager, l logging.Logger) error {
 
 type connector struct {
 	kube              client.Client
-	newGitlabClientFn func(cfg clients.Config) *gitlab.Client
+	newGitlabClientFn func(cfg clients.Config) projects.Client
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
@@ -72,14 +77,36 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 
 type external struct {
 	kube   client.Client
-	client *gitlab.Client
+	client projects.Client
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+	cr, ok := mg.(*v1alpha1.Project)
+	if !ok {
+		return managed.ExternalObservation{}, errors.New(errNotProject)
+	}
+
+	prj, _, err := e.client.GetProject(meta.GetExternalName(cr), nil)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
+	}
+
+	current := cr.Spec.ForProvider.DeepCopy()
+	projects.LateInitialize(&cr.Spec.ForProvider, prj)
+	if !reflect.DeepEqual(current, &cr.Spec.ForProvider) {
+		if err := e.kube.Update(context.Background(), cr); err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, errKubeUpdateFailed)
+		}
+	}
+
+	cr.Status.AtProvider = projects.GenerateObservation(prj)
+	cr.Status.SetConditions(runtimev1alpha1.Available())
+
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        true,
-		ResourceLateInitialized: true,
+		ResourceUpToDate:        projects.IsProjectUpToDate(&cr.Spec.ForProvider, prj),
+		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
+		ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte(prj.RunnersToken)},
 	}, nil
 }
 

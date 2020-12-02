@@ -6,5 +6,9 @@ cover.out
 /.vendor-new
 /.github
 
+# asdf loca go version
+.tool-versions
+
 # ignore IDE folders
 .vscode/
+.idea/

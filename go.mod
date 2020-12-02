@@ -3,14 +3,20 @@ module github.com/crossplane-contrib/provider-gitlab
 go 1.13
 
 require (
-	cloud.google.com/go/logging v1.1.2
 	github.com/crossplane/crossplane-runtime v0.11.0
 	github.com/crossplane/crossplane-tools v0.0.0-20201026195708-a544f360b8ac
 	github.com/go-ini/ini v1.62.0
-	github.com/hashicorp/go-retryablehttp v0.6.4
+	github.com/golang/protobuf v1.4.3 // indirect
+	github.com/google/go-cmp v0.5.2
+	github.com/google/uuid v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/xanzy/go-gitlab v0.39.0
+	golang.org/x/net v0.0.0-20201026091529-146b70c837a4 // indirect
+	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
+	golang.org/x/tools v0.0.0-20201105220310-78b158585360 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
+	gopkg.in/ini.v1 v1.62.0 // indirect
 	k8s.io/api v0.18.6
 	k8s.io/apimachinery v0.18.6
 	sigs.k8s.io/controller-runtime v0.6.2

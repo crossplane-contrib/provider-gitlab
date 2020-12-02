@@ -51,7 +51,7 @@ spec:
               - Delete
               type: string
             forProvider:
-              description: ProjectParameters define the desired state of an AWS Elastic Kubernetes Service Project.
+              description: ProjectParameters define the desired state of a Gitlab Project
               properties:
                 approvalsBeforeMerge:
                   type: integer
@@ -499,9 +499,6 @@ spec:
                       - accessLevel
                       - notificationLevel
                       type: object
-                  required:
-                  - groupAccess
-                  - projectAccess
                   type: object
                 public:
                   type: boolean
