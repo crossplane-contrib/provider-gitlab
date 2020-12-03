@@ -18,6 +18,7 @@ package projects
 
 import (
 	"context"
+	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
@@ -38,6 +39,8 @@ var (
 	path = "some/path/to/repo"
 
 	errBoom = errors.New("boom")
+
+	extName = "example-project"
 )
 
 type args struct {
@@ -54,6 +57,10 @@ func withConditions(c ...runtimev1alpha1.Condition) projectModifier {
 
 func withPath(p *string) projectModifier {
 	return func(r *v1alpha1.Project) { r.Spec.ForProvider.Path = p }
+}
+
+func withExternalName(n *string) projectModifier {
+	return func(r *v1alpha1.Project) { meta.SetExternalName(r, extName) }
 }
 
 func project(m ...projectModifier) *v1alpha1.Project {
@@ -162,6 +169,102 @@ func TestObserve(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			e := &external{kube: tc.kube, client: tc.project}
 			o, err := e.Observe(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestCreate(t *testing.T) {
+	type want struct {
+		cr     *v1alpha1.Project
+		result managed.ExternalCreation
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"SuccessfulCreation": {
+			args: args{
+				project: &fake.MockClient{
+					MockCreateProject: func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{Name: extName}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(),
+			},
+			want: want{
+				cr: project(
+					withConditions(runtimev1alpha1.Creating()),
+					withExternalName(&extName),
+				),
+				result: managed.ExternalCreation{},
+			},
+		},
+		"FailedNameSetting": {
+			args: args{
+				project: &fake.MockClient{
+					MockCreateProject: func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(),
+			},
+			want: want{
+				cr: project(
+					withConditions(runtimev1alpha1.Creating()),
+				),
+				result: managed.ExternalCreation{},
+			},
+		},
+		"FailedCreation": {
+			args: args{
+				project: &fake.MockClient{
+					MockCreateProject: func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, errBoom
+					},
+				},
+				cr: project(),
+			},
+			want: want{
+				cr:  project(),
+				err: errors.Wrap(errBoom, errCreateFailed),
+			},
+		},
+		"LateInitFailedKubeUpdate": {
+			args: args{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(errBoom),
+				},
+				project: &fake.MockClient{
+					MockCreateProject: func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{
+							Path: path,
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(),
+			},
+			want: want{
+				cr:  project(withPath(&path)),
+				err: errors.Wrap(errBoom, errKubeUpdateFailed),
+			},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.kube, client: tc.project}
+			o, err := e.Create(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)

@@ -24,7 +24,6 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	gitlab "github.com/xanzy/go-gitlab"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -42,6 +41,7 @@ const (
 	errNotProject       = "managed resource is not a Gitlab project custom resource"
 	errGetFailed        = "cannot get Gitlab project"
 	errKubeUpdateFailed = "cannot update Gitlab project custom resource"
+	errCreateFailed     = "cannot create Gitlab project"
 )
 
 // SetupProject adds a controller that reconciles Projects.
@@ -54,7 +54,7 @@ func SetupProject(mgr ctrl.Manager, l logging.Logger) error {
 		Complete(managed.NewReconciler(mgr,
 			resource.ManagedKind(v1alpha1.ProjectGroupVersionKind),
 			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProjectClient}),
-			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient()), managed.NewNameAsExternalName(mgr.GetClient())),
+			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
 			// managed.WithReferenceResolver(managed.NewAPISimpleReferenceResolver(mgr.GetClient())),
 			managed.WithLogger(l.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
@@ -88,9 +88,15 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotProject)
 	}
 
+	if meta.GetExternalName(cr) == "" {
+		return managed.ExternalObservation{
+			ResourceExists: false,
+		}, nil
+	}
+
 	prj, _, err := e.client.GetProject(meta.GetExternalName(cr), nil)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
+		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorProjectNotFound, err), errGetFailed)
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
@@ -119,61 +125,15 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotProject)
 	}
 
-	name := meta.GetExternalName(cr)
-
-	// Create new project
-	p := &gitlab.CreateProjectOptions{
-		Name:                             &name,
-		Path:                             cr.Spec.ForProvider.Path,
-		NamespaceID:                      cr.Spec.ForProvider.NamespaceID,
-		DefaultBranch:                    cr.Spec.ForProvider.DefaultBranch,
-		Description:                      cr.Spec.ForProvider.Description,
-		IssuesAccessLevel:                stringToAccessControlValue(cr.Spec.ForProvider.IssuesAccessLevel),
-		RepositoryAccessLevel:            stringToAccessControlValue(cr.Spec.ForProvider.RepositoryAccessLevel),
-		MergeRequestsAccessLevel:         stringToAccessControlValue(cr.Spec.ForProvider.MergeRequestsAccessLevel),
-		ForkingAccessLevel:               stringToAccessControlValue(cr.Spec.ForProvider.ForkingAccessLevel),
-		BuildsAccessLevel:                stringToAccessControlValue(cr.Spec.ForProvider.BuildsAccessLevel),
-		WikiAccessLevel:                  stringToAccessControlValue(cr.Spec.ForProvider.WikiAccessLevel),
-		SnippetsAccessLevel:              stringToAccessControlValue(cr.Spec.ForProvider.SnippetsAccessLevel),
-		PagesAccessLevel:                 stringToAccessControlValue(cr.Spec.ForProvider.PagesAccessLevel),
-		EmailsDisabled:                   cr.Spec.ForProvider.EmailsDisabled,
-		ResolveOutdatedDiffDiscussions:   cr.Spec.ForProvider.ResolveOutdatedDiffDiscussions,
-		ContainerRegistryEnabled:         cr.Spec.ForProvider.ContainerRegistryEnabled,
-		SharedRunnersEnabled:             cr.Spec.ForProvider.SharedRunnersEnabled,
-		Visibility:                       stringToVisibilityLevel(cr.Spec.ForProvider.Visibility),
-		ImportURL:                        cr.Spec.ForProvider.ImportURL,
-		PublicBuilds:                     cr.Spec.ForProvider.PublicBuilds,
-		OnlyAllowMergeIfPipelineSucceeds: cr.Spec.ForProvider.OnlyAllowMergeIfPipelineSucceeds,
-		OnlyAllowMergeIfAllDiscussionsAreResolved: cr.Spec.ForProvider.OnlyAllowMergeIfAllDiscussionsAreResolved,
-		MergeMethod:                              stringToMergeMethod(cr.Spec.ForProvider.MergeMethod),
-		RemoveSourceBranchAfterMerge:             cr.Spec.ForProvider.RemoveSourceBranchAfterMerge,
-		LFSEnabled:                               cr.Spec.ForProvider.LFSEnabled,
-		RequestAccessEnabled:                     cr.Spec.ForProvider.RequestAccessEnabled,
-		TagList:                                  &cr.Spec.ForProvider.TagList,
-		PrintingMergeRequestLinkEnabled:          cr.Spec.ForProvider.PrintingMergeRequestLinkEnabled,
-		BuildGitStrategy:                         cr.Spec.ForProvider.BuildGitStrategy,
-		BuildTimeout:                             cr.Spec.ForProvider.BuildTimeout,
-		AutoCancelPendingPipelines:               cr.Spec.ForProvider.AutoCancelPendingPipelines,
-		BuildCoverageRegex:                       cr.Spec.ForProvider.BuildCoverageRegex,
-		CIConfigPath:                             cr.Spec.ForProvider.CIConfigPath,
-		AutoDevopsEnabled:                        cr.Spec.ForProvider.AutoDevopsEnabled,
-		AutoDevopsDeployStrategy:                 cr.Spec.ForProvider.AutoDevopsDeployStrategy,
-		ApprovalsBeforeMerge:                     cr.Spec.ForProvider.ApprovalsBeforeMerge,
-		ExternalAuthorizationClassificationLabel: cr.Spec.ForProvider.ExternalAuthorizationClassificationLabel,
-		Mirror:                                   cr.Spec.ForProvider.Mirror,
-		MirrorTriggerBuilds:                      cr.Spec.ForProvider.MirrorTriggerBuilds,
-		InitializeWithReadme:                     cr.Spec.ForProvider.InitializeWithReadme,
-		TemplateName:                             cr.Spec.ForProvider.TemplateName,
-		TemplateProjectID:                        cr.Spec.ForProvider.TemplateProjectID,
-		UseCustomTemplate:                        cr.Spec.ForProvider.UseCustomTemplate,
-		GroupWithProjectTemplatesID:              cr.Spec.ForProvider.GroupWithProjectTemplatesID,
-		PackagesEnabled:                          cr.Spec.ForProvider.PackagesEnabled,
-		ServiceDeskEnabled:                       cr.Spec.ForProvider.ServiceDeskEnabled,
-		AutocloseReferencedIssues:                cr.Spec.ForProvider.AutocloseReferencedIssues,
+	cr.Status.SetConditions(runtimev1alpha1.Creating())
+	prj, _, err := e.client.CreateProject(projects.GenerateCreateProjectOptions(meta.GetExternalName(cr), &cr.Spec.ForProvider))
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
+	meta.SetExternalName(cr, prj.PathWithNamespace)
+	err = e.kube.Update(context.Background(), cr)
 
-	_, _, err := e.client.CreateProject(p)
-	return managed.ExternalCreation{}, nil
+	return managed.ExternalCreation{}, errors.Wrap(err, errKubeUpdateFailed)
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -182,37 +142,4 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	return nil
-}
-
-func stringToVisibilityLevel(from *v1alpha1.VisibilityValue) *gitlab.VisibilityValue {
-	return (*gitlab.VisibilityValue)(&from)
-}
-
-func stringToAccessControlValue(s *v1alpha1.AccessControlValue) *gitlab.AccessControlValue {
-	lookup := map[string]gitlab.VisibilityValue{
-		"disabled": gitlab.DisabledAccessControl,
-		"enabled":  gitlab.EnabledAccessControl,
-		"private":  gitlab.PrivateAccessControl,
-		"public":   gitlab.PublicAccessControl,
-	}
-
-	value, ok := lookup[s]
-	if !ok {
-		return nil
-	}
-	return value
-}
-
-func stringToMergeMethod(s *v1alpha1.MergeMethodValue) *gitlab.MergeMethodValue {
-	lookup := map[string]gitlab.VisibilityValue{
-		"merge":        gitlab.NoFastForwardMerge,
-		"ff":           gitlab.FastForwardMerge,
-		"rebase_merge": gitlab.RebaseMerge,
-	}
-
-	value, ok := lookup[s]
-	if !ok {
-		return nil
-	}
-	return value
 }

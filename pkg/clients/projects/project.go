@@ -17,36 +17,39 @@ limitations under the License.
 package projects
 
 import (
-<<<<<<< Updated upstream
-=======
-	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
->>>>>>> Stashed changes
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	gitlab "github.com/xanzy/go-gitlab"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-<<<<<<< Updated upstream
-	"time"
-=======
->>>>>>> Stashed changes
+)
+
+const (
+	errProjectNotFound = "404 Project Not Found"
 )
 
 // Client defines Gitlab Project service operations
 type Client interface {
 	GetProject(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
-	CreateProject(opt *CreateProjectOptions, options ...RequestOptionFunc) (*Project, *Response, error)
+	CreateProject(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 }
 
 // NewProjectClient returns a new Gitlab Project service
 func NewProjectClient(cfg clients.Config) Client {
 	git := clients.NewClient(cfg)
 	return git.Projects
+}
+
+// IsErrorProjectNotFound helper function to test for errProjectNotFound error.
+func IsErrorProjectNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), errProjectNotFound)
 }
 
 // LateInitialize fills the empty fields in the project spec with the
@@ -284,6 +287,61 @@ func isIntEqualToIntPtr(ip *int, i int) bool {
 	return true
 }
 
+// Generate project creation options
+func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.CreateProjectOptions {
+	project := &gitlab.CreateProjectOptions{
+		Name:                             &name,
+		Path:                             p.Path,
+		NamespaceID:                      p.NamespaceID,
+		DefaultBranch:                    p.DefaultBranch,
+		Description:                      p.Description,
+		IssuesAccessLevel:                stringToAccessControlValue(p.IssuesAccessLevel),
+		RepositoryAccessLevel:            stringToAccessControlValue(p.RepositoryAccessLevel),
+		MergeRequestsAccessLevel:         stringToAccessControlValue(p.MergeRequestsAccessLevel),
+		ForkingAccessLevel:               stringToAccessControlValue(p.ForkingAccessLevel),
+		BuildsAccessLevel:                stringToAccessControlValue(p.BuildsAccessLevel),
+		WikiAccessLevel:                  stringToAccessControlValue(p.WikiAccessLevel),
+		SnippetsAccessLevel:              stringToAccessControlValue(p.SnippetsAccessLevel),
+		PagesAccessLevel:                 stringToAccessControlValue(p.PagesAccessLevel),
+		EmailsDisabled:                   p.EmailsDisabled,
+		ResolveOutdatedDiffDiscussions:   p.ResolveOutdatedDiffDiscussions,
+		ContainerRegistryEnabled:         p.ContainerRegistryEnabled,
+		SharedRunnersEnabled:             p.SharedRunnersEnabled,
+		Visibility:                       stringToVisibilityLevel(p.Visibility),
+		ImportURL:                        p.ImportURL,
+		PublicBuilds:                     p.PublicBuilds,
+		OnlyAllowMergeIfPipelineSucceeds: p.OnlyAllowMergeIfPipelineSucceeds,
+		OnlyAllowMergeIfAllDiscussionsAreResolved: p.OnlyAllowMergeIfAllDiscussionsAreResolved,
+		MergeMethod:                              stringToMergeMethod(p.MergeMethod),
+		RemoveSourceBranchAfterMerge:             p.RemoveSourceBranchAfterMerge,
+		LFSEnabled:                               p.LFSEnabled,
+		RequestAccessEnabled:                     p.RequestAccessEnabled,
+		TagList:                                  &p.TagList,
+		PrintingMergeRequestLinkEnabled:          p.PrintingMergeRequestLinkEnabled,
+		BuildGitStrategy:                         p.BuildGitStrategy,
+		BuildTimeout:                             p.BuildTimeout,
+		AutoCancelPendingPipelines:               p.AutoCancelPendingPipelines,
+		BuildCoverageRegex:                       p.BuildCoverageRegex,
+		CIConfigPath:                             p.CIConfigPath,
+		AutoDevopsEnabled:                        p.AutoDevopsEnabled,
+		AutoDevopsDeployStrategy:                 p.AutoDevopsDeployStrategy,
+		ApprovalsBeforeMerge:                     p.ApprovalsBeforeMerge,
+		ExternalAuthorizationClassificationLabel: p.ExternalAuthorizationClassificationLabel,
+		Mirror:                                   p.Mirror,
+		MirrorTriggerBuilds:                      p.MirrorTriggerBuilds,
+		InitializeWithReadme:                     p.InitializeWithReadme,
+		TemplateName:                             p.TemplateName,
+		TemplateProjectID:                        p.TemplateProjectID,
+		UseCustomTemplate:                        p.UseCustomTemplate,
+		GroupWithProjectTemplatesID:              p.GroupWithProjectTemplatesID,
+		PackagesEnabled:                          p.PackagesEnabled,
+		ServiceDeskEnabled:                       p.ServiceDeskEnabled,
+		AutocloseReferencedIssues:                p.AutocloseReferencedIssues,
+	}
+
+	return project
+}
+
 // IsProjectUpToDate checks whether there is a change in any of the modifiable fields.
 func IsProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { // nolint:gocyclo
 	if !cmp.Equal(p.Path, stringToPtr(g.Path)) {
@@ -401,4 +459,16 @@ func IsProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	}
 
 	return true
+}
+
+func stringToVisibilityLevel(from *v1alpha1.VisibilityValue) *gitlab.VisibilityValue {
+	return (*gitlab.VisibilityValue)(from)
+}
+
+func stringToAccessControlValue(from *v1alpha1.AccessControlValue) *gitlab.AccessControlValue {
+	return (*gitlab.AccessControlValue)(from)
+}
+
+func stringToMergeMethod(from *v1alpha1.MergeMethodValue) *gitlab.MergeMethodValue {
+	return (*gitlab.MergeMethodValue)(from)
 }
