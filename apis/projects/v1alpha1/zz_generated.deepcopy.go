@@ -433,11 +433,6 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.CIForwardDeploymentEnabled != nil {
-		in, out := &in.CIForwardDeploymentEnabled, &out.CIForwardDeploymentEnabled
-		*out = new(bool)
-		**out = **in
-	}
 	if in.AutoDevopsEnabled != nil {
 		in, out := &in.AutoDevopsEnabled, &out.AutoDevopsEnabled
 		*out = new(bool)

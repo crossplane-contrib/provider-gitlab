@@ -22,6 +22,10 @@ import (
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 )
 
+const (
+	SEPARATOR string = ","
+)
+
 // AccessControlValue represents an access control value within GitLab,
 // used for managing access to certain project features.
 //
@@ -180,8 +184,6 @@ type ProjectParameters struct {
 	BuildCoverageRegex *string `json:"buildCoverageRegex,omitempty"`
 	// +optional
 	CIConfigPath *string `json:"ciConfigPath,omitempty"`
-	// +optional
-	CIForwardDeploymentEnabled *bool `json:"ciForwardDeploymentEnabled,omitempty"`
 	// +optional
 	AutoDevopsEnabled *bool `json:"autoDevopsEnabled,omitempty"`
 	// +optional
@@ -381,4 +383,37 @@ type ProjectList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Project `json:"items"`
+}
+
+// Bool is a helper routine that allocates a new bool value
+// to store v and returns a pointer to it.
+func Bool(v bool) *bool {
+	p := new(bool)
+	*p = v
+	return p
+}
+
+// Int is a helper routine that allocates a new int32 value
+// to store v and returns a pointer to it, but unlike Int32
+// its argument value is an int.
+func Int(v int) *int {
+	p := new(int)
+	*p = v
+	return p
+}
+
+// String is a helper routine that allocates a new string value
+// to store v and returns a pointer to it.
+func String(v string) *string {
+	p := new(string)
+	*p = v
+	return p
+}
+
+// StringSlice is a helper routine that allocates a new []string value
+// to store v and returns a pointer to it.
+func StringSlice(v []string) *[]string {
+	p := new([]string)
+	*p = v
+	return p
 }
