@@ -29,9 +29,14 @@ type MockClient struct {
     projects.Client
 
 	MockGetProject func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
+	MockCreateProject func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 }
 
 // // GetProject calls the underlying MockGetProject method.
 func (c *MockClient) GetProject(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
 	return c.MockGetProject(pid, opt)
+}
+
+func (c *MockClient) CreateProject(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+	return c.MockCreateProject(opt)
 }
