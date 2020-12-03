@@ -17,18 +17,30 @@ limitations under the License.
 package projects
 
 import (
+<<<<<<< Updated upstream
+=======
+	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
+>>>>>>> Stashed changes
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	gitlab "github.com/xanzy/go-gitlab"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+<<<<<<< Updated upstream
 	"time"
+=======
+>>>>>>> Stashed changes
 )
 
 // Client defines Gitlab Project service operations
 type Client interface {
 	GetProject(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
+	CreateProject(opt *CreateProjectOptions, options ...RequestOptionFunc) (*Project, *Response, error)
 }
 
 // NewProjectClient returns a new Gitlab Project service
