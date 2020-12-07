@@ -40,7 +40,10 @@ var (
 
 	errBoom = errors.New("boom")
 
-	extName = "example-project"
+	extName           = "example-project"
+	extNameAnnotation = map[string]string{
+		meta.AnnotationKeyExternalName: extName,
+	}
 )
 
 type args struct {
@@ -59,8 +62,43 @@ func withPath(p *string) projectModifier {
 	return func(r *v1alpha1.Project) { r.Spec.ForProvider.Path = p }
 }
 
-func withExternalName(n *string) projectModifier {
-	return func(r *v1alpha1.Project) { meta.SetExternalName(r, extName) }
+func withExternalName(n string) projectModifier {
+	return func(r *v1alpha1.Project) { meta.SetExternalName(r, n) }
+}
+
+func withStatus(s v1alpha1.ProjectObservation) projectModifier {
+	return func(r *v1alpha1.Project) { r.Status.AtProvider = s }
+}
+
+func withDefaultValues() projectModifier {
+	return func(p *v1alpha1.Project) {
+		f := false
+		i := 0
+		p.Spec.ForProvider = v1alpha1.ProjectParameters{
+			ResolveOutdatedDiffDiscussions:            &f,
+			ContainerRegistryEnabled:                  &f,
+			SharedRunnersEnabled:                      &f,
+			PublicBuilds:                              &f,
+			OnlyAllowMergeIfPipelineSucceeds:          &f,
+			OnlyAllowMergeIfAllDiscussionsAreResolved: &f,
+			RemoveSourceBranchAfterMerge:              &f,
+			LFSEnabled:                                &f,
+			RequestAccessEnabled:                      &f,
+			CIDefaultGitDepth:                         &i,
+			Mirror:                                    &f,
+			MirrorUserID:                              &i,
+			MirrorTriggerBuilds:                       &f,
+			OnlyMirrorProtectedBranches:               &f,
+			MirrorOverwritesDivergedBranches:          &f,
+			PackagesEnabled:                           &f,
+			ServiceDeskEnabled:                        &f,
+			AutocloseReferencedIssues:                 &f,
+		}
+	}
+}
+
+func withAnnotations(a map[string]string) projectModifier {
+	return func(p *v1alpha1.Project) { meta.AddAnnotations(p, a) }
 }
 
 func project(m ...projectModifier) *v1alpha1.Project {
@@ -89,11 +127,16 @@ func TestObserve(t *testing.T) {
 						return &gitlab.Project{Name: "example-project"}, &gitlab.Response{}, nil
 					},
 				},
-				cr: project(),
+				cr: project(
+					withDefaultValues(),
+					withExternalName(extName),
+				),
 			},
 			want: want{
 				cr: project(
+					withDefaultValues(),
 					withConditions(runtimev1alpha1.Available()),
+					withAnnotations(extNameAnnotation),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -110,10 +153,10 @@ func TestObserve(t *testing.T) {
 						return &gitlab.Project{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: project(),
+				cr: project(withExternalName(extName)),
 			},
 			want: want{
-				cr:  project(),
+				cr:  project(withAnnotations(extNameAnnotation)),
 				err: errors.Wrap(errBoom, errGetFailed),
 			},
 		},
@@ -129,10 +172,17 @@ func TestObserve(t *testing.T) {
 						}, &gitlab.Response{}, nil
 					},
 				},
-				cr: project(),
+				cr: project(
+					withDefaultValues(),
+					withExternalName(extName),
+				),
 			},
 			want: want{
-				cr:  project(withPath(&path)),
+				cr: project(
+					withDefaultValues(),
+					withPath(&path),
+					withAnnotations(extNameAnnotation),
+				),
 				err: errors.Wrap(errBoom, errKubeUpdateFailed),
 			},
 		},
@@ -149,18 +199,36 @@ func TestObserve(t *testing.T) {
 						}, &gitlab.Response{}, nil
 					},
 				},
-				cr: project(),
+				cr: project(
+					withDefaultValues(),
+					withExternalName(extName),
+				),
 			},
 			want: want{
 				cr: project(
+					withDefaultValues(),
 					withConditions(runtimev1alpha1.Available()),
 					withPath(&path),
+					withAnnotations(extNameAnnotation),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
 					ResourceUpToDate:        true,
 					ResourceLateInitialized: true,
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("token")},
+				},
+			},
+		},
+		"NoExternalName": {
+			args: args{
+				cr: project(),
+			},
+			want: want{
+				cr: project(),
+				result: managed.ExternalObservation{
+					ResourceExists:          false,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
 				},
 			},
 		},
@@ -196,9 +264,12 @@ func TestCreate(t *testing.T) {
 	}{
 		"SuccessfulCreation": {
 			args: args{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
 				project: &fake.MockClient{
 					MockCreateProject: func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return &gitlab.Project{Name: extName}, &gitlab.Response{}, nil
+						return &gitlab.Project{Name: extName, PathWithNamespace: extName}, &gitlab.Response{}, nil
 					},
 				},
 				cr: project(),
@@ -206,7 +277,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: project(
 					withConditions(runtimev1alpha1.Creating()),
-					withExternalName(&extName),
+					withExternalName(extName),
 				),
 				result: managed.ExternalCreation{},
 			},
@@ -265,6 +336,111 @@ func TestCreate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			e := &external{kube: tc.kube, client: tc.project}
 			o, err := e.Create(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	var (
+		newExtName = "new/path/with/namespace"
+	)
+	type want struct {
+		cr     *v1alpha1.Project
+		result managed.ExternalUpdate
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"SuccessfulEditProject": {
+			args: args{
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
+			},
+			want: want{
+				cr: project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
+			},
+		},
+		"FailedEdit": {
+			args: args{
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, errBoom
+					},
+				},
+				cr: project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
+			},
+			want: want{
+				cr:  project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
+				err: errors.Wrap(errBoom, errUpdateFailed),
+			},
+		},
+		"SuccessfulUpdateExternalName": {
+			args: args{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{PathWithNamespace: newExtName}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withExternalName(extName),
+				),
+			},
+			want: want{
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withExternalName(newExtName),
+				),
+			},
+		},
+		"FailedUpdateExternalName": {
+			args: args{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(errBoom),
+				},
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{PathWithNamespace: newExtName}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withExternalName(extName),
+				),
+			},
+			want: want{
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withExternalName(newExtName),
+				),
+				err: errors.Wrap(errBoom, errKubeUpdateFailed),
+			},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.kube, client: tc.project}
+			o, err := e.Update(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)

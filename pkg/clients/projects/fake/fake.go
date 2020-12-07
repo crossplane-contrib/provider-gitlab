@@ -17,19 +17,20 @@ limitations under the License.
 package fake
 
 import (
-    "github.com/xanzy/go-gitlab"
-    
-    "github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
+	"github.com/xanzy/go-gitlab"
+
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
 )
 
 var _ projects.Client = &MockClient{}
 
 // MockClient is a fake implementation of projects.Client.
 type MockClient struct {
-    projects.Client
+	projects.Client
 
-	MockGetProject func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
+	MockGetProject    func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	MockCreateProject func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
+	MockEditProject   func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 }
 
 // // GetProject calls the underlying MockGetProject method.
@@ -37,6 +38,12 @@ func (c *MockClient) GetProject(pid interface{}, opt *gitlab.GetProjectOptions, 
 	return c.MockGetProject(pid, opt)
 }
 
+// CreateProject calls the underlying MockCreateProject method
 func (c *MockClient) CreateProject(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
 	return c.MockCreateProject(opt)
+}
+
+// EditProject calls the underlying MockEditProject method
+func (c *MockClient) EditProject(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+	return c.MockEditProject(pid, opt)
 }

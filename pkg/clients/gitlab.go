@@ -22,6 +22,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/go-ini/ini"
+	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "github.com/xanzy/go-gitlab"
 	corev1 "k8s.io/api/core/v1"
@@ -158,4 +159,50 @@ func LateInitializeMergeMethodValue(in *v1alpha1.MergeMethodValue, from gitlab.M
 		return (*v1alpha1.MergeMethodValue)(&from)
 	}
 	return in
+}
+
+func VisibilityValueV1alpha1ToGitlab(from *v1alpha1.VisibilityValue) *gitlab.VisibilityValue {
+	return (*gitlab.VisibilityValue)(from)
+}
+func VisibilityValueStringToGitlab(from string) *gitlab.VisibilityValue {
+	return (*gitlab.VisibilityValue)(&from)
+}
+
+func AccessControlValueV1alpha1ToGitlab(from *v1alpha1.AccessControlValue) *gitlab.AccessControlValue {
+	return (*gitlab.AccessControlValue)(from)
+}
+func AccessControlValueStringToGitlab(from string) *gitlab.AccessControlValue {
+	return (*gitlab.AccessControlValue)(&from)
+}
+
+func MergeMethodV1alpha1ToGitlab(from *v1alpha1.MergeMethodValue) *gitlab.MergeMethodValue {
+	return (*gitlab.MergeMethodValue)(from)
+}
+func MergeMethodStringToGitlab(from string) *gitlab.MergeMethodValue {
+	return (*gitlab.MergeMethodValue)(&from)
+}
+
+func StringToPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+func IsBoolEqualToBoolPtr(bp *bool, b bool) bool {
+	if bp != nil {
+		if !cmp.Equal(*bp, b) {
+			return false
+		}
+	}
+	return true
+}
+
+func IsIntEqualToIntPtr(ip *int, i int) bool {
+	if ip != nil {
+		if !cmp.Equal(*ip, i) {
+			return false
+		}
+	}
+	return true
 }

@@ -120,101 +120,166 @@ type User struct {
 type ProjectParameters struct {
 	// +optional
 	Path *string `json:"path,omitempty"`
+
 	// +immutable
 	// +optional
 	NamespaceID *int `json:"namespaceId,omitempty"`
+
 	// +optional
 	DefaultBranch *string `json:"defaultBranch,omitempty"`
+
 	// +optional
 	Description *string `json:"description,omitempty"`
+
 	// +optional
 	IssuesAccessLevel *AccessControlValue `json:"issuesAccessLevel,omitempty"`
+
 	// +optional
 	RepositoryAccessLevel *AccessControlValue `json:"repositoryAccessLevel,omitempty"`
+
 	// +optional
 	MergeRequestsAccessLevel *AccessControlValue `json:"mergeRequestsAccessLevel,omitempty"`
+
 	// +optional
 	ForkingAccessLevel *AccessControlValue `json:"forkingAccessLevel,omitempty"`
+
 	// +optional
 	BuildsAccessLevel *AccessControlValue `json:"buildsAccessLevel,omitempty"`
+
 	// +optional
 	WikiAccessLevel *AccessControlValue `json:"wikiAccessLevel,omitempty"`
+
 	// +optional
 	SnippetsAccessLevel *AccessControlValue `json:"snippetsAccessLevel,omitempty"`
+
 	// +optional
 	PagesAccessLevel *AccessControlValue `json:"pagesAccessLevel,omitempty"`
+
 	// +optional
 	EmailsDisabled *bool `json:"emailsDisabled,omitempty"`
+
 	// +optional
 	ResolveOutdatedDiffDiscussions *bool `json:"resolveOutdatedDiffDiscussions,omitempty"`
+
 	// +optional
 	ContainerRegistryEnabled *bool `json:"containerRegistryEnabled,omitempty"`
+
 	// +optional
 	SharedRunnersEnabled *bool `json:"sharedRunnersEnabled,omitempty"`
+
 	// +optional
 	Visibility *VisibilityValue `json:"visibility,omitempty"`
+
 	// +optional
 	ImportURL *string `json:"importUrl,omitempty"`
+
 	// +optional
 	PublicBuilds *bool `json:"publicBuilds,omitempty"`
+
 	// +optional
 	OnlyAllowMergeIfPipelineSucceeds *bool `json:"onlyAllowMergeIfPipelineSucceeds,omitempty"`
+
 	// +optional
 	OnlyAllowMergeIfAllDiscussionsAreResolved *bool `json:"onlyAllowMergeIfAllDiscussionsAreResolved,omitempty"`
+
 	// +optional
 	MergeMethod *MergeMethodValue `json:"mergeMethod,omitempty"`
+
 	// +optional
 	RemoveSourceBranchAfterMerge *bool `json:"removeSourceBranchAfterMerge,omitempty"`
+
 	// +optional
 	LFSEnabled *bool `json:"lfsEnabled,omitempty"`
+
 	// +optional
 	RequestAccessEnabled *bool `json:"requestAccessEnabled,omitempty"`
+
 	// +optional
 	TagList []string `json:"tagList,omitempty"`
+
 	// +immutable
 	// +optional
 	PrintingMergeRequestLinkEnabled *bool `json:"printingMergeRequestLinkEnabled,omitempty"`
+
 	// +optional
 	BuildGitStrategy *string `json:"buildGitStrategy,omitempty"`
+
 	// +optional
 	BuildTimeout *int `json:"buildTimeout,omitempty"`
+
 	// +optional
 	AutoCancelPendingPipelines *string `json:"autoCancelPendingPipelines,omitempty"`
+
 	// +optional
 	BuildCoverageRegex *string `json:"buildCoverageRegex,omitempty"`
+
 	// +optional
 	CIConfigPath *string `json:"ciConfigPath,omitempty"`
+
+	// CIDefaultGitDepth can't be provided during project creation
+	// but in can be changed afterwards with the EditProject API call
+	// +optional
+	CIDefaultGitDepth *int `json:"ciDefaultGitDepth,omitempty"`
+
 	// +optional
 	AutoDevopsEnabled *bool `json:"autoDevopsEnabled,omitempty"`
+
 	// +optional
 	AutoDevopsDeployStrategy *string `json:"autoDevopsDeployStrategy,omitempty"`
+
 	// +optional
 	ApprovalsBeforeMerge *int `json:"approvalsBeforeMerge,omitempty"`
+
 	// +optional
 	ExternalAuthorizationClassificationLabel *string `json:"externalAuthorizationClassificationLabel,omitempty"`
+
 	// +optional
 	Mirror *bool `json:"mirror,omitempty"`
+
+	// MirrorUserID can't be provided during project creation
+	// but in can be changed afterwards with the EditProject API call
+	// +optional
+	MirrorUserID *int `json:"mirrorUserId,omitempty"`
+
 	// +optional
 	MirrorTriggerBuilds *bool `json:"mirrorTriggerBuilds,omitempty"`
+
+	// OnlyMirrorProtectedBranches can't be provided during project creation
+	// but in can be changed afterwards with the EditProject API call
+	// +optional
+	OnlyMirrorProtectedBranches *bool `json:"onlyMirrorProtectedBranches,omitempty"`
+
+	// MirrorOverwritesDivergedBranches can't be provided during project creation
+	// but in can be changed afterwards with the EditProject API call
+	// +optional
+	MirrorOverwritesDivergedBranches *bool `json:"mirrorOverwritesDivergedBranches,omitempty"`
+
 	// +immutable
 	// +optional
 	InitializeWithReadme *bool `json:"initializeWithReadme,omitempty"`
+
 	// +immutable
 	// +optional
 	TemplateName *string `json:"templateName,omitempty"`
+
 	// +immutable
 	// +optional
 	TemplateProjectID *int `json:"templateProjectId,omitempty"`
+
 	// +immutable
 	// +optional
 	UseCustomTemplate *bool `json:"useCustomTemplate,omitempty"`
+
 	// +immutable
 	// +optional
 	GroupWithProjectTemplatesID *int `json:"groupWithProjectTemplatesId,omitempty"`
+
 	// +optional
 	PackagesEnabled *bool `json:"packagesEnabled,omitempty"`
+
 	// +optional
 	ServiceDeskEnabled *bool `json:"serviceDeskEnabled,omitempty"`
+
 	// +optional
 	AutocloseReferencedIssues *bool `json:"autocloseReferencedIssues,omitempty"`
 }
@@ -309,42 +374,38 @@ type SharedWithGroups struct {
 
 // ProjectObservation is the observed state of a Project.
 type ProjectObservation struct {
-	ID                               int                `json:"id,omitempty"`
-	Public                           bool               `json:"public,omitempty"`
-	SSHURLToRepo                     string             `json:"sshUrlToRepo,omitempty"`
-	HTTPURLToRepo                    string             `json:"httpUrlToRepo,omitempty"`
-	WebURL                           string             `json:"webUrl,omitempty"`
-	ReadmeURL                        string             `json:"readmeUrl,omitempty"`
-	Owner                            *User              `json:"owner,omitempty"`
-	PathWithNamespace                string             `json:"pathWithNamespace,omitempty"`
-	IssuesEnabled                    bool               `json:"issuesEnabled,omitempty"`
-	OpenIssuesCount                  int                `json:"openIssuesCount,omitempty"`
-	MergeRequestsEnabled             bool               `json:"mergeRequestsEnabled,omitempty"`
-	JobsEnabled                      bool               `json:"jobsEnabled,omitempty"`
-	WikiEnabled                      bool               `json:"wikiEnabled,omitempty"`
-	SnippetsEnabled                  bool               `json:"snippetsEnabled,omitempty"`
-	CreatedAt                        *metav1.Time       `json:"createdAt,omitempty"`
-	LastActivityAt                   *metav1.Time       `json:"lastActivityAt,omitempty"`
-	CreatorID                        int                `json:"creatorId,omitempty"`
-	Namespace                        *ProjectNamespace  `json:"namespace,omitempty"`
-	ImportStatus                     string             `json:"importStatus,omitempty"`
-	ImportError                      string             `json:"importError,omitempty"`
-	Permissions                      *Permissions       `json:"permissions,omitempty"`
-	MarkedForDeletionAt              *metav1.Time       `json:"markedForDeletionAt,omitempty"`
-	Archived                         bool               `json:"archived,omitempty"`
-	ForksCount                       int                `json:"forksCount,omitempty"`
-	StarCount                        int                `json:"starCount,omitempty"`
-	RunnersToken                     string             `json:"runnersToken,omitempty"`
-	ForkedFromProject                *ForkParent        `json:"forkedFromProject,omitempty"`
-	MirrorUserID                     int                `json:"mirrorUserId,omitempty"`
-	OnlyMirrorProtectedBranches      bool               `json:"onlyMirrorProtectedBranches,omitempty"`
-	MirrorOverwritesDivergedBranches bool               `json:"mirrorOverwritesDivergedBranches,omitempty"`
-	SharedWithGroups                 []SharedWithGroups `json:"sharedWithGroups,omitempty"`
-	Statistics                       *ProjectStatistics `json:"statistics,omitempty"`
-	Links                            *Links             `json:"links,omitempty"`
-	CIDefaultGitDepth                int                `json:"ciDefaultGitDepth,omitempty"`
-	CustomAttributes                 []CustomAttribute  `json:"customAttributes,omitempty"`
-	ComplianceFrameworks             []string           `json:"complianceFrameworks,omitempty"`
+	ID                   int                `json:"id,omitempty"`
+	Public               bool               `json:"public,omitempty"`
+	SSHURLToRepo         string             `json:"sshUrlToRepo,omitempty"`
+	HTTPURLToRepo        string             `json:"httpUrlToRepo,omitempty"`
+	WebURL               string             `json:"webUrl,omitempty"`
+	ReadmeURL            string             `json:"readmeUrl,omitempty"`
+	Owner                *User              `json:"owner,omitempty"`
+	PathWithNamespace    string             `json:"pathWithNamespace,omitempty"`
+	IssuesEnabled        bool               `json:"issuesEnabled,omitempty"`
+	OpenIssuesCount      int                `json:"openIssuesCount,omitempty"`
+	MergeRequestsEnabled bool               `json:"mergeRequestsEnabled,omitempty"`
+	JobsEnabled          bool               `json:"jobsEnabled,omitempty"`
+	WikiEnabled          bool               `json:"wikiEnabled,omitempty"`
+	SnippetsEnabled      bool               `json:"snippetsEnabled,omitempty"`
+	CreatedAt            *metav1.Time       `json:"createdAt,omitempty"`
+	LastActivityAt       *metav1.Time       `json:"lastActivityAt,omitempty"`
+	CreatorID            int                `json:"creatorId,omitempty"`
+	Namespace            *ProjectNamespace  `json:"namespace,omitempty"`
+	ImportStatus         string             `json:"importStatus,omitempty"`
+	ImportError          string             `json:"importError,omitempty"`
+	Permissions          *Permissions       `json:"permissions,omitempty"`
+	MarkedForDeletionAt  *metav1.Time       `json:"markedForDeletionAt,omitempty"`
+	Archived             bool               `json:"archived,omitempty"`
+	ForksCount           int                `json:"forksCount,omitempty"`
+	StarCount            int                `json:"starCount,omitempty"`
+	RunnersToken         string             `json:"runnersToken,omitempty"`
+	ForkedFromProject    *ForkParent        `json:"forkedFromProject,omitempty"`
+	SharedWithGroups     []SharedWithGroups `json:"sharedWithGroups,omitempty"`
+	Statistics           *ProjectStatistics `json:"statistics,omitempty"`
+	Links                *Links             `json:"links,omitempty"`
+	CustomAttributes     []CustomAttribute  `json:"customAttributes,omitempty"`
+	ComplianceFrameworks []string           `json:"complianceFrameworks,omitempty"`
 }
 
 // A ProjectSpec defines the desired state of a Gitlab Project.

@@ -36,6 +36,7 @@ const (
 type Client interface {
 	GetProject(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	CreateProject(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
+	EditProject(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 }
 
 // NewProjectClient returns a new Gitlab Project service
@@ -69,12 +70,66 @@ func LateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { /
 	in.WikiAccessLevel = clients.LateInitializeAccessControlValue(in.WikiAccessLevel, project.WikiAccessLevel)
 	in.SnippetsAccessLevel = clients.LateInitializeAccessControlValue(in.SnippetsAccessLevel, project.SnippetsAccessLevel)
 	in.PagesAccessLevel = clients.LateInitializeAccessControlValue(in.PagesAccessLevel, project.PagesAccessLevel)
+	if in.ResolveOutdatedDiffDiscussions == nil {
+		in.ResolveOutdatedDiffDiscussions = &project.ResolveOutdatedDiffDiscussions
+	}
+	if in.ContainerRegistryEnabled == nil {
+		in.ContainerRegistryEnabled = &project.ContainerRegistryEnabled
+	}
+	if in.SharedRunnersEnabled == nil {
+		in.SharedRunnersEnabled = &project.SharedRunnersEnabled
+	}
 	in.Visibility = clients.LateInitializeVisibilityValue(in.Visibility, project.Visibility)
+	if in.PublicBuilds == nil {
+		in.PublicBuilds = &project.PublicBuilds
+	}
+	if in.OnlyAllowMergeIfPipelineSucceeds == nil {
+		in.OnlyAllowMergeIfPipelineSucceeds = &project.OnlyAllowMergeIfPipelineSucceeds
+	}
+	if in.OnlyAllowMergeIfAllDiscussionsAreResolved == nil {
+		in.OnlyAllowMergeIfAllDiscussionsAreResolved = &project.OnlyAllowMergeIfAllDiscussionsAreResolved
+	}
+	if in.RemoveSourceBranchAfterMerge == nil {
+		in.RemoveSourceBranchAfterMerge = &project.RemoveSourceBranchAfterMerge
+	}
+	if in.LFSEnabled == nil {
+		in.LFSEnabled = &project.LFSEnabled
+	}
+	if in.RequestAccessEnabled == nil {
+		in.RequestAccessEnabled = &project.RequestAccessEnabled
+	}
 	in.MergeMethod = clients.LateInitializeMergeMethodValue(in.MergeMethod, project.MergeMethod)
 	if len(in.TagList) == 0 && len(project.TagList) > 0 {
 		in.TagList = project.TagList
 	}
 	in.CIConfigPath = clients.LateInitializeStringPtr(in.CIConfigPath, project.CIConfigPath)
+	if in.CIDefaultGitDepth == nil {
+		in.CIDefaultGitDepth = &project.CIDefaultGitDepth
+	}
+	if in.Mirror == nil {
+		in.Mirror = &project.Mirror
+	}
+	if in.MirrorUserID == nil {
+		in.MirrorUserID = &project.MirrorUserID
+	}
+	if in.MirrorTriggerBuilds == nil {
+		in.MirrorTriggerBuilds = &project.MirrorTriggerBuilds
+	}
+	if in.OnlyMirrorProtectedBranches == nil {
+		in.OnlyMirrorProtectedBranches = &project.OnlyMirrorProtectedBranches
+	}
+	if in.MirrorOverwritesDivergedBranches == nil {
+		in.MirrorOverwritesDivergedBranches = &project.MirrorOverwritesDivergedBranches
+	}
+	if in.PackagesEnabled == nil {
+		in.PackagesEnabled = &project.PackagesEnabled
+	}
+	if in.ServiceDeskEnabled == nil {
+		in.ServiceDeskEnabled = &project.ServiceDeskEnabled
+	}
+	if in.AutocloseReferencedIssues == nil {
+		in.AutocloseReferencedIssues = &project.AutocloseReferencedIssues
+	}
 }
 
 // GenerateObservation is used to produce v1alpha1.ProjectObservation from
@@ -85,29 +140,25 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 	}
 
 	o := v1alpha1.ProjectObservation{
-		ID:                               prj.ID,
-		Public:                           prj.Public,
-		SSHURLToRepo:                     prj.SSHURLToRepo,
-		HTTPURLToRepo:                    prj.HTTPURLToRepo,
-		WebURL:                           prj.WebURL,
-		ReadmeURL:                        prj.ReadmeURL,
-		PathWithNamespace:                prj.PathWithNamespace,
-		IssuesEnabled:                    prj.IssuesEnabled,
-		OpenIssuesCount:                  prj.OpenIssuesCount,
-		MergeRequestsEnabled:             prj.MergeRequestsEnabled,
-		JobsEnabled:                      prj.JobsEnabled,
-		WikiEnabled:                      prj.WikiEnabled,
-		SnippetsEnabled:                  prj.SnippetsEnabled,
-		CreatorID:                        prj.CreatorID,
-		ImportStatus:                     prj.ImportStatus,
-		ImportError:                      prj.ImportError,
-		Archived:                         prj.Archived,
-		ForksCount:                       prj.ForksCount,
-		StarCount:                        prj.StarCount,
-		MirrorUserID:                     prj.MirrorUserID,
-		OnlyMirrorProtectedBranches:      prj.OnlyMirrorProtectedBranches,
-		MirrorOverwritesDivergedBranches: prj.MirrorOverwritesDivergedBranches,
-		CIDefaultGitDepth:                prj.CIDefaultGitDepth,
+		ID:                   prj.ID,
+		Public:               prj.Public,
+		SSHURLToRepo:         prj.SSHURLToRepo,
+		HTTPURLToRepo:        prj.HTTPURLToRepo,
+		WebURL:               prj.WebURL,
+		ReadmeURL:            prj.ReadmeURL,
+		PathWithNamespace:    prj.PathWithNamespace,
+		IssuesEnabled:        prj.IssuesEnabled,
+		OpenIssuesCount:      prj.OpenIssuesCount,
+		MergeRequestsEnabled: prj.MergeRequestsEnabled,
+		JobsEnabled:          prj.JobsEnabled,
+		WikiEnabled:          prj.WikiEnabled,
+		SnippetsEnabled:      prj.SnippetsEnabled,
+		CreatorID:            prj.CreatorID,
+		ImportStatus:         prj.ImportStatus,
+		ImportError:          prj.ImportError,
+		Archived:             prj.Archived,
+		ForksCount:           prj.ForksCount,
+		StarCount:            prj.StarCount,
 	}
 
 	if prj.CreatedAt != nil {
@@ -262,31 +313,6 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 	return o
 }
 
-func stringToPtr(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
-}
-
-func isBoolEqualToBoolPtr(bp *bool, b bool) bool {
-	if bp != nil {
-		if !cmp.Equal(*bp, b) {
-			return false
-		}
-	}
-	return true
-}
-
-func isIntEqualToIntPtr(ip *int, i int) bool {
-	if ip != nil {
-		if !cmp.Equal(*ip, i) {
-			return false
-		}
-	}
-	return true
-}
-
 // Generate project creation options
 func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.CreateProjectOptions {
 	project := &gitlab.CreateProjectOptions{
@@ -295,24 +321,24 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		NamespaceID:                      p.NamespaceID,
 		DefaultBranch:                    p.DefaultBranch,
 		Description:                      p.Description,
-		IssuesAccessLevel:                stringToAccessControlValue(p.IssuesAccessLevel),
-		RepositoryAccessLevel:            stringToAccessControlValue(p.RepositoryAccessLevel),
-		MergeRequestsAccessLevel:         stringToAccessControlValue(p.MergeRequestsAccessLevel),
-		ForkingAccessLevel:               stringToAccessControlValue(p.ForkingAccessLevel),
-		BuildsAccessLevel:                stringToAccessControlValue(p.BuildsAccessLevel),
-		WikiAccessLevel:                  stringToAccessControlValue(p.WikiAccessLevel),
-		SnippetsAccessLevel:              stringToAccessControlValue(p.SnippetsAccessLevel),
-		PagesAccessLevel:                 stringToAccessControlValue(p.PagesAccessLevel),
+		IssuesAccessLevel:                clients.AccessControlValueV1alpha1ToGitlab(p.IssuesAccessLevel),
+		RepositoryAccessLevel:            clients.AccessControlValueV1alpha1ToGitlab(p.RepositoryAccessLevel),
+		MergeRequestsAccessLevel:         clients.AccessControlValueV1alpha1ToGitlab(p.MergeRequestsAccessLevel),
+		ForkingAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.ForkingAccessLevel),
+		BuildsAccessLevel:                clients.AccessControlValueV1alpha1ToGitlab(p.BuildsAccessLevel),
+		WikiAccessLevel:                  clients.AccessControlValueV1alpha1ToGitlab(p.WikiAccessLevel),
+		SnippetsAccessLevel:              clients.AccessControlValueV1alpha1ToGitlab(p.SnippetsAccessLevel),
+		PagesAccessLevel:                 clients.AccessControlValueV1alpha1ToGitlab(p.PagesAccessLevel),
 		EmailsDisabled:                   p.EmailsDisabled,
 		ResolveOutdatedDiffDiscussions:   p.ResolveOutdatedDiffDiscussions,
 		ContainerRegistryEnabled:         p.ContainerRegistryEnabled,
 		SharedRunnersEnabled:             p.SharedRunnersEnabled,
-		Visibility:                       stringToVisibilityLevel(p.Visibility),
+		Visibility:                       clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
 		ImportURL:                        p.ImportURL,
 		PublicBuilds:                     p.PublicBuilds,
 		OnlyAllowMergeIfPipelineSucceeds: p.OnlyAllowMergeIfPipelineSucceeds,
 		OnlyAllowMergeIfAllDiscussionsAreResolved: p.OnlyAllowMergeIfAllDiscussionsAreResolved,
-		MergeMethod:                              stringToMergeMethod(p.MergeMethod),
+		MergeMethod:                              clients.MergeMethodV1alpha1ToGitlab(p.MergeMethod),
 		RemoveSourceBranchAfterMerge:             p.RemoveSourceBranchAfterMerge,
 		LFSEnabled:                               p.LFSEnabled,
 		RequestAccessEnabled:                     p.RequestAccessEnabled,
@@ -342,15 +368,66 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 	return project
 }
 
+func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.EditProjectOptions {
+	o := &gitlab.EditProjectOptions{
+		Name:                             &name,
+		Path:                             p.Path,
+		DefaultBranch:                    p.DefaultBranch,
+		Description:                      p.Description,
+		IssuesAccessLevel:                clients.AccessControlValueV1alpha1ToGitlab(p.IssuesAccessLevel),
+		RepositoryAccessLevel:            clients.AccessControlValueV1alpha1ToGitlab(p.RepositoryAccessLevel),
+		MergeRequestsAccessLevel:         clients.AccessControlValueV1alpha1ToGitlab(p.MergeRequestsAccessLevel),
+		ForkingAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.ForkingAccessLevel),
+		BuildsAccessLevel:                clients.AccessControlValueV1alpha1ToGitlab(p.BuildsAccessLevel),
+		WikiAccessLevel:                  clients.AccessControlValueV1alpha1ToGitlab(p.WikiAccessLevel),
+		SnippetsAccessLevel:              clients.AccessControlValueV1alpha1ToGitlab(p.SnippetsAccessLevel),
+		PagesAccessLevel:                 clients.AccessControlValueV1alpha1ToGitlab(p.PagesAccessLevel),
+		EmailsDisabled:                   p.EmailsDisabled,
+		ResolveOutdatedDiffDiscussions:   p.ResolveOutdatedDiffDiscussions,
+		ContainerRegistryEnabled:         p.ContainerRegistryEnabled,
+		SharedRunnersEnabled:             p.SharedRunnersEnabled,
+		Visibility:                       clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
+		ImportURL:                        p.ImportURL,
+		PublicBuilds:                     p.PublicBuilds,
+		OnlyAllowMergeIfPipelineSucceeds: p.OnlyAllowMergeIfPipelineSucceeds,
+		OnlyAllowMergeIfAllDiscussionsAreResolved: p.OnlyAllowMergeIfAllDiscussionsAreResolved,
+		MergeMethod:                              clients.MergeMethodV1alpha1ToGitlab(p.MergeMethod),
+		RemoveSourceBranchAfterMerge:             p.RemoveSourceBranchAfterMerge,
+		LFSEnabled:                               p.LFSEnabled,
+		RequestAccessEnabled:                     p.RequestAccessEnabled,
+		TagList:                                  &p.TagList,
+		BuildGitStrategy:                         p.BuildGitStrategy,
+		BuildTimeout:                             p.BuildTimeout,
+		AutoCancelPendingPipelines:               p.AutoCancelPendingPipelines,
+		BuildCoverageRegex:                       p.BuildCoverageRegex,
+		CIConfigPath:                             p.CIConfigPath,
+		CIDefaultGitDepth:                        p.CIDefaultGitDepth,
+		AutoDevopsEnabled:                        p.AutoDevopsEnabled,
+		AutoDevopsDeployStrategy:                 p.AutoDevopsDeployStrategy,
+		ApprovalsBeforeMerge:                     p.ApprovalsBeforeMerge,
+		ExternalAuthorizationClassificationLabel: p.ExternalAuthorizationClassificationLabel,
+		Mirror:                                   p.Mirror,
+		MirrorUserID:                             p.MirrorUserID,
+		MirrorTriggerBuilds:                      p.MirrorTriggerBuilds,
+		OnlyMirrorProtectedBranches:              p.OnlyMirrorProtectedBranches,
+		MirrorOverwritesDivergedBranches:         p.MirrorOverwritesDivergedBranches,
+		PackagesEnabled:                          p.PackagesEnabled,
+		ServiceDeskEnabled:                       p.ServiceDeskEnabled,
+		AutocloseReferencedIssues:                p.AutocloseReferencedIssues,
+	}
+
+	return o
+}
+
 // IsProjectUpToDate checks whether there is a change in any of the modifiable fields.
 func IsProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { // nolint:gocyclo
-	if !cmp.Equal(p.Path, stringToPtr(g.Path)) {
+	if !cmp.Equal(p.Path, clients.StringToPtr(g.Path)) {
 		return false
 	}
-	if !cmp.Equal(p.DefaultBranch, stringToPtr(g.DefaultBranch)) {
+	if !cmp.Equal(p.DefaultBranch, clients.StringToPtr(g.DefaultBranch)) {
 		return false
 	}
-	if !cmp.Equal(p.Description, stringToPtr(g.Description)) {
+	if !cmp.Equal(p.Description, clients.StringToPtr(g.Description)) {
 		return false
 	}
 	if p.IssuesAccessLevel != nil {
@@ -393,13 +470,13 @@ func IsProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 			return false
 		}
 	}
-	if !isBoolEqualToBoolPtr(p.ResolveOutdatedDiffDiscussions, g.ResolveOutdatedDiffDiscussions) {
+	if !clients.IsBoolEqualToBoolPtr(p.ResolveOutdatedDiffDiscussions, g.ResolveOutdatedDiffDiscussions) {
 		return false
 	}
-	if !isBoolEqualToBoolPtr(p.ContainerRegistryEnabled, g.ContainerRegistryEnabled) {
+	if !clients.IsBoolEqualToBoolPtr(p.ContainerRegistryEnabled, g.ContainerRegistryEnabled) {
 		return false
 	}
-	if !isBoolEqualToBoolPtr(p.SharedRunnersEnabled, g.SharedRunnersEnabled) {
+	if !clients.IsBoolEqualToBoolPtr(p.SharedRunnersEnabled, g.SharedRunnersEnabled) {
 		return false
 	}
 
@@ -408,13 +485,13 @@ func IsProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 			return false
 		}
 	}
-	if !isBoolEqualToBoolPtr(p.PublicBuilds, g.PublicBuilds) {
+	if !clients.IsBoolEqualToBoolPtr(p.PublicBuilds, g.PublicBuilds) {
 		return false
 	}
-	if !isBoolEqualToBoolPtr(p.OnlyAllowMergeIfPipelineSucceeds, g.OnlyAllowMergeIfPipelineSucceeds) {
+	if !clients.IsBoolEqualToBoolPtr(p.OnlyAllowMergeIfPipelineSucceeds, g.OnlyAllowMergeIfPipelineSucceeds) {
 		return false
 	}
-	if !isBoolEqualToBoolPtr(p.OnlyAllowMergeIfAllDiscussionsAreResolved, g.OnlyAllowMergeIfAllDiscussionsAreResolved) {
+	if !clients.IsBoolEqualToBoolPtr(p.OnlyAllowMergeIfAllDiscussionsAreResolved, g.OnlyAllowMergeIfAllDiscussionsAreResolved) {
 		return false
 	}
 	if p.MergeMethod != nil {
@@ -422,13 +499,13 @@ func IsProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 			return false
 		}
 	}
-	if !isBoolEqualToBoolPtr(p.RemoveSourceBranchAfterMerge, g.RemoveSourceBranchAfterMerge) {
+	if !clients.IsBoolEqualToBoolPtr(p.RemoveSourceBranchAfterMerge, g.RemoveSourceBranchAfterMerge) {
 		return false
 	}
-	if !isBoolEqualToBoolPtr(p.LFSEnabled, g.LFSEnabled) {
+	if !clients.IsBoolEqualToBoolPtr(p.LFSEnabled, g.LFSEnabled) {
 		return false
 	}
-	if !isBoolEqualToBoolPtr(p.RequestAccessEnabled, g.RequestAccessEnabled) {
+	if !clients.IsBoolEqualToBoolPtr(p.RequestAccessEnabled, g.RequestAccessEnabled) {
 		return false
 	}
 	if !cmp.Equal(p.TagList, g.TagList, cmpopts.EquateEmpty()) {
@@ -439,36 +516,24 @@ func IsProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 			return false
 		}
 	}
-	if !isIntEqualToIntPtr(p.ApprovalsBeforeMerge, g.ApprovalsBeforeMerge) {
+	if !clients.IsIntEqualToIntPtr(p.ApprovalsBeforeMerge, g.ApprovalsBeforeMerge) {
 		return false
 	}
-	if !isBoolEqualToBoolPtr(p.Mirror, g.Mirror) {
+	if !clients.IsBoolEqualToBoolPtr(p.Mirror, g.Mirror) {
 		return false
 	}
-	if !isBoolEqualToBoolPtr(p.MirrorTriggerBuilds, g.MirrorTriggerBuilds) {
+	if !clients.IsBoolEqualToBoolPtr(p.MirrorTriggerBuilds, g.MirrorTriggerBuilds) {
 		return false
 	}
-	if !isBoolEqualToBoolPtr(p.PackagesEnabled, g.PackagesEnabled) {
+	if !clients.IsBoolEqualToBoolPtr(p.PackagesEnabled, g.PackagesEnabled) {
 		return false
 	}
-	if !isBoolEqualToBoolPtr(p.ServiceDeskEnabled, g.ServiceDeskEnabled) {
+	if !clients.IsBoolEqualToBoolPtr(p.ServiceDeskEnabled, g.ServiceDeskEnabled) {
 		return false
 	}
-	if !isBoolEqualToBoolPtr(p.AutocloseReferencedIssues, g.AutocloseReferencedIssues) {
+	if !clients.IsBoolEqualToBoolPtr(p.AutocloseReferencedIssues, g.AutocloseReferencedIssues) {
 		return false
 	}
 
 	return true
-}
-
-func stringToVisibilityLevel(from *v1alpha1.VisibilityValue) *gitlab.VisibilityValue {
-	return (*gitlab.VisibilityValue)(from)
-}
-
-func stringToAccessControlValue(from *v1alpha1.AccessControlValue) *gitlab.AccessControlValue {
-	return (*gitlab.AccessControlValue)(from)
-}
-
-func stringToMergeMethod(from *v1alpha1.MergeMethodValue) *gitlab.MergeMethodValue {
-	return (*gitlab.MergeMethodValue)(from)
 }
