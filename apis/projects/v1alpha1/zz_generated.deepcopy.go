@@ -433,6 +433,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.CIDefaultGitDepth != nil {
+		in, out := &in.CIDefaultGitDepth, &out.CIDefaultGitDepth
+		*out = new(int)
+		**out = **in
+	}
 	if in.AutoDevopsEnabled != nil {
 		in, out := &in.AutoDevopsEnabled, &out.AutoDevopsEnabled
 		*out = new(bool)
@@ -458,8 +463,23 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.MirrorUserID != nil {
+		in, out := &in.MirrorUserID, &out.MirrorUserID
+		*out = new(int)
+		**out = **in
+	}
 	if in.MirrorTriggerBuilds != nil {
 		in, out := &in.MirrorTriggerBuilds, &out.MirrorTriggerBuilds
+		*out = new(bool)
+		**out = **in
+	}
+	if in.OnlyMirrorProtectedBranches != nil {
+		in, out := &in.OnlyMirrorProtectedBranches, &out.OnlyMirrorProtectedBranches
+		*out = new(bool)
+		**out = **in
+	}
+	if in.MirrorOverwritesDivergedBranches != nil {
+		in, out := &in.MirrorOverwritesDivergedBranches, &out.MirrorOverwritesDivergedBranches
 		*out = new(bool)
 		**out = **in
 	}

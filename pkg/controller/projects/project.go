@@ -18,6 +18,7 @@ package projects
 
 import (
 	"context"
+	"github.com/xanzy/go-gitlab"
 	"reflect"
 
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
@@ -42,6 +43,7 @@ const (
 	errGetFailed        = "cannot get Gitlab project"
 	errKubeUpdateFailed = "cannot update Gitlab project custom resource"
 	errCreateFailed     = "cannot create Gitlab project"
+	errUpdateFailed     = "cannot update Gitlab project"
 )
 
 // SetupProject adds a controller that reconciles Projects.
@@ -130,16 +132,34 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
-	meta.SetExternalName(cr, prj.PathWithNamespace)
-	err = e.kube.Update(context.Background(), cr)
-
+	err = e.updateExternalName(cr, prj)
 	return managed.ExternalCreation{}, errors.Wrap(err, errKubeUpdateFailed)
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
+	cr, ok := mg.(*v1alpha1.Project)
+	if !ok {
+		return managed.ExternalUpdate{}, errors.New(errNotProject)
+	}
+
+	prj, _, err := e.client.EditProject(cr.Status.AtProvider.ID, projects.GenerateEditProjectOptions(cr.Name, &cr.Spec.ForProvider), gitlab.WithContext(ctx))
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	}
+	if !cmp.Equal(prj.PathWithNamespace, meta.GetExternalName(cr)) {
+		err = e.updateExternalName(cr, prj)
+		if err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errKubeUpdateFailed)
+		}
+	}
 	return managed.ExternalUpdate{}, nil
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	return nil
+}
+
+func (e *external) updateExternalName(cr *v1alpha1.Project, prj *gitlab.Project) error {
+	meta.SetExternalName(cr, prj.PathWithNamespace)
+	return e.kube.Update(context.Background(), cr)
 }

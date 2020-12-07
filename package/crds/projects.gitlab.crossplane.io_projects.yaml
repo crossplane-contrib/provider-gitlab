@@ -74,6 +74,9 @@ spec:
                   type: string
                 ciConfigPath:
                   type: string
+                ciDefaultGitDepth:
+                  description: CIDefaultGitDepth can't be provided during project creation but in can be changed afterwards with the EditProject API call
+                  type: integer
                 containerRegistryEnabled:
                   type: boolean
                 defaultBranch:
@@ -106,13 +109,22 @@ spec:
                   type: string
                 mirror:
                   type: boolean
+                mirrorOverwritesDivergedBranches:
+                  description: MirrorOverwritesDivergedBranches can't be provided during project creation but in can be changed afterwards with the EditProject API call
+                  type: boolean
                 mirrorTriggerBuilds:
                   type: boolean
+                mirrorUserId:
+                  description: MirrorUserID can't be provided during project creation but in can be changed afterwards with the EditProject API call
+                  type: integer
                 namespaceId:
                   type: integer
                 onlyAllowMergeIfAllDiscussionsAreResolved:
                   type: boolean
                 onlyAllowMergeIfPipelineSucceeds:
+                  type: boolean
+                onlyMirrorProtectedBranches:
+                  description: OnlyMirrorProtectedBranches can't be provided during project creation but in can be changed afterwards with the EditProject API call
                   type: boolean
                 packagesEnabled:
                   type: boolean
@@ -200,8 +212,6 @@ spec:
               properties:
                 archived:
                   type: boolean
-                ciDefaultGitDepth:
-                  type: integer
                 complianceFrameworks:
                   items:
                     type: string
@@ -298,10 +308,6 @@ spec:
                   type: string
                 mergeRequestsEnabled:
                   type: boolean
-                mirrorOverwritesDivergedBranches:
-                  type: boolean
-                mirrorUserId:
-                  type: integer
                 namespace:
                   description: ProjectNamespace represents a project namespace.
                   properties:
@@ -328,8 +334,6 @@ spec:
                   - path
                   - webUrl
                   type: object
-                onlyMirrorProtectedBranches:
-                  type: boolean
                 openIssuesCount:
                   type: integer
                 owner:

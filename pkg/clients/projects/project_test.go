@@ -18,6 +18,7 @@ package projects
 
 import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 	"github.com/google/go-cmp/cmp"
 	"github.com/xanzy/go-gitlab"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,31 +27,54 @@ import (
 )
 
 var (
-	path                             = "path/to/project"
-	defaultBranch                    = "main"
-	description                      = "my awesome project"
-	issuesAccessLevel                = "enabled"
-	issuesAccessLevelv1alpha1        = v1alpha1.AccessControlValue(issuesAccessLevel)
-	repositoryAccessLevel            = "enabled"
-	repositoryAccessLevelv1alpha1    = v1alpha1.AccessControlValue(repositoryAccessLevel)
-	mergeRequestsAccessLevel         = "enabled"
-	mergeRequestsAccessLevelv1alpha1 = v1alpha1.AccessControlValue(mergeRequestsAccessLevel)
-	forkingAccessLevel               = "enabled"
-	forkingAccessLevelv1alpha1       = v1alpha1.AccessControlValue(forkingAccessLevel)
-	buildsAccessLevel                = "disabled"
-	buildsAccessLevelv1alpha1        = v1alpha1.AccessControlValue(buildsAccessLevel)
-	wikiAccessLevel                  = "private"
-	wikiAccessLevelv1alpha1          = v1alpha1.AccessControlValue(wikiAccessLevel)
-	snippetsAccessLevel              = "public"
-	snippetsAccessLevelv1alpha1      = v1alpha1.AccessControlValue(snippetsAccessLevel)
-	pagesAccessLevel                 = "enabled"
-	pagesAccessLevelv1alpha1         = v1alpha1.AccessControlValue(pagesAccessLevel)
-	visibility                       = "private"
-	visibilityv1alpha1               = v1alpha1.VisibilityValue(visibility)
-	mergeMethod                      = "merge"
-	mergeMethodv1alpha1              = v1alpha1.MergeMethodValue(mergeMethod)
-	tagList                          = []string{"tag1", "tag2"}
-	ciConfigPath                     = "path/to/ci/config"
+	name                                      = "my-project"
+	path                                      = "path/to/project"
+	defaultBranch                             = "main"
+	description                               = "my awesome project"
+	issuesAccessLevel                         = "enabled"
+	issuesAccessLevelv1alpha1                 = v1alpha1.AccessControlValue(issuesAccessLevel)
+	repositoryAccessLevel                     = "enabled"
+	repositoryAccessLevelv1alpha1             = v1alpha1.AccessControlValue(repositoryAccessLevel)
+	mergeRequestsAccessLevel                  = "enabled"
+	mergeRequestsAccessLevelv1alpha1          = v1alpha1.AccessControlValue(mergeRequestsAccessLevel)
+	forkingAccessLevel                        = "enabled"
+	forkingAccessLevelv1alpha1                = v1alpha1.AccessControlValue(forkingAccessLevel)
+	buildsAccessLevel                         = "disabled"
+	buildsAccessLevelv1alpha1                 = v1alpha1.AccessControlValue(buildsAccessLevel)
+	wikiAccessLevel                           = "private"
+	wikiAccessLevelv1alpha1                   = v1alpha1.AccessControlValue(wikiAccessLevel)
+	snippetsAccessLevel                       = "public"
+	snippetsAccessLevelv1alpha1               = v1alpha1.AccessControlValue(snippetsAccessLevel)
+	pagesAccessLevel                          = "enabled"
+	pagesAccessLevelv1alpha1                  = v1alpha1.AccessControlValue(pagesAccessLevel)
+	resolveOutdatedDiffDiscussions            = true
+	containerRegistryEnabled                  = true
+	sharedRunnersEnabled                      = true
+	visibility                                = "private"
+	visibilityv1alpha1                        = v1alpha1.VisibilityValue(visibility)
+	publicBuilds                              = false
+	onlyAllowMergeIfPipelineSucceeds          = true
+	OnlyAllowMergeIfAllDiscussionsAreResolved = true
+	mergeMethod                               = "merge"
+	mergeMethodv1alpha1                       = v1alpha1.MergeMethodValue(mergeMethod)
+	removeSourceBranchAfterMerge              = false
+	lfsEnabled                                = true
+	requestAccessEnabled                      = true
+	tagList                                   = []string{"tag1", "tag2"}
+	buildGitStategy                           = "strategy"
+	buildTimeout                              = 60
+	ciConfigPath                              = "path/to/ci/config"
+	ciDefaultGitDepth                         = 50
+	approvalsBeforeMerge                      = 0
+	externalAuthorizationClassificationLabel  = "authz-label"
+	mirror                                    = false
+	mirrorUserID                              = 1
+	mirrorTriggerBuilds                       = true
+	onlyMirrorProtectedBranches               = false
+	mirrorOverwritesDivergedBranches          = false
+	packagesEnabled                           = true
+	serviceDeskEnabled                        = true
+	autocloseReferencedIssues                 = true
 )
 
 func TestGenerateObservation(t *testing.T) {
@@ -84,9 +108,6 @@ func TestGenerateObservation(t *testing.T) {
 	// TODO(knappek): verify that Kubernetes secret has been created
 	//runnersToken := "secrettoken"
 	forkedFromProjectHTTPURL := "http://fork.url"
-	mirrorUserID := 1
-	onlyMirrorProtectedBranches := false
-	mirrorOverwritesDivergedBranches := false
 	sharedWithGroups := []struct {
 		GroupID          int    `json:"group_id"`
 		GroupName        string `json:"group_name"`
@@ -111,7 +132,6 @@ func TestGenerateObservation(t *testing.T) {
 	}
 	projectStatisticsCommitCount := 0
 	linksSelf := "selflink"
-	ciDefaultGitDepth := 1
 	customAttributesKey := "customAttrKey"
 	customAttributesValue := "customAttrValue"
 	complianceFrameworks := []string{"framework1", "framework2"}
@@ -169,10 +189,7 @@ func TestGenerateObservation(t *testing.T) {
 					ForkedFromProject: &gitlab.ForkParent{
 						HTTPURLToRepo: forkedFromProjectHTTPURL,
 					},
-					MirrorUserID:                     mirrorUserID,
-					OnlyMirrorProtectedBranches:      onlyMirrorProtectedBranches,
-					MirrorOverwritesDivergedBranches: mirrorOverwritesDivergedBranches,
-					SharedWithGroups:                 sharedWithGroups,
+					SharedWithGroups: sharedWithGroups,
 					Statistics: &gitlab.ProjectStatistics{
 						StorageStatistics: storageStatistics,
 						CommitCount:       projectStatisticsCommitCount,
@@ -234,9 +251,6 @@ func TestGenerateObservation(t *testing.T) {
 				ForkedFromProject: &v1alpha1.ForkParent{
 					HTTPURLToRepo: forkedFromProjectHTTPURL,
 				},
-				MirrorUserID:                     mirrorUserID,
-				OnlyMirrorProtectedBranches:      onlyMirrorProtectedBranches,
-				MirrorOverwritesDivergedBranches: mirrorOverwritesDivergedBranches,
 				SharedWithGroups: []v1alpha1.SharedWithGroups{
 					{
 						GroupID:          sharedWithGroups[0].GroupID,
@@ -256,7 +270,6 @@ func TestGenerateObservation(t *testing.T) {
 				Links: &v1alpha1.Links{
 					Self: linksSelf,
 				},
-				CIDefaultGitDepth: ciDefaultGitDepth,
 				CustomAttributes: []v1alpha1.CustomAttribute{
 					{
 						Key:   customAttributesKey,
@@ -322,80 +335,154 @@ func TestLateInitialize(t *testing.T) {
 		"AllOptionalFields": {
 			parameters: &v1alpha1.ProjectParameters{},
 			project: &gitlab.Project{
-				Path:                     path,
-				DefaultBranch:            defaultBranch,
-				Description:              description,
-				IssuesAccessLevel:        gitlab.AccessControlValue(issuesAccessLevel),
-				RepositoryAccessLevel:    gitlab.AccessControlValue(repositoryAccessLevel),
-				MergeRequestsAccessLevel: gitlab.AccessControlValue(mergeRequestsAccessLevel),
-				ForkingAccessLevel:       gitlab.AccessControlValue(forkingAccessLevel),
-				BuildsAccessLevel:        gitlab.AccessControlValue(buildsAccessLevel),
-				WikiAccessLevel:          gitlab.AccessControlValue(wikiAccessLevel),
-				SnippetsAccessLevel:      gitlab.AccessControlValue(snippetsAccessLevel),
-				PagesAccessLevel:         gitlab.AccessControlValue(pagesAccessLevel),
-				Visibility:               gitlab.VisibilityValue(visibility),
-				MergeMethod:              gitlab.MergeMethodValue(mergeMethod),
-				TagList:                  tagList,
-				CIConfigPath:             ciConfigPath,
+				Path:                             path,
+				DefaultBranch:                    defaultBranch,
+				Description:                      description,
+				IssuesAccessLevel:                gitlab.AccessControlValue(issuesAccessLevel),
+				RepositoryAccessLevel:            gitlab.AccessControlValue(repositoryAccessLevel),
+				MergeRequestsAccessLevel:         gitlab.AccessControlValue(mergeRequestsAccessLevel),
+				ForkingAccessLevel:               gitlab.AccessControlValue(forkingAccessLevel),
+				BuildsAccessLevel:                gitlab.AccessControlValue(buildsAccessLevel),
+				WikiAccessLevel:                  gitlab.AccessControlValue(wikiAccessLevel),
+				SnippetsAccessLevel:              gitlab.AccessControlValue(snippetsAccessLevel),
+				PagesAccessLevel:                 gitlab.AccessControlValue(pagesAccessLevel),
+				ResolveOutdatedDiffDiscussions:   resolveOutdatedDiffDiscussions,
+				ContainerRegistryEnabled:         containerRegistryEnabled,
+				SharedRunnersEnabled:             sharedRunnersEnabled,
+				Visibility:                       gitlab.VisibilityValue(visibility),
+				PublicBuilds:                     publicBuilds,
+				OnlyAllowMergeIfPipelineSucceeds: onlyAllowMergeIfPipelineSucceeds,
+				OnlyAllowMergeIfAllDiscussionsAreResolved: OnlyAllowMergeIfAllDiscussionsAreResolved,
+				RemoveSourceBranchAfterMerge:              removeSourceBranchAfterMerge,
+				LFSEnabled:                                lfsEnabled,
+				RequestAccessEnabled:                      requestAccessEnabled,
+				MergeMethod:                               gitlab.MergeMethodValue(mergeMethod),
+				TagList:                                   tagList,
+				CIConfigPath:                              ciConfigPath,
+				CIDefaultGitDepth:                         ciDefaultGitDepth,
+				Mirror:                                    mirror,
+				MirrorUserID:                              mirrorUserID,
+				MirrorTriggerBuilds:                       mirrorTriggerBuilds,
+				OnlyMirrorProtectedBranches:               onlyMirrorProtectedBranches,
+				MirrorOverwritesDivergedBranches:          mirrorOverwritesDivergedBranches,
+				PackagesEnabled:                           packagesEnabled,
+				ServiceDeskEnabled:                        serviceDeskEnabled,
+				AutocloseReferencedIssues:                 autocloseReferencedIssues,
 			},
 			want: &v1alpha1.ProjectParameters{
-				Path:                     &path,
-				DefaultBranch:            &defaultBranch,
-				Description:              &description,
-				IssuesAccessLevel:        &issuesAccessLevelv1alpha1,
-				RepositoryAccessLevel:    &repositoryAccessLevelv1alpha1,
-				MergeRequestsAccessLevel: &mergeRequestsAccessLevelv1alpha1,
-				ForkingAccessLevel:       &forkingAccessLevelv1alpha1,
-				BuildsAccessLevel:        &buildsAccessLevelv1alpha1,
-				WikiAccessLevel:          &wikiAccessLevelv1alpha1,
-				SnippetsAccessLevel:      &snippetsAccessLevelv1alpha1,
-				PagesAccessLevel:         &pagesAccessLevelv1alpha1,
-				Visibility:               &visibilityv1alpha1,
-				MergeMethod:              &mergeMethodv1alpha1,
-				TagList:                  tagList,
-				CIConfigPath:             &ciConfigPath,
+				Path:                             &path,
+				DefaultBranch:                    &defaultBranch,
+				Description:                      &description,
+				IssuesAccessLevel:                &issuesAccessLevelv1alpha1,
+				RepositoryAccessLevel:            &repositoryAccessLevelv1alpha1,
+				MergeRequestsAccessLevel:         &mergeRequestsAccessLevelv1alpha1,
+				ForkingAccessLevel:               &forkingAccessLevelv1alpha1,
+				BuildsAccessLevel:                &buildsAccessLevelv1alpha1,
+				WikiAccessLevel:                  &wikiAccessLevelv1alpha1,
+				SnippetsAccessLevel:              &snippetsAccessLevelv1alpha1,
+				PagesAccessLevel:                 &pagesAccessLevelv1alpha1,
+				ResolveOutdatedDiffDiscussions:   &resolveOutdatedDiffDiscussions,
+				ContainerRegistryEnabled:         &containerRegistryEnabled,
+				SharedRunnersEnabled:             &sharedRunnersEnabled,
+				Visibility:                       &visibilityv1alpha1,
+				PublicBuilds:                     &publicBuilds,
+				OnlyAllowMergeIfPipelineSucceeds: &onlyAllowMergeIfPipelineSucceeds,
+				OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
+				RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
+				LFSEnabled:                                &lfsEnabled,
+				RequestAccessEnabled:                      &requestAccessEnabled,
+				MergeMethod:                               &mergeMethodv1alpha1,
+				TagList:                                   tagList,
+				CIConfigPath:                              &ciConfigPath,
+				CIDefaultGitDepth:                         &ciDefaultGitDepth,
+				Mirror:                                    &mirror,
+				MirrorUserID:                              &mirrorUserID,
+				MirrorTriggerBuilds:                       &mirrorTriggerBuilds,
+				OnlyMirrorProtectedBranches:               &onlyMirrorProtectedBranches,
+				MirrorOverwritesDivergedBranches:          &mirrorOverwritesDivergedBranches,
+				PackagesEnabled:                           &packagesEnabled,
+				ServiceDeskEnabled:                        &serviceDeskEnabled,
+				AutocloseReferencedIssues:                 &autocloseReferencedIssues,
 			},
 		},
 		"SomeFieldsDontOverwrite": {
 			parameters: &v1alpha1.ProjectParameters{
-				Path:          &path,
-				Description:   &description,
-				DefaultBranch: &defaultBranch,
-				TagList:       tagList,
+				Path:                           &path,
+				Description:                    &description,
+				DefaultBranch:                  &defaultBranch,
+				ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
+				PublicBuilds:                   &publicBuilds,
+				TagList:                        tagList,
 			},
 			project: &gitlab.Project{
-				Path:                     "new-path",
-				Description:              "manually changed description",
-				DefaultBranch:            "manually changed default branch",
-				IssuesAccessLevel:        gitlab.AccessControlValue(issuesAccessLevel),
-				RepositoryAccessLevel:    gitlab.AccessControlValue(repositoryAccessLevel),
-				MergeRequestsAccessLevel: gitlab.AccessControlValue(mergeRequestsAccessLevel),
-				ForkingAccessLevel:       gitlab.AccessControlValue(forkingAccessLevel),
-				BuildsAccessLevel:        gitlab.AccessControlValue(buildsAccessLevel),
-				WikiAccessLevel:          gitlab.AccessControlValue(wikiAccessLevel),
-				SnippetsAccessLevel:      gitlab.AccessControlValue(snippetsAccessLevel),
-				PagesAccessLevel:         gitlab.AccessControlValue(pagesAccessLevel),
-				Visibility:               gitlab.VisibilityValue(visibility),
-				MergeMethod:              gitlab.MergeMethodValue(mergeMethod),
-				TagList:                  []string{"an evil changed the tags manually"},
-				CIConfigPath:             ciConfigPath,
+				Path:                             path,
+				DefaultBranch:                    defaultBranch,
+				Description:                      description,
+				IssuesAccessLevel:                gitlab.AccessControlValue(issuesAccessLevel),
+				RepositoryAccessLevel:            gitlab.AccessControlValue(repositoryAccessLevel),
+				MergeRequestsAccessLevel:         gitlab.AccessControlValue(mergeRequestsAccessLevel),
+				ForkingAccessLevel:               gitlab.AccessControlValue(forkingAccessLevel),
+				BuildsAccessLevel:                gitlab.AccessControlValue(buildsAccessLevel),
+				WikiAccessLevel:                  gitlab.AccessControlValue(wikiAccessLevel),
+				SnippetsAccessLevel:              gitlab.AccessControlValue(snippetsAccessLevel),
+				PagesAccessLevel:                 gitlab.AccessControlValue(pagesAccessLevel),
+				ResolveOutdatedDiffDiscussions:   !resolveOutdatedDiffDiscussions,
+				ContainerRegistryEnabled:         containerRegistryEnabled,
+				SharedRunnersEnabled:             sharedRunnersEnabled,
+				Visibility:                       gitlab.VisibilityValue(visibility),
+				PublicBuilds:                     !publicBuilds,
+				OnlyAllowMergeIfPipelineSucceeds: onlyAllowMergeIfPipelineSucceeds,
+				OnlyAllowMergeIfAllDiscussionsAreResolved: OnlyAllowMergeIfAllDiscussionsAreResolved,
+				RemoveSourceBranchAfterMerge:              removeSourceBranchAfterMerge,
+				LFSEnabled:                                lfsEnabled,
+				RequestAccessEnabled:                      requestAccessEnabled,
+				MergeMethod:                               gitlab.MergeMethodValue(mergeMethod),
+				TagList:                                   tagList,
+				CIConfigPath:                              ciConfigPath,
+				CIDefaultGitDepth:                         ciDefaultGitDepth,
+				Mirror:                                    mirror,
+				MirrorUserID:                              mirrorUserID,
+				MirrorTriggerBuilds:                       mirrorTriggerBuilds,
+				OnlyMirrorProtectedBranches:               onlyMirrorProtectedBranches,
+				MirrorOverwritesDivergedBranches:          mirrorOverwritesDivergedBranches,
+				PackagesEnabled:                           packagesEnabled,
+				ServiceDeskEnabled:                        serviceDeskEnabled,
+				AutocloseReferencedIssues:                 autocloseReferencedIssues,
 			},
 			want: &v1alpha1.ProjectParameters{
-				Path:                     &path,
-				DefaultBranch:            &defaultBranch,
-				Description:              &description,
-				IssuesAccessLevel:        &issuesAccessLevelv1alpha1,
-				RepositoryAccessLevel:    &repositoryAccessLevelv1alpha1,
-				MergeRequestsAccessLevel: &mergeRequestsAccessLevelv1alpha1,
-				ForkingAccessLevel:       &forkingAccessLevelv1alpha1,
-				BuildsAccessLevel:        &buildsAccessLevelv1alpha1,
-				WikiAccessLevel:          &wikiAccessLevelv1alpha1,
-				SnippetsAccessLevel:      &snippetsAccessLevelv1alpha1,
-				PagesAccessLevel:         &pagesAccessLevelv1alpha1,
-				Visibility:               &visibilityv1alpha1,
-				MergeMethod:              &mergeMethodv1alpha1,
-				TagList:                  tagList,
-				CIConfigPath:             &ciConfigPath,
+				Path:                             &path,
+				DefaultBranch:                    &defaultBranch,
+				Description:                      &description,
+				IssuesAccessLevel:                &issuesAccessLevelv1alpha1,
+				RepositoryAccessLevel:            &repositoryAccessLevelv1alpha1,
+				MergeRequestsAccessLevel:         &mergeRequestsAccessLevelv1alpha1,
+				ForkingAccessLevel:               &forkingAccessLevelv1alpha1,
+				BuildsAccessLevel:                &buildsAccessLevelv1alpha1,
+				WikiAccessLevel:                  &wikiAccessLevelv1alpha1,
+				SnippetsAccessLevel:              &snippetsAccessLevelv1alpha1,
+				PagesAccessLevel:                 &pagesAccessLevelv1alpha1,
+				ResolveOutdatedDiffDiscussions:   &resolveOutdatedDiffDiscussions,
+				ContainerRegistryEnabled:         &containerRegistryEnabled,
+				SharedRunnersEnabled:             &sharedRunnersEnabled,
+				Visibility:                       &visibilityv1alpha1,
+				PublicBuilds:                     &publicBuilds,
+				OnlyAllowMergeIfPipelineSucceeds: &onlyAllowMergeIfPipelineSucceeds,
+				OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
+				RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
+				LFSEnabled:                                &lfsEnabled,
+				RequestAccessEnabled:                      &requestAccessEnabled,
+				MergeMethod:                               &mergeMethodv1alpha1,
+				TagList:                                   tagList,
+				CIConfigPath:                              &ciConfigPath,
+				CIDefaultGitDepth:                         &ciDefaultGitDepth,
+				Mirror:                                    &mirror,
+				MirrorUserID:                              &mirrorUserID,
+				MirrorTriggerBuilds:                       &mirrorTriggerBuilds,
+				OnlyMirrorProtectedBranches:               &onlyMirrorProtectedBranches,
+				MirrorOverwritesDivergedBranches:          &mirrorOverwritesDivergedBranches,
+				PackagesEnabled:                           &packagesEnabled,
+				ServiceDeskEnabled:                        &serviceDeskEnabled,
+				AutocloseReferencedIssues:                 &autocloseReferencedIssues,
 			},
 		},
 	}
@@ -410,23 +497,130 @@ func TestLateInitialize(t *testing.T) {
 	}
 }
 
-func TestIsProjectUpToDate(t *testing.T) {
-	resolveOutdatedDiffDiscussions := true
-	containerRegistryEnabled := true
-	sharedRunnersEnabled := true
-	publicBuilds := false
-	onlyAllowMergeIfPipelineSucceeds := true
-	OnlyAllowMergeIfAllDiscussionsAreResolved := true
-	removeSourceBranchAfterMerge := false
-	lfsEnabled := true
-	requestAccessEnabled := true
-	approvalsBeforeMerge := 0
-	mirror := false
-	mirrorTriggerBuilds := true
-	packagesEnabled := true
-	serviceDeskEnabled := true
-	autocloseReferencedIssues := true
+func TestGenerateEditProjectOptions(t *testing.T) {
+	type args struct {
+		name       string
+		parameters *v1alpha1.ProjectParameters
+	}
+	cases := map[string]struct {
+		args args
+		want *gitlab.EditProjectOptions
+	}{
+		"AllFields": {
+			args: args{
+				name: name,
+				parameters: &v1alpha1.ProjectParameters{
+					Path:                             &path,
+					Description:                      &description,
+					DefaultBranch:                    &defaultBranch,
+					IssuesAccessLevel:                &issuesAccessLevelv1alpha1,
+					RepositoryAccessLevel:            &repositoryAccessLevelv1alpha1,
+					MergeRequestsAccessLevel:         &mergeRequestsAccessLevelv1alpha1,
+					ForkingAccessLevel:               &forkingAccessLevelv1alpha1,
+					BuildsAccessLevel:                &buildsAccessLevelv1alpha1,
+					WikiAccessLevel:                  &wikiAccessLevelv1alpha1,
+					SnippetsAccessLevel:              &snippetsAccessLevelv1alpha1,
+					PagesAccessLevel:                 &pagesAccessLevelv1alpha1,
+					ResolveOutdatedDiffDiscussions:   &resolveOutdatedDiffDiscussions,
+					ContainerRegistryEnabled:         &containerRegistryEnabled,
+					SharedRunnersEnabled:             &sharedRunnersEnabled,
+					Visibility:                       &visibilityv1alpha1,
+					PublicBuilds:                     &publicBuilds,
+					OnlyAllowMergeIfPipelineSucceeds: &onlyAllowMergeIfPipelineSucceeds,
+					OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
+					RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
+					LFSEnabled:                                &lfsEnabled,
+					RequestAccessEnabled:                      &requestAccessEnabled,
+					MergeMethod:                               &mergeMethodv1alpha1,
+					TagList:                                   tagList,
+					BuildGitStrategy:                          &buildGitStategy,
+					BuildTimeout:                              &buildTimeout,
+					CIConfigPath:                              &ciConfigPath,
+					CIDefaultGitDepth:                         &ciDefaultGitDepth,
+					Mirror:                                    &mirror,
+					MirrorUserID:                              &mirrorUserID,
+					MirrorTriggerBuilds:                       &mirrorTriggerBuilds,
+					OnlyMirrorProtectedBranches:               &onlyMirrorProtectedBranches,
+					MirrorOverwritesDivergedBranches:          &mirrorOverwritesDivergedBranches,
+					PackagesEnabled:                           &packagesEnabled,
+					ServiceDeskEnabled:                        &serviceDeskEnabled,
+					AutocloseReferencedIssues:                 &autocloseReferencedIssues,
+				},
+			},
+			want: &gitlab.EditProjectOptions{
+				Name:                             &name,
+				Path:                             &path,
+				DefaultBranch:                    &defaultBranch,
+				Description:                      &description,
+				IssuesAccessLevel:                clients.AccessControlValueStringToGitlab(issuesAccessLevel),
+				RepositoryAccessLevel:            clients.AccessControlValueStringToGitlab(repositoryAccessLevel),
+				MergeRequestsAccessLevel:         clients.AccessControlValueStringToGitlab(mergeRequestsAccessLevel),
+				ForkingAccessLevel:               clients.AccessControlValueStringToGitlab(forkingAccessLevel),
+				BuildsAccessLevel:                clients.AccessControlValueStringToGitlab(buildsAccessLevel),
+				WikiAccessLevel:                  clients.AccessControlValueStringToGitlab(wikiAccessLevel),
+				SnippetsAccessLevel:              clients.AccessControlValueStringToGitlab(snippetsAccessLevel),
+				PagesAccessLevel:                 clients.AccessControlValueStringToGitlab(pagesAccessLevel),
+				ResolveOutdatedDiffDiscussions:   &resolveOutdatedDiffDiscussions,
+				ContainerRegistryEnabled:         &containerRegistryEnabled,
+				SharedRunnersEnabled:             &sharedRunnersEnabled,
+				Visibility:                       clients.VisibilityValueStringToGitlab(visibility),
+				PublicBuilds:                     &publicBuilds,
+				OnlyAllowMergeIfPipelineSucceeds: &onlyAllowMergeIfPipelineSucceeds,
+				OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
+				RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
+				LFSEnabled:                                &lfsEnabled,
+				RequestAccessEnabled:                      &requestAccessEnabled,
+				MergeMethod:                               clients.MergeMethodStringToGitlab(mergeMethod),
+				TagList:                                   &tagList,
+				BuildGitStrategy:                          &buildGitStategy,
+				BuildTimeout:                              &buildTimeout,
+				CIConfigPath:                              &ciConfigPath,
+				CIDefaultGitDepth:                         &ciDefaultGitDepth,
+				Mirror:                                    &mirror,
+				MirrorUserID:                              &mirrorUserID,
+				MirrorTriggerBuilds:                       &mirrorTriggerBuilds,
+				OnlyMirrorProtectedBranches:               &onlyMirrorProtectedBranches,
+				MirrorOverwritesDivergedBranches:          &mirrorOverwritesDivergedBranches,
+				PackagesEnabled:                           &packagesEnabled,
+				ServiceDeskEnabled:                        &serviceDeskEnabled,
+				AutocloseReferencedIssues:                 &autocloseReferencedIssues,
+			},
+		},
+		"SomeFields": {
+			args: args{
+				name: name,
+				parameters: &v1alpha1.ProjectParameters{
+					Path:                           &path,
+					IssuesAccessLevel:              &issuesAccessLevelv1alpha1,
+					ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
+					MergeMethod:                    &mergeMethodv1alpha1,
+					TagList:                        tagList,
+					BuildTimeout:                   &buildTimeout,
+				},
+			},
+			want: &gitlab.EditProjectOptions{
+				Name:                           &name,
+				Path:                           &path,
+				IssuesAccessLevel:              clients.AccessControlValueStringToGitlab(issuesAccessLevel),
+				ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
+				MergeMethod:                    clients.MergeMethodStringToGitlab(mergeMethod),
+				TagList:                        &tagList,
+				BuildTimeout:                   &buildTimeout,
+			},
+		},
+	}
 
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateEditProjectOptions(tc.args.name, tc.args.parameters)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestIsProjectUpToDate(t *testing.T) {
 	type args struct {
 		project *gitlab.Project
 		p       *v1alpha1.ProjectParameters
