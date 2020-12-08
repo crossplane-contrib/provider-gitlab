@@ -19,8 +19,7 @@ package clients
 import (
 	"context"
 	"fmt"
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
+
 	"github.com/go-ini/ini"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
@@ -30,7 +29,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
+	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/apis/v1beta1"
 )
 
@@ -125,7 +126,7 @@ func UseProviderSecret(_ context.Context, data []byte, section string) (*Config,
 	return &Config{Token: token.Value(), BaseURL: baseURL.Value()}, nil
 }
 
-// LateInitializeStringRef returns `from` if `in` is nil and `from` is non-empty,
+// LateInitializeStringPtr returns `from` if `in` is nil and `from` is non-empty,
 // in other cases it returns `in`.
 func LateInitializeStringPtr(in *string, from string) *string {
 	if in == nil && from != "" {
@@ -143,7 +144,7 @@ func LateInitializeAccessControlValue(in *v1alpha1.AccessControlValue, from gitl
 	return in
 }
 
-// LateInitializeAccessControlValue returns in if it's non-nil, otherwise returns from
+// LateInitializeVisibilityValue returns in if it's non-nil, otherwise returns from
 // which is the backup for the cases in is nil.
 func LateInitializeVisibilityValue(in *v1alpha1.VisibilityValue, from gitlab.VisibilityValue) *v1alpha1.VisibilityValue {
 	if in == nil && from != "" {
@@ -152,7 +153,7 @@ func LateInitializeVisibilityValue(in *v1alpha1.VisibilityValue, from gitlab.Vis
 	return in
 }
 
-// LateInitializeAccessControlValue returns in if it's non-nil, otherwise returns from
+// LateInitializeMergeMethodValue returns in if it's non-nil, otherwise returns from
 // which is the backup for the cases in is nil.
 func LateInitializeMergeMethodValue(in *v1alpha1.MergeMethodValue, from gitlab.MergeMethodValue) *v1alpha1.MergeMethodValue {
 	if in == nil && from != "" {
@@ -161,27 +162,37 @@ func LateInitializeMergeMethodValue(in *v1alpha1.MergeMethodValue, from gitlab.M
 	return in
 }
 
+// VisibilityValueV1alpha1ToGitlab converts *v1alpha1.VisibilityValue to *gitlab.VisibilityValue
 func VisibilityValueV1alpha1ToGitlab(from *v1alpha1.VisibilityValue) *gitlab.VisibilityValue {
 	return (*gitlab.VisibilityValue)(from)
 }
+
+// VisibilityValueStringToGitlab converts string to *gitlab.VisibilityValue
 func VisibilityValueStringToGitlab(from string) *gitlab.VisibilityValue {
 	return (*gitlab.VisibilityValue)(&from)
 }
 
+// AccessControlValueV1alpha1ToGitlab converts *v1alpha1.AccessControlValue to *gitlab.AccessControlValue
 func AccessControlValueV1alpha1ToGitlab(from *v1alpha1.AccessControlValue) *gitlab.AccessControlValue {
 	return (*gitlab.AccessControlValue)(from)
 }
+
+// AccessControlValueStringToGitlab converts string to *gitlab.AccessControlValue
 func AccessControlValueStringToGitlab(from string) *gitlab.AccessControlValue {
 	return (*gitlab.AccessControlValue)(&from)
 }
 
+// MergeMethodV1alpha1ToGitlab converts *v1alpha1.MergeMethodValue to *gitlab.MergeMethodValue
 func MergeMethodV1alpha1ToGitlab(from *v1alpha1.MergeMethodValue) *gitlab.MergeMethodValue {
 	return (*gitlab.MergeMethodValue)(from)
 }
+
+// MergeMethodStringToGitlab converts string to *gitlab.MergeMethodValue
 func MergeMethodStringToGitlab(from string) *gitlab.MergeMethodValue {
 	return (*gitlab.MergeMethodValue)(&from)
 }
 
+// StringToPtr converts string to *string
 func StringToPtr(s string) *string {
 	if s == "" {
 		return nil
@@ -189,6 +200,7 @@ func StringToPtr(s string) *string {
 	return &s
 }
 
+// IsBoolEqualToBoolPtr compares a *bool with bool
 func IsBoolEqualToBoolPtr(bp *bool, b bool) bool {
 	if bp != nil {
 		if !cmp.Equal(*bp, b) {
@@ -198,6 +210,7 @@ func IsBoolEqualToBoolPtr(bp *bool, b bool) bool {
 	return true
 }
 
+// IsIntEqualToIntPtr compares an *int with int
 func IsIntEqualToIntPtr(ip *int, i int) bool {
 	if ip != nil {
 		if !cmp.Equal(*ip, i) {

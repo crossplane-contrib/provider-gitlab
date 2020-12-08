@@ -510,6 +510,7 @@ spec:
                   type: string
                 sharedWithGroups:
                   items:
+                    description: SharedWithGroups struct used in gitlab project
                     properties:
                       groupAccessLevel:
                         type: integer
