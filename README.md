@@ -4,7 +4,7 @@
 
 `provider-gitlab` is the Crossplane infrastructure provider for
 [Gitlab](https://gitlab.com/). The provider that is built from the source code
-in this repository can be installedƒ into a Crossplane control plane and adds the
+in this repository can be installed into a Crossplane control plane and adds the
 following new functionality:
 
 * Custom Resource Definitions (CRDs) that model Gitlab resources
