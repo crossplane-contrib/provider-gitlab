@@ -39,7 +39,6 @@ var (
 	path = "some/path/to/repo"
 
 	errBoom = errors.New("boom")
-
 	extName           = "example-project"
 	extNameAnnotation = map[string]string{
 		meta.AnnotationKeyExternalName: extName,
@@ -282,22 +281,6 @@ func TestCreate(t *testing.T) {
 				result: managed.ExternalCreation{},
 			},
 		},
-		"FailedNameSetting": {
-			args: args{
-				project: &fake.MockClient{
-					MockCreateProject: func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return &gitlab.Project{}, &gitlab.Response{}, nil
-					},
-				},
-				cr: project(),
-			},
-			want: want{
-				cr: project(
-					withConditions(runtimev1alpha1.Creating()),
-				),
-				result: managed.ExternalCreation{},
-			},
-		},
 		"FailedCreation": {
 			args: args{
 				project: &fake.MockClient{
@@ -308,26 +291,31 @@ func TestCreate(t *testing.T) {
 				cr: project(),
 			},
 			want: want{
-				cr:  project(),
+				cr:  project(
+					withConditions(runtimev1alpha1.Creating()),
+				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
 		},
-		"LateInitFailedKubeUpdate": {
+		"FailedKubeUpdate": {
 			args: args{
 				kube: &test.MockClient{
 					MockUpdate: test.NewMockUpdateFn(errBoom),
 				},
 				project: &fake.MockClient{
 					MockCreateProject: func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return &gitlab.Project{
-							Path: path,
-						}, &gitlab.Response{}, nil
+						return &gitlab.Project{}, &gitlab.Response{}, nil
 					},
 				},
-				cr: project(),
+				cr: project(
+					withExternalName(extName),
+				),
 			},
 			want: want{
-				cr:  project(withPath(&path)),
+				cr: project(
+					withConditions(runtimev1alpha1.Creating()),
+					withExternalName(""),
+				),
 				err: errors.Wrap(errBoom, errKubeUpdateFailed),
 			},
 		},
@@ -348,6 +336,7 @@ func TestCreate(t *testing.T) {
 			}
 		})
 	}
+
 }
 
 func TestUpdate(t *testing.T) {
