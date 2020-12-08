@@ -1,13 +1,14 @@
 apiVersion: projects.gitlab.crossplane.io/v1alpha1
 kind: Project
 metadata:
-  name: provider-aws
-  annotations:
-    crossplane.io/external-name: "cnp/core/provider-aws"
+  name: example-project
 spec:
-  forProvider: {}
-  writeConnectionSecretToRef:
-    namespace: crossplane-system
-    name: gitlab-project-provider-aws
+  forProvider:
+    namespaceId: <GITLAB GROUP ID>
+    description: "an example project"
   providerConfigRef:
     name: gitlab-provider
+  # a reference to a Kubernetes secret to which the controller will write the runnersToken
+  writeConnectionSecretToRef:
+    name: gitlab-project-example-project
+    namespace: crossplane-system
