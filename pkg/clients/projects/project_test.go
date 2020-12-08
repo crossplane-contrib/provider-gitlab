@@ -29,6 +29,7 @@ import (
 var (
 	name                                      = "my-project"
 	path                                      = "path/to/project"
+	namespaceID								  = 1
 	defaultBranch                             = "main"
 	description                               = "my awesome project"
 	issuesAccessLevel                         = "enabled"
@@ -61,6 +62,7 @@ var (
 	lfsEnabled                                = true
 	requestAccessEnabled                      = true
 	tagList                                   = []string{"tag1", "tag2"}
+	printingMergeRequestLinkEnabled			  = true
 	buildGitStategy                           = "strategy"
 	buildTimeout                              = 60
 	ciConfigPath                              = "path/to/ci/config"
@@ -70,6 +72,11 @@ var (
 	mirror                                    = false
 	mirrorUserID                              = 1
 	mirrorTriggerBuilds                       = true
+	initializeWithReadme					  = true
+	templateName							  = "template"
+	templateProjectID						  = 1
+	useCustomTemplate						  = true
+	groupWithProjectTemplatesID				  = 1
 	onlyMirrorProtectedBranches               = false
 	mirrorOverwritesDivergedBranches          = false
 	packagesEnabled                           = true
@@ -491,6 +498,152 @@ func TestLateInitialize(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			LateInitialize(tc.parameters, tc.project)
 			if diff := cmp.Diff(tc.want, tc.parameters); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGenerateCreateProjectOptions(t *testing.T) {
+	type args struct {
+		name       string
+		parameters *v1alpha1.ProjectParameters
+	}
+	cases := map[string]struct {
+		args args
+		want *gitlab.CreateProjectOptions
+	}{
+		"AllFields": {
+			args: args{
+				name: name,
+				parameters: &v1alpha1.ProjectParameters{
+					Path:                             &path,
+					NamespaceID:					  &namespaceID,
+					DefaultBranch:                    &defaultBranch,
+					Description:                      &description,
+					IssuesAccessLevel:                &issuesAccessLevelv1alpha1,
+					RepositoryAccessLevel:            &repositoryAccessLevelv1alpha1,
+					MergeRequestsAccessLevel:         &mergeRequestsAccessLevelv1alpha1,
+					ForkingAccessLevel:               &forkingAccessLevelv1alpha1,
+					BuildsAccessLevel:                &buildsAccessLevelv1alpha1,
+					WikiAccessLevel:                  &wikiAccessLevelv1alpha1,
+					SnippetsAccessLevel:              &snippetsAccessLevelv1alpha1,
+					PagesAccessLevel:                 &pagesAccessLevelv1alpha1,
+					EmailsDisabled:                   &emailsDisabled,
+					ResolveOutdatedDiffDiscussions:   &resolveOutdatedDiffDiscussions,
+					ContainerRegistryEnabled:         &containerRegistryEnabled,
+					SharedRunnersEnabled:             &sharedRunnersEnabled,
+					Visibility:                       &visibilityv1alpha1,
+					ImportURL:                        &importURL,
+					PublicBuilds:                     &publicBuilds,
+					OnlyAllowMergeIfPipelineSucceeds: &onlyAllowMergeIfPipelineSucceeds,
+					OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
+					MergeMethod:                              &mergeMethodv1alpha1,
+					RemoveSourceBranchAfterMerge:             &removeSourceBranchAfterMerge,
+					LFSEnabled:                               &lfsEnabled,
+					RequestAccessEnabled:                     &requestAccessEnabled,
+					TagList:                                  tagList,
+					PrintingMergeRequestLinkEnabled:          &printingMergeRequestLinkEnabled,
+					BuildGitStrategy:                         &buildGitStategy,
+					BuildTimeout:                             &buildTimeout,
+					AutoCancelPendingPipelines:               &autoCancelPendingPipelines,
+					BuildCoverageRegex:                       &buildCoverageRegex,
+					CIConfigPath:                             &ciConfigPath,
+					CIDefaultGitDepth:                        &ciDefaultGitDepth,
+					AutoDevopsEnabled:                        &autoDevopsEnabled,
+					AutoDevopsDeployStrategy:                 &autoDevopsDeployStrategy,
+					ApprovalsBeforeMerge:                     &approvalsBeforeMerge,
+					ExternalAuthorizationClassificationLabel: &externalAuthorizationClassificationLabel,
+					Mirror:                                   &mirror,
+					MirrorTriggerBuilds:                      &mirrorTriggerBuilds,
+					InitializeWithReadme:                     &initializeWithReadme,
+					TemplateName:                             &templateName,
+					TemplateProjectID:                        &templateProjectID,
+					UseCustomTemplate:                        &useCustomTemplate,
+					GroupWithProjectTemplatesID:              &groupWithProjectTemplatesID,
+					PackagesEnabled:                          &packagesEnabled,
+					ServiceDeskEnabled:                       &serviceDeskEnabled,
+					AutocloseReferencedIssues:                &autocloseReferencedIssues,
+				},
+			},
+			want: &gitlab.CreateProjectOptions{
+				Name:                             &name,
+				Path:                             &path,
+				NamespaceID:					  &namespaceID,
+				DefaultBranch:                    &defaultBranch,
+				Description:                      &description,
+				IssuesAccessLevel:                clients.AccessControlValueStringToGitlab(issuesAccessLevel),
+				RepositoryAccessLevel:            clients.AccessControlValueStringToGitlab(repositoryAccessLevel),
+				MergeRequestsAccessLevel:         clients.AccessControlValueStringToGitlab(mergeRequestsAccessLevel),
+				ForkingAccessLevel:               clients.AccessControlValueStringToGitlab(forkingAccessLevel),
+				BuildsAccessLevel:                clients.AccessControlValueStringToGitlab(buildsAccessLevel),
+				WikiAccessLevel:                  clients.AccessControlValueStringToGitlab(wikiAccessLevel),
+				SnippetsAccessLevel:              clients.AccessControlValueStringToGitlab(snippetsAccessLevel),
+				EmailsDisabled:                   &emailsDisabled,
+				PagesAccessLevel:                 clients.AccessControlValueStringToGitlab(pagesAccessLevel),
+				ResolveOutdatedDiffDiscussions:   &resolveOutdatedDiffDiscussions,
+				ContainerRegistryEnabled:         &containerRegistryEnabled,
+				SharedRunnersEnabled:             &sharedRunnersEnabled,
+				Visibility:                       clients.VisibilityValueStringToGitlab(visibility),
+				ImportURL:                        &importURL,
+				PublicBuilds:                     &publicBuilds,
+				OnlyAllowMergeIfPipelineSucceeds: &onlyAllowMergeIfPipelineSucceeds,
+				OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
+				MergeMethod:                              clients.MergeMethodStringToGitlab(mergeMethod),
+				RemoveSourceBranchAfterMerge:             &removeSourceBranchAfterMerge,
+				LFSEnabled:                               &lfsEnabled,
+				RequestAccessEnabled:                     &requestAccessEnabled,
+				TagList:                                  &tagList,
+				PrintingMergeRequestLinkEnabled:          &printingMergeRequestLinkEnabled,
+				BuildGitStrategy:                         &buildGitStategy,
+				BuildTimeout:                             &buildTimeout,
+				AutoCancelPendingPipelines:               &autoCancelPendingPipelines,
+				BuildCoverageRegex:                       &buildCoverageRegex,
+				CIConfigPath:                             &ciConfigPath,
+				AutoDevopsEnabled:                        &autoDevopsEnabled,
+				AutoDevopsDeployStrategy:                 &autoDevopsDeployStrategy,
+				ApprovalsBeforeMerge:                     &approvalsBeforeMerge,
+				ExternalAuthorizationClassificationLabel: &externalAuthorizationClassificationLabel,
+				Mirror:                                   &mirror,
+				MirrorTriggerBuilds:                      &mirrorTriggerBuilds,
+				InitializeWithReadme:                     &initializeWithReadme,
+				TemplateName:                             &templateName,
+				TemplateProjectID:                        &templateProjectID,
+				UseCustomTemplate:                        &useCustomTemplate,
+				GroupWithProjectTemplatesID:              &groupWithProjectTemplatesID,
+				PackagesEnabled:                          &packagesEnabled,
+				ServiceDeskEnabled:                       &serviceDeskEnabled,
+				AutocloseReferencedIssues:                &autocloseReferencedIssues,
+			},
+		},
+		"SomeFields": {
+			args: args{
+				name: name,
+				parameters: &v1alpha1.ProjectParameters{
+					Path:                           &path,
+					IssuesAccessLevel:              &issuesAccessLevelv1alpha1,
+					ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
+					MergeMethod:                    &mergeMethodv1alpha1,
+					TagList:                        tagList,
+					BuildTimeout:                   &buildTimeout,
+				},
+			},
+			want: &gitlab.CreateProjectOptions{
+				Name:                           &name,
+				Path:                           &path,
+				IssuesAccessLevel:              clients.AccessControlValueStringToGitlab(issuesAccessLevel),
+				ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
+				MergeMethod:                    clients.MergeMethodStringToGitlab(mergeMethod),
+				TagList:                        &tagList,
+				BuildTimeout:                   &buildTimeout,
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateCreateProjectOptions(tc.args.name, tc.args.parameters)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 		})
