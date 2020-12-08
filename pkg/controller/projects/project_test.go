@@ -18,15 +18,15 @@ package projects
 
 import (
 	"context"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
-	"testing"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/test"
 
@@ -38,7 +38,7 @@ import (
 var (
 	path = "some/path/to/repo"
 
-	errBoom = errors.New("boom")
+	errBoom           = errors.New("boom")
 	extName           = "example-project"
 	extNameAnnotation = map[string]string{
 		meta.AnnotationKeyExternalName: extName,
@@ -291,7 +291,7 @@ func TestCreate(t *testing.T) {
 				cr: project(),
 			},
 			want: want{
-				cr:  project(
+				cr: project(
 					withConditions(runtimev1alpha1.Creating()),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),

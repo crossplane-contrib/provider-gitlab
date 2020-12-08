@@ -33,7 +33,7 @@ type MockClient struct {
 	MockEditProject   func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 }
 
-// // GetProject calls the underlying MockGetProject method.
+// GetProject calls the underlying MockGetProject method.
 func (c *MockClient) GetProject(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
 	return c.MockGetProject(pid, opt)
 }

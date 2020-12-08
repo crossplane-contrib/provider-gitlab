@@ -22,10 +22,6 @@ import (
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 )
 
-const (
-	SEPARATOR string = ","
-)
-
 // AccessControlValue represents an access control value within GitLab,
 // used for managing access to certain project features.
 //
@@ -366,6 +362,7 @@ type CustomAttribute struct {
 	Value string `json:"value"`
 }
 
+// SharedWithGroups struct used in gitlab project
 type SharedWithGroups struct {
 	GroupID          int    `json:"groupId,omitempty"`
 	GroupName        string `json:"groupName,omitempty"`

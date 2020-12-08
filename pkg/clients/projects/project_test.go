@@ -17,19 +17,21 @@ limitations under the License.
 package projects
 
 import (
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
+	"testing"
+	"time"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/xanzy/go-gitlab"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
-	"time"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 
 var (
 	name                                      = "my-project"
 	path                                      = "path/to/project"
-	namespaceID								  = 1
+	namespaceID                               = 1
 	defaultBranch                             = "main"
 	description                               = "my awesome project"
 	issuesAccessLevel                         = "enabled"
@@ -48,11 +50,13 @@ var (
 	snippetsAccessLevelv1alpha1               = v1alpha1.AccessControlValue(snippetsAccessLevel)
 	pagesAccessLevel                          = "enabled"
 	pagesAccessLevelv1alpha1                  = v1alpha1.AccessControlValue(pagesAccessLevel)
+	emailsDisabled                            = true
 	resolveOutdatedDiffDiscussions            = true
 	containerRegistryEnabled                  = true
 	sharedRunnersEnabled                      = true
 	visibility                                = "private"
 	visibilityv1alpha1                        = v1alpha1.VisibilityValue(visibility)
+	importURL                                 = "import.url"
 	publicBuilds                              = false
 	onlyAllowMergeIfPipelineSucceeds          = true
 	OnlyAllowMergeIfAllDiscussionsAreResolved = true
@@ -62,21 +66,25 @@ var (
 	lfsEnabled                                = true
 	requestAccessEnabled                      = true
 	tagList                                   = []string{"tag1", "tag2"}
-	printingMergeRequestLinkEnabled			  = true
+	printingMergeRequestLinkEnabled           = true
 	buildGitStategy                           = "strategy"
 	buildTimeout                              = 60
+	autoCancelPendingPipelines                = "enabled"
+	buildCoverageRegex                        = "some-regex"
 	ciConfigPath                              = "path/to/ci/config"
 	ciDefaultGitDepth                         = 50
+	autoDevopsEnabled                         = true
+	autoDevopsDeployStrategy                  = "continuous"
 	approvalsBeforeMerge                      = 0
 	externalAuthorizationClassificationLabel  = "authz-label"
 	mirror                                    = false
 	mirrorUserID                              = 1
 	mirrorTriggerBuilds                       = true
-	initializeWithReadme					  = true
-	templateName							  = "template"
-	templateProjectID						  = 1
-	useCustomTemplate						  = true
-	groupWithProjectTemplatesID				  = 1
+	initializeWithReadme                      = true
+	templateName                              = "template"
+	templateProjectID                         = 1
+	useCustomTemplate                         = true
+	groupWithProjectTemplatesID               = 1
 	onlyMirrorProtectedBranches               = false
 	mirrorOverwritesDivergedBranches          = false
 	packagesEnabled                           = true
@@ -101,7 +109,7 @@ func TestGenerateObservation(t *testing.T) {
 	snippetsEnabled := true
 	now := time.Now()
 	creatorID := 1
-	namespaceId := 3
+	namespaceID := 3
 	importStatus := "foo"
 	importError := "none"
 	permissionsProjectAccessAccessLevel := 1
@@ -112,8 +120,6 @@ func TestGenerateObservation(t *testing.T) {
 	archived := false
 	forksCount := 2
 	starCount := 10000
-	// TODO(knappek): verify that Kubernetes secret has been created
-	//runnersToken := "secrettoken"
 	forkedFromProjectHTTPURL := "http://fork.url"
 	sharedWithGroups := []struct {
 		GroupID          int    `json:"group_id"`
@@ -174,7 +180,7 @@ func TestGenerateObservation(t *testing.T) {
 					LastActivityAt:       &now,
 					CreatorID:            creatorID,
 					Namespace: &gitlab.ProjectNamespace{
-						ID: namespaceId,
+						ID: namespaceID,
 					},
 					ImportStatus: importStatus,
 					ImportError:  importError,
@@ -192,7 +198,6 @@ func TestGenerateObservation(t *testing.T) {
 					Archived:            archived,
 					ForksCount:          forksCount,
 					StarCount:           starCount,
-					//RunnersToken:         ,
 					ForkedFromProject: &gitlab.ForkParent{
 						HTTPURLToRepo: forkedFromProjectHTTPURL,
 					},
@@ -236,7 +241,7 @@ func TestGenerateObservation(t *testing.T) {
 				LastActivityAt:       &metav1.Time{Time: now},
 				CreatorID:            creatorID,
 				Namespace: &v1alpha1.ProjectNamespace{
-					ID: namespaceId,
+					ID: namespaceID,
 				},
 				ImportStatus: importStatus,
 				ImportError:  importError,
@@ -254,7 +259,6 @@ func TestGenerateObservation(t *testing.T) {
 				Archived:            archived,
 				ForksCount:          forksCount,
 				StarCount:           starCount,
-				//RunnersToken:         ,
 				ForkedFromProject: &v1alpha1.ForkParent{
 					HTTPURLToRepo: forkedFromProjectHTTPURL,
 				},
@@ -294,7 +298,7 @@ func TestGenerateObservation(t *testing.T) {
 					CreatedAt:      &now,
 					LastActivityAt: &now,
 					Namespace: &gitlab.ProjectNamespace{
-						ID: namespaceId,
+						ID: namespaceID,
 					},
 					Permissions: &gitlab.Permissions{
 						ProjectAccess: nil,
@@ -311,7 +315,7 @@ func TestGenerateObservation(t *testing.T) {
 				CreatedAt:      &metav1.Time{Time: now},
 				LastActivityAt: &metav1.Time{Time: now},
 				Namespace: &v1alpha1.ProjectNamespace{
-					ID: namespaceId,
+					ID: namespaceID,
 				},
 				Permissions: &v1alpha1.Permissions{
 					GroupAccess: &v1alpha1.GroupAccess{
@@ -518,7 +522,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				name: name,
 				parameters: &v1alpha1.ProjectParameters{
 					Path:                             &path,
-					NamespaceID:					  &namespaceID,
+					NamespaceID:                      &namespaceID,
 					DefaultBranch:                    &defaultBranch,
 					Description:                      &description,
 					IssuesAccessLevel:                &issuesAccessLevelv1alpha1,
@@ -549,7 +553,6 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					AutoCancelPendingPipelines:               &autoCancelPendingPipelines,
 					BuildCoverageRegex:                       &buildCoverageRegex,
 					CIConfigPath:                             &ciConfigPath,
-					CIDefaultGitDepth:                        &ciDefaultGitDepth,
 					AutoDevopsEnabled:                        &autoDevopsEnabled,
 					AutoDevopsDeployStrategy:                 &autoDevopsDeployStrategy,
 					ApprovalsBeforeMerge:                     &approvalsBeforeMerge,
@@ -569,7 +572,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 			want: &gitlab.CreateProjectOptions{
 				Name:                             &name,
 				Path:                             &path,
-				NamespaceID:					  &namespaceID,
+				NamespaceID:                      &namespaceID,
 				DefaultBranch:                    &defaultBranch,
 				Description:                      &description,
 				IssuesAccessLevel:                clients.AccessControlValueStringToGitlab(issuesAccessLevel),
@@ -579,8 +582,8 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				BuildsAccessLevel:                clients.AccessControlValueStringToGitlab(buildsAccessLevel),
 				WikiAccessLevel:                  clients.AccessControlValueStringToGitlab(wikiAccessLevel),
 				SnippetsAccessLevel:              clients.AccessControlValueStringToGitlab(snippetsAccessLevel),
-				EmailsDisabled:                   &emailsDisabled,
 				PagesAccessLevel:                 clients.AccessControlValueStringToGitlab(pagesAccessLevel),
+				EmailsDisabled:                   &emailsDisabled,
 				ResolveOutdatedDiffDiscussions:   &resolveOutdatedDiffDiscussions,
 				ContainerRegistryEnabled:         &containerRegistryEnabled,
 				SharedRunnersEnabled:             &sharedRunnersEnabled,
@@ -664,8 +667,8 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				name: name,
 				parameters: &v1alpha1.ProjectParameters{
 					Path:                             &path,
-					Description:                      &description,
 					DefaultBranch:                    &defaultBranch,
+					Description:                      &description,
 					IssuesAccessLevel:                &issuesAccessLevelv1alpha1,
 					RepositoryAccessLevel:            &repositoryAccessLevelv1alpha1,
 					MergeRequestsAccessLevel:         &mergeRequestsAccessLevelv1alpha1,
@@ -674,30 +677,38 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					WikiAccessLevel:                  &wikiAccessLevelv1alpha1,
 					SnippetsAccessLevel:              &snippetsAccessLevelv1alpha1,
 					PagesAccessLevel:                 &pagesAccessLevelv1alpha1,
+					EmailsDisabled:                   &emailsDisabled,
 					ResolveOutdatedDiffDiscussions:   &resolveOutdatedDiffDiscussions,
 					ContainerRegistryEnabled:         &containerRegistryEnabled,
 					SharedRunnersEnabled:             &sharedRunnersEnabled,
 					Visibility:                       &visibilityv1alpha1,
+					ImportURL:                        &importURL,
 					PublicBuilds:                     &publicBuilds,
 					OnlyAllowMergeIfPipelineSucceeds: &onlyAllowMergeIfPipelineSucceeds,
 					OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
-					RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
-					LFSEnabled:                                &lfsEnabled,
-					RequestAccessEnabled:                      &requestAccessEnabled,
-					MergeMethod:                               &mergeMethodv1alpha1,
-					TagList:                                   tagList,
-					BuildGitStrategy:                          &buildGitStategy,
-					BuildTimeout:                              &buildTimeout,
-					CIConfigPath:                              &ciConfigPath,
-					CIDefaultGitDepth:                         &ciDefaultGitDepth,
-					Mirror:                                    &mirror,
-					MirrorUserID:                              &mirrorUserID,
-					MirrorTriggerBuilds:                       &mirrorTriggerBuilds,
-					OnlyMirrorProtectedBranches:               &onlyMirrorProtectedBranches,
-					MirrorOverwritesDivergedBranches:          &mirrorOverwritesDivergedBranches,
-					PackagesEnabled:                           &packagesEnabled,
-					ServiceDeskEnabled:                        &serviceDeskEnabled,
-					AutocloseReferencedIssues:                 &autocloseReferencedIssues,
+					MergeMethod:                              &mergeMethodv1alpha1,
+					RemoveSourceBranchAfterMerge:             &removeSourceBranchAfterMerge,
+					LFSEnabled:                               &lfsEnabled,
+					RequestAccessEnabled:                     &requestAccessEnabled,
+					TagList:                                  tagList,
+					BuildGitStrategy:                         &buildGitStategy,
+					BuildTimeout:                             &buildTimeout,
+					AutoCancelPendingPipelines:               &autoCancelPendingPipelines,
+					BuildCoverageRegex:                       &buildCoverageRegex,
+					CIConfigPath:                             &ciConfigPath,
+					CIDefaultGitDepth:                        &ciDefaultGitDepth,
+					AutoDevopsEnabled:                        &autoDevopsEnabled,
+					AutoDevopsDeployStrategy:                 &autoDevopsDeployStrategy,
+					ApprovalsBeforeMerge:                     &approvalsBeforeMerge,
+					ExternalAuthorizationClassificationLabel: &externalAuthorizationClassificationLabel,
+					Mirror:                                   &mirror,
+					MirrorUserID:                             &mirrorUserID,
+					MirrorTriggerBuilds:                      &mirrorTriggerBuilds,
+					OnlyMirrorProtectedBranches:              &onlyMirrorProtectedBranches,
+					MirrorOverwritesDivergedBranches:         &mirrorOverwritesDivergedBranches,
+					PackagesEnabled:                          &packagesEnabled,
+					ServiceDeskEnabled:                       &serviceDeskEnabled,
+					AutocloseReferencedIssues:                &autocloseReferencedIssues,
 				},
 			},
 			want: &gitlab.EditProjectOptions{
@@ -712,31 +723,39 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				BuildsAccessLevel:                clients.AccessControlValueStringToGitlab(buildsAccessLevel),
 				WikiAccessLevel:                  clients.AccessControlValueStringToGitlab(wikiAccessLevel),
 				SnippetsAccessLevel:              clients.AccessControlValueStringToGitlab(snippetsAccessLevel),
+				EmailsDisabled:                   &emailsDisabled,
 				PagesAccessLevel:                 clients.AccessControlValueStringToGitlab(pagesAccessLevel),
 				ResolveOutdatedDiffDiscussions:   &resolveOutdatedDiffDiscussions,
 				ContainerRegistryEnabled:         &containerRegistryEnabled,
 				SharedRunnersEnabled:             &sharedRunnersEnabled,
 				Visibility:                       clients.VisibilityValueStringToGitlab(visibility),
+				ImportURL:                        &importURL,
 				PublicBuilds:                     &publicBuilds,
 				OnlyAllowMergeIfPipelineSucceeds: &onlyAllowMergeIfPipelineSucceeds,
 				OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
-				RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
-				LFSEnabled:                                &lfsEnabled,
-				RequestAccessEnabled:                      &requestAccessEnabled,
-				MergeMethod:                               clients.MergeMethodStringToGitlab(mergeMethod),
-				TagList:                                   &tagList,
-				BuildGitStrategy:                          &buildGitStategy,
-				BuildTimeout:                              &buildTimeout,
-				CIConfigPath:                              &ciConfigPath,
-				CIDefaultGitDepth:                         &ciDefaultGitDepth,
-				Mirror:                                    &mirror,
-				MirrorUserID:                              &mirrorUserID,
-				MirrorTriggerBuilds:                       &mirrorTriggerBuilds,
-				OnlyMirrorProtectedBranches:               &onlyMirrorProtectedBranches,
-				MirrorOverwritesDivergedBranches:          &mirrorOverwritesDivergedBranches,
-				PackagesEnabled:                           &packagesEnabled,
-				ServiceDeskEnabled:                        &serviceDeskEnabled,
-				AutocloseReferencedIssues:                 &autocloseReferencedIssues,
+				MergeMethod:                              clients.MergeMethodStringToGitlab(mergeMethod),
+				RemoveSourceBranchAfterMerge:             &removeSourceBranchAfterMerge,
+				LFSEnabled:                               &lfsEnabled,
+				RequestAccessEnabled:                     &requestAccessEnabled,
+				TagList:                                  &tagList,
+				BuildGitStrategy:                         &buildGitStategy,
+				BuildTimeout:                             &buildTimeout,
+				AutoCancelPendingPipelines:               &autoCancelPendingPipelines,
+				BuildCoverageRegex:                       &buildCoverageRegex,
+				CIConfigPath:                             &ciConfigPath,
+				CIDefaultGitDepth:                        &ciDefaultGitDepth,
+				AutoDevopsEnabled:                        &autoDevopsEnabled,
+				AutoDevopsDeployStrategy:                 &autoDevopsDeployStrategy,
+				ApprovalsBeforeMerge:                     &approvalsBeforeMerge,
+				ExternalAuthorizationClassificationLabel: &externalAuthorizationClassificationLabel,
+				Mirror:                                   &mirror,
+				MirrorUserID:                             &mirrorUserID,
+				MirrorTriggerBuilds:                      &mirrorTriggerBuilds,
+				OnlyMirrorProtectedBranches:              &onlyMirrorProtectedBranches,
+				MirrorOverwritesDivergedBranches:         &mirrorOverwritesDivergedBranches,
+				PackagesEnabled:                          &packagesEnabled,
+				ServiceDeskEnabled:                       &serviceDeskEnabled,
+				AutocloseReferencedIssues:                &autocloseReferencedIssues,
 			},
 		},
 		"SomeFields": {

@@ -20,12 +20,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	gitlab "github.com/xanzy/go-gitlab"
+	"github.com/xanzy/go-gitlab"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 
 const (
@@ -295,10 +296,10 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 			o.Owner.CurrentSignInAt = &metav1.Time{Time: *prj.Owner.CurrentSignInAt}
 		}
 		if prj.Owner.LastSignInAt != nil {
-			o.Owner.LastSignInAt = &metav1.Time{Time: time.Time(*prj.Owner.LastSignInAt)}
+			o.Owner.LastSignInAt = &metav1.Time{Time: *prj.Owner.LastSignInAt}
 		}
 		if prj.Owner.ConfirmedAt != nil {
-			o.Owner.ConfirmedAt = &metav1.Time{Time: time.Time(*prj.Owner.ConfirmedAt)}
+			o.Owner.ConfirmedAt = &metav1.Time{Time: *prj.Owner.ConfirmedAt}
 		}
 		for i, c := range prj.Owner.CustomAttributes {
 			o.Owner.CustomAttributes[i].Key = c.Key
@@ -313,7 +314,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 	return o
 }
 
-// Generate project creation options
+// GenerateCreateProjectOptions generates project creation options
 func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.CreateProjectOptions {
 	project := &gitlab.CreateProjectOptions{
 		Name:                             &name,
@@ -368,6 +369,7 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 	return project
 }
 
+// GenerateEditProjectOptions generates project edit options
 func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.EditProjectOptions {
 	o := &gitlab.EditProjectOptions{
 		Name:                             &name,
@@ -512,7 +514,7 @@ func IsProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	if p.CIConfigPath != nil {
-		if !cmp.Equal(string(*p.CIConfigPath), string(g.CIConfigPath)) {
+		if !cmp.Equal(*p.CIConfigPath, g.CIConfigPath) {
 			return false
 		}
 	}
