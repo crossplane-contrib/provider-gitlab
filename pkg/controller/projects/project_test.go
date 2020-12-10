@@ -443,3 +443,65 @@ func TestUpdate(t *testing.T) {
 		})
 	}
 }
+
+func TestDelete(t *testing.T) {
+	type want struct {
+		cr  *v1alpha1.Project
+		err error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"SuccessfulDeletion": {
+			args: args{
+				project: &fake.MockClient{
+					MockDeleteProject: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, nil
+					},
+				},
+				cr: project(
+					withConditions(runtimev1alpha1.Available()),
+				),
+			},
+			want: want{
+				cr: project(
+					withConditions(runtimev1alpha1.Deleting()),
+				),
+			},
+		},
+		"FailedDeletion": {
+			args: args{
+				project: &fake.MockClient{
+					MockDeleteProject: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, errBoom
+					},
+				},
+				cr: project(
+					withConditions(runtimev1alpha1.Available()),
+				),
+			},
+			want: want{
+				cr: project(
+					withConditions(runtimev1alpha1.Deleting()),
+				),
+				err: errors.Wrap(errBoom, errDeleteFailed),
+			},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.kube, client: tc.project}
+			err := e.Delete(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+
+}

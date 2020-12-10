@@ -45,6 +45,7 @@ const (
 	errKubeUpdateFailed = "cannot update Gitlab project custom resource"
 	errCreateFailed     = "cannot create Gitlab project"
 	errUpdateFailed     = "cannot update Gitlab project"
+	errDeleteFailed     = "cannot delete Gitlab project"
 )
 
 // SetupProject adds a controller that reconciles Projects.
@@ -128,7 +129,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	cr.Status.SetConditions(runtimev1alpha1.Creating())
-	prj, _, err := e.client.CreateProject(projects.GenerateCreateProjectOptions(meta.GetExternalName(cr), &cr.Spec.ForProvider))
+	prj, _, err := e.client.CreateProject(projects.GenerateCreateProjectOptions(meta.GetExternalName(cr), &cr.Spec.ForProvider), gitlab.WithContext(ctx))
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
@@ -156,7 +157,15 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
-	return nil
+	cr, ok := mg.(*v1alpha1.Project)
+	if !ok {
+		return errors.New(errNotProject)
+	}
+
+	cr.Status.SetConditions(runtimev1alpha1.Deleting())
+
+	_, err := e.client.DeleteProject(cr.Status.AtProvider.ID, gitlab.WithContext(ctx))
+	return errors.Wrap(err, errDeleteFailed)
 }
 
 func (e *external) updateExternalName(cr *v1alpha1.Project, prj *gitlab.Project) error {
