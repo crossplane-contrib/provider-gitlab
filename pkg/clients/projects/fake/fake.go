@@ -31,7 +31,6 @@ type MockClient struct {
 	MockGetProject    func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	MockCreateProject func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	MockEditProject   func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
-	MockDeleteProject func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetProject calls the underlying MockGetProject method.
@@ -47,9 +46,4 @@ func (c *MockClient) CreateProject(opt *gitlab.CreateProjectOptions, options ...
 // EditProject calls the underlying MockEditProject method
 func (c *MockClient) EditProject(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
 	return c.MockEditProject(pid, opt)
-}
-
-// DeleteProject calls the underlying MockDeleteProject method
-func (c *MockClient) DeleteProject(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-	return c.MockDeleteProject(pid)
 }
