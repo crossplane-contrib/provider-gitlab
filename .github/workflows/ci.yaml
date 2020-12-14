@@ -8,15 +8,17 @@ on:
     paths-ignore:
       - '**.md'
 
+env:
+  DOCKER_BUILDX_VERSION: 'v0.4.2'
+
 jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Install QEMU
-        run: DEBIAN_FRONTEND=noninteractive sudo apt-get install -yq --no-install-recommends binfmt-support qemu-user-static
-
-      - name: Register QEMU with Docker
-        run: docker run --rm --privileged hypriot/qemu-register
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: all
 
       - name: Checkout
         uses: actions/checkout@v2
