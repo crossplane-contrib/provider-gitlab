@@ -1,0 +1,13 @@
+---
+# Gitlab provider that references the secret credentials
+apiVersion: gitlab.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: gitlab-provider
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: gitlab-credentials
+      key: credentials
