@@ -22,6 +22,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/config"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects"
 )
 
 // Setup creates all Cluster API controllers with the supplied logger and adds
@@ -29,6 +30,7 @@ import (
 func Setup(mgr ctrl.Manager, l logging.Logger) error {
 	for _, setup := range []func(ctrl.Manager, logging.Logger) error{
 		config.Setup,
+		projects.SetupProject,
 	} {
 		if err := setup(mgr, l); err != nil {
 			return err
