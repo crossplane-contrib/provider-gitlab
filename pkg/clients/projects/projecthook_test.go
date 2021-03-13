@@ -80,7 +80,6 @@ func TestGenerateProjectHookObservation(t *testing.T) {
 	}
 }
 func TestLateInitializeProjectHook(t *testing.T) {
-	projectID := 0
 	cases := map[string]struct {
 		parameters  *v1alpha1.ProjectHookParameters
 		projecthook *gitlab.ProjectHook
@@ -109,7 +108,6 @@ func TestLateInitializeProjectHook(t *testing.T) {
 				IssuesEvents:             &issuesEvents,
 				ConfidentialIssuesEvents: &confidentialIssuesEvents,
 				MergeRequestsEvents:      &mergeRequestsEvents,
-				ProjectID:                &projectID,
 				TagPushEvents:            &tagPushEvents,
 				NoteEvents:               &noteEvents,
 				JobEvents:                &jobEvents,
