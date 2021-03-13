@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/crossplane/crossplane-runtime v0.11.0
-	github.com/crossplane/crossplane-tools v0.0.0-20201026195708-a544f360b8ac
+	github.com/crossplane/crossplane-tools v0.0.0-20210312050831-2600cba82bc3
 	github.com/go-ini/ini v1.62.0
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.2
