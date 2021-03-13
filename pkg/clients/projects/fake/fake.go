@@ -32,6 +32,11 @@ type MockClient struct {
 	MockCreateProject func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	MockEditProject   func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	MockDeleteProject func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockGetProjectHook    func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
+	MockAddProjectHook    func(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
+	MockEditProjectHook   func(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
+	MockDeleteProjectHook func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetProject calls the underlying MockGetProject method.
@@ -52,4 +57,24 @@ func (c *MockClient) EditProject(pid interface{}, opt *gitlab.EditProjectOptions
 // DeleteProject calls the underlying MockDeleteProject method
 func (c *MockClient) DeleteProject(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteProject(pid)
+}
+
+// GetProjectHook calls the underlying MockGetProjectHook method.
+func (c *MockClient) GetProjectHook(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+	return c.MockGetProjectHook(pid, hook)
+}
+
+// AddProjectHook calls the underlying MockAddProjectHook method.
+func (c *MockClient) AddProjectHook(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+	return c.MockAddProjectHook(pid, opt)
+}
+
+// EditProjectHook calls the underlying MockEditProjectHook method.
+func (c *MockClient) EditProjectHook(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+	return c.MockEditProjectHook(pid, hook, opt)
+}
+
+// DeleteProjectHook calls the underlying MockDeleteProjectHook method.
+func (c *MockClient) DeleteProjectHook(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteProjectHook(pid, hook)
 }
