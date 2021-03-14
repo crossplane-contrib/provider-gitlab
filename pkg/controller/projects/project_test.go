@@ -18,6 +18,7 @@ package projects
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -38,11 +39,9 @@ import (
 var (
 	path = "some/path/to/repo"
 
-	errBoom           = errors.New("boom")
-	extName           = "example-project"
-	extNameAnnotation = map[string]string{
-		meta.AnnotationKeyExternalName: extName,
-	}
+	errBoom     = errors.New("boom")
+	projectID   = 1234
+	projectName = "example-project"
 )
 
 type args struct {
@@ -61,8 +60,8 @@ func withPath(p *string) projectModifier {
 	return func(r *v1alpha1.Project) { r.Spec.ForProvider.Path = p }
 }
 
-func withExternalName(n string) projectModifier {
-	return func(r *v1alpha1.Project) { meta.SetExternalName(r, n) }
+func withExternalName(projectID int) projectModifier {
+	return func(r *v1alpha1.Project) { meta.SetExternalName(r, strconv.Itoa(projectID)) }
 }
 
 func withStatus(s v1alpha1.ProjectObservation) projectModifier {
@@ -96,10 +95,6 @@ func withDefaultValues() projectModifier {
 	}
 }
 
-func withAnnotations(a map[string]string) projectModifier {
-	return func(p *v1alpha1.Project) { meta.AddAnnotations(p, a) }
-}
-
 func project(m ...projectModifier) *v1alpha1.Project {
 	cr := &v1alpha1.Project{}
 	for _, f := range m {
@@ -128,14 +123,14 @@ func TestObserve(t *testing.T) {
 				},
 				cr: project(
 					withDefaultValues(),
-					withExternalName(extName),
+					withExternalName(projectID),
 				),
 			},
 			want: want{
 				cr: project(
 					withDefaultValues(),
+					withExternalName(projectID),
 					withConditions(runtimev1alpha1.Available()),
-					withAnnotations(extNameAnnotation),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -152,10 +147,10 @@ func TestObserve(t *testing.T) {
 						return &gitlab.Project{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: project(withExternalName(extName)),
+				cr: project(withExternalName(projectID)),
 			},
 			want: want{
-				cr:  project(withAnnotations(extNameAnnotation)),
+				cr:  project(withExternalName(projectID)),
 				err: errors.Wrap(errBoom, errGetFailed),
 			},
 		},
@@ -166,21 +161,17 @@ func TestObserve(t *testing.T) {
 				},
 				project: &fake.MockClient{
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return &gitlab.Project{
-							Path: path,
-						}, &gitlab.Response{}, nil
+						return &gitlab.Project{}, &gitlab.Response{}, nil
 					},
 				},
 				cr: project(
-					withDefaultValues(),
-					withExternalName(extName),
+					withExternalName(projectID),
 				),
 			},
 			want: want{
 				cr: project(
 					withDefaultValues(),
-					withPath(&path),
-					withAnnotations(extNameAnnotation),
+					withExternalName(projectID),
 				),
 				err: errors.Wrap(errBoom, errKubeUpdateFailed),
 			},
@@ -200,7 +191,7 @@ func TestObserve(t *testing.T) {
 				},
 				cr: project(
 					withDefaultValues(),
-					withExternalName(extName),
+					withExternalName(projectID),
 				),
 			},
 			want: want{
@@ -208,7 +199,7 @@ func TestObserve(t *testing.T) {
 					withDefaultValues(),
 					withConditions(runtimev1alpha1.Available()),
 					withPath(&path),
-					withAnnotations(extNameAnnotation),
+					withExternalName(projectID),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -268,7 +259,7 @@ func TestCreate(t *testing.T) {
 				},
 				project: &fake.MockClient{
 					MockCreateProject: func(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return &gitlab.Project{Name: extName, PathWithNamespace: extName}, &gitlab.Response{}, nil
+						return &gitlab.Project{Name: projectName, ID: projectID}, &gitlab.Response{}, nil
 					},
 				},
 				cr: project(),
@@ -276,7 +267,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: project(
 					withConditions(runtimev1alpha1.Creating()),
-					withExternalName(extName),
+					withExternalName(projectID),
 				),
 				result: managed.ExternalCreation{},
 			},
@@ -307,14 +298,12 @@ func TestCreate(t *testing.T) {
 						return &gitlab.Project{}, &gitlab.Response{}, nil
 					},
 				},
-				cr: project(
-					withExternalName(extName),
-				),
+				cr: project(),
 			},
 			want: want{
 				cr: project(
 					withConditions(runtimev1alpha1.Creating()),
-					withExternalName(""),
+					withExternalName(0),
 				),
 				err: errors.Wrap(errBoom, errKubeUpdateFailed),
 			},
@@ -340,9 +329,6 @@ func TestCreate(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	var (
-		newExtName = "new/path/with/namespace"
-	)
 	type want struct {
 		cr     *v1alpha1.Project
 		result managed.ExternalUpdate
@@ -378,51 +364,6 @@ func TestUpdate(t *testing.T) {
 			want: want{
 				cr:  project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
 				err: errors.Wrap(errBoom, errUpdateFailed),
-			},
-		},
-		"SuccessfulUpdateExternalName": {
-			args: args{
-				kube: &test.MockClient{
-					MockUpdate: test.NewMockUpdateFn(nil),
-				},
-				project: &fake.MockClient{
-					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return &gitlab.Project{PathWithNamespace: newExtName}, &gitlab.Response{}, nil
-					},
-				},
-				cr: project(
-					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
-					withExternalName(extName),
-				),
-			},
-			want: want{
-				cr: project(
-					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
-					withExternalName(newExtName),
-				),
-			},
-		},
-		"FailedUpdateExternalName": {
-			args: args{
-				kube: &test.MockClient{
-					MockUpdate: test.NewMockUpdateFn(errBoom),
-				},
-				project: &fake.MockClient{
-					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return &gitlab.Project{PathWithNamespace: newExtName}, &gitlab.Response{}, nil
-					},
-				},
-				cr: project(
-					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
-					withExternalName(extName),
-				),
-			},
-			want: want{
-				cr: project(
-					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
-					withExternalName(newExtName),
-				),
-				err: errors.Wrap(errBoom, errKubeUpdateFailed),
 			},
 		},
 	}
