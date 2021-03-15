@@ -80,6 +80,27 @@ spec:
                 projectId:
                   description: ProjectID is the ID of the project.
                   type: integer
+                projectIdRef:
+                  description: ProjectIDRef is a reference to a project to retrieve its projectId
+                  properties:
+                    name:
+                      description: Name of the referenced object.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                projectIdSelector:
+                  description: ProjectIDSelector selects reference to a project to retrieve its projectId.
+                  properties:
+                    matchControllerRef:
+                      description: MatchControllerRef ensures an object with the same controller reference as the selecting object is selected.
+                      type: boolean
+                    matchLabels:
+                      additionalProperties:
+                        type: string
+                      description: MatchLabels ensures an object with matching labels is selected.
+                      type: object
+                  type: object
                 pushEvents:
                   description: PushEvents triggers hook on push events.
                   type: boolean
@@ -99,7 +120,6 @@ spec:
                   description: WikiPageEvents triggers hook on wiki events.
                   type: boolean
               required:
-              - projectId
               - url
               type: object
             providerConfigRef:
