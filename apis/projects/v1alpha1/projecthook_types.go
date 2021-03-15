@@ -32,8 +32,18 @@ type ProjectHookParameters struct {
 	ConfidentialNoteEvents *bool `json:"confidentialNoteEvents,omitempty"`
 
 	// ProjectID is the ID of the project.
+	// +optional
 	// +immutable
-	ProjectID *int `json:"projectId"`
+	ProjectID *int `json:"projectId,omitempty"`
+
+	// ProjectIDRef is a reference to a project to retrieve its projectId
+	// +optional
+	// +immutable
+	ProjectIDRef *runtimev1alpha1.Reference `json:"projectIdRef,omitempty"`
+
+	// ProjectIDSelector selects reference to a project to retrieve its projectId.
+	// +optional
+	ProjectIDSelector *runtimev1alpha1.Selector `json:"projectIdSelector,omitempty"`
 
 	// PushEvents triggers hook on push events.
 	// +optional
