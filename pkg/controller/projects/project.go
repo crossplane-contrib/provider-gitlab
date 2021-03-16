@@ -19,6 +19,7 @@ package projects
 import (
 	"context"
 	"reflect"
+	"strconv"
 
 	"github.com/xanzy/go-gitlab"
 
@@ -128,7 +129,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	cr.Status.SetConditions(runtimev1alpha1.Creating())
-	prj, _, err := e.client.CreateProject(projects.GenerateCreateProjectOptions(meta.GetExternalName(cr), &cr.Spec.ForProvider), gitlab.WithContext(ctx))
+	prj, _, err := e.client.CreateProject(projects.GenerateCreateProjectOptions(cr.Name, &cr.Spec.ForProvider), gitlab.WithContext(ctx))
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
@@ -142,16 +143,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotProject)
 	}
 
-	prj, _, err := e.client.EditProject(cr.Status.AtProvider.ID, projects.GenerateEditProjectOptions(cr.Name, &cr.Spec.ForProvider), gitlab.WithContext(ctx))
+	_, _, err := e.client.EditProject(cr.Status.AtProvider.ID, projects.GenerateEditProjectOptions(cr.Name, &cr.Spec.ForProvider), gitlab.WithContext(ctx))
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}
-	if !cmp.Equal(prj.PathWithNamespace, meta.GetExternalName(cr)) {
-		err = e.updateExternalName(cr, prj)
-		if err != nil {
-			return managed.ExternalUpdate{}, errors.Wrap(err, errKubeUpdateFailed)
-		}
-	}
+
 	return managed.ExternalUpdate{}, nil
 }
 
@@ -168,6 +164,6 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 }
 
 func (e *external) updateExternalName(cr *v1alpha1.Project, prj *gitlab.Project) error {
-	meta.SetExternalName(cr, prj.PathWithNamespace)
+	meta.SetExternalName(cr, strconv.Itoa(prj.ID))
 	return e.kube.Update(context.Background(), cr)
 }
