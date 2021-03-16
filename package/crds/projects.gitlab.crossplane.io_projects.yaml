@@ -16,6 +16,9 @@ spec:
   - JSONPath: .metadata.creationTimestamp
     name: AGE
     type: date
+  - JSONPath: .status.atProvider.pathWithNamespace
+    name: PATH WITH NAMESPACE
+    type: string
   group: projects.gitlab.crossplane.io
   names:
     categories:
@@ -31,7 +34,7 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      description: A Project is a managed resource that represents an AWS Elastic Kubernetes Service Project.
+      description: A Project is a managed resource that represents a Gitlab Project
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'

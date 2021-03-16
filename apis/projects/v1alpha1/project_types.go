@@ -419,11 +419,11 @@ type ProjectStatus struct {
 
 // +kubebuilder:object:root=true
 
-// A Project is a managed resource that represents an AWS Elastic Kubernetes
-// Service Project.
+// A Project is a managed resource that represents a Gitlab Project
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="PATH WITH NAMESPACE",type="string",JSONPath=".status.atProvider.pathWithNamespace"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab}
 type Project struct {
