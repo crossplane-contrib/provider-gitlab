@@ -23,14 +23,16 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/config"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/projecthooks"
 )
 
-// Setup creates all Cluster API controllers with the supplied logger and adds
+// Setup creates all Gitlab API controllers with the supplied logger and adds
 // them to the supplied manager.
 func Setup(mgr ctrl.Manager, l logging.Logger) error {
 	for _, setup := range []func(ctrl.Manager, logging.Logger) error{
 		config.Setup,
 		projects.SetupProject,
+		projecthooks.SetupProjectHook,
 	} {
 		if err := setup(mgr, l); err != nil {
 			return err
