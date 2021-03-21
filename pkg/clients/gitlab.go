@@ -18,9 +18,7 @@ package clients
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/go-ini/ini"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "github.com/xanzy/go-gitlab"
@@ -34,9 +32,6 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/apis/v1beta1"
 )
-
-// DefaultSection for INI files.
-const DefaultSection = ini.DefaultSection
 
 // Config provides gitlab configurations for the Gitlab client
 type Config struct {
@@ -72,7 +67,6 @@ func GetConfig(ctx context.Context, c client.Client, mg resource.Managed) (*Conf
 
 // UseProviderConfig to produce a config that can be used to authenticate to AWS.
 func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed) (*Config, error) {
-	// pc := &v1beta1.ProviderConfig{}
 	pc := &v1beta1.ProviderConfig{}
 	if err := c.Get(ctx, types.NamespacedName{Name: mg.GetProviderConfigReference().Name}, pc); err != nil {
 		return nil, errors.Wrap(err, "cannot get referenced Provider")
@@ -93,37 +87,10 @@ func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed
 		if err := c.Get(ctx, types.NamespacedName{Namespace: csr.Namespace, Name: csr.Name}, s); err != nil {
 			return nil, errors.Wrap(err, "cannot get credentials secret")
 		}
-		return UseProviderSecret(ctx, s.Data[csr.Key], DefaultSection)
+		return &Config{BaseURL: pc.Spec.BaseURL, Token: string(s.Data[csr.Key])}, nil
 	default:
 		return nil, errors.Errorf("credentials source %s is not currently supported", s)
 	}
-}
-
-// UseProviderSecret retrieves the gitlab token and base url that are being used
-// to authenticate to Gitlab.
-// Example:
-// [default]
-// token = <YOUR_PERSONAL_ACCESS_TOKEN>
-// base_url = <YOUR_GITLAB_BASE_URL>
-func UseProviderSecret(_ context.Context, data []byte, section string) (*Config, error) {
-	config, err := ini.InsensitiveLoad(data)
-	if err != nil {
-		return &Config{}, errors.Wrap(err, "cannot parse credentials secret")
-	}
-
-	iniSection, err := config.GetSection(section)
-	if err != nil {
-		return &Config{}, errors.Wrap(err, fmt.Sprintf("cannot get %s section in credentials secret", section))
-	}
-
-	token := iniSection.Key("token")
-	baseURL := iniSection.Key("base_url")
-
-	if token == nil || baseURL == nil {
-		return &Config{}, errors.New("returned key can be empty but cannot be nil")
-	}
-
-	return &Config{Token: token.Value(), BaseURL: baseURL.Value()}, nil
 }
 
 // LateInitializeStringPtr returns `from` if `in` is nil and `from` is non-empty,
