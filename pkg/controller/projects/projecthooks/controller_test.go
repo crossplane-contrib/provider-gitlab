@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/pkg/errors"
 
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -53,7 +53,7 @@ type args struct {
 
 type projectHookModifier func(*v1alpha1.ProjectHook)
 
-func withConditions(c ...runtimev1alpha1.Condition) projectHookModifier {
+func withConditions(c ...xpv1.Condition) projectHookModifier {
 	return func(r *v1alpha1.ProjectHook) { r.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -133,7 +133,7 @@ func TestObserve(t *testing.T) {
 				cr: projecthook(
 					withDefaultValues(),
 					withExternalName(projectHookID),
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:   true,
@@ -163,7 +163,7 @@ func TestObserve(t *testing.T) {
 				cr: projecthook(
 					withDefaultValues(),
 					withExternalName(projectHookID),
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:   true,
@@ -191,7 +191,7 @@ func TestObserve(t *testing.T) {
 				cr: projecthook(
 					withDefaultValues(),
 					withExternalName(projectHookID),
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -248,7 +248,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: projecthook(
 					withDefaultValues(),
-					withConditions(runtimev1alpha1.Creating()),
+					withConditions(xpv1.Creating()),
 					withExternalName(projectHookID),
 				),
 				result: managed.ExternalCreation{},
@@ -268,7 +268,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: projecthook(
 					withDefaultValues(),
-					withConditions(runtimev1alpha1.Creating()),
+					withConditions(xpv1.Creating()),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
@@ -387,7 +387,7 @@ func TestDelete(t *testing.T) {
 					withStatus(v1alpha1.ProjectHookObservation{
 						ID: projectHookID,
 					}),
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 				),
 			},
 			want: want{
@@ -396,7 +396,7 @@ func TestDelete(t *testing.T) {
 					withStatus(v1alpha1.ProjectHookObservation{
 						ID: projectHookID,
 					}),
-					withConditions(runtimev1alpha1.Deleting()),
+					withConditions(xpv1.Deleting()),
 				),
 			},
 		},
@@ -412,7 +412,7 @@ func TestDelete(t *testing.T) {
 					withStatus(v1alpha1.ProjectHookObservation{
 						ID: projectHookID,
 					}),
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 				),
 			},
 			want: want{
@@ -421,7 +421,7 @@ func TestDelete(t *testing.T) {
 					withStatus(v1alpha1.ProjectHookObservation{
 						ID: projectHookID,
 					}),
-					withConditions(runtimev1alpha1.Deleting()),
+					withConditions(xpv1.Deleting()),
 				),
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},
@@ -435,13 +435,13 @@ func TestDelete(t *testing.T) {
 				},
 				cr: projecthook(
 					withProjectID(projectID),
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 				),
 			},
 			want: want{
 				cr: projecthook(
 					withProjectID(projectID),
-					withConditions(runtimev1alpha1.Deleting()),
+					withConditions(xpv1.Deleting()),
 				),
 			},
 		},

@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
@@ -84,7 +84,7 @@ func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed
 	}
 
 	switch s := pc.Spec.Credentials.Source; s { //nolint:exhaustive
-	case runtimev1alpha1.CredentialsSourceSecret:
+	case xpv1.CredentialsSourceSecret:
 		csr := pc.Spec.Credentials.SecretRef
 		if csr == nil {
 			return nil, errors.New("no credentials secret referenced")

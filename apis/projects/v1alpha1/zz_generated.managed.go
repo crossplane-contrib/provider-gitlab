@@ -18,20 +18,20 @@ limitations under the License.
 
 package v1alpha1
 
-import runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+import xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 
 // GetCondition of this Project.
-func (mg *Project) GetCondition(ct runtimev1alpha1.ConditionType) runtimev1alpha1.Condition {
+func (mg *Project) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return mg.Status.GetCondition(ct)
 }
 
 // GetDeletionPolicy of this Project.
-func (mg *Project) GetDeletionPolicy() runtimev1alpha1.DeletionPolicy {
+func (mg *Project) GetDeletionPolicy() xpv1.DeletionPolicy {
 	return mg.Spec.DeletionPolicy
 }
 
 // GetProviderConfigReference of this Project.
-func (mg *Project) GetProviderConfigReference() *runtimev1alpha1.Reference {
+func (mg *Project) GetProviderConfigReference() *xpv1.Reference {
 	return mg.Spec.ProviderConfigReference
 }
 
@@ -39,27 +39,27 @@ func (mg *Project) GetProviderConfigReference() *runtimev1alpha1.Reference {
 GetProviderReference of this Project.
 Deprecated: Use GetProviderConfigReference.
 */
-func (mg *Project) GetProviderReference() *runtimev1alpha1.Reference {
+func (mg *Project) GetProviderReference() *xpv1.Reference {
 	return mg.Spec.ProviderReference
 }
 
 // GetWriteConnectionSecretToReference of this Project.
-func (mg *Project) GetWriteConnectionSecretToReference() *runtimev1alpha1.SecretReference {
+func (mg *Project) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
 // SetConditions of this Project.
-func (mg *Project) SetConditions(c ...runtimev1alpha1.Condition) {
+func (mg *Project) SetConditions(c ...xpv1.Condition) {
 	mg.Status.SetConditions(c...)
 }
 
 // SetDeletionPolicy of this Project.
-func (mg *Project) SetDeletionPolicy(r runtimev1alpha1.DeletionPolicy) {
+func (mg *Project) SetDeletionPolicy(r xpv1.DeletionPolicy) {
 	mg.Spec.DeletionPolicy = r
 }
 
 // SetProviderConfigReference of this Project.
-func (mg *Project) SetProviderConfigReference(r *runtimev1alpha1.Reference) {
+func (mg *Project) SetProviderConfigReference(r *xpv1.Reference) {
 	mg.Spec.ProviderConfigReference = r
 }
 
@@ -67,27 +67,27 @@ func (mg *Project) SetProviderConfigReference(r *runtimev1alpha1.Reference) {
 SetProviderReference of this Project.
 Deprecated: Use SetProviderConfigReference.
 */
-func (mg *Project) SetProviderReference(r *runtimev1alpha1.Reference) {
+func (mg *Project) SetProviderReference(r *xpv1.Reference) {
 	mg.Spec.ProviderReference = r
 }
 
 // SetWriteConnectionSecretToReference of this Project.
-func (mg *Project) SetWriteConnectionSecretToReference(r *runtimev1alpha1.SecretReference) {
+func (mg *Project) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
 // GetCondition of this ProjectHook.
-func (mg *ProjectHook) GetCondition(ct runtimev1alpha1.ConditionType) runtimev1alpha1.Condition {
+func (mg *ProjectHook) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return mg.Status.GetCondition(ct)
 }
 
 // GetDeletionPolicy of this ProjectHook.
-func (mg *ProjectHook) GetDeletionPolicy() runtimev1alpha1.DeletionPolicy {
+func (mg *ProjectHook) GetDeletionPolicy() xpv1.DeletionPolicy {
 	return mg.Spec.DeletionPolicy
 }
 
 // GetProviderConfigReference of this ProjectHook.
-func (mg *ProjectHook) GetProviderConfigReference() *runtimev1alpha1.Reference {
+func (mg *ProjectHook) GetProviderConfigReference() *xpv1.Reference {
 	return mg.Spec.ProviderConfigReference
 }
 
@@ -95,27 +95,27 @@ func (mg *ProjectHook) GetProviderConfigReference() *runtimev1alpha1.Reference {
 GetProviderReference of this ProjectHook.
 Deprecated: Use GetProviderConfigReference.
 */
-func (mg *ProjectHook) GetProviderReference() *runtimev1alpha1.Reference {
+func (mg *ProjectHook) GetProviderReference() *xpv1.Reference {
 	return mg.Spec.ProviderReference
 }
 
 // GetWriteConnectionSecretToReference of this ProjectHook.
-func (mg *ProjectHook) GetWriteConnectionSecretToReference() *runtimev1alpha1.SecretReference {
+func (mg *ProjectHook) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
 // SetConditions of this ProjectHook.
-func (mg *ProjectHook) SetConditions(c ...runtimev1alpha1.Condition) {
+func (mg *ProjectHook) SetConditions(c ...xpv1.Condition) {
 	mg.Status.SetConditions(c...)
 }
 
 // SetDeletionPolicy of this ProjectHook.
-func (mg *ProjectHook) SetDeletionPolicy(r runtimev1alpha1.DeletionPolicy) {
+func (mg *ProjectHook) SetDeletionPolicy(r xpv1.DeletionPolicy) {
 	mg.Spec.DeletionPolicy = r
 }
 
 // SetProviderConfigReference of this ProjectHook.
-func (mg *ProjectHook) SetProviderConfigReference(r *runtimev1alpha1.Reference) {
+func (mg *ProjectHook) SetProviderConfigReference(r *xpv1.Reference) {
 	mg.Spec.ProviderConfigReference = r
 }
 
@@ -123,11 +123,11 @@ func (mg *ProjectHook) SetProviderConfigReference(r *runtimev1alpha1.Reference) 
 SetProviderReference of this ProjectHook.
 Deprecated: Use SetProviderConfigReference.
 */
-func (mg *ProjectHook) SetProviderReference(r *runtimev1alpha1.Reference) {
+func (mg *ProjectHook) SetProviderReference(r *xpv1.Reference) {
 	mg.Spec.ProviderReference = r
 }
 
 // SetWriteConnectionSecretToReference of this ProjectHook.
-func (mg *ProjectHook) SetWriteConnectionSecretToReference(r *runtimev1alpha1.SecretReference) {
+func (mg *ProjectHook) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
