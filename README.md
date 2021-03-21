@@ -16,8 +16,30 @@ following new functionality:
 
 ## Getting Started and Documentation
 
-For getting started guides, installation, deployment, and administration, see
-our [Documentation](https://crossplane.io/docs/latest).
+Create a [Personal Access Token](https://gitlab.com/-/profile/personal_access_tokens) on your GitLab instance with the scope set to `api` and fill in the corresponding Kubernetes secret:
+
+```bash
+kubectl create secret generic gitlab-credentials -n crossplane-system --from-literal=token="<PERSONAL_ACCESS_TOKEN>"
+```
+
+Configure a `ProviderConfig` with a baseURL pointing to your GitLab instance:
+```yaml
+apiVersion: gitlab.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: gitlab-provider
+spec:
+  baseURL: https://gitlab.com/
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: gitlab-credentials
+      key: token
+```
+```bash
+kubectl apply -f examples/providerconfig/provider.yaml
+```
 
 ## Contributing
 
