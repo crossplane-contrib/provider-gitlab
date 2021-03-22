@@ -42,6 +42,9 @@ spec:
           spec:
             description: A ProviderConfigSpec defines the desired state of a ProviderConfig.
             properties:
+              baseURL:
+                description: Base URL of the Gitlab Service
+                type: string
               credentials:
                 description: Credentials required to authenticate to this provider.
                 properties:
