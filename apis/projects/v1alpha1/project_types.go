@@ -19,7 +19,7 @@ package v1alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
 // AccessControlValue represents an access control value within GitLab,
@@ -407,14 +407,14 @@ type ProjectObservation struct {
 
 // A ProjectSpec defines the desired state of a Gitlab Project.
 type ProjectSpec struct {
-	runtimev1alpha1.ResourceSpec `json:",inline"`
-	ForProvider                  ProjectParameters `json:"forProvider"`
+	xpv1.ResourceSpec `json:",inline"`
+	ForProvider       ProjectParameters `json:"forProvider"`
 }
 
 // A ProjectStatus represents the observed state of a Gitlab Project.
 type ProjectStatus struct {
-	runtimev1alpha1.ResourceStatus `json:",inline"`
-	AtProvider                     ProjectObservation `json:"atProvider,omitempty"`
+	xpv1.ResourceStatus `json:",inline"`
+	AtProvider          ProjectObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

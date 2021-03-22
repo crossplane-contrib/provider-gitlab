@@ -26,7 +26,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/test"
@@ -52,7 +52,7 @@ type args struct {
 
 type projectModifier func(*v1alpha1.Project)
 
-func withConditions(c ...runtimev1alpha1.Condition) projectModifier {
+func withConditions(c ...xpv1.Condition) projectModifier {
 	return func(r *v1alpha1.Project) { r.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -130,7 +130,7 @@ func TestObserve(t *testing.T) {
 				cr: project(
 					withDefaultValues(),
 					withExternalName(projectID),
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -197,7 +197,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: project(
 					withDefaultValues(),
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 					withPath(&path),
 					withExternalName(projectID),
 				),
@@ -266,7 +266,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: want{
 				cr: project(
-					withConditions(runtimev1alpha1.Creating()),
+					withConditions(xpv1.Creating()),
 					withExternalName(projectID),
 				),
 				result: managed.ExternalCreation{},
@@ -283,7 +283,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: want{
 				cr: project(
-					withConditions(runtimev1alpha1.Creating()),
+					withConditions(xpv1.Creating()),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
@@ -302,7 +302,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: want{
 				cr: project(
-					withConditions(runtimev1alpha1.Creating()),
+					withConditions(xpv1.Creating()),
 					withExternalName(0),
 				),
 				err: errors.Wrap(errBoom, errKubeUpdateFailed),
@@ -403,12 +403,12 @@ func TestDelete(t *testing.T) {
 					},
 				},
 				cr: project(
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 				),
 			},
 			want: want{
 				cr: project(
-					withConditions(runtimev1alpha1.Deleting()),
+					withConditions(xpv1.Deleting()),
 				),
 			},
 		},
@@ -420,12 +420,12 @@ func TestDelete(t *testing.T) {
 					},
 				},
 				cr: project(
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 				),
 			},
 			want: want{
 				cr: project(
-					withConditions(runtimev1alpha1.Deleting()),
+					withConditions(xpv1.Deleting()),
 				),
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},

@@ -19,7 +19,7 @@ package v1alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
 // A ProjectHookParameters defines the desired state of a Gitlab ProjectHook.
@@ -39,11 +39,11 @@ type ProjectHookParameters struct {
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
 	// +immutable
-	ProjectIDRef *runtimev1alpha1.Reference `json:"projectIdRef,omitempty"`
+	ProjectIDRef *xpv1.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
 	// +optional
-	ProjectIDSelector *runtimev1alpha1.Selector `json:"projectIdSelector,omitempty"`
+	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
 
 	// PushEvents triggers hook on push events.
 	// +optional
@@ -108,14 +108,14 @@ type ProjectHookObservation struct {
 
 // A ProjectHookSpec defines the desired state of a Gitlab ProjectHook.
 type ProjectHookSpec struct {
-	runtimev1alpha1.ResourceSpec `json:",inline"`
-	ForProvider                  ProjectHookParameters `json:"forProvider"`
+	xpv1.ResourceSpec `json:",inline"`
+	ForProvider       ProjectHookParameters `json:"forProvider"`
 }
 
 // A ProjectHookStatus represents the observed state of a Gitlab ProjectHook.
 type ProjectHookStatus struct {
-	runtimev1alpha1.ResourceStatus `json:",inline"`
-	AtProvider                     ProjectHookObservation `json:"atProvider,omitempty"`
+	xpv1.ResourceStatus `json:",inline"`
+	AtProvider          ProjectHookObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
