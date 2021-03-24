@@ -22,7 +22,11 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/config"
+<<<<<<< HEAD
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups"
+=======
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/deploykeys"
+>>>>>>> add deploy keys
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/projecthooks"
 )
@@ -35,6 +39,7 @@ func Setup(mgr ctrl.Manager, l logging.Logger) error {
 		groups.SetupGroup,
 		projects.SetupProject,
 		projecthooks.SetupProjectHook,
+		deploykeys.SetupDeployKey,
 	} {
 		if err := setup(mgr, l); err != nil {
 			return err

@@ -22,6 +22,7 @@ import (
 
 	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	v1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
 	gitlabv1beta1 "github.com/crossplane-contrib/provider-gitlab/apis/v1beta1"
 )
 
@@ -31,6 +32,7 @@ func init() {
 		gitlabv1beta1.SchemeBuilder.AddToScheme,
 		groupsv1alpha1.SchemeBuilder.AddToScheme,
 		projectsv1alpha1.SchemeBuilder.AddToScheme,
+		v1alpha1.SchemeBuilder.AddToScheme,
 	)
 }
 
