@@ -8,7 +8,7 @@ in this repository can be installed into a Crossplane control plane and adds the
 following new functionality:
 
 * Custom Resource Definitions (CRDs) that model Gitlab resources
-* Controllers to provision these resources in Github based on the users desired
+* Controllers to provision these resources in Gitlab based on the users desired
   state captured in CRDs they create
 * Implementations of Crossplane's portable resource
   abstractions, enabling
