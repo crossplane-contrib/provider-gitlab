@@ -1,0 +1,287 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  name: groups.groups.gitlab.crossplane.io
+spec:
+  group: groups.gitlab.crossplane.io
+  names:
+    categories:
+    - crossplane
+    - managed
+    - gitlab
+    kind: Group
+    listKind: GroupList
+    plural: groups
+    singular: group
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Synced')].status
+      name: SYNCED
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: A Group is a managed resource that represents an AWS Elastic Kubernetes Service Group.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: A GroupSpec defines the desired state of a Gitlab Group.
+            properties:
+              deletionPolicy:
+                description: DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted - either "Delete" or "Orphan" the external resource. The "Delete" policy is the default when no policy is specified.
+                enum:
+                - Orphan
+                - Delete
+                type: string
+              forProvider:
+                description: GroupParameters define the desired state of a Gitlab Project
+                properties:
+                  autoDevopsEnabled:
+                    description: Default to Auto DevOps pipeline for all projects within this group.
+                    type: boolean
+                  description:
+                    description: The group’s description.
+                    type: string
+                  emailsDisabled:
+                    description: Disable email notifications.
+                    type: boolean
+                  extraSharedRunnersMinutesLimit:
+                    description: Extra pipeline minutes quota for this group (purchased in addition to the minutes included in the plan).
+                    type: integer
+                  lfsEnabled:
+                    description: Enable/disable Large File Storage (LFS) for the projects in this group.
+                    type: boolean
+                  membershipLock:
+                    description: Prevent adding new members to project membership within this group.
+                    type: boolean
+                  mentionsDisabled:
+                    description: Disable the capability of a group from getting mentioned.
+                    type: boolean
+                  parentId:
+                    description: The parent group ID for creating nested group.
+                    type: integer
+                  path:
+                    description: The path of the group.
+                    type: string
+                  projectCreationLevel:
+                    description: developers can create projects in the group. Can be noone (No one), maintainer (Maintainers), or developer (Developers + Maintainers).
+                    type: string
+                  requestAccessEnabled:
+                    description: Allow users to request member access.
+                    type: boolean
+                  requireTwoFactorAuthentication:
+                    description: Require all users in this group to setup Two-factor authentication.
+                    type: boolean
+                  shareWithGroupLock:
+                    description: Prevent sharing a project with another group within this group.
+                    type: boolean
+                  sharedRunnersMinutesLimit:
+                    description: Pipeline minutes quota for this group (included in plan). Can be nil (default; inherit system default), 0 (unlimited) or > 0.
+                    type: integer
+                  subgroupCreationLevel:
+                    description: Allowed to create subgroups. Can be owner (Owners), or maintainer (Maintainers).
+                    type: string
+                  twoFactorGracePeriod:
+                    description: Time before Two-factor authentication is enforced (in hours).
+                    type: integer
+                  visibility:
+                    description: The group’s visibility. Can be private, internal, or public.
+                    type: string
+                type: object
+              providerConfigRef:
+                description: ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured.
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                required:
+                - name
+                type: object
+              providerRef:
+                description: 'ProviderReference specifies the provider that will be used to create, observe, update, and delete this managed resource. Deprecated: Please use ProviderConfigReference, i.e. `providerConfigRef`'
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                required:
+                - name
+                type: object
+              writeConnectionSecretToRef:
+                description: WriteConnectionSecretToReference specifies the namespace and name of a Secret to which any connection details for this managed resource should be written. Connection details frequently include the endpoint, username, and password required to connect to the managed resource.
+                properties:
+                  name:
+                    description: Name of the secret.
+                    type: string
+                  namespace:
+                    description: Namespace of the secret.
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+            required:
+            - forProvider
+            type: object
+          status:
+            description: A GroupStatus represents the observed state of a Gitlab Group.
+            properties:
+              atProvider:
+                description: GroupObservation is the observed state of a Group.
+                properties:
+                  avatarUrl:
+                    type: string
+                  createdAt:
+                    format: date-time
+                    type: string
+                  customAttributes:
+                    items:
+                      description: "CustomAttribute struct is used to unmarshal response to api calls. \n GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html"
+                      properties:
+                        key:
+                          type: string
+                        value:
+                          type: string
+                      required:
+                      - key
+                      - value
+                      type: object
+                    type: array
+                  fullName:
+                    type: string
+                  fullPath:
+                    type: string
+                  id:
+                    type: integer
+                  ldapAccess:
+                    description: "AccessLevelValue represents a permission level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
+                    type: integer
+                  ldapCn:
+                    type: string
+                  ldapGroupLinks:
+                    items:
+                      description: "LDAPGroupLink represents a GitLab LDAP group link. \n GitLab API docs: https://docs.gitlab.com/ce/api/groups.html#ldap-group-links"
+                      properties:
+                        cn:
+                          type: string
+                        groupAccess:
+                          description: "AccessLevelValue represents a permission level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
+                          type: integer
+                        provider:
+                          type: string
+                      required:
+                      - cn
+                      - groupAccess
+                      - provider
+                      type: object
+                    type: array
+                  markedForDeletionOn:
+                    format: date-time
+                    type: string
+                  runnersToken:
+                    type: string
+                  sharedWithGroups:
+                    items:
+                      description: SharedWithGroups represents a GitLab Shared with groups.
+                      properties:
+                        expiresAt:
+                          format: date-time
+                          type: string
+                        groupAccessLevel:
+                          type: integer
+                        groupFullPath:
+                          type: string
+                        groupId:
+                          type: integer
+                        groupName:
+                          type: string
+                      required:
+                      - expiresAt
+                      - groupAccessLevel
+                      - groupFullPath
+                      - groupId
+                      - groupName
+                      type: object
+                    type: array
+                  statistics:
+                    description: StorageStatistics represents a statistics record for a group or project.
+                    properties:
+                      jobArtifactsSize:
+                        format: int64
+                        type: integer
+                      lfsObjectsSize:
+                        format: int64
+                        type: integer
+                      repositorySize:
+                        format: int64
+                        type: integer
+                      storageSize:
+                        format: int64
+                        type: integer
+                    required:
+                    - jobArtifactsSize
+                    - lfsObjectsSize
+                    - repositorySize
+                    - storageSize
+                    type: object
+                  webUrl:
+                    type: string
+                type: object
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  description: A Condition that may apply to a resource.
+                  properties:
+                    lastTransitionTime:
+                      description: LastTransitionTime is the last time this condition transitioned from one status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A Message containing details about this condition's last transition from one status to another, if any.
+                      type: string
+                    reason:
+                      description: A Reason for this condition's last transition from one status to another.
+                      type: string
+                    status:
+                      description: Status of this condition; is it currently True, False, or Unknown?
+                      type: string
+                    type:
+                      description: Type of this condition. At most one of each condition type may apply to a resource at any point in time.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

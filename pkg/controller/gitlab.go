@@ -22,6 +22,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/config"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/projecthooks"
 )
@@ -31,6 +32,7 @@ import (
 func Setup(mgr ctrl.Manager, l logging.Logger) error {
 	for _, setup := range []func(ctrl.Manager, logging.Logger) error{
 		config.Setup,
+		groups.SetupGroup,
 		projects.SetupProject,
 		projecthooks.SetupProjectHook,
 	} {
