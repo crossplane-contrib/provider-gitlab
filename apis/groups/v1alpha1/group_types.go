@@ -224,11 +224,11 @@ type GroupStatus struct {
 
 // +kubebuilder:object:root=true
 
-// A Group is a managed resource that represents an AWS Elastic Kubernetes
-// Service Group.
+// A Group is a managed resource that represents a Gitlab Group
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".status.atProvider.ID"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab}
 type Group struct {
@@ -246,37 +246,4 @@ type GroupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Group `json:"items"`
-}
-
-// Bool is a helper routine that allocates a new bool value
-// to store v and returns a pointer to it.
-func Bool(v bool) *bool {
-	p := new(bool)
-	*p = v
-	return p
-}
-
-// Int is a helper routine that allocates a new int32 value
-// to store v and returns a pointer to it, but unlike Int32
-// its argument value is an int.
-func Int(v int) *int {
-	p := new(int)
-	*p = v
-	return p
-}
-
-// String is a helper routine that allocates a new string value
-// to store v and returns a pointer to it.
-func String(v string) *string {
-	p := new(string)
-	*p = v
-	return p
-}
-
-// StringSlice is a helper routine that allocates a new []string value
-// to store v and returns a pointer to it.
-func StringSlice(v []string) *[]string {
-	p := new([]string)
-	*p = v
-	return p
 }

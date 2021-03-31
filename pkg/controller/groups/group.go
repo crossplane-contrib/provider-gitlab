@@ -18,7 +18,6 @@ package groups
 
 import (
 	"context"
-	"reflect"
 	"strconv"
 
 	"github.com/xanzy/go-gitlab"
@@ -41,12 +40,11 @@ import (
 )
 
 const (
-	errNotGroup         = "managed resource is not a Gitlab Group custom resource"
-	errGetFailed        = "cannot get Gitlab Group"
-	errKubeUpdateFailed = "cannot update Gitlab Group custom resource"
-	errCreateFailed     = "cannot create Gitlab Group"
-	errUpdateFailed     = "cannot update Gitlab Group"
-	errDeleteFailed     = "cannot delete Gitlab Group"
+	errNotGroup     = "managed resource is not a Gitlab Group custom resource"
+	errGetFailed    = "cannot get Gitlab Group"
+	errCreateFailed = "cannot create Gitlab Group"
+	errUpdateFailed = "cannot update Gitlab Group"
+	errDeleteFailed = "cannot delete Gitlab Group"
 )
 
 // SetupGroup adds a controller that reconciles Groups.
@@ -92,24 +90,23 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotGroup)
 	}
 
-	if meta.GetExternalName(cr) == "" {
-		return managed.ExternalObservation{
-			ResourceExists: false,
-		}, nil
+	externalName := meta.GetExternalName(cr)
+	if externalName == "" {
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	grp, _, err := e.client.GetGroup(meta.GetExternalName(cr), nil)
+	groupID, err := strconv.Atoi(externalName)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.New(errNotGroup)
+	}
+
+	grp, _, err := e.client.GetGroup(groupID, nil)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(groups.IsErrorGroupNotFound, err), errGetFailed)
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
 	groups.LateInitialize(&cr.Spec.ForProvider, grp)
-	if !reflect.DeepEqual(current, &cr.Spec.ForProvider) {
-		if err := e.kube.Update(context.Background(), cr); err != nil {
-			return managed.ExternalObservation{}, errors.Wrap(err, errKubeUpdateFailed)
-		}
-	}
 
 	cr.Status.AtProvider = groups.GenerateObservation(grp)
 	cr.Status.SetConditions(xpv1.Available())
@@ -129,13 +126,17 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	cr.Status.SetConditions(xpv1.Creating())
-	grp, _, err := e.client.CreateGroup(groups.GenerateCreateGroupOptions(cr.Name, &cr.Spec.ForProvider), gitlab.WithContext(ctx))
+
+	grp, _, err := e.client.CreateGroup(
+		groups.GenerateCreateGroupOptions(cr.Name, &cr.Spec.ForProvider),
+		gitlab.WithContext(ctx),
+	)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	err = e.updateExternalName(cr, grp)
-	return managed.ExternalCreation{}, errors.Wrap(err, errKubeUpdateFailed)
+	meta.SetExternalName(cr, strconv.Itoa(grp.ID))
+	return managed.ExternalCreation{ExternalNameAssigned: true}, nil
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -144,12 +145,12 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotGroup)
 	}
 
-	_, _, err := e.client.UpdateGroup(meta.GetExternalName(cr), groups.GenerateEditGroupOptions(cr.Name, &cr.Spec.ForProvider), gitlab.WithContext(ctx))
-	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
-	}
-
-	return managed.ExternalUpdate{}, errors.Wrap(err, errKubeUpdateFailed)
+	_, _, err := e.client.UpdateGroup(
+		meta.GetExternalName(cr),
+		groups.GenerateEditGroupOptions(cr.Name, &cr.Spec.ForProvider),
+		gitlab.WithContext(ctx),
+	)
+	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
@@ -162,9 +163,4 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 
 	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), gitlab.WithContext(ctx))
 	return errors.Wrap(err, errDeleteFailed)
-}
-
-func (e *external) updateExternalName(cr *v1alpha1.Group, grp *gitlab.Group) error {
-	meta.SetExternalName(cr, strconv.Itoa(grp.ID))
-	return e.kube.Update(context.Background(), cr)
 }

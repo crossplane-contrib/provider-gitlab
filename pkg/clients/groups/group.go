@@ -278,10 +278,8 @@ func IsGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) bool { // nol
 	if !clients.IsBoolEqualToBoolPtr(p.MembershipLock, g.MembershipLock) {
 		return false
 	}
-	if p.Visibility != nil {
-		if !cmp.Equal(string(*p.Visibility), string(g.Visibility)) {
-			return false
-		}
+	if (p.Visibility != nil) && (!cmp.Equal(string(*p.Visibility), string(g.Visibility))) {
+		return false
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.ShareWithGroupLock, g.ShareWithGroupLock) {
 		return false

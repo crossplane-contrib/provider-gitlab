@@ -56,7 +56,7 @@ type args struct {
 type groupModifier func(*v1alpha1.Group)
 
 func withConditions(c ...xpv1.Condition) groupModifier {
-	return func(r *v1alpha1.Group) { r.Status.ConditionedStatus.Conditions = c }
+	return func(cr *v1alpha1.Group) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
 func withPath(p *string) groupModifier {
@@ -115,6 +115,33 @@ func TestObserve(t *testing.T) {
 		args
 		want
 	}{
+		"NoExternalName": {
+			args: args{
+				cr: group(),
+			},
+			want: want{
+				cr: group(),
+				result: managed.ExternalObservation{
+					ResourceExists:          false,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
+		"NotIDExternalName": {
+			args: args{
+				group: &fake.MockClient{
+					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return &gitlab.Group{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: group(withExternalName("fr")),
+			},
+			want: want{
+				cr:  group(withExternalName("fr")),
+				err: errors.New(errNotGroup),
+			},
+		},
 		"SuccessfulAvailable": {
 			args: args{
 				group: &fake.MockClient{
@@ -132,6 +159,7 @@ func TestObserve(t *testing.T) {
 					withDefaultValues(),
 					withConditions(xpv1.Available()),
 					withAnnotations(extNameAnnotation),
+					withExternalName(extName),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -153,32 +181,6 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr:  group(withAnnotations(extNameAnnotation)),
 				err: errors.Wrap(errBoom, errGetFailed),
-			},
-		},
-		"LateInitFailedKubeUpdate": {
-			args: args{
-				kube: &test.MockClient{
-					MockUpdate: test.NewMockUpdateFn(errBoom),
-				},
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{
-							Path: path,
-						}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName(extName),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withPath(&path),
-					withAnnotations(extNameAnnotation),
-				),
-				err: errors.Wrap(errBoom, errKubeUpdateFailed),
 			},
 		},
 		"LateInitSuccess": {
@@ -212,19 +214,6 @@ func TestObserve(t *testing.T) {
 					ResourceUpToDate:        true,
 					ResourceLateInitialized: true,
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("token")},
-				},
-			},
-		},
-		"NoExternalName": {
-			args: args{
-				cr: group(),
-			},
-			want: want{
-				cr: group(),
-				result: managed.ExternalObservation{
-					ResourceExists:          false,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
 				},
 			},
 		},
@@ -265,7 +254,7 @@ func TestCreate(t *testing.T) {
 				},
 				group: &fake.MockClient{
 					MockCreateGroup: func(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: extName, Path: extName}, &gitlab.Response{}, nil
+						return &gitlab.Group{Name: extName, Path: extName, ID: 0}, &gitlab.Response{}, nil
 					},
 				},
 				cr: group(
@@ -277,7 +266,7 @@ func TestCreate(t *testing.T) {
 					withConditions(xpv1.Creating()),
 					withExternalName("0"),
 				),
-				result: managed.ExternalCreation{},
+				result: managed.ExternalCreation{ExternalNameAssigned: true},
 			},
 		},
 		"FailedCreation": {
@@ -297,28 +286,6 @@ func TestCreate(t *testing.T) {
 					withStatus(v1alpha1.GroupObservation{ID: 0}),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
-			},
-		},
-		"FailedKubeUpdate": {
-			args: args{
-				kube: &test.MockClient{
-					MockUpdate: test.NewMockUpdateFn(errBoom),
-				},
-				group: &fake.MockClient{
-					MockCreateGroup: func(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withExternalName(extName),
-				),
-			},
-			want: want{
-				cr: group(
-					withConditions(xpv1.Creating()),
-					withExternalName("0"),
-				),
-				err: errors.Wrap(errBoom, errKubeUpdateFailed),
 			},
 		},
 	}
@@ -435,9 +402,7 @@ func TestDelete(t *testing.T) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
-				cr: group(
-					withConditions(xpv1.Available()),
-				),
+				cr: group(),
 			},
 			want: want{
 				cr: group(
