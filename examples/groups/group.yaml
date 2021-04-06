@@ -5,7 +5,7 @@ metadata:
 spec:
   forProvider:
     parentId: 11358079
-    path: "example-path-1111199990000"
+    path: "example-path-11358079"
     description: "group description v2"
   providerConfigRef:
     name: gitlab-provider

@@ -106,15 +106,17 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
-	groups.LateInitialize(&cr.Spec.ForProvider, grp)
+
+	LateInitialize(&cr.Spec.ForProvider, grp)
+	resourceLateInitialized := !cmp.Equal(current, &cr.Spec.ForProvider)
 
 	cr.Status.AtProvider = groups.GenerateObservation(grp)
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        groups.IsGroupUpToDate(&cr.Spec.ForProvider, grp),
-		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
+		ResourceUpToDate:        IsGroupUpToDate(&cr.Spec.ForProvider, grp),
+		ResourceLateInitialized: resourceLateInitialized,
 		ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte(grp.RunnersToken)},
 	}, nil
 }
@@ -144,7 +146,6 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotGroup)
 	}
-
 	_, _, err := e.client.UpdateGroup(
 		meta.GetExternalName(cr),
 		groups.GenerateEditGroupOptions(cr.Name, &cr.Spec.ForProvider),
@@ -163,4 +164,110 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 
 	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), gitlab.WithContext(ctx))
 	return errors.Wrap(err, errDeleteFailed)
+}
+
+// IsGroupUpToDate checks whether there is a change in any of the modifiable fields.
+func IsGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) bool { // nolint:gocyclo
+	if !cmp.Equal(p.Path, clients.StringToPtr(g.Path)) {
+		return false
+	}
+	if !cmp.Equal(p.Description, clients.StringToPtr(g.Description)) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.MembershipLock, g.MembershipLock) {
+		return false
+	}
+	if (p.Visibility != nil) && (!cmp.Equal(string(*p.Visibility), string(g.Visibility))) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.ShareWithGroupLock, g.ShareWithGroupLock) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.RequireTwoFactorAuth, g.RequireTwoFactorAuth) {
+		return false
+	}
+	if !clients.IsIntEqualToIntPtr(p.TwoFactorGracePeriod, g.TwoFactorGracePeriod) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.AutoDevopsEnabled, g.AutoDevopsEnabled) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.EmailsDisabled, g.EmailsDisabled) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.MentionsDisabled, g.MentionsDisabled) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.LFSEnabled, g.LFSEnabled) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.RequestAccessEnabled, g.RequestAccessEnabled) {
+		return false
+	}
+	if !clients.IsIntEqualToIntPtr(p.ParentID, g.ParentID) {
+		return false
+	}
+	if !clients.IsIntEqualToIntPtr(p.SharedRunnersMinutesLimit, g.SharedRunnersMinutesLimit) {
+		return false
+	}
+	if !clients.IsIntEqualToIntPtr(p.ExtraSharedRunnersMinutesLimit, g.ExtraSharedRunnersMinutesLimit) {
+		return false
+	}
+	return true
+}
+
+// LateInitialize fills the empty fields in the group spec with the
+// values seen in gitlab.Group.
+func LateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) { // nolint:gocyclo
+	if group == nil {
+		return
+	}
+
+	in.Path = clients.LateInitializeStringPtr(in.Path, group.Path)
+	in.Description = clients.LateInitializeStringPtr(in.Description, group.Description)
+	in.Visibility = clients.LateInitializeGroupVisibilityValue(in.Visibility, group.Visibility)
+	in.ProjectCreationLevel = clients.LateInitializeGroupProjectCreationLevelValue(in.ProjectCreationLevel, group.ProjectCreationLevel)
+	in.SubGroupCreationLevel = clients.LateInitializeGroupSubGroupCreationLevelValue(in.SubGroupCreationLevel, group.SubGroupCreationLevel)
+
+	if in.MembershipLock == nil {
+		in.MembershipLock = &group.MembershipLock
+	}
+
+	if in.ShareWithGroupLock == nil {
+		in.ShareWithGroupLock = &group.ShareWithGroupLock
+	}
+
+	if in.RequireTwoFactorAuth == nil {
+		in.RequireTwoFactorAuth = &group.RequireTwoFactorAuth
+	}
+
+	if in.TwoFactorGracePeriod == nil {
+		in.TwoFactorGracePeriod = &group.TwoFactorGracePeriod
+	}
+
+	if in.AutoDevopsEnabled == nil {
+		in.AutoDevopsEnabled = &group.AutoDevopsEnabled
+	}
+
+	if in.EmailsDisabled == nil {
+		in.EmailsDisabled = &group.EmailsDisabled
+	}
+	if in.MentionsDisabled == nil {
+		in.MentionsDisabled = &group.MentionsDisabled
+	}
+	if in.LFSEnabled == nil {
+		in.LFSEnabled = &group.LFSEnabled
+	}
+	if in.RequestAccessEnabled == nil {
+		in.RequestAccessEnabled = &group.RequestAccessEnabled
+	}
+	if in.ParentID == nil {
+		in.ParentID = &group.ParentID
+	}
+	if in.SharedRunnersMinutesLimit == nil {
+		in.SharedRunnersMinutesLimit = &group.SharedRunnersMinutesLimit
+	}
+	if in.ExtraSharedRunnersMinutesLimit == nil {
+		in.ExtraSharedRunnersMinutesLimit = &group.ExtraSharedRunnersMinutesLimit
+	}
 }
