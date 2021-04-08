@@ -18,6 +18,7 @@ package groups
 
 import (
 	"context"
+	"reflect"
 	"strconv"
 	"testing"
 
@@ -91,7 +92,8 @@ func withExternalName(n string) groupModifier {
 	return func(r *v1alpha1.Group) { meta.SetExternalName(r, n) }
 }
 
-func withDefaultValues() groupModifier {
+// Use for testing. When ResourceLateInitialized should it be false
+func withClientDefaultValues() groupModifier {
 	return func(p *v1alpha1.Group) {
 		f := false
 		i := 0
@@ -127,10 +129,6 @@ func group(m ...groupModifier) *v1alpha1.Group {
 	}
 	return cr
 }
-
-// func newGitlabClientFn(cfg clients.Config) groups.Client {
-// 	return groups.NewGroupClient(clients.Config{Token: "token", BaseURL: "baseurl"})
-// }
 
 func TestConnect(t *testing.T) {
 	type want struct {
@@ -181,9 +179,7 @@ func TestConnect(t *testing.T) {
 }
 
 func TestObserve(t *testing.T) {
-	pathNew := "path/to/group/new"
 	description := "description"
-	descriptionNew := "new description"
 
 	gitlabVisibilityNew := gitlab.VisibilityValue("public")
 	v1alpha1VisibilityNew := v1alpha1.VisibilityValue("public")
@@ -266,13 +262,13 @@ func TestObserve(t *testing.T) {
 					},
 				},
 				cr: group(
-					withDefaultValues(),
+					withClientDefaultValues(),
 					withExternalName(extName),
 				),
 			},
 			want: want{
 				cr: group(
-					withDefaultValues(),
+					withClientDefaultValues(),
 					withConditions(xpv1.Available()),
 					withPath(&path),
 					withAnnotations(extNameAnnotation),
@@ -283,564 +279,6 @@ func TestObserve(t *testing.T) {
 					ResourceUpToDate:        true,
 					ResourceLateInitialized: true,
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("token")},
-				},
-			},
-		},
-		"IsGroupUpToDatePath": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Path: path}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withPath(&pathNew),
-					withDescription(&description),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withPath(&pathNew),
-					withDescription(&description),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateDescription": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Description: description}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withPath(&path),
-					withDescription(&descriptionNew),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withPath(&path),
-					withDescription(&descriptionNew),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateMembershipLock": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, MembershipLock: true}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateVisibility": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, Visibility: gitlabVisibilityNew}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateShareWithGroupLock": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, ShareWithGroupLock: true}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateRequireTwoFactorAuth": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, RequireTwoFactorAuth: true}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateTwoFactorGracePeriod": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, TwoFactorGracePeriod: 1}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateProjectCreationLevel": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{
-							Name:                 name,
-							ProjectCreationLevel: *gitlabProjectCreationLevelNew,
-						}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateAutoDevopsEnabled": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, AutoDevopsEnabled: true}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateSubGroupCreationLevel": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{
-							Name:                  name,
-							SubGroupCreationLevel: *gitlabSubGroupCreationLevelNew,
-						}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateEmailsDisabled": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, EmailsDisabled: true}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateMentionsDisabled": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, MentionsDisabled: true}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateLFSEnabled": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, LFSEnabled: true}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateRequestAccessEnabled": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, RequestAccessEnabled: true}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateParentID": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, ParentID: 1}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateSharedRunnersMinutesLimit": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, SharedRunnersMinutesLimit: 1}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
-				},
-			},
-		},
-		"IsGroupUpToDateExtraSharedRunnersMinutesLimit": {
-			args: args{
-				group: &fake.MockClient{
-					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: name, ExtraSharedRunnersMinutesLimit: 1}, &gitlab.Response{}, nil
-					},
-				},
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-			},
-			want: want{
-				cr: group(
-					withDefaultValues(),
-					withExternalName("0"),
-					withConditions(xpv1.Available()),
-					withVisibility(&v1alpha1Visibility),
-					withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
-					withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
 				},
 			},
 		},
@@ -874,7 +312,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: group(
 					withExternalName("0"),
-					withDefaultValues(),
+					withClientDefaultValues(),
 					withPath(&path),
 					withConditions(xpv1.Available()),
 					withDescription(&description),
@@ -898,13 +336,13 @@ func TestObserve(t *testing.T) {
 					},
 				},
 				cr: group(
-					withDefaultValues(),
+					withClientDefaultValues(),
 					withExternalName(extName),
 				),
 			},
 			want: want{
 				cr: group(
-					withDefaultValues(),
+					withClientDefaultValues(),
 					withConditions(xpv1.Available()),
 					withAnnotations(extNameAnnotation),
 					withExternalName(extName),
@@ -918,6 +356,84 @@ func TestObserve(t *testing.T) {
 			},
 		},
 	}
+
+	isGroupUpToDateCases := map[string]interface{}{
+		"Path":                           "/new/group/path",
+		"Description":                    "description v2",
+		"MembershipLock":                 true,
+		"ProjectCreationLevel":           *gitlabProjectCreationLevelNew,
+		"SubGroupCreationLevel":          *gitlabSubGroupCreationLevelNew,
+		"Visibility":                     gitlabVisibilityNew,
+		"ShareWithGroupLock":             true,
+		"RequireTwoFactorAuth":           true,
+		"TwoFactorGracePeriod":           1,
+		"AutoDevopsEnabled":              true,
+		"EmailsDisabled":                 true,
+		"MentionsDisabled":               true,
+		"LFSEnabled":                     true,
+		"RequestAccessEnabled":           true,
+		"ParentID":                       1,
+		"SharedRunnersMinutesLimit":      1,
+		"ExtraSharedRunnersMinutesLimit": 1,
+	}
+
+	for name, value := range isGroupUpToDateCases {
+		argsGroupModifier := []groupModifier{
+			withClientDefaultValues(),
+			withExternalName("0"),
+			withVisibility(&v1alpha1Visibility),
+			withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
+			withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
+		}
+		wantGroupModifier := []groupModifier{
+			withClientDefaultValues(),
+			withExternalName("0"),
+			withConditions(xpv1.Available()),
+			withVisibility(&v1alpha1Visibility),
+			withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
+			withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
+		}
+
+		if name == "Path" {
+			argsGroupModifier = append(argsGroupModifier, withPath(&path))
+			wantGroupModifier = append(wantGroupModifier, withPath(&path))
+		}
+
+		if name == "Description" {
+			argsGroupModifier = append(argsGroupModifier, withDescription(&description))
+			wantGroupModifier = append(wantGroupModifier, withDescription(&description))
+		}
+
+		gitlabGroup := &gitlab.Group{Name: name}
+		structValue := reflect.ValueOf(gitlabGroup).Elem()
+		structFieldValue := structValue.FieldByName(name)
+		val := reflect.ValueOf(value)
+
+		structFieldValue.Set(val)
+		cases["IsGroupUpToDate"+name] = struct {
+			args
+			want
+		}{
+			args: args{
+				group: &fake.MockClient{
+					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return gitlabGroup, &gitlab.Response{}, nil
+					},
+				},
+				cr: group(argsGroupModifier...),
+			},
+			want: want{
+				cr: group(wantGroupModifier...),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		}
+	}
+
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			e := &external{kube: tc.kube, client: tc.group}
