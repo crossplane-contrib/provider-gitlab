@@ -29,6 +29,7 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
+	v1alpha1Groups "github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/apis/v1beta1"
 )
@@ -91,6 +92,33 @@ func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed
 	default:
 		return nil, errors.Errorf("credentials source %s is not currently supported", s)
 	}
+}
+
+// LateInitializeGroupVisibilityValue returns in if it's non-nil, otherwise returns from
+// which is the backup for the cases in is nil.
+func LateInitializeGroupVisibilityValue(in *v1alpha1Groups.VisibilityValue, from gitlab.VisibilityValue) *v1alpha1Groups.VisibilityValue {
+	if in == nil && from != "" {
+		return (*v1alpha1Groups.VisibilityValue)(&from)
+	}
+	return in
+}
+
+// LateInitializeGroupSubGroupCreationLevelValue returns in if it's non-nil, otherwise returns from
+// which is the backup for the cases in is nil.
+func LateInitializeGroupSubGroupCreationLevelValue(in *v1alpha1Groups.SubGroupCreationLevelValue, from gitlab.SubGroupCreationLevelValue) *v1alpha1Groups.SubGroupCreationLevelValue {
+	if in == nil && from != "" {
+		return (*v1alpha1Groups.SubGroupCreationLevelValue)(&from)
+	}
+	return in
+}
+
+// LateInitializeGroupProjectCreationLevelValue returns in if it's non-nil, otherwise returns from
+// which is the backup for the cases in is nil.
+func LateInitializeGroupProjectCreationLevelValue(in *v1alpha1Groups.ProjectCreationLevelValue, from gitlab.ProjectCreationLevelValue) *v1alpha1Groups.ProjectCreationLevelValue {
+	if in == nil && from != "" {
+		return (*v1alpha1Groups.ProjectCreationLevelValue)(&from)
+	}
+	return in
 }
 
 // LateInitializeStringPtr returns `from` if `in` is nil and `from` is non-empty,
