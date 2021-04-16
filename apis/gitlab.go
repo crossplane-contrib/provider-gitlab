@@ -20,6 +20,7 @@ package apis
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
+	deploytokenv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/deploytoken/v1alpha1"
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	gitlabv1beta1 "github.com/crossplane-contrib/provider-gitlab/apis/v1beta1"
 )
@@ -29,6 +30,7 @@ func init() {
 	AddToSchemes = append(AddToSchemes,
 		gitlabv1beta1.SchemeBuilder.AddToScheme,
 		projectsv1alpha1.SchemeBuilder.AddToScheme,
+		deploytokenv1alpha1.SchemeBuilder.AddToScheme,
 	)
 }
 
