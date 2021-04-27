@@ -1,0 +1,15 @@
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Group
+metadata:
+  name: example-group
+spec:
+  forProvider:
+    parentId: <parent-group-id>
+    path: "example-path"
+    description: "example description"
+  providerConfigRef:
+    name: gitlab-provider
+  # a reference to a Kubernetes secret to which the controller will write the runnersToken
+  writeConnectionSecretToRef:
+    name: gitlab-group-example-group
+    namespace: crossplane-system
