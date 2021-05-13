@@ -37,10 +37,14 @@ spec:
         description: A Project is a managed resource that represents a Gitlab Project
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -48,13 +52,17 @@ spec:
             description: A ProjectSpec defines the desired state of a Gitlab Project.
             properties:
               deletionPolicy:
-                description: DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted - either "Delete" or "Orphan" the external resource. The "Delete" policy is the default when no policy is specified.
+                description: DeletionPolicy specifies what will happen to the underlying
+                  external when this managed resource is deleted - either "Delete"
+                  or "Orphan" the external resource. The "Delete" policy is the default
+                  when no policy is specified.
                 enum:
                 - Orphan
                 - Delete
                 type: string
               forProvider:
-                description: ProjectParameters define the desired state of a Gitlab Project
+                description: ProjectParameters define the desired state of a Gitlab
+                  Project
                 properties:
                   approvalsBeforeMerge:
                     type: integer
@@ -73,12 +81,16 @@ spec:
                   buildTimeout:
                     type: integer
                   buildsAccessLevel:
-                    description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                    description: "AccessControlValue represents an access control
+                      value within GitLab, used for managing access to certain project
+                      features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
                     type: string
                   ciConfigPath:
                     type: string
                   ciDefaultGitDepth:
-                    description: CIDefaultGitDepth can't be provided during project creation but in can be changed afterwards with the EditProject API call
+                    description: CIDefaultGitDepth can't be provided during project
+                      creation but in can be changed afterwards with the EditProject
+                      API call
                     type: integer
                   containerRegistryEnabled:
                     type: boolean
@@ -91,7 +103,9 @@ spec:
                   externalAuthorizationClassificationLabel:
                     type: string
                   forkingAccessLevel:
-                    description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                    description: "AccessControlValue represents an access control
+                      value within GitLab, used for managing access to certain project
+                      features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
                     type: string
                   groupWithProjectTemplatesId:
                     type: integer
@@ -100,25 +114,33 @@ spec:
                   initializeWithReadme:
                     type: boolean
                   issuesAccessLevel:
-                    description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                    description: "AccessControlValue represents an access control
+                      value within GitLab, used for managing access to certain project
+                      features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
                     type: string
                   lfsEnabled:
                     type: boolean
                   mergeMethod:
-                    description: "MergeMethodValue represents a project merge type within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html#project-merge-method"
+                    description: "MergeMethodValue represents a project merge type
+                      within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html#project-merge-method"
                     type: string
                   mergeRequestsAccessLevel:
-                    description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                    description: "AccessControlValue represents an access control
+                      value within GitLab, used for managing access to certain project
+                      features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
                     type: string
                   mirror:
                     type: boolean
                   mirrorOverwritesDivergedBranches:
-                    description: MirrorOverwritesDivergedBranches can't be provided during project creation but in can be changed afterwards with the EditProject API call
+                    description: MirrorOverwritesDivergedBranches can't be provided
+                      during project creation but in can be changed afterwards with
+                      the EditProject API call
                     type: boolean
                   mirrorTriggerBuilds:
                     type: boolean
                   mirrorUserId:
-                    description: MirrorUserID can't be provided during project creation but in can be changed afterwards with the EditProject API call
+                    description: MirrorUserID can't be provided during project creation
+                      but in can be changed afterwards with the EditProject API call
                     type: integer
                   namespaceId:
                     type: integer
@@ -127,12 +149,16 @@ spec:
                   onlyAllowMergeIfPipelineSucceeds:
                     type: boolean
                   onlyMirrorProtectedBranches:
-                    description: OnlyMirrorProtectedBranches can't be provided during project creation but in can be changed afterwards with the EditProject API call
+                    description: OnlyMirrorProtectedBranches can't be provided during
+                      project creation but in can be changed afterwards with the EditProject
+                      API call
                     type: boolean
                   packagesEnabled:
                     type: boolean
                   pagesAccessLevel:
-                    description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                    description: "AccessControlValue represents an access control
+                      value within GitLab, used for managing access to certain project
+                      features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
                     type: string
                   path:
                     type: string
@@ -143,7 +169,9 @@ spec:
                   removeSourceBranchAfterMerge:
                     type: boolean
                   repositoryAccessLevel:
-                    description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                    description: "AccessControlValue represents an access control
+                      value within GitLab, used for managing access to certain project
+                      features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
                     type: string
                   requestAccessEnabled:
                     type: boolean
@@ -154,7 +182,9 @@ spec:
                   sharedRunnersEnabled:
                     type: boolean
                   snippetsAccessLevel:
-                    description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                    description: "AccessControlValue represents an access control
+                      value within GitLab, used for managing access to certain project
+                      features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
                     type: string
                   tagList:
                     items:
@@ -167,14 +197,19 @@ spec:
                   useCustomTemplate:
                     type: boolean
                   visibility:
-                    description: "VisibilityValue represents a visibility level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/api/"
+                    description: "VisibilityValue represents a visibility level within
+                      GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/api/"
                     type: string
                   wikiAccessLevel:
-                    description: "AccessControlValue represents an access control value within GitLab, used for managing access to certain project features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
+                    description: "AccessControlValue represents an access control
+                      value within GitLab, used for managing access to certain project
+                      features. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html"
                     type: string
                 type: object
               providerConfigRef:
-                description: ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured.
+                description: ProviderConfigReference specifies how the provider that
+                  will be used to create, observe, update, and delete this managed
+                  resource should be configured.
                 properties:
                   name:
                     description: Name of the referenced object.
@@ -183,7 +218,9 @@ spec:
                 - name
                 type: object
               providerRef:
-                description: 'ProviderReference specifies the provider that will be used to create, observe, update, and delete this managed resource. Deprecated: Please use ProviderConfigReference, i.e. `providerConfigRef`'
+                description: 'ProviderReference specifies the provider that will be
+                  used to create, observe, update, and delete this managed resource.
+                  Deprecated: Please use ProviderConfigReference, i.e. `providerConfigRef`'
                 properties:
                   name:
                     description: Name of the referenced object.
@@ -192,7 +229,11 @@ spec:
                 - name
                 type: object
               writeConnectionSecretToRef:
-                description: WriteConnectionSecretToReference specifies the namespace and name of a Secret to which any connection details for this managed resource should be written. Connection details frequently include the endpoint, username, and password required to connect to the managed resource.
+                description: WriteConnectionSecretToReference specifies the namespace
+                  and name of a Secret to which any connection details for this managed
+                  resource should be written. Connection details frequently include
+                  the endpoint, username, and password required to connect to the
+                  managed resource.
                 properties:
                   name:
                     description: Name of the secret.
@@ -208,7 +249,8 @@ spec:
             - forProvider
             type: object
           status:
-            description: A ProjectStatus represents the observed state of a Gitlab Project.
+            description: A ProjectStatus represents the observed state of a Gitlab
+              Project.
             properties:
               atProvider:
                 description: ProjectObservation is the observed state of a Project.
@@ -226,7 +268,8 @@ spec:
                     type: integer
                   customAttributes:
                     items:
-                      description: "CustomAttribute struct is used to unmarshal response to api calls. \n GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html"
+                      description: "CustomAttribute struct is used to unmarshal response
+                        to api calls. \n GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html"
                       properties:
                         key:
                           type: string
@@ -238,7 +281,8 @@ spec:
                       type: object
                     type: array
                   forkedFromProject:
-                    description: ForkParent represents the parent project when this is a fork.
+                    description: ForkParent represents the parent project when this
+                      is a fork.
                     properties:
                       httpUrlToRepo:
                         type: string
@@ -281,7 +325,8 @@ spec:
                     format: date-time
                     type: string
                   links:
-                    description: Links represents a project web links for self, issues, mergeRequests, repoBranches, labels, events, members.
+                    description: Links represents a project web links for self, issues,
+                      mergeRequests, repoBranches, labels, events, members.
                     properties:
                       events:
                         type: string
@@ -340,7 +385,8 @@ spec:
                   openIssuesCount:
                     type: integer
                   owner:
-                    description: "User represents a GitLab user. \n GitLab API docs: https://docs.gitlab.com/ee/api/users.html"
+                    description: "User represents a GitLab user. \n GitLab API docs:
+                      https://docs.gitlab.com/ee/api/users.html"
                     properties:
                       avatarUrl:
                         type: string
@@ -363,7 +409,8 @@ spec:
                         type: string
                       customAttributes:
                         items:
-                          description: "CustomAttribute struct is used to unmarshal response to api calls. \n GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html"
+                          description: "CustomAttribute struct is used to unmarshal
+                            response to api calls. \n GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html"
                           properties:
                             key:
                               type: string
@@ -482,10 +529,12 @@ spec:
                         description: GroupAccess represents group access.
                         properties:
                           accessLevel:
-                            description: "AccessLevelValue represents a permission level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
+                            description: "AccessLevelValue represents a permission
+                              level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
                             type: integer
                           notificationLevel:
-                            description: NotificationLevelValue represents a notification level.
+                            description: NotificationLevelValue represents a notification
+                              level.
                             type: integer
                         required:
                         - accessLevel
@@ -495,10 +544,12 @@ spec:
                         description: ProjectAccess represents project access.
                         properties:
                           accessLevel:
-                            description: "AccessLevelValue represents a permission level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
+                            description: "AccessLevelValue represents a permission
+                              level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
                             type: integer
                           notificationLevel:
-                            description: NotificationLevelValue represents a notification level.
+                            description: NotificationLevelValue represents a notification
+                              level.
                             type: integer
                         required:
                         - accessLevel
@@ -530,7 +581,8 @@ spec:
                   starCount:
                     type: integer
                   statistics:
-                    description: ProjectStatistics represents a statistics record for a project.
+                    description: ProjectStatistics represents a statistics record
+                      for a project.
                     properties:
                       commitCount:
                         type: integer
@@ -564,20 +616,25 @@ spec:
                   description: A Condition that may apply to a resource.
                   properties:
                     lastTransitionTime:
-                      description: LastTransitionTime is the last time this condition transitioned from one status to another.
+                      description: LastTransitionTime is the last time this condition
+                        transitioned from one status to another.
                       format: date-time
                       type: string
                     message:
-                      description: A Message containing details about this condition's last transition from one status to another, if any.
+                      description: A Message containing details about this condition's
+                        last transition from one status to another, if any.
                       type: string
                     reason:
-                      description: A Reason for this condition's last transition from one status to another.
+                      description: A Reason for this condition's last transition from
+                        one status to another.
                       type: string
                     status:
-                      description: Status of this condition; is it currently True, False, or Unknown?
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
                       type: string
                     type:
-                      description: Type of this condition. At most one of each condition type may apply to a resource at any point in time.
+                      description: Type of this condition. At most one of each condition
+                        type may apply to a resource at any point in time.
                       type: string
                   required:
                   - lastTransitionTime

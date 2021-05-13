@@ -23,8 +23,10 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/config"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/groupmembers"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/projecthooks"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/projectmembers"
 )
 
 // Setup creates all Gitlab API controllers with the supplied logger and adds
@@ -33,8 +35,10 @@ func Setup(mgr ctrl.Manager, l logging.Logger) error {
 	for _, setup := range []func(ctrl.Manager, logging.Logger) error{
 		config.Setup,
 		groups.SetupGroup,
+		groupmembers.SetupGroupMember,
 		projects.SetupProject,
 		projecthooks.SetupProjectHook,
+		projectmembers.SetupProjectMember,
 	} {
 		if err := setup(mgr, l); err != nil {
 			return err

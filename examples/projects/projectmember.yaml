@@ -1,0 +1,16 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: ProjectMember
+metadata:
+  name: example-project-member
+spec:
+  forProvider:
+    projectID: 26268393
+    userID: 8777466
+    accessLevel: 30
+    # expiresAt: "2021-06-05"
+  providerConfigRef:
+    name: gitlab-provider
+  # a reference to a Kubernetes secret to which the controller will write the runnersToken
+  writeConnectionSecretToRef:
+    name: gitlab-project-example-projectmember
+    namespace: crossplane-system

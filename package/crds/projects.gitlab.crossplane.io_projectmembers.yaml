@@ -4,7 +4,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.5.0
   creationTimestamp: null
-  name: projecthooks.projects.gitlab.crossplane.io
+  name: projectmembers.projects.gitlab.crossplane.io
 spec:
   group: projects.gitlab.crossplane.io
   names:
@@ -12,10 +12,10 @@ spec:
     - crossplane
     - managed
     - gitlab
-    kind: ProjectHook
-    listKind: ProjectHookList
-    plural: projecthooks
-    singular: projecthook
+    kind: ProjectMember
+    listKind: ProjectMemberList
+    plural: projectmembers
+    singular: projectmember
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -28,11 +28,20 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
+    - jsonPath: .spec.forProvider.projectID
+      name: Project ID
+      type: integer
+    - jsonPath: .status.atProvider.username
+      name: Username
+      type: string
+    - jsonPath: .spec.forProvider.accessLevel
+      name: Acceess Level
+      type: integer
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A ProjectHook is a managed resource that represents a Gitlab
-          ProjectHook
+        description: A ProjectMember is a managed resource that represents a Gitlab
+          ProjectMember
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -47,7 +56,8 @@ spec:
           metadata:
             type: object
           spec:
-            description: A ProjectHookSpec defines the desired state of a Gitlab ProjectHook.
+            description: A ProjectMemberSpec defines the desired state of a Gitlab
+              ProjectMember.
             properties:
               deletionPolicy:
                 description: DeletionPolicy specifies what will happen to the underlying
@@ -59,86 +69,26 @@ spec:
                 - Delete
                 type: string
               forProvider:
-                description: A ProjectHookParameters defines the desired state of
-                  a Gitlab ProjectHook.
+                description: A ProjectMemberParameters defines the desired state of
+                  a Gitlab ProjectMember.
                 properties:
-                  confidentialIssuesEvents:
-                    description: ConfidentialIssuesEvents triggers hook on confidential
-                      issues events.
-                    type: boolean
-                  confidentialNoteEvents:
-                    description: ConfidentialNoteEvents triggers hook on confidential
-                      issues events.
-                    type: boolean
-                  enableSslVerification:
-                    description: EnableSSLVerification enables SSL verification when
-                      triggering the hook.
-                    type: boolean
-                  issuesEvents:
-                    description: IssuesEvents triggers hook on issues events.
-                    type: boolean
-                  jobEvents:
-                    description: JobEvents triggers hook on job events.
-                    type: boolean
-                  mergeRequestsEvents:
-                    description: MergeRequestsEvents triggers hook on merge requests
-                      events.
-                    type: boolean
-                  noteEvents:
-                    description: NoteEvents triggers hook on note events.
-                    type: boolean
-                  pipelineEvents:
-                    description: PipelineEvents triggers hook on pipeline events.
-                    type: boolean
-                  projectId:
-                    description: ProjectID is the ID of the project.
+                  accessLevel:
+                    description: A valid access level.
                     type: integer
-                  projectIdRef:
-                    description: ProjectIDRef is a reference to a project to retrieve
-                      its projectId
-                    properties:
-                      name:
-                        description: Name of the referenced object.
-                        type: string
-                    required:
-                    - name
-                    type: object
-                  projectIdSelector:
-                    description: ProjectIDSelector selects reference to a project
-                      to retrieve its projectId.
-                    properties:
-                      matchControllerRef:
-                        description: MatchControllerRef ensures an object with the
-                          same controller reference as the selecting object is selected.
-                        type: boolean
-                      matchLabels:
-                        additionalProperties:
-                          type: string
-                        description: MatchLabels ensures an object with matching labels
-                          is selected.
-                        type: object
-                    type: object
-                  pushEvents:
-                    description: PushEvents triggers hook on push events.
-                    type: boolean
-                  pushEventsBranch_filter:
-                    description: PushEventsBranchFilter triggers hook on push events
-                      for matching branches only.
+                  expiresAt:
+                    description: A date string in the format YEAR-MONTH-DAY.
                     type: string
-                  tagPushEvents:
-                    description: TagPushEvents triggers hook on tag push events.
-                    type: boolean
-                  token:
-                    description: Token is the secret token to validate received payloads.
-                    type: string
-                  url:
-                    description: URL is the hook URL.
-                    type: string
-                  wikiPageEvents:
-                    description: WikiPageEvents triggers hook on wiki events.
-                    type: boolean
+                  projectID:
+                    description: The ID of the project owned by the authenticated
+                      user.
+                    type: integer
+                  userID:
+                    description: The user ID of the member.
+                    type: integer
                 required:
-                - url
+                - accessLevel
+                - projectID
+                - userID
                 type: object
               providerConfigRef:
                 description: ProviderConfigReference specifies how the provider that
@@ -183,21 +133,28 @@ spec:
             - forProvider
             type: object
           status:
-            description: A ProjectHookStatus represents the observed state of a Gitlab
-              ProjectHook.
+            description: A ProjectMemberStatus represents the observed state of a
+              Gitlab ProjectMember.
             properties:
               atProvider:
-                description: "ProjectHookObservation represents a project hook. \n
-                  GitLab API docs: https://docs.gitlab.com/ce/api/projects.html#list-project-hooks"
+                description: "ProjectMemberObservation represents a project member.
+                  \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html#list-project-team-members"
                 properties:
+                  avatarURL:
+                    type: string
                   createdAt:
-                    description: CreatedAt specifies the time the project hook was
-                      created
                     format: date-time
                     type: string
-                  id:
-                    description: ID of the project hook at gitlab
-                    type: integer
+                  email:
+                    type: string
+                  name:
+                    type: string
+                  state:
+                    type: string
+                  username:
+                    type: string
+                  webURL:
+                    type: string
                 type: object
               conditions:
                 description: Conditions of the resource.

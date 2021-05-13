@@ -53,7 +53,16 @@ var (
 	ProjectHookGroupVersionKind = SchemeGroupVersion.WithKind(ProjectHookKind)
 )
 
+// ProjectMember type metadata
+var (
+	ProjectMemberKind             = reflect.TypeOf(ProjectMember{}).Name()
+	ProjectMemberGroupKind        = schema.GroupKind{Group: Group, Kind: ProjectMemberKind}.String()
+	ProjectMemberKindAPIVersion   = ProjectMemberKind + "." + SchemeGroupVersion.String()
+	ProjectMemberGroupVersionKind = SchemeGroupVersion.WithKind(ProjectMemberKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&ProjectHook{}, &ProjectHookList{})
+	SchemeBuilder.Register(&ProjectMember{}, &ProjectMemberList{})
 }
