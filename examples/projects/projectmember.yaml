@@ -1,0 +1,15 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: ProjectMember
+metadata:
+  name: example-project-member
+spec:
+  forProvider:
+    projectID: <gitlab-project-id>
+    userID: <gitlab-user-id>
+    accessLevel: 30
+    # expiresAt: "2021-06-05"
+  providerConfigRef:
+    name: gitlab-provider
+  writeConnectionSecretToRef:
+    name: gitlab-project-example-projectmember
+    namespace: crossplane-system

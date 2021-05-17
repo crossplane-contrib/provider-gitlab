@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The Crossplane Authors.
+Copyright 2021 The Crossplane Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,7 +53,16 @@ var (
 	ProjectHookGroupVersionKind = SchemeGroupVersion.WithKind(ProjectHookKind)
 )
 
+// ProjectMember type metadata
+var (
+	ProjectMemberKind             = reflect.TypeOf(ProjectMember{}).Name()
+	ProjectMemberGroupKind        = schema.GroupKind{Group: Group, Kind: ProjectMemberKind}.String()
+	ProjectMemberKindAPIVersion   = ProjectMemberKind + "." + SchemeGroupVersion.String()
+	ProjectMemberGroupVersionKind = SchemeGroupVersion.WithKind(ProjectMemberKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&ProjectHook{}, &ProjectHookList{})
+	SchemeBuilder.Register(&ProjectMember{}, &ProjectMemberList{})
 }
