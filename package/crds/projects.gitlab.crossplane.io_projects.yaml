@@ -437,41 +437,6 @@ spec:
                         type: string
                       websiteUrl:
                         type: string
-                    required:
-                    - avatarUrl
-                    - bio
-                    - canCreateGroup
-                    - canCreateProject
-                    - colorSchemeId
-                    - confirmedAt
-                    - createdAt
-                    - currentSignInAt
-                    - customAttributes
-                    - email
-                    - externUid
-                    - external
-                    - id
-                    - identities
-                    - isAdmin
-                    - lastActivityOn
-                    - lastSignInAt
-                    - linkedin
-                    - location
-                    - name
-                    - organization
-                    - privateProfile
-                    - projectsLimit
-                    - provider
-                    - publicEmail
-                    - sharedRunnersMinutesLimit
-                    - skype
-                    - state
-                    - themeId
-                    - twitter
-                    - twoFactorEnabled
-                    - username
-                    - webUrl
-                    - websiteUrl
                     type: object
                   pathWithNamespace:
                     type: string

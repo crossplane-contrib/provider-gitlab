@@ -18,12 +18,12 @@ package projects
 
 import (
 	"context"
-	"reflect"
 	"strconv"
 
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,7 +42,6 @@ import (
 
 const (
 	errNotProject       = "managed resource is not a Gitlab project custom resource"
-	errGetFailed        = "cannot get Gitlab project"
 	errKubeUpdateFailed = "cannot update Gitlab project custom resource"
 	errCreateFailed     = "cannot create Gitlab project"
 	errUpdateFailed     = "cannot update Gitlab project"
@@ -92,31 +91,30 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotProject)
 	}
 
-	if meta.GetExternalName(cr) == "" {
-		return managed.ExternalObservation{
-			ResourceExists: false,
-		}, nil
+	externalName := meta.GetExternalName(cr)
+	if externalName == "" {
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	prj, _, err := e.client.GetProject(meta.GetExternalName(cr), nil)
+	projectID, err := strconv.Atoi(externalName)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorProjectNotFound, err), errGetFailed)
+		return managed.ExternalObservation{}, errors.New(errNotProject)
+	}
+
+	prj, _, _ := e.client.GetProject(projectID, nil)
+	if prj == nil {
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
-	projects.LateInitialize(&cr.Spec.ForProvider, prj)
-	if !reflect.DeepEqual(current, &cr.Spec.ForProvider) {
-		if err := e.kube.Update(context.Background(), cr); err != nil {
-			return managed.ExternalObservation{}, errors.Wrap(err, errKubeUpdateFailed)
-		}
-	}
+	lateInitialize(&cr.Spec.ForProvider, prj)
 
 	cr.Status.AtProvider = projects.GenerateObservation(prj)
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        projects.IsProjectUpToDate(&cr.Spec.ForProvider, prj),
+		ResourceUpToDate:        isProjectUpToDate(&cr.Spec.ForProvider, prj),
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 		ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte(prj.RunnersToken)},
 	}, nil
@@ -128,13 +126,16 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotProject)
 	}
 
-	cr.Status.SetConditions(xpv1.Creating())
-	prj, _, err := e.client.CreateProject(projects.GenerateCreateProjectOptions(cr.Name, &cr.Spec.ForProvider), gitlab.WithContext(ctx))
+	prj, _, err := e.client.CreateProject(
+		projects.GenerateCreateProjectOptions(cr.Name, &cr.Spec.ForProvider),
+		gitlab.WithContext(ctx),
+	)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
-	err = e.updateExternalName(cr, prj)
-	return managed.ExternalCreation{}, errors.Wrap(err, errKubeUpdateFailed)
+
+	meta.SetExternalName(cr, strconv.Itoa(prj.ID))
+	return managed.ExternalCreation{ExternalNameAssigned: true}, errors.Wrap(err, errKubeUpdateFailed)
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -143,12 +144,13 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotProject)
 	}
 
-	_, _, err := e.client.EditProject(cr.Status.AtProvider.ID, projects.GenerateEditProjectOptions(cr.Name, &cr.Spec.ForProvider), gitlab.WithContext(ctx))
-	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
-	}
+	_, _, err := e.client.EditProject(
+		meta.GetExternalName(cr),
+		projects.GenerateEditProjectOptions(cr.Name, &cr.Spec.ForProvider),
+		gitlab.WithContext(ctx),
+	)
 
-	return managed.ExternalUpdate{}, nil
+	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
@@ -157,13 +159,195 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotProject)
 	}
 
-	cr.Status.SetConditions(xpv1.Deleting())
-
-	_, err := e.client.DeleteProject(cr.Status.AtProvider.ID, gitlab.WithContext(ctx))
+	_, err := e.client.DeleteProject(meta.GetExternalName(cr), gitlab.WithContext(ctx))
 	return errors.Wrap(err, errDeleteFailed)
 }
 
-func (e *external) updateExternalName(cr *v1alpha1.Project, prj *gitlab.Project) error {
-	meta.SetExternalName(cr, strconv.Itoa(prj.ID))
-	return e.kube.Update(context.Background(), cr)
+// lateInitialize fills the empty fields in the project spec with the
+// values seen in gitlab.Project.
+func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { // nolint:gocyclo
+	if project == nil {
+		return
+	}
+	in.Path = clients.LateInitializeStringPtr(in.Path, project.Path)
+	in.DefaultBranch = clients.LateInitializeStringPtr(in.DefaultBranch, project.DefaultBranch)
+	in.Description = clients.LateInitializeStringPtr(in.Description, project.Description)
+	in.IssuesAccessLevel = clients.LateInitializeAccessControlValue(in.IssuesAccessLevel, project.IssuesAccessLevel)
+	in.RepositoryAccessLevel = clients.LateInitializeAccessControlValue(in.RepositoryAccessLevel, project.RepositoryAccessLevel)
+	in.MergeRequestsAccessLevel = clients.LateInitializeAccessControlValue(in.MergeRequestsAccessLevel, project.MergeRequestsAccessLevel)
+	in.ForkingAccessLevel = clients.LateInitializeAccessControlValue(in.ForkingAccessLevel, project.ForkingAccessLevel)
+	in.BuildsAccessLevel = clients.LateInitializeAccessControlValue(in.BuildsAccessLevel, project.BuildsAccessLevel)
+	in.WikiAccessLevel = clients.LateInitializeAccessControlValue(in.WikiAccessLevel, project.WikiAccessLevel)
+	in.SnippetsAccessLevel = clients.LateInitializeAccessControlValue(in.SnippetsAccessLevel, project.SnippetsAccessLevel)
+	in.PagesAccessLevel = clients.LateInitializeAccessControlValue(in.PagesAccessLevel, project.PagesAccessLevel)
+	if in.ResolveOutdatedDiffDiscussions == nil {
+		in.ResolveOutdatedDiffDiscussions = &project.ResolveOutdatedDiffDiscussions
+	}
+	if in.ContainerRegistryEnabled == nil {
+		in.ContainerRegistryEnabled = &project.ContainerRegistryEnabled
+	}
+	if in.SharedRunnersEnabled == nil {
+		in.SharedRunnersEnabled = &project.SharedRunnersEnabled
+	}
+	in.Visibility = clients.LateInitializeVisibilityValue(in.Visibility, project.Visibility)
+	if in.PublicBuilds == nil {
+		in.PublicBuilds = &project.PublicBuilds
+	}
+	if in.OnlyAllowMergeIfPipelineSucceeds == nil {
+		in.OnlyAllowMergeIfPipelineSucceeds = &project.OnlyAllowMergeIfPipelineSucceeds
+	}
+	if in.OnlyAllowMergeIfAllDiscussionsAreResolved == nil {
+		in.OnlyAllowMergeIfAllDiscussionsAreResolved = &project.OnlyAllowMergeIfAllDiscussionsAreResolved
+	}
+	if in.RemoveSourceBranchAfterMerge == nil {
+		in.RemoveSourceBranchAfterMerge = &project.RemoveSourceBranchAfterMerge
+	}
+	if in.LFSEnabled == nil {
+		in.LFSEnabled = &project.LFSEnabled
+	}
+	if in.RequestAccessEnabled == nil {
+		in.RequestAccessEnabled = &project.RequestAccessEnabled
+	}
+	in.MergeMethod = clients.LateInitializeMergeMethodValue(in.MergeMethod, project.MergeMethod)
+	if len(in.TagList) == 0 && len(project.TagList) > 0 {
+		in.TagList = project.TagList
+	}
+	in.CIConfigPath = clients.LateInitializeStringPtr(in.CIConfigPath, project.CIConfigPath)
+	if in.CIDefaultGitDepth == nil {
+		in.CIDefaultGitDepth = &project.CIDefaultGitDepth
+	}
+	if in.ApprovalsBeforeMerge == nil {
+		in.ApprovalsBeforeMerge = &project.ApprovalsBeforeMerge
+	}
+	if in.Mirror == nil {
+		in.Mirror = &project.Mirror
+	}
+	if in.MirrorUserID == nil {
+		in.MirrorUserID = &project.MirrorUserID
+	}
+	if in.MirrorTriggerBuilds == nil {
+		in.MirrorTriggerBuilds = &project.MirrorTriggerBuilds
+	}
+	if in.OnlyMirrorProtectedBranches == nil {
+		in.OnlyMirrorProtectedBranches = &project.OnlyMirrorProtectedBranches
+	}
+	if in.MirrorOverwritesDivergedBranches == nil {
+		in.MirrorOverwritesDivergedBranches = &project.MirrorOverwritesDivergedBranches
+	}
+	if in.PackagesEnabled == nil {
+		in.PackagesEnabled = &project.PackagesEnabled
+	}
+	if in.ServiceDeskEnabled == nil {
+		in.ServiceDeskEnabled = &project.ServiceDeskEnabled
+	}
+	if in.AutocloseReferencedIssues == nil {
+		in.AutocloseReferencedIssues = &project.AutocloseReferencedIssues
+	}
+}
+
+// isProjectUpToDate checks whether there is a change in any of the modifiable fields.
+func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { // nolint:gocyclo
+	if !cmp.Equal(p.Path, clients.StringToPtr(g.Path)) {
+		return false
+	}
+	if !cmp.Equal(p.DefaultBranch, clients.StringToPtr(g.DefaultBranch)) {
+		return false
+	}
+	if !cmp.Equal(p.Description, clients.StringToPtr(g.Description)) {
+		return false
+	}
+	if p.IssuesAccessLevel != nil && !cmp.Equal(string(*p.IssuesAccessLevel), string(g.IssuesAccessLevel)) {
+		return false
+	}
+	if p.RepositoryAccessLevel != nil && !cmp.Equal(string(*p.RepositoryAccessLevel), string(g.RepositoryAccessLevel)) {
+		return false
+	}
+	if p.MergeRequestsAccessLevel != nil && !cmp.Equal(string(*p.MergeRequestsAccessLevel), string(g.MergeRequestsAccessLevel)) {
+		return false
+	}
+	if p.ForkingAccessLevel != nil && !cmp.Equal(string(*p.ForkingAccessLevel), string(g.ForkingAccessLevel)) {
+		return false
+	}
+	if p.BuildsAccessLevel != nil && !cmp.Equal(string(*p.BuildsAccessLevel), string(g.BuildsAccessLevel)) {
+		return false
+	}
+	if p.WikiAccessLevel != nil && !cmp.Equal(string(*p.WikiAccessLevel), string(g.WikiAccessLevel)) {
+		return false
+	}
+	if p.SnippetsAccessLevel != nil && !cmp.Equal(string(*p.SnippetsAccessLevel), string(g.SnippetsAccessLevel)) {
+		return false
+	}
+	if p.PagesAccessLevel != nil && !cmp.Equal(string(*p.PagesAccessLevel), string(g.PagesAccessLevel)) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.ResolveOutdatedDiffDiscussions, g.ResolveOutdatedDiffDiscussions) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.ContainerRegistryEnabled, g.ContainerRegistryEnabled) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.SharedRunnersEnabled, g.SharedRunnersEnabled) {
+		return false
+	}
+	if p.Visibility != nil && !cmp.Equal(string(*p.Visibility), string(g.Visibility)) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.PublicBuilds, g.PublicBuilds) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.OnlyAllowMergeIfPipelineSucceeds, g.OnlyAllowMergeIfPipelineSucceeds) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.OnlyAllowMergeIfAllDiscussionsAreResolved, g.OnlyAllowMergeIfAllDiscussionsAreResolved) {
+		return false
+	}
+	if p.MergeMethod != nil && !cmp.Equal(string(*p.MergeMethod), string(g.MergeMethod)) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.RemoveSourceBranchAfterMerge, g.RemoveSourceBranchAfterMerge) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.LFSEnabled, g.LFSEnabled) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.RequestAccessEnabled, g.RequestAccessEnabled) {
+		return false
+	}
+	if !cmp.Equal(p.TagList, g.TagList, cmpopts.EquateEmpty()) {
+		return false
+	}
+	if p.CIConfigPath != nil && !cmp.Equal(*p.CIConfigPath, g.CIConfigPath) {
+		return false
+	}
+	if !clients.IsIntEqualToIntPtr(p.CIDefaultGitDepth, g.CIDefaultGitDepth) {
+		return false
+	}
+	if !clients.IsIntEqualToIntPtr(p.ApprovalsBeforeMerge, g.ApprovalsBeforeMerge) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.Mirror, g.Mirror) {
+		return false
+	}
+	if !clients.IsIntEqualToIntPtr(p.MirrorUserID, g.MirrorUserID) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.MirrorTriggerBuilds, g.MirrorTriggerBuilds) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.OnlyMirrorProtectedBranches, g.OnlyMirrorProtectedBranches) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.MirrorOverwritesDivergedBranches, g.MirrorOverwritesDivergedBranches) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.PackagesEnabled, g.PackagesEnabled) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.ServiceDeskEnabled, g.ServiceDeskEnabled) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.AutocloseReferencedIssues, g.AutocloseReferencedIssues) {
+		return false
+	}
+	return true
 }

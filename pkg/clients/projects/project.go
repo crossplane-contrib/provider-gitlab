@@ -20,8 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/xanzy/go-gitlab"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -55,85 +53,6 @@ func IsErrorProjectNotFound(err error) bool {
 	return strings.Contains(err.Error(), errProjectNotFound)
 }
 
-// LateInitialize fills the empty fields in the project spec with the
-// values seen in gitlab.Project.
-func LateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { // nolint:gocyclo
-	if project == nil {
-		return
-	}
-	in.Path = clients.LateInitializeStringPtr(in.Path, project.Path)
-	in.DefaultBranch = clients.LateInitializeStringPtr(in.DefaultBranch, project.DefaultBranch)
-	in.Description = clients.LateInitializeStringPtr(in.Description, project.Description)
-	in.IssuesAccessLevel = clients.LateInitializeAccessControlValue(in.IssuesAccessLevel, project.IssuesAccessLevel)
-	in.RepositoryAccessLevel = clients.LateInitializeAccessControlValue(in.RepositoryAccessLevel, project.RepositoryAccessLevel)
-	in.MergeRequestsAccessLevel = clients.LateInitializeAccessControlValue(in.MergeRequestsAccessLevel, project.MergeRequestsAccessLevel)
-	in.ForkingAccessLevel = clients.LateInitializeAccessControlValue(in.ForkingAccessLevel, project.ForkingAccessLevel)
-	in.BuildsAccessLevel = clients.LateInitializeAccessControlValue(in.BuildsAccessLevel, project.BuildsAccessLevel)
-	in.WikiAccessLevel = clients.LateInitializeAccessControlValue(in.WikiAccessLevel, project.WikiAccessLevel)
-	in.SnippetsAccessLevel = clients.LateInitializeAccessControlValue(in.SnippetsAccessLevel, project.SnippetsAccessLevel)
-	in.PagesAccessLevel = clients.LateInitializeAccessControlValue(in.PagesAccessLevel, project.PagesAccessLevel)
-	if in.ResolveOutdatedDiffDiscussions == nil {
-		in.ResolveOutdatedDiffDiscussions = &project.ResolveOutdatedDiffDiscussions
-	}
-	if in.ContainerRegistryEnabled == nil {
-		in.ContainerRegistryEnabled = &project.ContainerRegistryEnabled
-	}
-	if in.SharedRunnersEnabled == nil {
-		in.SharedRunnersEnabled = &project.SharedRunnersEnabled
-	}
-	in.Visibility = clients.LateInitializeVisibilityValue(in.Visibility, project.Visibility)
-	if in.PublicBuilds == nil {
-		in.PublicBuilds = &project.PublicBuilds
-	}
-	if in.OnlyAllowMergeIfPipelineSucceeds == nil {
-		in.OnlyAllowMergeIfPipelineSucceeds = &project.OnlyAllowMergeIfPipelineSucceeds
-	}
-	if in.OnlyAllowMergeIfAllDiscussionsAreResolved == nil {
-		in.OnlyAllowMergeIfAllDiscussionsAreResolved = &project.OnlyAllowMergeIfAllDiscussionsAreResolved
-	}
-	if in.RemoveSourceBranchAfterMerge == nil {
-		in.RemoveSourceBranchAfterMerge = &project.RemoveSourceBranchAfterMerge
-	}
-	if in.LFSEnabled == nil {
-		in.LFSEnabled = &project.LFSEnabled
-	}
-	if in.RequestAccessEnabled == nil {
-		in.RequestAccessEnabled = &project.RequestAccessEnabled
-	}
-	in.MergeMethod = clients.LateInitializeMergeMethodValue(in.MergeMethod, project.MergeMethod)
-	if len(in.TagList) == 0 && len(project.TagList) > 0 {
-		in.TagList = project.TagList
-	}
-	in.CIConfigPath = clients.LateInitializeStringPtr(in.CIConfigPath, project.CIConfigPath)
-	if in.CIDefaultGitDepth == nil {
-		in.CIDefaultGitDepth = &project.CIDefaultGitDepth
-	}
-	if in.Mirror == nil {
-		in.Mirror = &project.Mirror
-	}
-	if in.MirrorUserID == nil {
-		in.MirrorUserID = &project.MirrorUserID
-	}
-	if in.MirrorTriggerBuilds == nil {
-		in.MirrorTriggerBuilds = &project.MirrorTriggerBuilds
-	}
-	if in.OnlyMirrorProtectedBranches == nil {
-		in.OnlyMirrorProtectedBranches = &project.OnlyMirrorProtectedBranches
-	}
-	if in.MirrorOverwritesDivergedBranches == nil {
-		in.MirrorOverwritesDivergedBranches = &project.MirrorOverwritesDivergedBranches
-	}
-	if in.PackagesEnabled == nil {
-		in.PackagesEnabled = &project.PackagesEnabled
-	}
-	if in.ServiceDeskEnabled == nil {
-		in.ServiceDeskEnabled = &project.ServiceDeskEnabled
-	}
-	if in.AutocloseReferencedIssues == nil {
-		in.AutocloseReferencedIssues = &project.AutocloseReferencedIssues
-	}
-}
-
 // GenerateObservation is used to produce v1alpha1.ProjectObservation from
 // gitlab.Project.
 func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // nolint:gocyclo
@@ -161,6 +80,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 		Archived:             prj.Archived,
 		ForksCount:           prj.ForksCount,
 		StarCount:            prj.StarCount,
+		RunnersToken:         prj.RunnersToken,
 	}
 
 	if prj.CreatedAt != nil {
@@ -420,123 +340,4 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 	}
 
 	return o
-}
-
-// IsProjectUpToDate checks whether there is a change in any of the modifiable fields.
-func IsProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { // nolint:gocyclo
-	if !cmp.Equal(p.Path, clients.StringToPtr(g.Path)) {
-		return false
-	}
-	if !cmp.Equal(p.DefaultBranch, clients.StringToPtr(g.DefaultBranch)) {
-		return false
-	}
-	if !cmp.Equal(p.Description, clients.StringToPtr(g.Description)) {
-		return false
-	}
-	if p.IssuesAccessLevel != nil {
-		if !cmp.Equal(string(*p.IssuesAccessLevel), string(g.IssuesAccessLevel)) {
-			return false
-		}
-	}
-	if p.RepositoryAccessLevel != nil {
-		if !cmp.Equal(string(*p.RepositoryAccessLevel), string(g.RepositoryAccessLevel)) {
-			return false
-		}
-	}
-	if p.MergeRequestsAccessLevel != nil {
-		if !cmp.Equal(string(*p.MergeRequestsAccessLevel), string(g.MergeRequestsAccessLevel)) {
-			return false
-		}
-	}
-	if p.ForkingAccessLevel != nil {
-		if !cmp.Equal(string(*p.ForkingAccessLevel), string(g.ForkingAccessLevel)) {
-			return false
-		}
-	}
-	if p.BuildsAccessLevel != nil {
-		if !cmp.Equal(string(*p.BuildsAccessLevel), string(g.BuildsAccessLevel)) {
-			return false
-		}
-	}
-	if p.WikiAccessLevel != nil {
-		if !cmp.Equal(string(*p.WikiAccessLevel), string(g.WikiAccessLevel)) {
-			return false
-		}
-	}
-	if p.SnippetsAccessLevel != nil {
-		if !cmp.Equal(string(*p.SnippetsAccessLevel), string(g.SnippetsAccessLevel)) {
-			return false
-		}
-	}
-	if p.PagesAccessLevel != nil {
-		if !cmp.Equal(string(*p.PagesAccessLevel), string(g.PagesAccessLevel)) {
-			return false
-		}
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.ResolveOutdatedDiffDiscussions, g.ResolveOutdatedDiffDiscussions) {
-		return false
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.ContainerRegistryEnabled, g.ContainerRegistryEnabled) {
-		return false
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.SharedRunnersEnabled, g.SharedRunnersEnabled) {
-		return false
-	}
-
-	if p.Visibility != nil {
-		if !cmp.Equal(string(*p.Visibility), string(g.Visibility)) {
-			return false
-		}
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.PublicBuilds, g.PublicBuilds) {
-		return false
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.OnlyAllowMergeIfPipelineSucceeds, g.OnlyAllowMergeIfPipelineSucceeds) {
-		return false
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.OnlyAllowMergeIfAllDiscussionsAreResolved, g.OnlyAllowMergeIfAllDiscussionsAreResolved) {
-		return false
-	}
-	if p.MergeMethod != nil {
-		if !cmp.Equal(string(*p.MergeMethod), string(g.MergeMethod)) {
-			return false
-		}
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.RemoveSourceBranchAfterMerge, g.RemoveSourceBranchAfterMerge) {
-		return false
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.LFSEnabled, g.LFSEnabled) {
-		return false
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.RequestAccessEnabled, g.RequestAccessEnabled) {
-		return false
-	}
-	if !cmp.Equal(p.TagList, g.TagList, cmpopts.EquateEmpty()) {
-		return false
-	}
-	if p.CIConfigPath != nil {
-		if !cmp.Equal(*p.CIConfigPath, g.CIConfigPath) {
-			return false
-		}
-	}
-	if !clients.IsIntEqualToIntPtr(p.ApprovalsBeforeMerge, g.ApprovalsBeforeMerge) {
-		return false
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.Mirror, g.Mirror) {
-		return false
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.MirrorTriggerBuilds, g.MirrorTriggerBuilds) {
-		return false
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.PackagesEnabled, g.PackagesEnabled) {
-		return false
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.ServiceDeskEnabled, g.ServiceDeskEnabled) {
-		return false
-	}
-	if !clients.IsBoolEqualToBoolPtr(p.AutocloseReferencedIssues, g.AutocloseReferencedIssues) {
-		return false
-	}
-
-	return true
 }
