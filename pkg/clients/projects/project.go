@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The Crossplane Authors.
+Copyright 2021 The Crossplane Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 		HTTPURLToRepo:        prj.HTTPURLToRepo,
 		WebURL:               prj.WebURL,
 		ReadmeURL:            prj.ReadmeURL,
+		NameWithNamespace:    prj.NameWithNamespace,
 		PathWithNamespace:    prj.PathWithNamespace,
 		IssuesEnabled:        prj.IssuesEnabled,
 		OpenIssuesCount:      prj.OpenIssuesCount,
@@ -81,6 +82,32 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 		ForksCount:           prj.ForksCount,
 		StarCount:            prj.StarCount,
 		RunnersToken:         prj.RunnersToken,
+		EmptyRepo:            prj.EmptyRepo,
+		AvatarURL:            prj.AvatarURL,
+		LicenseURL:           prj.LicenseURL,
+		ServiceDeskAddress:   prj.ServiceDeskAddress,
+	}
+
+	if prj.ContainerExpirationPolicy != nil {
+		o.ContainerExpirationPolicy = &v1alpha1.ContainerExpirationPolicy{
+			Cadence:         prj.ContainerExpirationPolicy.Cadence,
+			KeepN:           prj.ContainerExpirationPolicy.KeepN,
+			OlderThan:       prj.ContainerExpirationPolicy.OlderThan,
+			NameRegexDelete: prj.ContainerExpirationPolicy.NameRegexDelete,
+			NameRegexKeep:   prj.ContainerExpirationPolicy.NameRegexKeep,
+			Enabled:         prj.ContainerExpirationPolicy.Enabled,
+			NextRunAt:       &metav1.Time{Time: *prj.ContainerExpirationPolicy.NextRunAt},
+		}
+	}
+
+	if prj.License != nil {
+		o.License = &v1alpha1.ProjectLicense{
+			Key:       prj.License.Key,
+			Name:      prj.License.Name,
+			Nickname:  prj.License.Nickname,
+			HTMLURL:   prj.License.HTMLURL,
+			SourceURL: prj.License.SourceURL,
+		}
 	}
 
 	if prj.CreatedAt != nil {
@@ -238,27 +265,30 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 // GenerateCreateProjectOptions generates project creation options
 func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.CreateProjectOptions {
 	project := &gitlab.CreateProjectOptions{
-		Name:                             &name,
-		Path:                             p.Path,
-		NamespaceID:                      p.NamespaceID,
-		DefaultBranch:                    p.DefaultBranch,
-		Description:                      p.Description,
-		IssuesAccessLevel:                clients.AccessControlValueV1alpha1ToGitlab(p.IssuesAccessLevel),
-		RepositoryAccessLevel:            clients.AccessControlValueV1alpha1ToGitlab(p.RepositoryAccessLevel),
-		MergeRequestsAccessLevel:         clients.AccessControlValueV1alpha1ToGitlab(p.MergeRequestsAccessLevel),
-		ForkingAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.ForkingAccessLevel),
-		BuildsAccessLevel:                clients.AccessControlValueV1alpha1ToGitlab(p.BuildsAccessLevel),
-		WikiAccessLevel:                  clients.AccessControlValueV1alpha1ToGitlab(p.WikiAccessLevel),
-		SnippetsAccessLevel:              clients.AccessControlValueV1alpha1ToGitlab(p.SnippetsAccessLevel),
-		PagesAccessLevel:                 clients.AccessControlValueV1alpha1ToGitlab(p.PagesAccessLevel),
-		EmailsDisabled:                   p.EmailsDisabled,
-		ResolveOutdatedDiffDiscussions:   p.ResolveOutdatedDiffDiscussions,
-		ContainerRegistryEnabled:         p.ContainerRegistryEnabled,
-		SharedRunnersEnabled:             p.SharedRunnersEnabled,
-		Visibility:                       clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
-		ImportURL:                        p.ImportURL,
-		PublicBuilds:                     p.PublicBuilds,
-		OnlyAllowMergeIfPipelineSucceeds: p.OnlyAllowMergeIfPipelineSucceeds,
+		Name:                                &name,
+		Path:                                p.Path,
+		NamespaceID:                         p.NamespaceID,
+		DefaultBranch:                       p.DefaultBranch,
+		Description:                         p.Description,
+		IssuesAccessLevel:                   clients.AccessControlValueV1alpha1ToGitlab(p.IssuesAccessLevel),
+		RepositoryAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.RepositoryAccessLevel),
+		MergeRequestsAccessLevel:            clients.AccessControlValueV1alpha1ToGitlab(p.MergeRequestsAccessLevel),
+		ForkingAccessLevel:                  clients.AccessControlValueV1alpha1ToGitlab(p.ForkingAccessLevel),
+		BuildsAccessLevel:                   clients.AccessControlValueV1alpha1ToGitlab(p.BuildsAccessLevel),
+		WikiAccessLevel:                     clients.AccessControlValueV1alpha1ToGitlab(p.WikiAccessLevel),
+		SnippetsAccessLevel:                 clients.AccessControlValueV1alpha1ToGitlab(p.SnippetsAccessLevel),
+		PagesAccessLevel:                    clients.AccessControlValueV1alpha1ToGitlab(p.PagesAccessLevel),
+		OperationsAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.OperationsAccessLevel),
+		EmailsDisabled:                      p.EmailsDisabled,
+		ResolveOutdatedDiffDiscussions:      p.ResolveOutdatedDiffDiscussions,
+		ContainerExpirationPolicyAttributes: clients.ContainerExpirationPolicyAttributesV1alpha1ToGitlab(p.ContainerExpirationPolicyAttributes),
+		ContainerRegistryEnabled:            p.ContainerRegistryEnabled,
+		SharedRunnersEnabled:                p.SharedRunnersEnabled,
+		Visibility:                          clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
+		ImportURL:                           p.ImportURL,
+		PublicBuilds:                        p.PublicBuilds,
+		AllowMergeOnSkippedPipeline:         p.AllowMergeOnSkippedPipeline,
+		OnlyAllowMergeIfPipelineSucceeds:    p.OnlyAllowMergeIfPipelineSucceeds,
 		OnlyAllowMergeIfAllDiscussionsAreResolved: p.OnlyAllowMergeIfAllDiscussionsAreResolved,
 		MergeMethod:                              clients.MergeMethodV1alpha1ToGitlab(p.MergeMethod),
 		RemoveSourceBranchAfterMerge:             p.RemoveSourceBranchAfterMerge,
@@ -271,6 +301,7 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		AutoCancelPendingPipelines:               p.AutoCancelPendingPipelines,
 		BuildCoverageRegex:                       p.BuildCoverageRegex,
 		CIConfigPath:                             p.CIConfigPath,
+		CIForwardDeploymentEnabled:               p.CIForwardDeploymentEnabled,
 		AutoDevopsEnabled:                        p.AutoDevopsEnabled,
 		AutoDevopsDeployStrategy:                 p.AutoDevopsDeployStrategy,
 		ApprovalsBeforeMerge:                     p.ApprovalsBeforeMerge,
@@ -285,34 +316,39 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		PackagesEnabled:                          p.PackagesEnabled,
 		ServiceDeskEnabled:                       p.ServiceDeskEnabled,
 		AutocloseReferencedIssues:                p.AutocloseReferencedIssues,
+		SuggestionCommitMessage:                  p.SuggestionCommitMessage,
+		IssuesTemplate:                           p.IssuesTemplate,
+		MergeRequestsTemplate:                    p.MergeRequestsTemplate,
 	}
-
 	return project
 }
 
 // GenerateEditProjectOptions generates project edit options
 func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.EditProjectOptions {
 	o := &gitlab.EditProjectOptions{
-		Name:                             &name,
-		Path:                             p.Path,
-		DefaultBranch:                    p.DefaultBranch,
-		Description:                      p.Description,
-		IssuesAccessLevel:                clients.AccessControlValueV1alpha1ToGitlab(p.IssuesAccessLevel),
-		RepositoryAccessLevel:            clients.AccessControlValueV1alpha1ToGitlab(p.RepositoryAccessLevel),
-		MergeRequestsAccessLevel:         clients.AccessControlValueV1alpha1ToGitlab(p.MergeRequestsAccessLevel),
-		ForkingAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.ForkingAccessLevel),
-		BuildsAccessLevel:                clients.AccessControlValueV1alpha1ToGitlab(p.BuildsAccessLevel),
-		WikiAccessLevel:                  clients.AccessControlValueV1alpha1ToGitlab(p.WikiAccessLevel),
-		SnippetsAccessLevel:              clients.AccessControlValueV1alpha1ToGitlab(p.SnippetsAccessLevel),
-		PagesAccessLevel:                 clients.AccessControlValueV1alpha1ToGitlab(p.PagesAccessLevel),
-		EmailsDisabled:                   p.EmailsDisabled,
-		ResolveOutdatedDiffDiscussions:   p.ResolveOutdatedDiffDiscussions,
-		ContainerRegistryEnabled:         p.ContainerRegistryEnabled,
-		SharedRunnersEnabled:             p.SharedRunnersEnabled,
-		Visibility:                       clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
-		ImportURL:                        p.ImportURL,
-		PublicBuilds:                     p.PublicBuilds,
-		OnlyAllowMergeIfPipelineSucceeds: p.OnlyAllowMergeIfPipelineSucceeds,
+		Name:                                &name,
+		Path:                                p.Path,
+		DefaultBranch:                       p.DefaultBranch,
+		Description:                         p.Description,
+		IssuesAccessLevel:                   clients.AccessControlValueV1alpha1ToGitlab(p.IssuesAccessLevel),
+		RepositoryAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.RepositoryAccessLevel),
+		MergeRequestsAccessLevel:            clients.AccessControlValueV1alpha1ToGitlab(p.MergeRequestsAccessLevel),
+		ForkingAccessLevel:                  clients.AccessControlValueV1alpha1ToGitlab(p.ForkingAccessLevel),
+		BuildsAccessLevel:                   clients.AccessControlValueV1alpha1ToGitlab(p.BuildsAccessLevel),
+		WikiAccessLevel:                     clients.AccessControlValueV1alpha1ToGitlab(p.WikiAccessLevel),
+		SnippetsAccessLevel:                 clients.AccessControlValueV1alpha1ToGitlab(p.SnippetsAccessLevel),
+		PagesAccessLevel:                    clients.AccessControlValueV1alpha1ToGitlab(p.PagesAccessLevel),
+		OperationsAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.OperationsAccessLevel),
+		EmailsDisabled:                      p.EmailsDisabled,
+		ResolveOutdatedDiffDiscussions:      p.ResolveOutdatedDiffDiscussions,
+		ContainerExpirationPolicyAttributes: clients.ContainerExpirationPolicyAttributesV1alpha1ToGitlab(p.ContainerExpirationPolicyAttributes),
+		ContainerRegistryEnabled:            p.ContainerRegistryEnabled,
+		SharedRunnersEnabled:                p.SharedRunnersEnabled,
+		Visibility:                          clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
+		ImportURL:                           p.ImportURL,
+		PublicBuilds:                        p.PublicBuilds,
+		AllowMergeOnSkippedPipeline:         p.AllowMergeOnSkippedPipeline,
+		OnlyAllowMergeIfPipelineSucceeds:    p.OnlyAllowMergeIfPipelineSucceeds,
 		OnlyAllowMergeIfAllDiscussionsAreResolved: p.OnlyAllowMergeIfAllDiscussionsAreResolved,
 		MergeMethod:                              clients.MergeMethodV1alpha1ToGitlab(p.MergeMethod),
 		RemoveSourceBranchAfterMerge:             p.RemoveSourceBranchAfterMerge,
@@ -324,6 +360,7 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		AutoCancelPendingPipelines:               p.AutoCancelPendingPipelines,
 		BuildCoverageRegex:                       p.BuildCoverageRegex,
 		CIConfigPath:                             p.CIConfigPath,
+		CIForwardDeploymentEnabled:               p.CIForwardDeploymentEnabled,
 		CIDefaultGitDepth:                        p.CIDefaultGitDepth,
 		AutoDevopsEnabled:                        p.AutoDevopsEnabled,
 		AutoDevopsDeployStrategy:                 p.AutoDevopsDeployStrategy,
@@ -337,7 +374,9 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		PackagesEnabled:                          p.PackagesEnabled,
 		ServiceDeskEnabled:                       p.ServiceDeskEnabled,
 		AutocloseReferencedIssues:                p.AutocloseReferencedIssues,
+		SuggestionCommitMessage:                  p.SuggestionCommitMessage,
+		IssuesTemplate:                           p.IssuesTemplate,
+		MergeRequestsTemplate:                    p.MergeRequestsTemplate,
 	}
-
 	return o
 }
