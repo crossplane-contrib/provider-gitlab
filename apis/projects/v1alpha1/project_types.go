@@ -76,40 +76,40 @@ type UserIdentity struct {
 //
 // GitLab API docs: https://docs.gitlab.com/ee/api/users.html
 type User struct {
-	ID                        int                `json:"id"`
-	Username                  string             `json:"username"`
-	Email                     string             `json:"email"`
-	Name                      string             `json:"name"`
-	State                     string             `json:"state"`
-	WebURL                    string             `json:"webUrl"`
-	CreatedAt                 *metav1.Time       `json:"createdAt"`
-	Bio                       string             `json:"bio"`
-	Location                  string             `json:"location"`
-	PublicEmail               string             `json:"publicEmail"`
-	Skype                     string             `json:"skype"`
-	Linkedin                  string             `json:"linkedin"`
-	Twitter                   string             `json:"twitter"`
-	WebsiteURL                string             `json:"websiteUrl"`
-	Organization              string             `json:"organization"`
-	ExternUID                 string             `json:"externUid"`
-	Provider                  string             `json:"provider"`
-	ThemeID                   int                `json:"themeId"`
-	LastActivityOn            *metav1.Time       `json:"lastActivityOn"`
-	ColorSchemeID             int                `json:"colorSchemeId"`
-	IsAdmin                   bool               `json:"isAdmin"`
-	AvatarURL                 string             `json:"avatarUrl"`
-	CanCreateGroup            bool               `json:"canCreateGroup"`
-	CanCreateProject          bool               `json:"canCreateProject"`
-	ProjectsLimit             int                `json:"projectsLimit"`
-	CurrentSignInAt           *metav1.Time       `json:"currentSignInAt"`
-	LastSignInAt              *metav1.Time       `json:"lastSignInAt"`
-	ConfirmedAt               *metav1.Time       `json:"confirmedAt"`
-	TwoFactorEnabled          bool               `json:"twoFactorEnabled"`
-	Identities                []*UserIdentity    `json:"identities"`
-	External                  bool               `json:"external"`
-	PrivateProfile            bool               `json:"privateProfile"`
-	SharedRunnersMinutesLimit int                `json:"sharedRunnersMinutesLimit"`
-	CustomAttributes          []*CustomAttribute `json:"customAttributes"`
+	ID                        int                `json:"id,omitempty"`
+	Username                  string             `json:"username,omitempty"`
+	Email                     string             `json:"email,omitempty"`
+	Name                      string             `json:"name,omitempty"`
+	State                     string             `json:"state,omitempty"`
+	WebURL                    string             `json:"webUrl,omitempty"`
+	CreatedAt                 *metav1.Time       `json:"createdAt,omitempty"`
+	Bio                       string             `json:"bio,omitempty"`
+	Location                  string             `json:"location,omitempty"`
+	PublicEmail               string             `json:"publicEmail,omitempty"`
+	Skype                     string             `json:"skype,omitempty"`
+	Linkedin                  string             `json:"linkedin,omitempty"`
+	Twitter                   string             `json:"twitter,omitempty"`
+	WebsiteURL                string             `json:"websiteUrl,omitempty"`
+	Organization              string             `json:"organization,omitempty"`
+	ExternUID                 string             `json:"externUid,omitempty"`
+	Provider                  string             `json:"provider,omitempty"`
+	ThemeID                   int                `json:"themeId,omitempty"`
+	LastActivityOn            *metav1.Time       `json:"lastActivityOn,omitempty"`
+	ColorSchemeID             int                `json:"colorSchemeId,omitempty"`
+	IsAdmin                   bool               `json:"isAdmin,omitempty"`
+	AvatarURL                 string             `json:"avatarUrl,omitempty"`
+	CanCreateGroup            bool               `json:"canCreateGroup,omitempty"`
+	CanCreateProject          bool               `json:"canCreateProject,omitempty"`
+	ProjectsLimit             int                `json:"projectsLimit,omitempty"`
+	CurrentSignInAt           *metav1.Time       `json:"currentSignInAt,omitempty"`
+	LastSignInAt              *metav1.Time       `json:"lastSignInAt,omitempty"`
+	ConfirmedAt               *metav1.Time       `json:"confirmedAt,omitempty"`
+	TwoFactorEnabled          bool               `json:"twoFactorEnabled,omitempty"`
+	Identities                []*UserIdentity    `json:"identities,omitempty"`
+	External                  bool               `json:"external,omitempty"`
+	PrivateProfile            bool               `json:"privateProfile,omitempty"`
+	SharedRunnersMinutesLimit int                `json:"sharedRunnersMinutesLimit,omitempty"`
+	CustomAttributes          []*CustomAttribute `json:"customAttributes,omitempty"`
 }
 
 // ProjectParameters define the desired state of a Gitlab Project
@@ -117,7 +117,6 @@ type ProjectParameters struct {
 	// +optional
 	Path *string `json:"path,omitempty"`
 
-	// +immutable
 	// +optional
 	NamespaceID *int `json:"namespaceId,omitempty"`
 
