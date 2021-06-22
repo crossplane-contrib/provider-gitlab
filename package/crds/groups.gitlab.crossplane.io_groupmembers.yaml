@@ -1,0 +1,188 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  name: groupmembers.groups.gitlab.crossplane.io
+spec:
+  group: groups.gitlab.crossplane.io
+  names:
+    categories:
+    - crossplane
+    - managed
+    - gitlab
+    kind: GroupMember
+    listKind: GroupMemberList
+    plural: groupmembers
+    singular: groupmember
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Synced')].status
+      name: SYNCED
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    - jsonPath: .spec.forProvider.groupID
+      name: Group ID
+      type: integer
+    - jsonPath: .status.atProvider.username
+      name: Username
+      type: string
+    - jsonPath: .spec.forProvider.accessLevel
+      name: Acceess Level
+      type: integer
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: A GroupMember is a managed resource that represents a Gitlab GroupMember
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: A GroupMemberSpec defines the desired state of a Gitlab GroupMember.
+            properties:
+              deletionPolicy:
+                description: DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted - either "Delete" or "Orphan" the external resource. The "Delete" policy is the default when no policy is specified.
+                enum:
+                - Orphan
+                - Delete
+                type: string
+              forProvider:
+                description: A GroupMemberParameters defines the desired state of a Gitlab GroupMember.
+                properties:
+                  accessLevel:
+                    description: A valid access level.
+                    type: integer
+                  expiresAt:
+                    description: A date string in the format YEAR-MONTH-DAY.
+                    type: string
+                  groupID:
+                    description: The ID of the group owned by the authenticated user.
+                    type: integer
+                  userID:
+                    description: The user ID of the member.
+                    type: integer
+                required:
+                - accessLevel
+                - groupID
+                - userID
+                type: object
+              providerConfigRef:
+                description: ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured.
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                required:
+                - name
+                type: object
+              providerRef:
+                description: 'ProviderReference specifies the provider that will be used to create, observe, update, and delete this managed resource. Deprecated: Please use ProviderConfigReference, i.e. `providerConfigRef`'
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                required:
+                - name
+                type: object
+              writeConnectionSecretToRef:
+                description: WriteConnectionSecretToReference specifies the namespace and name of a Secret to which any connection details for this managed resource should be written. Connection details frequently include the endpoint, username, and password required to connect to the managed resource.
+                properties:
+                  name:
+                    description: Name of the secret.
+                    type: string
+                  namespace:
+                    description: Namespace of the secret.
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+            required:
+            - forProvider
+            type: object
+          status:
+            description: A GroupMemberStatus represents the observed state of a Gitlab GroupMember.
+            properties:
+              atProvider:
+                description: "GroupMemberObservation represents a group member. \n GitLab API docs: https://docs.gitlab.com/ce/api/groups.html#list-group-members"
+                properties:
+                  avatarURL:
+                    type: string
+                  groupSamlIdentity:
+                    description: "GroupMemberSAMLIdentity represents the SAML Identity link for the group member. \n GitLab API docs: https://docs.gitlab.com/ce/api/members.html#list-all-members-of-a-group-or-project Gitlab MR for API change: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/20357 Gitlab MR for API Doc change: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/25652"
+                    properties:
+                      externUID:
+                        type: string
+                      provider:
+                        type: string
+                      samlProviderID:
+                        type: integer
+                    required:
+                    - externUID
+                    - provider
+                    - samlProviderID
+                    type: object
+                  name:
+                    type: string
+                  state:
+                    type: string
+                  username:
+                    type: string
+                  webURL:
+                    type: string
+                type: object
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  description: A Condition that may apply to a resource.
+                  properties:
+                    lastTransitionTime:
+                      description: LastTransitionTime is the last time this condition transitioned from one status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A Message containing details about this condition's last transition from one status to another, if any.
+                      type: string
+                    reason:
+                      description: A Reason for this condition's last transition from one status to another.
+                      type: string
+                    status:
+                      description: Status of this condition; is it currently True, False, or Unknown?
+                      type: string
+                    type:
+                      description: Type of this condition. At most one of each condition type may apply to a resource at any point in time.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

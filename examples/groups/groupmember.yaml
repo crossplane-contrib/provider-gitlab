@@ -1,0 +1,15 @@
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: GroupMember
+metadata:
+  name: example-group-member
+spec:
+  forProvider:
+    groupID: <gitlab-group-id>
+    userID: <gitlab-user-id>
+    accessLevel: 20
+    # expiresAt: "2021-06-09"
+  providerConfigRef:
+    name: gitlab-provider
+  writeConnectionSecretToRef:
+    name: gitlab-group-example-groupmember
+    namespace: crossplane-system
