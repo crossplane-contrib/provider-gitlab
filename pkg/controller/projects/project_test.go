@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The Crossplane Authors.
+Copyright 2021 The Crossplane Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,6 +80,8 @@ func withClientDefaultValues() projectModifier {
 		f := false
 		i := 0
 		p.Spec.ForProvider = v1alpha1.ProjectParameters{
+			AllowMergeOnSkippedPipeline:               &f,
+			CIForwardDeploymentEnabled:                &f,
 			NamespaceID:                               &i,
 			EmailsDisabled:                            &f,
 			ResolveOutdatedDiffDiscussions:            &f,
@@ -327,6 +329,8 @@ func TestObserve(t *testing.T) {
 		"PackagesEnabled":                           true,
 		"ServiceDeskEnabled":                        true,
 		"AutocloseReferencedIssues":                 true,
+		"AllowMergeOnSkippedPipeline":               true,
+		"CIForwardDeploymentEnabled":                true,
 	}
 
 	f := false
@@ -372,6 +376,8 @@ func TestObserve(t *testing.T) {
 		PackagesEnabled:                  &f,
 		ServiceDeskEnabled:               &f,
 		AutocloseReferencedIssues:        &f,
+		AllowMergeOnSkippedPipeline:      &f,
+		CIForwardDeploymentEnabled:       &f,
 	}
 
 	for name, value := range isProjectUpToDateCases {
@@ -419,6 +425,8 @@ func TestObserve(t *testing.T) {
 			PackagesEnabled:                  f,
 			ServiceDeskEnabled:               f,
 			AutocloseReferencedIssues:        f,
+			AllowMergeOnSkippedPipeline:      f,
+			CIForwardDeploymentEnabled:       f,
 		}
 		gitlabProject.Name = name
 		structValue := reflect.ValueOf(gitlabProject).Elem()
