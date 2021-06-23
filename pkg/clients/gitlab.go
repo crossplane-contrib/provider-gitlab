@@ -144,6 +144,11 @@ func AccessControlValueV1alpha1ToGitlab(from *v1alpha1.AccessControlValue) *gitl
 	return (*gitlab.AccessControlValue)(from)
 }
 
+// ContainerExpirationPolicyAttributesV1alpha1ToGitlab converts *v1alpha1.ContainerExpirationPolicyAttributes to *gitlab.ContainerExpirationPolicyAttributes
+func ContainerExpirationPolicyAttributesV1alpha1ToGitlab(from *v1alpha1.ContainerExpirationPolicyAttributes) *gitlab.ContainerExpirationPolicyAttributes {
+	return (*gitlab.ContainerExpirationPolicyAttributes)(from)
+}
+
 // AccessControlValueStringToGitlab converts string to *gitlab.AccessControlValue
 func AccessControlValueStringToGitlab(from string) *gitlab.AccessControlValue {
 	return (*gitlab.AccessControlValue)(&from)
