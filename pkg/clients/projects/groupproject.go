@@ -28,39 +28,39 @@ import (
 )
 
 const (
-	errProjectNotFound = "404 Project Not Found"
+	errGroupProjectNotFound = "404 GroupProject Not Found"
 )
 
-// Client defines Gitlab Project service operations
-type Client interface {
+// GroupProjectClient defines Gitlab Project service operations
+type GroupProjectClient interface {
 	GetProject(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	CreateProject(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	EditProject(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	DeleteProject(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
-// NewProjectClient returns a new Gitlab Project service
-func NewProjectClient(cfg clients.Config) Client {
+// NewGroupProjectClient returns a new Gitlab Project service
+func NewGroupProjectClient(cfg clients.Config) Client {
 	git := clients.NewClient(cfg)
 	return git.Projects
 }
 
-// IsErrorProjectNotFound helper function to test for errProjectNotFound error.
-func IsErrorProjectNotFound(err error) bool {
+// IsErrorGroupProjectNotFound helper function to test for errGroupProjectNotFound error.
+func IsErrorGroupProjectNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	return strings.Contains(err.Error(), errProjectNotFound)
+	return strings.Contains(err.Error(), errGroupProjectNotFound)
 }
 
-// GenerateObservation is used to produce v1alpha1.ProjectObservation from
+// GenerateGroupProjectObservation is used to produce v1alpha1.GroupProjectObservation from
 // gitlab.Project.
-func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // nolint:gocyclo
+func GenerateGroupProjectObservation(prj *gitlab.Project) v1alpha1.GroupProjectObservation { // nolint:gocyclo
 	if prj == nil {
-		return v1alpha1.ProjectObservation{}
+		return v1alpha1.GroupProjectObservation{}
 	}
 
-	o := v1alpha1.ProjectObservation{
+	o := v1alpha1.GroupProjectObservation{
 		ID:                   prj.ID,
 		Public:               prj.Public,
 		SSHURLToRepo:         prj.SSHURLToRepo,
@@ -262,11 +262,12 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 	return o
 }
 
-// GenerateCreateProjectOptions generates project creation options
-func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.CreateProjectOptions {
+// GenerateCreateGroupProjectOptions generates project creation options
+func GenerateCreateGroupProjectOptions(name string, p *v1alpha1.GroupProjectParameters) *gitlab.CreateProjectOptions {
 	project := &gitlab.CreateProjectOptions{
 		Name:                                &name,
 		Path:                                p.Path,
+		NamespaceID:                         p.NamespaceID,
 		DefaultBranch:                       p.DefaultBranch,
 		Description:                         p.Description,
 		IssuesAccessLevel:                   clients.AccessControlValueV1alpha1ToGitlab(p.IssuesAccessLevel),
@@ -322,8 +323,8 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 	return project
 }
 
-// GenerateEditProjectOptions generates project edit options
-func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.EditProjectOptions {
+// GenerateEditGroupProjectOptions generates project edit options
+func GenerateEditGroupProjectOptions(name string, p *v1alpha1.GroupProjectParameters) *gitlab.EditProjectOptions {
 	o := &gitlab.EditProjectOptions{
 		Name:                                &name,
 		Path:                                p.Path,

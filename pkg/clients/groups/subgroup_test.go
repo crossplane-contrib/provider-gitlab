@@ -28,52 +28,10 @@ import (
 )
 
 var (
-	name                           = "example-group"
-	path                           = "example/path/to/group"
-	description                    = "group description"
-	membershipLock                 = true
-	visibility                     = "private"
-	v1alpha1Visibility             = v1alpha1.VisibilityValue(visibility)
-	gitlabVisibility               = gitlab.VisibilityValue(visibility)
-	shareWithGroupLock             = true
-	requireTwoFactorAuth           = false
-	twoFactorGracePeriod           = 48
-	projectCreationLevel           = "developer"
-	v1alpha1ProjectCreationLevel   = v1alpha1.ProjectCreationLevelValue(projectCreationLevel)
-	gitlabProjectCreationLevel     = gitlab.ProjectCreationLevelValue(projectCreationLevel)
-	autoDevopsEnabled              = true
-	subGroupCreationLevel          = "maintainer"
-	v1alpha1SubGroupCreationLevel  = v1alpha1.SubGroupCreationLevelValue(subGroupCreationLevel)
-	gitlabSubGroupCreationLevel    = gitlab.SubGroupCreationLevelValue(subGroupCreationLevel)
-	emailsDisabled                 = true
-	mentionsDisabled               = true
-	LFSEnabled                     = true
-	requestAccessEnabled           = true
-	sharedRunnersMinutesLimit      = 0
-	extraSharedRunnersMinutesLimit = 0
-	storageSize                    = int64(10)
-	repositorySize                 = int64(20)
-	lfsObjectsSize                 = int64(30)
-	jobArtifactsSize               = int64(40)
-	v1alpha1Statistics             = v1alpha1.StorageStatistics{
-		StorageSize:      storageSize,
-		RepositorySize:   repositorySize,
-		LfsObjectsSize:   lfsObjectsSize,
-		JobArtifactsSize: jobArtifactsSize,
-	}
-	gitlabStatistics = gitlab.StorageStatistics{
-		StorageSize:      storageSize,
-		RepositorySize:   repositorySize,
-		LfsObjectsSize:   lfsObjectsSize,
-		JobArtifactsSize: jobArtifactsSize,
-	}
-	LDAPAccess         = 0
-	groupAccessLevel   = 50
-	v1alpha1LDAPAccess = v1alpha1.AccessLevelValue(LDAPAccess)
-	gitlabLDAPAccess   = gitlab.AccessLevelValue(LDAPAccess)
+	parentID = 0
 )
 
-func TestGenerateObservation(t *testing.T) {
+func TestGenerateSubGroupObservation(t *testing.T) {
 	id := 0
 	webURL := "web.url"
 	fullName := "Full name"
@@ -102,7 +60,7 @@ func TestGenerateObservation(t *testing.T) {
 	}
 	cases := map[string]struct {
 		args args
-		want v1alpha1.GroupObservation
+		want v1alpha1.SubGroupObservation
 	}{
 		"Full": {
 			args: args{
@@ -145,7 +103,7 @@ func TestGenerateObservation(t *testing.T) {
 					CreatedAt:           &gitlabCreatedAt,
 				},
 			},
-			want: v1alpha1.GroupObservation{
+			want: v1alpha1.SubGroupObservation{
 				ID:         id,
 				WebURL:     webURL,
 				FullName:   fullName,
@@ -174,7 +132,7 @@ func TestGenerateObservation(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateObservation(tc.args.p)
+			got := GenerateSubGroupObservation(tc.args.p)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
@@ -182,10 +140,10 @@ func TestGenerateObservation(t *testing.T) {
 	}
 }
 
-func TestGenerateCreateGroupOptions(t *testing.T) {
+func TestGenerateCreateSubGroupOptions(t *testing.T) {
 	type args struct {
 		name       string
-		parameters *v1alpha1.GroupParameters
+		parameters *v1alpha1.SubGroupParameters
 	}
 	cases := map[string]struct {
 		args args
@@ -194,7 +152,7 @@ func TestGenerateCreateGroupOptions(t *testing.T) {
 		"AllFields": {
 			args: args{
 				name: name,
-				parameters: &v1alpha1.GroupParameters{
+				parameters: &v1alpha1.SubGroupParameters{
 					Path:                           path,
 					Description:                    &description,
 					MembershipLock:                 &membershipLock,
@@ -209,6 +167,7 @@ func TestGenerateCreateGroupOptions(t *testing.T) {
 					MentionsDisabled:               &mentionsDisabled,
 					LFSEnabled:                     &LFSEnabled,
 					RequestAccessEnabled:           &requestAccessEnabled,
+					ParentID:                       &parentID,
 					SharedRunnersMinutesLimit:      &sharedRunnersMinutesLimit,
 					ExtraSharedRunnersMinutesLimit: &extraSharedRunnersMinutesLimit,
 				},
@@ -229,6 +188,7 @@ func TestGenerateCreateGroupOptions(t *testing.T) {
 				MentionsDisabled:               &mentionsDisabled,
 				LFSEnabled:                     &LFSEnabled,
 				RequestAccessEnabled:           &requestAccessEnabled,
+				ParentID:                       &parentID,
 				SharedRunnersMinutesLimit:      &sharedRunnersMinutesLimit,
 				ExtraSharedRunnersMinutesLimit: &extraSharedRunnersMinutesLimit,
 			},
@@ -236,7 +196,7 @@ func TestGenerateCreateGroupOptions(t *testing.T) {
 		"SomeFields": {
 			args: args{
 				name: name,
-				parameters: &v1alpha1.GroupParameters{
+				parameters: &v1alpha1.SubGroupParameters{
 					Path:               path,
 					Description:        &description,
 					MembershipLock:     &membershipLock,
@@ -257,7 +217,7 @@ func TestGenerateCreateGroupOptions(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateCreateGroupOptions(tc.args.name, tc.args.parameters)
+			got := GenerateCreateSubGroupOptions(tc.args.name, tc.args.parameters)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
@@ -265,10 +225,10 @@ func TestGenerateCreateGroupOptions(t *testing.T) {
 	}
 }
 
-func TestGenerateEditGroupOptions(t *testing.T) {
+func TestGenerateEditSubGroupOptions(t *testing.T) {
 	type args struct {
 		name       string
-		parameters *v1alpha1.GroupParameters
+		parameters *v1alpha1.SubGroupParameters
 	}
 	cases := map[string]struct {
 		args args
@@ -277,7 +237,7 @@ func TestGenerateEditGroupOptions(t *testing.T) {
 		"AllFields": {
 			args: args{
 				name: name,
-				parameters: &v1alpha1.GroupParameters{
+				parameters: &v1alpha1.SubGroupParameters{
 					Path:                           path,
 					Description:                    &description,
 					MembershipLock:                 &membershipLock,
@@ -292,6 +252,7 @@ func TestGenerateEditGroupOptions(t *testing.T) {
 					MentionsDisabled:               &mentionsDisabled,
 					LFSEnabled:                     &LFSEnabled,
 					RequestAccessEnabled:           &requestAccessEnabled,
+					ParentID:                       &parentID,
 					SharedRunnersMinutesLimit:      &sharedRunnersMinutesLimit,
 					ExtraSharedRunnersMinutesLimit: &extraSharedRunnersMinutesLimit,
 				},
@@ -312,6 +273,7 @@ func TestGenerateEditGroupOptions(t *testing.T) {
 				MentionsDisabled:               &mentionsDisabled,
 				LFSEnabled:                     &LFSEnabled,
 				RequestAccessEnabled:           &requestAccessEnabled,
+				ParentID:                       &parentID,
 				SharedRunnersMinutesLimit:      &sharedRunnersMinutesLimit,
 				ExtraSharedRunnersMinutesLimit: &extraSharedRunnersMinutesLimit,
 			},
@@ -319,7 +281,7 @@ func TestGenerateEditGroupOptions(t *testing.T) {
 		"SomeFields": {
 			args: args{
 				name: name,
-				parameters: &v1alpha1.GroupParameters{
+				parameters: &v1alpha1.SubGroupParameters{
 					Path:           path,
 					Description:    &description,
 					Visibility:     &v1alpha1Visibility,
@@ -338,7 +300,7 @@ func TestGenerateEditGroupOptions(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateEditGroupOptions(tc.args.name, tc.args.parameters)
+			got := GenerateEditSubGroupOptions(tc.args.name, tc.args.parameters)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}

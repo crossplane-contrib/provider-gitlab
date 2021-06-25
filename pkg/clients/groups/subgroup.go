@@ -28,53 +28,38 @@ import (
 )
 
 const (
-	errGroupNotFound = "404 Group Not Found"
+	errSubGroupNotFound = "404 SubGroup Not Found"
 )
 
-// Client defines Gitlab Group service operations
-type Client interface {
+// SubGroupClient defines Gitlab Group service operations
+type SubGroupClient interface {
 	GetGroup(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	CreateGroup(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	UpdateGroup(gid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	DeleteGroup(gid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
-// NewGroupClient returns a new Gitlab Group service
-func NewGroupClient(cfg clients.Config) Client {
+// NewSubGroupClient returns a new Gitlab Group service
+func NewSubGroupClient(cfg clients.Config) Client {
 	git := clients.NewClient(cfg)
 	return git.Groups
 }
 
-// IsErrorGroupNotFound helper function to test for errGroupNotFound error.
-func IsErrorGroupNotFound(err error) bool {
+// IsErrorSubGroupNotFound helper function to test for errSubGroupNotFound error.
+func IsErrorSubGroupNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	return strings.Contains(err.Error(), errGroupNotFound)
+	return strings.Contains(err.Error(), errSubGroupNotFound)
 }
 
-// VisibilityValueV1alpha1ToGitlab converts *v1alpha1.VisibilityValue to *gitlab.VisibilityValue
-func VisibilityValueV1alpha1ToGitlab(from *v1alpha1.VisibilityValue) *gitlab.VisibilityValue {
-	return (*gitlab.VisibilityValue)(from)
-}
-
-// ProjectCreationLevelValueV1alpha1ToGitlab converts *v1alpha1.ProjectCreationLevelValue to *gitlab.ProjectCreationLevelValue
-func ProjectCreationLevelValueV1alpha1ToGitlab(from *v1alpha1.ProjectCreationLevelValue) *gitlab.ProjectCreationLevelValue {
-	return (*gitlab.ProjectCreationLevelValue)(from)
-}
-
-// SubGroupCreationLevelValueV1alpha1ToGitlab converts *v1alpha1.SubGroupCreationLevelValue to *gitlab.SubGroupCreationLevelValue
-func SubGroupCreationLevelValueV1alpha1ToGitlab(from *v1alpha1.SubGroupCreationLevelValue) *gitlab.SubGroupCreationLevelValue {
-	return (*gitlab.SubGroupCreationLevelValue)(from)
-}
-
-// GenerateObservation is used to produce v1alpha1.GroupGitLabObservation from
+// GenerateSubGroupObservation is used to produce v1alpha1.SubGroupObservation from
 // gitlab.Group.
-func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { // nolint:gocyclo
+func GenerateSubGroupObservation(grp *gitlab.Group) v1alpha1.SubGroupObservation { // nolint:gocyclo
 	if grp == nil {
-		return v1alpha1.GroupObservation{}
+		return v1alpha1.SubGroupObservation{}
 	}
-	group := v1alpha1.GroupObservation{
+	group := v1alpha1.SubGroupObservation{
 		ID:           grp.ID,
 		AvatarURL:    grp.AvatarURL,
 		WebURL:       grp.WebURL,
@@ -132,8 +117,8 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { // nolin
 	return group
 }
 
-// GenerateCreateGroupOptions generates group creation options
-func GenerateCreateGroupOptions(name string, p *v1alpha1.GroupParameters) *gitlab.CreateGroupOptions {
+// GenerateCreateSubGroupOptions generates subgroup creation options
+func GenerateCreateSubGroupOptions(name string, p *v1alpha1.SubGroupParameters) *gitlab.CreateGroupOptions {
 	group := &gitlab.CreateGroupOptions{
 		Name:                           &name,
 		Path:                           &p.Path,
@@ -150,6 +135,7 @@ func GenerateCreateGroupOptions(name string, p *v1alpha1.GroupParameters) *gitla
 		MentionsDisabled:               p.MentionsDisabled,
 		LFSEnabled:                     p.LFSEnabled,
 		RequestAccessEnabled:           p.RequestAccessEnabled,
+		ParentID:                       p.ParentID,
 		SharedRunnersMinutesLimit:      p.SharedRunnersMinutesLimit,
 		ExtraSharedRunnersMinutesLimit: p.ExtraSharedRunnersMinutesLimit,
 	}
@@ -157,8 +143,8 @@ func GenerateCreateGroupOptions(name string, p *v1alpha1.GroupParameters) *gitla
 	return group
 }
 
-// GenerateEditGroupOptions generates group edit options
-func GenerateEditGroupOptions(name string, p *v1alpha1.GroupParameters) *gitlab.UpdateGroupOptions {
+// GenerateEditSubGroupOptions generates subgroup edit options
+func GenerateEditSubGroupOptions(name string, p *v1alpha1.SubGroupParameters) *gitlab.UpdateGroupOptions {
 	group := &gitlab.UpdateGroupOptions{
 		Name:                           &name,
 		Path:                           &p.Path,
@@ -175,6 +161,7 @@ func GenerateEditGroupOptions(name string, p *v1alpha1.GroupParameters) *gitlab.
 		MentionsDisabled:               p.MentionsDisabled,
 		LFSEnabled:                     p.LFSEnabled,
 		RequestAccessEnabled:           p.RequestAccessEnabled,
+		ParentID:                       p.ParentID,
 		SharedRunnersMinutesLimit:      p.SharedRunnersMinutesLimit,
 		ExtraSharedRunnersMinutesLimit: p.ExtraSharedRunnersMinutesLimit,
 	}

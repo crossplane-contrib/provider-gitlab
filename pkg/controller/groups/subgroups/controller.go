@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package groups
+package subgroups
 
 import (
 	"context"
@@ -40,23 +40,23 @@ import (
 )
 
 const (
-	errNotGroup     = "managed resource is not a Gitlab Group custom resource"
-	errGetFailed    = "cannot get Gitlab Group"
-	errCreateFailed = "cannot create Gitlab Group"
-	errUpdateFailed = "cannot update Gitlab Group"
-	errDeleteFailed = "cannot delete Gitlab Group"
+	errNotSubGroup  = "managed resource is not a Gitlab SubGroup custom resource"
+	errGetFailed    = "cannot get Gitlab SubGroup"
+	errCreateFailed = "cannot create Gitlab SubGroup"
+	errUpdateFailed = "cannot update Gitlab SubGroup"
+	errDeleteFailed = "cannot delete Gitlab SubGroup"
 )
 
-// SetupGroup adds a controller that reconciles Groups.
-func SetupGroup(mgr ctrl.Manager, l logging.Logger) error {
-	name := managed.ControllerName(v1alpha1.GroupKind)
+// SetupSubGroup adds a controller that reconciles Groups.
+func SetupSubGroup(mgr ctrl.Manager, l logging.Logger) error {
+	name := managed.ControllerName(v1alpha1.SubGroupKind)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		For(&v1alpha1.Group{}).
+		For(&v1alpha1.SubGroup{}).
 		Complete(managed.NewReconciler(mgr,
-			resource.ManagedKind(v1alpha1.GroupKubernetesGroupVersionKind),
-			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewGroupClient}),
+			resource.ManagedKind(v1alpha1.SubGroupKubernetesGroupVersionKind),
+			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewSubGroupClient}),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
 			managed.WithLogger(l.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
@@ -68,9 +68,9 @@ type connector struct {
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	cr, ok := mg.(*v1alpha1.Group)
+	cr, ok := mg.(*v1alpha1.SubGroup)
 	if !ok {
-		return nil, errors.New(errNotGroup)
+		return nil, errors.New(errNotSubGroup)
 	}
 	cfg, err := clients.GetConfig(ctx, c.kube, cr)
 	if err != nil {
@@ -85,9 +85,9 @@ type external struct {
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*v1alpha1.Group)
+	cr, ok := mg.(*v1alpha1.SubGroup)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotGroup)
+		return managed.ExternalObservation{}, errors.New(errNotSubGroup)
 	}
 
 	externalName := meta.GetExternalName(cr)
@@ -95,12 +95,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	groupID, err := strconv.Atoi(externalName)
+	subGroupID, err := strconv.Atoi(externalName)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errNotGroup)
+		return managed.ExternalObservation{}, errors.New(errNotSubGroup)
 	}
 
-	grp, _, err := e.client.GetGroup(groupID, nil)
+	grp, _, err := e.client.GetGroup(subGroupID, nil)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(groups.IsErrorGroupNotFound, err), errGetFailed)
 	}
@@ -110,25 +110,25 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	lateInitialize(&cr.Spec.ForProvider, grp)
 	resourceLateInitialized := !cmp.Equal(current, &cr.Spec.ForProvider)
 
-	cr.Status.AtProvider = groups.GenerateObservation(grp)
+	cr.Status.AtProvider = groups.GenerateSubGroupObservation(grp)
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        isGroupUpToDate(&cr.Spec.ForProvider, grp),
+		ResourceUpToDate:        isSubGroupUpToDate(&cr.Spec.ForProvider, grp),
 		ResourceLateInitialized: resourceLateInitialized,
 		ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte(grp.RunnersToken)},
 	}, nil
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.Group)
+	cr, ok := mg.(*v1alpha1.SubGroup)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotGroup)
+		return managed.ExternalCreation{}, errors.New(errNotSubGroup)
 	}
 
 	grp, _, err := e.client.CreateGroup(
-		groups.GenerateCreateGroupOptions(cr.Name, &cr.Spec.ForProvider),
+		groups.GenerateCreateSubGroupOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
@@ -140,30 +140,30 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mg.(*v1alpha1.Group)
+	cr, ok := mg.(*v1alpha1.SubGroup)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotGroup)
+		return managed.ExternalUpdate{}, errors.New(errNotSubGroup)
 	}
 	_, _, err := e.client.UpdateGroup(
 		meta.GetExternalName(cr),
-		groups.GenerateEditGroupOptions(cr.Name, &cr.Spec.ForProvider),
+		groups.GenerateEditSubGroupOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
-	cr, ok := mg.(*v1alpha1.Group)
+	cr, ok := mg.(*v1alpha1.SubGroup)
 	if !ok {
-		return errors.New(errNotGroup)
+		return errors.New(errNotSubGroup)
 	}
 
 	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), gitlab.WithContext(ctx))
 	return errors.Wrap(err, errDeleteFailed)
 }
 
-// isGroupUpToDate checks whether there is a change in any of the modifiable fields.
-func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) bool { // nolint:gocyclo
+// isSubGroupUpToDate checks whether there is a change in any of the modifiable fields.
+func isSubGroupUpToDate(p *v1alpha1.SubGroupParameters, g *gitlab.Group) bool { // nolint:gocyclo
 	if !cmp.Equal(p.Path, g.Path) {
 		return false
 	}
@@ -200,6 +200,9 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) bool { // nol
 	if !clients.IsBoolEqualToBoolPtr(p.RequestAccessEnabled, g.RequestAccessEnabled) {
 		return false
 	}
+	if !clients.IsIntEqualToIntPtr(p.ParentID, g.ParentID) {
+		return false
+	}
 	if !clients.IsIntEqualToIntPtr(p.SharedRunnersMinutesLimit, g.SharedRunnersMinutesLimit) {
 		return false
 	}
@@ -209,9 +212,9 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) bool { // nol
 	return true
 }
 
-// lateInitialize fills the empty fields in the group spec with the
+// lateInitialize fills the empty fields in the subgroup spec with the
 // values seen in gitlab.Group.
-func lateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) { // nolint:gocyclo
+func lateInitialize(in *v1alpha1.SubGroupParameters, group *gitlab.Group) { // nolint:gocyclo
 	if group == nil {
 		return
 	}
@@ -256,6 +259,9 @@ func lateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) { // noli
 	}
 	if in.RequestAccessEnabled == nil {
 		in.RequestAccessEnabled = &group.RequestAccessEnabled
+	}
+	if in.ParentID == nil {
+		in.ParentID = &group.ParentID
 	}
 	if in.SharedRunnersMinutesLimit == nil {
 		in.SharedRunnersMinutesLimit = &group.SharedRunnersMinutesLimit

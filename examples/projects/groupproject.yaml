@@ -1,13 +1,15 @@
 apiVersion: projects.gitlab.crossplane.io/v1alpha1
-kind: Project
+kind: GroupProject
 metadata:
-  name: example-project
+  name: example-group-project
 spec:
   forProvider:
-    description: "example project description"
+    namespaceIdRef:
+        name: example-group
+    description: "example group project description"
   providerConfigRef:
     name: gitlab-provider
   # a reference to a Kubernetes secret to which the controller will write the runnersToken
   writeConnectionSecretToRef:
-    name: gitlab-project-example-project
+    name: gitlab-groupproject-example-groupproject
     namespace: crossplane-system

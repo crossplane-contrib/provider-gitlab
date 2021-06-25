@@ -4,7 +4,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.5.0
   creationTimestamp: null
-  name: groups.groups.gitlab.crossplane.io
+  name: subgroups.groups.gitlab.crossplane.io
 spec:
   group: groups.gitlab.crossplane.io
   names:
@@ -12,10 +12,10 @@ spec:
     - crossplane
     - managed
     - gitlab
-    kind: Group
-    listKind: GroupList
-    plural: groups
-    singular: group
+    kind: SubGroup
+    listKind: SubGroupList
+    plural: subgroups
+    singular: subgroup
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -34,7 +34,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A Group is a managed resource that represents a Gitlab Group
+        description: A SubGroup is a managed resource that represents a Gitlab Group
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
@@ -45,7 +45,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: A GroupSpec defines the desired state of a Gitlab Group.
+            description: A SubGroupSpec defines the desired state of a Gitlab Group.
             properties:
               deletionPolicy:
                 description: DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted - either "Delete" or "Orphan" the external resource. The "Delete" policy is the default when no policy is specified.
@@ -54,7 +54,7 @@ spec:
                 - Delete
                 type: string
               forProvider:
-                description: GroupParameters define the desired state of a Gitlab Group
+                description: SubGroupParameters define the desired state of a Gitlab Group
                 properties:
                   autoDevopsEnabled:
                     description: Default to Auto DevOps pipeline for all projects within this group.
@@ -80,6 +80,27 @@ spec:
                   parentId:
                     description: The parent group ID for creating nested group.
                     type: integer
+                  parentIdRef:
+                    description: ParentIDRef is a reference to a group to retrieve its parentId
+                    properties:
+                      name:
+                        description: Name of the referenced object.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  parentIdSelector:
+                    description: ParentIDSelector selects reference to a group to retrieve its parentId.
+                    properties:
+                      matchControllerRef:
+                        description: MatchControllerRef ensures an object with the same controller reference as the selecting object is selected.
+                        type: boolean
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: MatchLabels ensures an object with matching labels is selected.
+                        type: object
+                    type: object
                   path:
                     description: The path of the group.
                     type: string
@@ -145,10 +166,10 @@ spec:
             - forProvider
             type: object
           status:
-            description: A GroupStatus represents the observed state of a Gitlab Group.
+            description: A SubGroupStatus represents the observed state of a Gitlab Group.
             properties:
               atProvider:
-                description: GroupObservation is the observed state of a Group.
+                description: SubGroupObservation is the observed state of a Group.
                 properties:
                   avatarUrl:
                     type: string

@@ -53,7 +53,16 @@ var (
 	GroupMemberKubernetesGroupVersionKind = SchemeGroupVersion.WithKind(GroupMemberKind)
 )
 
+// GroupMemberGitLab type metadata
+var (
+	SubGroupKind                       = reflect.TypeOf(SubGroup{}).Name()
+	SubGroupKubernetesGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: SubGroupKind}.String()
+	SubGroupKindAPIVersion             = SubGroupKind + "." + SchemeGroupVersion.String()
+	SubGroupKubernetesGroupVersionKind = SchemeGroupVersion.WithKind(SubGroupKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Group{}, &GroupList{})
+	SchemeBuilder.Register(&SubGroup{}, &SubGroupList{})
 	SchemeBuilder.Register(&GroupMember{}, &GroupMemberList{})
 }

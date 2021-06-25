@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package projects
+package groupprojects
 
 import (
 	"context"
@@ -53,35 +53,36 @@ type args struct {
 	cr      resource.Managed
 }
 
-type projectModifier func(*v1alpha1.Project)
+type projectModifier func(*v1alpha1.GroupProject)
 
 func withConditions(c ...xpv1.Condition) projectModifier {
-	return func(r *v1alpha1.Project) { r.Status.ConditionedStatus.Conditions = c }
+	return func(r *v1alpha1.GroupProject) { r.Status.ConditionedStatus.Conditions = c }
 }
 
 func withPath(p *string) projectModifier {
-	return func(r *v1alpha1.Project) { r.Spec.ForProvider.Path = p }
+	return func(r *v1alpha1.GroupProject) { r.Spec.ForProvider.Path = p }
 }
 
 func withExternalName(projectID string) projectModifier {
-	return func(r *v1alpha1.Project) { meta.SetExternalName(r, projectID) }
+	return func(r *v1alpha1.GroupProject) { meta.SetExternalName(r, projectID) }
 }
 
-func withStatus(s v1alpha1.ProjectObservation) projectModifier {
-	return func(r *v1alpha1.Project) { r.Status.AtProvider = s }
+func withStatus(s v1alpha1.GroupProjectObservation) projectModifier {
+	return func(r *v1alpha1.GroupProject) { r.Status.AtProvider = s }
 }
 
-func withSpec(s v1alpha1.ProjectParameters) projectModifier {
-	return func(r *v1alpha1.Project) { r.Spec.ForProvider = s }
+func withSpec(s v1alpha1.GroupProjectParameters) projectModifier {
+	return func(r *v1alpha1.GroupProject) { r.Spec.ForProvider = s }
 }
 
 func withClientDefaultValues() projectModifier {
-	return func(p *v1alpha1.Project) {
+	return func(p *v1alpha1.GroupProject) {
 		f := false
 		i := 0
-		p.Spec.ForProvider = v1alpha1.ProjectParameters{
+		p.Spec.ForProvider = v1alpha1.GroupProjectParameters{
 			AllowMergeOnSkippedPipeline:               &f,
 			CIForwardDeploymentEnabled:                &f,
+			NamespaceID:                               &i,
 			EmailsDisabled:                            &f,
 			ResolveOutdatedDiffDiscussions:            &f,
 			ContainerRegistryEnabled:                  &f,
@@ -114,11 +115,11 @@ func withClientDefaultValues() projectModifier {
 }
 
 func withAnnotations(a map[string]string) projectModifier {
-	return func(p *v1alpha1.Project) { meta.AddAnnotations(p, a) }
+	return func(p *v1alpha1.GroupProject) { meta.AddAnnotations(p, a) }
 }
 
-func project(m ...projectModifier) *v1alpha1.Project {
-	cr := &v1alpha1.Project{}
+func project(m ...projectModifier) *v1alpha1.GroupProject {
+	cr := &v1alpha1.GroupProject{}
 	for _, f := range m {
 		f(cr)
 	}
@@ -142,7 +143,7 @@ func TestConnect(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotProject),
+				err: errors.New(errNotGroupProject),
 			},
 		},
 		"ProviderConfigRefNotGivenError": {
@@ -189,7 +190,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotProject),
+				err: errors.New(errNotGroupProject),
 			},
 		},
 		"NoExternalName": {
@@ -216,7 +217,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr:  project(withExternalName("fr")),
-				err: errors.New(errNotProject),
+				err: errors.New(errNotGroupProject),
 			},
 		},
 		"FailedGetRequest": {
@@ -281,7 +282,7 @@ func TestObserve(t *testing.T) {
 					withConditions(xpv1.Available()),
 					withPath(&path),
 					withExternalName(extName),
-					withStatus(v1alpha1.ProjectObservation{RunnersToken: "token"}),
+					withStatus(v1alpha1.GroupProjectObservation{RunnersToken: "token"}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -340,7 +341,7 @@ func TestObserve(t *testing.T) {
 	s := "default string"
 	visibility := v1alpha1.PublicVisibility
 
-	projectParameters := v1alpha1.ProjectParameters{
+	projectParameters := v1alpha1.GroupProjectParameters{
 		Path:                             &s,
 		DefaultBranch:                    &s,
 		Description:                      &s,
@@ -492,7 +493,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotProject),
+				err: errors.New(errNotGroupProject),
 			},
 		},
 		"SuccessfulCreation": {
@@ -563,7 +564,7 @@ func TestUpdate(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotProject),
+				err: errors.New(errNotGroupProject),
 			},
 		},
 		"SuccessfulEditProject": {
@@ -573,10 +574,10 @@ func TestUpdate(t *testing.T) {
 						return &gitlab.Project{}, &gitlab.Response{}, nil
 					},
 				},
-				cr: project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
+				cr: project(withStatus(v1alpha1.GroupProjectObservation{ID: 1234})),
 			},
 			want: want{
-				cr: project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
+				cr: project(withStatus(v1alpha1.GroupProjectObservation{ID: 1234})),
 			},
 		},
 		"FailedEdit": {
@@ -586,10 +587,10 @@ func TestUpdate(t *testing.T) {
 						return &gitlab.Project{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
+				cr: project(withStatus(v1alpha1.GroupProjectObservation{ID: 1234})),
 			},
 			want: want{
-				cr:  project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
+				cr:  project(withStatus(v1alpha1.GroupProjectObservation{ID: 1234})),
 				err: errors.Wrap(errBoom, errUpdateFailed),
 			},
 		},
@@ -628,7 +629,7 @@ func TestDelete(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotProject),
+				err: errors.New(errNotGroupProject),
 			},
 		},
 		"SuccessfulDeletion": {

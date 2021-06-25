@@ -1,16 +1,16 @@
 apiVersion: groups.gitlab.crossplane.io/v1alpha1
-kind: Group
+kind: SubGroup
 metadata:
-  name: example-group
-  # annotations:
-  #   crossplane.io/external-name: "11879378"
+  name: example-subgroup
 spec:
   forProvider:
-    path: "example-group-path"
-    description: "example group description"
+    parentIdRef:
+        name: example-group
+    path: "example-subgroup-path"
+    description: "example subgroup description"
   providerConfigRef:
     name: gitlab-provider
   # a reference to a Kubernetes secret to which the controller will write the runnersToken
   writeConnectionSecretToRef:
-    name: gitlab-group-example-group
+    name: gitlab-subgroup-example-subgroup
     namespace: crossplane-system

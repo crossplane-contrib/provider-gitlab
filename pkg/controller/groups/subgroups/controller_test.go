@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package groups
+package subgroups
 
 import (
 	"context"
@@ -62,42 +62,42 @@ type args struct {
 	cr    resource.Managed
 }
 
-type groupModifier func(*v1alpha1.Group)
+type groupModifier func(*v1alpha1.SubGroup)
 
 func withConditions(c ...xpv1.Condition) groupModifier {
-	return func(cr *v1alpha1.Group) { cr.Status.ConditionedStatus.Conditions = c }
+	return func(cr *v1alpha1.SubGroup) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
 func withPath(s string) groupModifier {
-	return func(r *v1alpha1.Group) { r.Spec.ForProvider.Path = s }
+	return func(r *v1alpha1.SubGroup) { r.Spec.ForProvider.Path = s }
 }
 
 func withDescription(s *string) groupModifier {
-	return func(r *v1alpha1.Group) { r.Spec.ForProvider.Description = s }
+	return func(r *v1alpha1.SubGroup) { r.Spec.ForProvider.Description = s }
 }
 
 func withProjectCreationLevel(s *v1alpha1.ProjectCreationLevelValue) groupModifier {
-	return func(r *v1alpha1.Group) { r.Spec.ForProvider.ProjectCreationLevel = s }
+	return func(r *v1alpha1.SubGroup) { r.Spec.ForProvider.ProjectCreationLevel = s }
 }
 
 func withVisibility(s *v1alpha1.VisibilityValue) groupModifier {
-	return func(r *v1alpha1.Group) { r.Spec.ForProvider.Visibility = s }
+	return func(r *v1alpha1.SubGroup) { r.Spec.ForProvider.Visibility = s }
 }
 
 func withSubGroupCreationLevel(s *v1alpha1.SubGroupCreationLevelValue) groupModifier {
-	return func(r *v1alpha1.Group) { r.Spec.ForProvider.SubGroupCreationLevel = s }
+	return func(r *v1alpha1.SubGroup) { r.Spec.ForProvider.SubGroupCreationLevel = s }
 }
 
 func withExternalName(n string) groupModifier {
-	return func(r *v1alpha1.Group) { meta.SetExternalName(r, n) }
+	return func(r *v1alpha1.SubGroup) { meta.SetExternalName(r, n) }
 }
 
 // Use for testing. When ResourceLateInitialized should it be false
 func withClientDefaultValues() groupModifier {
-	return func(p *v1alpha1.Group) {
+	return func(p *v1alpha1.SubGroup) {
 		f := false
 		i := 0
-		p.Spec.ForProvider = v1alpha1.GroupParameters{
+		p.Spec.ForProvider = v1alpha1.SubGroupParameters{
 			MembershipLock:                 &f,
 			ShareWithGroupLock:             &f,
 			RequireTwoFactorAuth:           &f,
@@ -107,22 +107,23 @@ func withClientDefaultValues() groupModifier {
 			MentionsDisabled:               &f,
 			LFSEnabled:                     &f,
 			RequestAccessEnabled:           &f,
+			ParentID:                       &i,
 			SharedRunnersMinutesLimit:      &i,
 			ExtraSharedRunnersMinutesLimit: &i,
 		}
 	}
 }
 
-func withStatus(s v1alpha1.GroupObservation) groupModifier {
-	return func(r *v1alpha1.Group) { r.Status.AtProvider = s }
+func withStatus(s v1alpha1.SubGroupObservation) groupModifier {
+	return func(r *v1alpha1.SubGroup) { r.Status.AtProvider = s }
 }
 
 func withAnnotations(a map[string]string) groupModifier {
-	return func(p *v1alpha1.Group) { meta.AddAnnotations(p, a) }
+	return func(p *v1alpha1.SubGroup) { meta.AddAnnotations(p, a) }
 }
 
-func group(m ...groupModifier) *v1alpha1.Group {
-	cr := &v1alpha1.Group{}
+func group(m ...groupModifier) *v1alpha1.SubGroup {
+	cr := &v1alpha1.SubGroup{}
 	for _, f := range m {
 		f(cr)
 	}
@@ -147,7 +148,7 @@ func TestConnect(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotGroup),
+				err: errors.New(errNotSubGroup),
 			},
 		},
 		"ProviderConfigRefNotGivenError": {
@@ -203,7 +204,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotGroup),
+				err: errors.New(errNotSubGroup),
 			},
 		},
 		"NoExternalName": {
@@ -230,7 +231,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr:  group(withExternalName("fr")),
-				err: errors.New(errNotGroup),
+				err: errors.New(errNotSubGroup),
 			},
 		},
 		"FailedGetRequest": {
@@ -271,7 +272,7 @@ func TestObserve(t *testing.T) {
 					withConditions(xpv1.Available()),
 					withPath(path),
 					withAnnotations(extNameAnnotation),
-					withStatus(v1alpha1.GroupObservation{RunnersToken: "token"}),
+					withStatus(v1alpha1.SubGroupObservation{RunnersToken: "token"}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -300,6 +301,7 @@ func TestObserve(t *testing.T) {
 							MentionsDisabled:               false,
 							LFSEnabled:                     false,
 							RequestAccessEnabled:           false,
+							ParentID:                       0,
 							SharedRunnersMinutesLimit:      0,
 							ExtraSharedRunnersMinutesLimit: 0,
 						}, &gitlab.Response{}, nil
@@ -372,6 +374,7 @@ func TestObserve(t *testing.T) {
 		"MentionsDisabled":               true,
 		"LFSEnabled":                     true,
 		"RequestAccessEnabled":           true,
+		"ParentID":                       1,
 		"SharedRunnersMinutesLimit":      1,
 		"ExtraSharedRunnersMinutesLimit": 1,
 	}
@@ -468,7 +471,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotGroup),
+				err: errors.New(errNotSubGroup),
 			},
 		},
 		"SuccessfulCreation": {
@@ -495,10 +498,10 @@ func TestCreate(t *testing.T) {
 						return &gitlab.Group{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: group(withStatus(v1alpha1.GroupObservation{ID: 0})),
+				cr: group(withStatus(v1alpha1.SubGroupObservation{ID: 0})),
 			},
 			want: want{
-				cr:  group(withStatus(v1alpha1.GroupObservation{ID: 0})),
+				cr:  group(withStatus(v1alpha1.SubGroupObservation{ID: 0})),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
 		},
@@ -539,7 +542,7 @@ func TestUpdate(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotGroup),
+				err: errors.New(errNotSubGroup),
 			},
 		},
 		"SuccessfulUpdate": {
@@ -549,11 +552,11 @@ func TestUpdate(t *testing.T) {
 						return &gitlab.Group{ID: 1234}, &gitlab.Response{}, nil
 					},
 				},
-				cr: group(withStatus(v1alpha1.GroupObservation{ID: 1234}), withExternalName("1234")),
+				cr: group(withStatus(v1alpha1.SubGroupObservation{ID: 1234}), withExternalName("1234")),
 			},
 			want: want{
 				cr: group(
-					withStatus(v1alpha1.GroupObservation{ID: 1234}),
+					withStatus(v1alpha1.SubGroupObservation{ID: 1234}),
 					withExternalName("1234"),
 				),
 			},
@@ -565,10 +568,10 @@ func TestUpdate(t *testing.T) {
 						return &gitlab.Group{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: group(withStatus(v1alpha1.GroupObservation{ID: 1234})),
+				cr: group(withStatus(v1alpha1.SubGroupObservation{ID: 1234})),
 			},
 			want: want{
-				cr:  group(withStatus(v1alpha1.GroupObservation{ID: 1234})),
+				cr:  group(withStatus(v1alpha1.SubGroupObservation{ID: 1234})),
 				err: errors.Wrap(errBoom, errUpdateFailed),
 			},
 		},
@@ -607,7 +610,7 @@ func TestDelete(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotGroup),
+				err: errors.New(errNotSubGroup),
 			},
 		},
 		"SuccessfulDeletion": {

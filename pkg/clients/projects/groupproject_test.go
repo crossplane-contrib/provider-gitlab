@@ -29,117 +29,10 @@ import (
 )
 
 var (
-	name                             = "my-project"
-	path                             = "path/to/project"
-	defaultBranch                    = "main"
-	description                      = "my awesome project"
-	issuesAccessLevel                = "enabled"
-	issuesAccessLevelv1alpha1        = v1alpha1.AccessControlValue(issuesAccessLevel)
-	repositoryAccessLevel            = "enabled"
-	repositoryAccessLevelv1alpha1    = v1alpha1.AccessControlValue(repositoryAccessLevel)
-	mergeRequestsAccessLevel         = "enabled"
-	mergeRequestsAccessLevelv1alpha1 = v1alpha1.AccessControlValue(mergeRequestsAccessLevel)
-	forkingAccessLevel               = "enabled"
-	forkingAccessLevelv1alpha1       = v1alpha1.AccessControlValue(forkingAccessLevel)
-	buildsAccessLevel                = "disabled"
-	buildsAccessLevelv1alpha1        = v1alpha1.AccessControlValue(buildsAccessLevel)
-	wikiAccessLevel                  = "private"
-	wikiAccessLevelv1alpha1          = v1alpha1.AccessControlValue(wikiAccessLevel)
-	snippetsAccessLevel              = "public"
-	snippetsAccessLevelv1alpha1      = v1alpha1.AccessControlValue(snippetsAccessLevel)
-	pagesAccessLevel                 = "enabled"
-	pagesAccessLevelv1alpha1         = v1alpha1.AccessControlValue(pagesAccessLevel)
-	operationsAccessLevel            = "public"
-	operationsAccessLevelv1alpha1    = v1alpha1.AccessControlValue(operationsAccessLevel)
-	emailsDisabled                   = true
-	resolveOutdatedDiffDiscussions   = true
-	cadence                          = "Cadence"
-	keepN                            = 1
-	olderThan                        = "OlderThan"
-	nameRegexDelete                  = "NameRegexDelete"
-	nameRegexKeep                    = "NameRegexKeep"
-	enabled                          = false
-	nextRunAt                        = time.Now()
-	gitlabContainerExpirationPolicy  = gitlab.ContainerExpirationPolicy{
-		Cadence:         cadence,
-		KeepN:           keepN,
-		OlderThan:       olderThan,
-		NameRegexDelete: nameRegexDelete,
-		NameRegexKeep:   nameRegexKeep,
-		Enabled:         enabled,
-		NextRunAt:       &nextRunAt,
-	}
-	v1alpha1ContainerExpirationPolicy = v1alpha1.ContainerExpirationPolicy{
-		Cadence:         cadence,
-		KeepN:           keepN,
-		OlderThan:       olderThan,
-		NameRegexDelete: nameRegexDelete,
-		NameRegexKeep:   nameRegexKeep,
-		Enabled:         enabled,
-		NextRunAt:       &metav1.Time{Time: nextRunAt},
-	}
-	v1alpha1ContainerExpirationPolicyAttributes = v1alpha1.ContainerExpirationPolicyAttributes{
-		Cadence:         &cadence,
-		KeepN:           &keepN,
-		OlderThan:       &olderThan,
-		NameRegexDelete: &nameRegexDelete,
-		NameRegexKeep:   &nameRegexKeep,
-		Enabled:         &enabled,
-	}
-	gitlabContainerExpirationPolicyAttributes = gitlab.ContainerExpirationPolicyAttributes{
-		Cadence:         &cadence,
-		KeepN:           &keepN,
-		OlderThan:       &olderThan,
-		NameRegexDelete: &nameRegexDelete,
-		NameRegexKeep:   &nameRegexKeep,
-		Enabled:         &enabled,
-	}
-	containerRegistryEnabled                  = true
-	sharedRunnersEnabled                      = true
-	visibility                                = "private"
-	visibilityv1alpha1                        = v1alpha1.VisibilityValue(visibility)
-	importURL                                 = "import.url"
-	publicBuilds                              = false
-	allowMergeOnSkippedPipeline               = false
-	onlyAllowMergeIfPipelineSucceeds          = true
-	OnlyAllowMergeIfAllDiscussionsAreResolved = true
-	mergeMethod                               = "merge"
-	mergeMethodv1alpha1                       = v1alpha1.MergeMethodValue(mergeMethod)
-	removeSourceBranchAfterMerge              = false
-	lfsEnabled                                = true
-	requestAccessEnabled                      = true
-	tagList                                   = []string{"tag1", "tag2"}
-	printingMergeRequestLinkEnabled           = true
-	buildGitStategy                           = "strategy"
-	buildTimeout                              = 60
-	autoCancelPendingPipelines                = "enabled"
-	buildCoverageRegex                        = "some-regex"
-	ciConfigPath                              = "path/to/ci/config"
-	ciForwardDeploymentEnabled                = false
-	ciDefaultGitDepth                         = 50
-	autoDevopsEnabled                         = true
-	autoDevopsDeployStrategy                  = "continuous"
-	approvalsBeforeMerge                      = 0
-	externalAuthorizationClassificationLabel  = "authz-label"
-	mirror                                    = false
-	mirrorUserID                              = 1
-	mirrorTriggerBuilds                       = true
-	initializeWithReadme                      = true
-	templateName                              = "template"
-	templateProjectID                         = 1
-	useCustomTemplate                         = true
-	groupWithProjectTemplatesID               = 1
-	onlyMirrorProtectedBranches               = false
-	mirrorOverwritesDivergedBranches          = false
-	packagesEnabled                           = true
-	serviceDeskEnabled                        = true
-	autocloseReferencedIssues                 = true
-	suggestionCommitMessage                   = "SuggestionCommitMessage"
-	issuesTemplate                            = "IssuesTemplate"
-	mergeRequestsTemplate                     = "MergeRequestsTemplate"
+	namespaceID = 0
 )
 
-func TestGenerateObservation(t *testing.T) {
+func TestGenerateGroupProjectObservation(t *testing.T) {
 	id := 0
 	public := true
 	sshURLToRepo := "ssh:url"
@@ -225,7 +118,7 @@ func TestGenerateObservation(t *testing.T) {
 	}
 	cases := map[string]struct {
 		args args
-		want v1alpha1.ProjectObservation
+		want v1alpha1.GroupProjectObservation
 	}{
 		"Full": {
 			args: args{
@@ -297,7 +190,7 @@ func TestGenerateObservation(t *testing.T) {
 					ComplianceFrameworks: complianceFrameworks,
 				},
 			},
-			want: v1alpha1.ProjectObservation{
+			want: v1alpha1.GroupProjectObservation{
 				ID:            id,
 				Public:        public,
 				SSHURLToRepo:  sshURLToRepo,
@@ -394,7 +287,7 @@ func TestGenerateObservation(t *testing.T) {
 					},
 				},
 			},
-			want: v1alpha1.ProjectObservation{
+			want: v1alpha1.GroupProjectObservation{
 				ID:             id,
 				Public:         public,
 				CreatedAt:      &metav1.Time{Time: now},
@@ -414,7 +307,7 @@ func TestGenerateObservation(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateObservation(tc.args.p)
+			got := GenerateGroupProjectObservation(tc.args.p)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
@@ -422,10 +315,10 @@ func TestGenerateObservation(t *testing.T) {
 	}
 }
 
-func TestGenerateCreateProjectOptions(t *testing.T) {
+func TestGenerateCreateGroupProjectOptions(t *testing.T) {
 	type args struct {
 		name       string
-		parameters *v1alpha1.ProjectParameters
+		parameters *v1alpha1.GroupProjectParameters
 	}
 	cases := map[string]struct {
 		args args
@@ -434,8 +327,9 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 		"AllFields": {
 			args: args{
 				name: name,
-				parameters: &v1alpha1.ProjectParameters{
+				parameters: &v1alpha1.GroupProjectParameters{
 					Path:                                      &path,
+					NamespaceID:                               &namespaceID,
 					DefaultBranch:                             &defaultBranch,
 					Description:                               &description,
 					IssuesAccessLevel:                         &issuesAccessLevelv1alpha1,
@@ -493,6 +387,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 			want: &gitlab.CreateProjectOptions{
 				Name:                                &name,
 				Path:                                &path,
+				NamespaceID:                         &namespaceID,
 				DefaultBranch:                       &defaultBranch,
 				Description:                         &description,
 				IssuesAccessLevel:                   clients.AccessControlValueStringToGitlab(issuesAccessLevel),
@@ -549,7 +444,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 		"SomeFields": {
 			args: args{
 				name: name,
-				parameters: &v1alpha1.ProjectParameters{
+				parameters: &v1alpha1.GroupProjectParameters{
 					Path:                           &path,
 					IssuesAccessLevel:              &issuesAccessLevelv1alpha1,
 					ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
@@ -572,7 +467,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateCreateProjectOptions(tc.args.name, tc.args.parameters)
+			got := GenerateCreateGroupProjectOptions(tc.args.name, tc.args.parameters)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
@@ -580,10 +475,10 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 	}
 }
 
-func TestGenerateEditProjectOptions(t *testing.T) {
+func TestGenerateEditGroupProjectOptions(t *testing.T) {
 	type args struct {
 		name       string
-		parameters *v1alpha1.ProjectParameters
+		parameters *v1alpha1.GroupProjectParameters
 	}
 	cases := map[string]struct {
 		args args
@@ -592,7 +487,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 		"AllFields": {
 			args: args{
 				name: name,
-				parameters: &v1alpha1.ProjectParameters{
+				parameters: &v1alpha1.GroupProjectParameters{
 					Path:                                      &path,
 					DefaultBranch:                             &defaultBranch,
 					Description:                               &description,
@@ -702,7 +597,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 		"SomeFields": {
 			args: args{
 				name: name,
-				parameters: &v1alpha1.ProjectParameters{
+				parameters: &v1alpha1.GroupProjectParameters{
 					Path:                           &path,
 					IssuesAccessLevel:              &issuesAccessLevelv1alpha1,
 					ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
@@ -725,7 +620,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateEditProjectOptions(tc.args.name, tc.args.parameters)
+			got := GenerateEditGroupProjectOptions(tc.args.name, tc.args.parameters)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
