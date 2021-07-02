@@ -1,0 +1,15 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: ProjectDeployToken
+metadata:
+  name: example-project-deploy-token
+spec:
+  forProvider:
+    projectIdRef:
+      name: example-project
+    scopes:
+      - "read_repository"
+  providerConfigRef:
+    name: gitlab-provider
+  writeConnectionSecretToRef:
+    name: gitlab-example-project-deploy-token
+    namespace: crossplane-system

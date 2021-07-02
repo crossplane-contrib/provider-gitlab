@@ -20,6 +20,8 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
+
 	"github.com/crossplane/crossplane-runtime/pkg/reference"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -69,4 +71,50 @@ func (mg *ProjectHook) ResolveReferences(ctx context.Context, c client.Reader) e
 
 	return nil
 
+}
+
+// ResolveReferences of this Project
+func (mg *Project) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPIResolver(c, mg)
+
+	// resolve spec.forProvider.namespaceIdRef
+	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.NamespaceID),
+		Reference:    mg.Spec.ForProvider.NamespaceIDRef,
+		Selector:     mg.Spec.ForProvider.NamespaceIDSelector,
+		To:           reference.To{Managed: &v1alpha1.Group{}, List: &v1alpha1.GroupList{}},
+		Extract:      reference.ExternalName(),
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.namespaceId")
+	}
+
+	mg.Spec.ForProvider.NamespaceID = toPtrValue(rsp.ResolvedValue)
+	mg.Spec.ForProvider.NamespaceIDRef = rsp.ResolvedReference
+
+	return nil
+}
+
+// ResolveReferences of this Deploy Token
+func (mg *ProjectDeployToken) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPIResolver(c, mg)
+
+	// resolve spec.forProvider.projectIdRef
+	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.ProjectID),
+		Reference:    mg.Spec.ForProvider.ProjectIDRef,
+		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
+		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
+		Extract:      reference.ExternalName(),
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.projectId")
+	}
+
+	mg.Spec.ForProvider.ProjectID = toPtrValue(rsp.ResolvedValue)
+	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
+
+	return nil
 }
