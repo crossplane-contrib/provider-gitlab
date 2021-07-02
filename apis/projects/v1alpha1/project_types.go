@@ -293,6 +293,15 @@ type ProjectParameters struct {
 	// +optional
 	NamespaceID *int `json:"namespaceId,omitempty"`
 
+	// NamespaceIDRef is a reference to a project to retrieve its namespaceId
+	// +optional
+	// +immutable
+	NamespaceIDRef *xpv1.Reference `json:"namespaceIdRef,omitempty"`
+
+	// NamespaceIDSelector selects reference to a project to retrieve its namespaceId.
+	// +optional
+	NamespaceIDSelector *xpv1.Selector `json:"namespaceIdSelector,omitempty"`
+
 	// Set whether merge requests can only be merged when all the discussions are resolved.
 	// +optional
 	OnlyAllowMergeIfAllDiscussionsAreResolved *bool `json:"onlyAllowMergeIfAllDiscussionsAreResolved,omitempty"`
