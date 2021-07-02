@@ -80,6 +80,27 @@ spec:
                   parentId:
                     description: The parent group ID for creating nested group.
                     type: integer
+                  parentIdRef:
+                    description: ParentIDRef is a reference to a group to retrieve its parentId
+                    properties:
+                      name:
+                        description: Name of the referenced object.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  parentIdSelector:
+                    description: ParentIDSelector selects reference to a group to retrieve its parentId.
+                    properties:
+                      matchControllerRef:
+                        description: MatchControllerRef ensures an object with the same controller reference as the selecting object is selected.
+                        type: boolean
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: MatchLabels ensures an object with matching labels is selected.
+                        type: object
+                    type: object
                   path:
                     description: The path of the group.
                     type: string
