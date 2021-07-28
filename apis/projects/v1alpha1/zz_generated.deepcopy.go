@@ -882,6 +882,16 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(int)
 		**out = **in
 	}
+	if in.NamespaceIDRef != nil {
+		in, out := &in.NamespaceIDRef, &out.NamespaceIDRef
+		*out = new(v1.Reference)
+		**out = **in
+	}
+	if in.NamespaceIDSelector != nil {
+		in, out := &in.NamespaceIDSelector, &out.NamespaceIDSelector
+		*out = new(v1.Selector)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.OnlyAllowMergeIfAllDiscussionsAreResolved != nil {
 		in, out := &in.OnlyAllowMergeIfAllDiscussionsAreResolved, &out.OnlyAllowMergeIfAllDiscussionsAreResolved
 		*out = new(bool)

@@ -17,8 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
 // VisibilityValue represents a visibility level within GitLab.
@@ -124,6 +125,15 @@ type GroupParameters struct {
 	// The parent group ID for creating nested group.
 	// +optional
 	ParentID *int `json:"parentId,omitempty"`
+
+	// ParentIDRef is a reference to a group to retrieve its parentId
+	// +optional
+	// +immutable
+	ParentIDRef *xpv1.Reference `json:"parentIdRef,omitempty"`
+
+	// ParentIDSelector selects reference to a group to retrieve its parentId.
+	// +optional
+	ParentIDSelector *xpv1.Selector `json:"parentIdSelector,omitempty"`
 
 	// Pipeline minutes quota for this group (included in plan).
 	// Can be nil (default; inherit system default), 0 (unlimited) or > 0.
