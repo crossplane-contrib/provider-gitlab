@@ -134,6 +134,10 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { // nolin
 
 // GenerateCreateGroupOptions generates group creation options
 func GenerateCreateGroupOptions(name string, p *v1alpha1.GroupParameters) *gitlab.CreateGroupOptions {
+	// Name field overrides resource name
+	if p.Name != nil {
+		name = *p.Name
+	}
 	group := &gitlab.CreateGroupOptions{
 		Name:                           &name,
 		Path:                           &p.Path,
@@ -160,6 +164,10 @@ func GenerateCreateGroupOptions(name string, p *v1alpha1.GroupParameters) *gitla
 
 // GenerateEditGroupOptions generates group edit options
 func GenerateEditGroupOptions(name string, p *v1alpha1.GroupParameters) *gitlab.UpdateGroupOptions {
+	// Name field overrides resource name
+	if p.Name != nil {
+		name = *p.Name
+	}
 	group := &gitlab.UpdateGroupOptions{
 		Name:                           &name,
 		Path:                           &p.Path,

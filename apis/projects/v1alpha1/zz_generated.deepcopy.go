@@ -797,6 +797,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.Name != nil {
+		in, out := &in.Name, &out.Name
+		*out = new(string)
+		**out = **in
+	}
 	if in.EmailsDisabled != nil {
 		in, out := &in.EmailsDisabled, &out.EmailsDisabled
 		*out = new(bool)

@@ -73,6 +73,12 @@ type GroupParameters struct {
 	// +optional
 	Description *string `json:"description,omitempty"`
 
+	// Name is the human-readable name of the group.
+	// If set, it overrides metadata.name.
+	// +kubebuilder:validation:MaxLength:=255
+	// +optional
+	Name *string `json:"name,omitempty"`
+
 	// Prevent adding new members to project membership within this group.
 	// +optional
 	MembershipLock *bool `json:"membershipLock,omitempty"`

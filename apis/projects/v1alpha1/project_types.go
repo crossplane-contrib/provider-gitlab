@@ -220,6 +220,12 @@ type ProjectParameters struct {
 	// +optional
 	Description *string `json:"description,omitempty"`
 
+	// Name is the human-readable name of the project.
+	// If set, it overrides metadata.name.
+	// +kubebuilder:validation:MaxLength:=255
+	// +optional
+	Name *string `json:"name,omitempty"`
+
 	// Disable email notifications.
 	// +optional
 	EmailsDisabled *bool `json:"emailsDisabled,omitempty"`

@@ -300,6 +300,11 @@ func (in *GroupParameters) DeepCopyInto(out *GroupParameters) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.Name != nil {
+		in, out := &in.Name, &out.Name
+		*out = new(string)
+		**out = **in
+	}
 	if in.MembershipLock != nil {
 		in, out := &in.MembershipLock, &out.MembershipLock
 		*out = new(bool)
