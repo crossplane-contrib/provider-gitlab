@@ -61,8 +61,17 @@ var (
 	ProjectMemberGroupVersionKind = SchemeGroupVersion.WithKind(ProjectMemberKind)
 )
 
+// Project Deploy Token type metadata
+var (
+	ProjectDeployTokenKind             = reflect.TypeOf(ProjectDeployToken{}).Name()
+	ProjectDeployTokenGroupKind        = schema.GroupKind{Group: Group, Kind: ProjectDeployTokenKind}.String()
+	ProjectDeployTokenKindAPIVersion   = ProjectDeployTokenKind + "." + SchemeGroupVersion.String()
+	ProjectDeployTokenGroupVersionKind = SchemeGroupVersion.WithKind(ProjectDeployTokenKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&ProjectHook{}, &ProjectHookList{})
 	SchemeBuilder.Register(&ProjectMember{}, &ProjectMemberList{})
+	SchemeBuilder.Register(&ProjectDeployToken{}, &ProjectDeployTokenList{})
 }
