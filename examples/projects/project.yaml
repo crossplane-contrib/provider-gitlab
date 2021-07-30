@@ -4,8 +4,8 @@ metadata:
   name: example-project
 spec:
   forProvider:
-    namespaceIdRef:
-      name: example-group
+    # namespaceIdRef:
+    #   name: example-group
     description: "example project description"
   providerConfigRef:
     name: gitlab-provider
