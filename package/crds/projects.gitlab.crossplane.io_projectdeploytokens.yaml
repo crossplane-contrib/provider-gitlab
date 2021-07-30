@@ -131,12 +131,6 @@ spec:
             properties:
               atProvider:
                 description: "ProjectDeployTokenObservation represents a deploy token. \n GitLab API docs: https://docs.gitlab.com/ee/api/deploy_tokens.html"
-                properties:
-                  id:
-                    description: ID of the deploy token at gitlab
-                    type: integer
-                required:
-                - id
                 type: object
               conditions:
                 description: Conditions of the resource.

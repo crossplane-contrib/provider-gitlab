@@ -61,10 +61,7 @@ type ProjectDeployTokenParameters struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/deploy_tokens.html
-type ProjectDeployTokenObservation struct {
-	// ID of the deploy token at gitlab
-	ID int `json:"id"`
-}
+type ProjectDeployTokenObservation struct{}
 
 // A ProjectDeployTokenSpec defines the desired state of a Gitlab Project.
 type ProjectDeployTokenSpec struct {

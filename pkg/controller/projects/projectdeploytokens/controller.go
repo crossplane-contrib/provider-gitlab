@@ -115,7 +115,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	current := cr.Spec.ForProvider.DeepCopy()
 	lateInitializeProjectDeployToken(&cr.Spec.ForProvider, dt)
 
-	cr.Status.AtProvider = projects.GenerateProjectDeployTokenObservation(dt)
+	cr.Status.AtProvider = v1alpha1.ProjectDeployTokenObservation{}
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
@@ -156,12 +156,19 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotProjectDeployToken)
 	}
 
-	_, err := e.client.DeleteProjectDeployToken(
+	deployTokenID, err := strconv.Atoi(meta.GetExternalName(cr))
+
+	if err != nil {
+		return errors.New(errNotProjectDeployToken)
+	}
+
+	_, deleteError := e.client.DeleteProjectDeployToken(
 		*cr.Spec.ForProvider.ProjectID,
-		cr.Status.AtProvider.ID,
+		deployTokenID,
 		gitlab.WithContext(ctx),
 	)
-	return errors.Wrap(err, errDeleteFailed)
+
+	return errors.Wrap(deleteError, errDeleteFailed)
 }
 
 // lateInitializeProjectDeployToken fills the empty fields in the deploy token spec with the

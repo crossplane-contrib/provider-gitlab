@@ -46,20 +46,6 @@ func NewProjectDeployTokenClient(cfg clients.Config) ProjectDeployTokenClient {
 	return git.DeployTokens
 }
 
-// GenerateProjectDeployTokenObservation is used to produce v1alpha1.ProjectDeployTokenObservation from
-// gitlab.Project.
-func GenerateProjectDeployTokenObservation(deploytoken *gitlab.DeployToken) v1alpha1.ProjectDeployTokenObservation { // nolint:gocyclo
-	if deploytoken == nil {
-		return v1alpha1.ProjectDeployTokenObservation{}
-	}
-
-	o := v1alpha1.ProjectDeployTokenObservation{
-		ID: deploytoken.ID,
-	}
-
-	return o
-}
-
 // GenerateCreateProjectDeployTokenOptions generates project creation options
 func GenerateCreateProjectDeployTokenOptions(name string, p *v1alpha1.ProjectDeployTokenParameters) *gitlab.CreateProjectDeployTokenOptions {
 	deploytoken := &gitlab.CreateProjectDeployTokenOptions{

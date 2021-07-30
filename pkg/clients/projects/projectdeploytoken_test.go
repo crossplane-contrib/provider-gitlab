@@ -27,34 +27,6 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 )
 
-func TestGenerateProjecDeployTokenObservation(t *testing.T) {
-	id := 0
-
-	type args struct {
-		ph *gitlab.DeployToken
-	}
-
-	cases := map[string]struct {
-		args args
-		want v1alpha1.ProjectDeployTokenObservation
-	}{
-		"Full": {
-			args: args{
-				ph: &gitlab.DeployToken{ID: id},
-			},
-			want: v1alpha1.ProjectDeployTokenObservation{ID: id},
-		},
-	}
-	for name, tc := range cases {
-		t.Run(name, func(t *testing.T) {
-			got := GenerateProjectDeployTokenObservation(tc.args.ph)
-			if diff := cmp.Diff(tc.want, got); diff != "" {
-				t.Errorf("r: -want, +got:\n%s", diff)
-			}
-		})
-	}
-}
-
 func TestGenerateCreateProjectDeployTokenOptions(t *testing.T) {
 	name := "Name"
 	username := "Username"

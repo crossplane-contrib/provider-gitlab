@@ -1,12 +1,9 @@
 /*
 Copyright 2021 The Crossplane Authors.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,10 +80,6 @@ type projectDeployTokenModifier func(*v1alpha1.ProjectDeployToken)
 
 func withConditions(c ...xpv1.Condition) projectDeployTokenModifier {
 	return func(r *v1alpha1.ProjectDeployToken) { r.Status.ConditionedStatus.Conditions = c }
-}
-
-func withStatus(ap v1alpha1.ProjectDeployTokenObservation) projectDeployTokenModifier {
-	return func(r *v1alpha1.ProjectDeployToken) { r.Status.AtProvider = ap }
 }
 
 func withSpec(fp v1alpha1.ProjectDeployTokenParameters) projectDeployTokenModifier {
@@ -188,9 +181,6 @@ func TestObserve(t *testing.T) {
 					},
 				},
 				cr: projectDeployToken(
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: 3,
-					}),
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 						Username:  &username,
@@ -201,9 +191,6 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: projectDeployToken(
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: 3,
-					}),
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 						Username:  &username,
@@ -226,9 +213,6 @@ func TestObserve(t *testing.T) {
 					},
 				},
 				cr: projectDeployToken(
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: projectDeployTokenID,
-					}),
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 					}),
@@ -237,9 +221,6 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: projectDeployToken(
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: projectDeployTokenID,
-					}),
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 						Username:  &username,
@@ -263,9 +244,6 @@ func TestObserve(t *testing.T) {
 					},
 				},
 				cr: projectDeployToken(
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: projectDeployTokenID,
-					}),
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 						Username:  &username,
@@ -276,9 +254,6 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: projectDeployToken(
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: projectDeployTokenID,
-					}),
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 						Username:  &username,
@@ -372,9 +347,7 @@ func TestCreate(t *testing.T) {
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 					}),
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: 0,
-					}),
+					withExternalName("0"),
 				),
 			},
 			want: want{
@@ -382,9 +355,7 @@ func TestCreate(t *testing.T) {
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 					}),
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: 0,
-					}),
+					withExternalName("0"),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
@@ -476,9 +447,7 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 					}),
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: id,
-					}),
+					withExternalName(strconv.Itoa(id)),
 				),
 			},
 			want: want{
@@ -486,10 +455,32 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 					}),
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: id,
-					}),
+					withExternalName(strconv.Itoa(id)),
 				),
+			},
+		},
+		"NotIDExternalName": {
+			args: args{
+				projectDeployToken: &fake.MockClient{
+					MockDeleteProjectDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, nil
+					},
+				},
+				cr: projectDeployToken(
+					withSpec(v1alpha1.ProjectDeployTokenParameters{
+						ProjectID: &projectDeployTokenID,
+					}),
+					withExternalName("test"),
+				),
+			},
+			want: want{
+				cr: projectDeployToken(
+					withSpec(v1alpha1.ProjectDeployTokenParameters{
+						ProjectID: &projectDeployTokenID,
+					}),
+					withExternalName("test"),
+				),
+				err: errors.New(errNotProjectDeployToken),
 			},
 		},
 		"FailedDeletion": {
@@ -503,9 +494,7 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 					}),
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: id,
-					}),
+					withExternalName(strconv.Itoa(id)),
 				),
 			},
 			want: want{
@@ -513,9 +502,7 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.ProjectDeployTokenParameters{
 						ProjectID: &projectDeployTokenID,
 					}),
-					withStatus(v1alpha1.ProjectDeployTokenObservation{
-						ID: id,
-					}),
+					withExternalName(strconv.Itoa(id)),
 				),
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},
