@@ -171,6 +171,10 @@ spec:
                   mirrorUserId:
                     description: User responsible for all the activity surrounding a pull mirror event. (admins only)
                     type: integer
+                  name:
+                    description: Name is the human-readable name of the project. If set, it overrides metadata.name.
+                    maxLength: 255
+                    type: string
                   namespaceId:
                     description: Namespace for the new project (defaults to the current user’s namespace).
                     type: integer

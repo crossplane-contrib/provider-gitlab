@@ -77,6 +77,10 @@ spec:
                   mentionsDisabled:
                     description: Disable the capability of a group from getting mentioned.
                     type: boolean
+                  name:
+                    description: Name is the human-readable name of the group. If set, it overrides metadata.name.
+                    maxLength: 255
+                    type: string
                   parentId:
                     description: The parent group ID for creating nested group.
                     type: integer
