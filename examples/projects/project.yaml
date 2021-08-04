@@ -4,7 +4,8 @@ metadata:
   name: example-project
 spec:
   forProvider:
-    name: "Example Project" # Overrides metadata.name
+    # If not set, metadata.name will be used instead.
+    name: "Example Project"
     namespaceIdRef:
       name: example-group
     description: "example project description"
