@@ -264,6 +264,10 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 
 // GenerateCreateProjectOptions generates project creation options
 func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.CreateProjectOptions {
+	// Name field overrides resource name
+	if p.Name != nil {
+		name = *p.Name
+	}
 	project := &gitlab.CreateProjectOptions{
 		Name:                                &name,
 		Path:                                p.Path,
@@ -325,6 +329,10 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 
 // GenerateEditProjectOptions generates project edit options
 func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.EditProjectOptions {
+	// Name field overrides resource name
+	if p.Name != nil {
+		name = *p.Name
+	}
 	o := &gitlab.EditProjectOptions{
 		Name:                                &name,
 		Path:                                p.Path,

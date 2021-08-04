@@ -30,6 +30,7 @@ import (
 
 var (
 	name                             = "my-project"
+	overrideName                     = "My Project"
 	path                             = "path/to/project"
 	namespaceID                      = 1
 	defaultBranch                    = "main"
@@ -571,6 +572,21 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				BuildTimeout:                   &buildTimeout,
 			},
 		},
+		"NameOverride": {
+			args: args{
+				name: name,
+				parameters: &v1alpha1.ProjectParameters{
+					Name: &overrideName,
+					// TODO: TagList specified and wanted because otherwise
+					// test does not pass - (nil vs &nil - fix)
+					TagList: tagList,
+				},
+			},
+			want: &gitlab.CreateProjectOptions{
+				Name:    &overrideName,
+				TagList: &tagList,
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -722,6 +738,21 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				MergeMethod:                    clients.MergeMethodStringToGitlab(mergeMethod),
 				TagList:                        &tagList,
 				BuildTimeout:                   &buildTimeout,
+			},
+		},
+		"NameOverride": {
+			args: args{
+				name: name,
+				parameters: &v1alpha1.ProjectParameters{
+					Name: &name,
+					// TODO: TagList specified and wanted because otherwise
+					// test does not pass - (nil vs &nil - fix)
+					TagList: tagList,
+				},
+			},
+			want: &gitlab.EditProjectOptions{
+				Name:    &name,
+				TagList: &tagList,
 			},
 		},
 	}

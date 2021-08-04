@@ -4,6 +4,8 @@ metadata:
   name: example-group
 spec:
   forProvider:
+    # If not set, metadata.name will be used instead.
+    name: "Example Group"
     parentIdRef:
       name: example-parent-group
     path: "example-group-path"
