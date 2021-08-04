@@ -73,7 +73,7 @@ crds.clean:
 	@find package/crds -name *.yaml.sed -delete || $(FAIL)
 	@$(OK) cleaned generated CRDs
 
-generate: crds.clean
+generate.done: crds.clean
 
 # Ensure a PR is ready for review.
 reviewable: generate lint
