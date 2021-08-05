@@ -273,6 +273,9 @@ func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { /
 
 // isProjectUpToDate checks whether there is a change in any of the modifiable fields.
 func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { // nolint:gocyclo
+	if p.Name != nil && !cmp.Equal(*p.Name, g.Name) {
+		return false
+	}
 	if !clients.IsBoolEqualToBoolPtr(p.AllowMergeOnSkippedPipeline, g.AllowMergeOnSkippedPipeline) {
 		return false
 	}
