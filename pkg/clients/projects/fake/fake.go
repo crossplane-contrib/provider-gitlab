@@ -51,6 +51,11 @@ type MockClient struct {
 	MockCreateProjectVariable func(pid interface{}, opt *gitlab.CreateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error)
 	MockUpdateProjectVariable func(pid interface{}, key string, opt *gitlab.UpdateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error)
 	MockRemoveProjectVariable func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockGetDeployKey    func(pid interface{}, deployKeyID int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployKey, *gitlab.Response, error)
+	MockAddDeployKey    func(pid interface{}, opt *gitlab.AddDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployKey, *gitlab.Response, error)
+	MockUpdateDeployKey func(pid interface{}, deployKeyID int, opt *gitlab.UpdateDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployKey, *gitlab.Response, error)
+	MockDeleteDeployKey func(pid interface{}, deployKeyID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetProject calls the underlying MockGetProject method.
@@ -146,4 +151,24 @@ func (c *MockClient) UpdateVariable(pid interface{}, key string, opt *gitlab.Upd
 // RemoveVariable calls the underlying MockRemoveProjectVariable
 func (c *MockClient) RemoveVariable(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockRemoveProjectVariable(pid, key)
+}
+
+// GetDeployKey calls the underlying MockGetDeployKey method.
+func (c *MockClient) GetDeployKey(pid interface{}, deployKeyID int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployKey, *gitlab.Response, error) {
+	return c.MockGetDeployKey(pid, deployKeyID)
+}
+
+// AddDeployKey calls the underlying MockAddDeployKey method.
+func (c *MockClient) AddDeployKey(pid interface{}, opt *gitlab.AddDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployKey, *gitlab.Response, error) {
+	return c.MockAddDeployKey(pid, opt)
+}
+
+// UpdateDeployKey calls the underlying MockUpdateDeployKey method.
+func (c *MockClient) UpdateDeployKey(pid interface{}, deployKeyID int, opt *gitlab.UpdateDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployKey, *gitlab.Response, error) {
+	return c.MockUpdateDeployKey(pid, deployKeyID, opt)
+}
+
+// DeleteDeployKey calls the underlying MockDeleteDeployKey method.
+func (c *MockClient) DeleteDeployKey(pid interface{}, deployKeyID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteDeployKey(pid, deployKeyID)
 }

@@ -8,6 +8,7 @@ require (
 	github.com/google/go-cmp v0.5.2
 	github.com/pkg/errors v0.9.1
 	github.com/xanzy/go-gitlab v0.50.0
+	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
 	golang.org/x/tools v0.0.0-20201208062317-e652b2f42cc7 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6

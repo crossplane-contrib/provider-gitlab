@@ -1,0 +1,16 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: DeployKey
+metadata:
+  name: example-deploy-key
+spec:
+  forProvider:
+    projectIdRef:
+      name: example-project
+    title: deploy key test
+    key: ssh-rsa AAAA...
+  providerConfigRef:
+    name: gitlab-provider
+  # a reference to a Kubernetes secret to which the controller will write the private ssh key
+  writeConnectionSecretToRef:
+    name: gitlab-deploykey-example-deploykey
+    namespace: crossplane-system
