@@ -295,6 +295,7 @@ func TestObserve(t *testing.T) {
 	}
 
 	isProjectUpToDateCases := map[string]interface{}{
+		"Name":                                      "name",
 		"Path":                                      "path",
 		"DefaultBranch":                             "Default branch",
 		"Description":                               "description",
