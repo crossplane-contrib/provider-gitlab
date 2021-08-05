@@ -4,7 +4,8 @@ metadata:
   name: example-group-member
 spec:
   forProvider:
-    groupID: <gitlab-group-id>
+    groupIdRef:
+      name: example-group
     userID: <gitlab-user-id>
     accessLevel: 20
     # expiresAt: "2021-06-09"

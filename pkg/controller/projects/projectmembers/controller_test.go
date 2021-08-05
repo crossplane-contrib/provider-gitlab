@@ -1,12 +1,9 @@
 /*
 Copyright 2021 The Crossplane Authors.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,6 +79,10 @@ func withExternalName(n string) projectModifier {
 
 func withStatus(s v1alpha1.ProjectMemberObservation) projectModifier {
 	return func(r *v1alpha1.ProjectMember) { r.Status.AtProvider = s }
+}
+
+func withSpec(s v1alpha1.ProjectMemberParameters) projectModifier {
+	return func(r *v1alpha1.ProjectMember) { r.Spec.ForProvider = s }
 }
 
 func withAnnotations(a map[string]string) projectModifier {
@@ -345,10 +346,16 @@ func TestCreate(t *testing.T) {
 						}, &gitlab.Response{}, nil
 					},
 				},
-				cr: projectMember(withAnnotations(extNameAnnotation)),
+				cr: projectMember(
+					withAnnotations(extNameAnnotation),
+					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+				),
 			},
 			want: want{
-				cr:     projectMember(withExternalName(extName)),
+				cr: projectMember(
+					withExternalName(extName),
+					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+				),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
 			},
 		},
@@ -372,10 +379,16 @@ func TestCreate(t *testing.T) {
 						}, &gitlab.Response{}, nil
 					},
 				},
-				cr: projectMember(withAnnotations(extNameAnnotation)),
+				cr: projectMember(
+					withAnnotations(extNameAnnotation),
+					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+				),
 			},
 			want: want{
-				cr:     projectMember(withExternalName(extName)),
+				cr: projectMember(
+					withExternalName(extName),
+					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+				),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
 			},
 		},
@@ -386,10 +399,16 @@ func TestCreate(t *testing.T) {
 						return &gitlab.ProjectMember{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: projectMember(),
+				cr: projectMember(
+					withAnnotations(extNameAnnotation),
+					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+				),
 			},
 			want: want{
-				cr:  projectMember(),
+				cr: projectMember(
+					withExternalName(extName),
+					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
 		},

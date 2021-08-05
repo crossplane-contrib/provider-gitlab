@@ -1,12 +1,9 @@
 /*
 Copyright 2021 The Crossplane Authors.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,6 +78,10 @@ func withExternalName(n string) groupModifier {
 
 func withStatus(s v1alpha1.GroupMemberObservation) groupModifier {
 	return func(r *v1alpha1.GroupMember) { r.Status.AtProvider = s }
+}
+
+func withSpec(s v1alpha1.GroupMemberParameters) groupModifier {
+	return func(r *v1alpha1.GroupMember) { r.Spec.ForProvider = s }
 }
 
 func withAnnotations(a map[string]string) groupModifier {
@@ -343,10 +344,16 @@ func TestCreate(t *testing.T) {
 						}, &gitlab.Response{}, nil
 					},
 				},
-				cr: groupMember(withAnnotations(extNameAnnotation)),
+				cr: groupMember(
+					withAnnotations(extNameAnnotation),
+					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+				),
 			},
 			want: want{
-				cr:     groupMember(withExternalName(extName)),
+				cr: groupMember(
+					withExternalName(extName),
+					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+				),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
 			},
 		},
@@ -369,10 +376,16 @@ func TestCreate(t *testing.T) {
 						}, &gitlab.Response{}, nil
 					},
 				},
-				cr: groupMember(withAnnotations(extNameAnnotation)),
+				cr: groupMember(
+					withAnnotations(extNameAnnotation),
+					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+				),
 			},
 			want: want{
-				cr:     groupMember(withExternalName(extName)),
+				cr: groupMember(
+					withExternalName(extName),
+					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+				),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
 			},
 		},
@@ -383,10 +396,16 @@ func TestCreate(t *testing.T) {
 						return &gitlab.GroupMember{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: groupMember(),
+				cr: groupMember(
+					withAnnotations(extNameAnnotation),
+					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+				),
 			},
 			want: want{
-				cr:  groupMember(),
+				cr: groupMember(
+					withExternalName(extName),
+					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
 		},
