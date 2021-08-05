@@ -1,8 +1,8 @@
 /*
 Copyright 2021 The Crossplane Authors.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
+
 You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
@@ -26,8 +26,18 @@ import (
 type ProjectMemberParameters struct {
 
 	// The ID of the project owned by the authenticated user.
+	// +optional
 	// +immutable
-	ProjectID int `json:"projectID"`
+	ProjectID *int `json:"projectId,omitempty"`
+
+	// ProjectIDRef is a reference to a project to retrieve its projectId
+	// +optional
+	// +immutable
+	ProjectIDRef *xpv1.Reference `json:"projectIdRef,omitempty"`
+
+	// ProjectIDSelector selects reference to a project to retrieve its projectId.
+	// +optional
+	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
 
 	// The user ID of the member.
 	// +immutable
@@ -74,7 +84,7 @@ type ProjectMemberStatus struct {
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:printcolumn:name="Project ID",type="integer",JSONPath=".spec.forProvider.projectID"
+// +kubebuilder:printcolumn:name="Project ID",type="integer",JSONPath=".spec.forProvider.projectId"
 // +kubebuilder:printcolumn:name="Username",type="string",JSONPath=".status.atProvider.username"
 // +kubebuilder:printcolumn:name="Acceess Level",type="integer",JSONPath=".spec.forProvider.accessLevel"
 // +kubebuilder:subresource:status

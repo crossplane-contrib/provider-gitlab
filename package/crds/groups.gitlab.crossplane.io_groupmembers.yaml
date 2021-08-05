@@ -28,7 +28,7 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
-    - jsonPath: .spec.forProvider.groupID
+    - jsonPath: .spec.forProvider.groupId
       name: Group ID
       type: integer
     - jsonPath: .status.atProvider.username
@@ -68,15 +68,35 @@ spec:
                   expiresAt:
                     description: A date string in the format YEAR-MONTH-DAY.
                     type: string
-                  groupID:
+                  groupId:
                     description: The ID of the group owned by the authenticated user.
                     type: integer
+                  groupIdRef:
+                    description: GroupIDRef is a reference to a group to retrieve its groupId
+                    properties:
+                      name:
+                        description: Name of the referenced object.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  groupIdSelector:
+                    description: GroupIDSelector selects reference to a group to retrieve its groupId.
+                    properties:
+                      matchControllerRef:
+                        description: MatchControllerRef ensures an object with the same controller reference as the selecting object is selected.
+                        type: boolean
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: MatchLabels ensures an object with matching labels is selected.
+                        type: object
+                    type: object
                   userID:
                     description: The user ID of the member.
                     type: integer
                 required:
                 - accessLevel
-                - groupID
                 - userID
                 type: object
               providerConfigRef:
