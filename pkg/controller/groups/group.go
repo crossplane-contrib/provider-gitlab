@@ -179,6 +179,12 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) bool { // nol
 	if (p.Visibility != nil) && (!cmp.Equal(string(*p.Visibility), string(g.Visibility))) {
 		return false
 	}
+	if (p.ProjectCreationLevel != nil) && (!cmp.Equal(string(*p.ProjectCreationLevel), string(g.ProjectCreationLevel))) {
+		return false
+	}
+	if (p.SubGroupCreationLevel != nil) && (!cmp.Equal(string(*p.SubGroupCreationLevel), string(g.SubGroupCreationLevel))) {
+		return false
+	}
 	if !clients.IsBoolEqualToBoolPtr(p.ShareWithGroupLock, g.ShareWithGroupLock) {
 		return false
 	}
