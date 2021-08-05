@@ -42,6 +42,10 @@ type MockClient struct {
 	MockAddProjectMember    func(pid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
 	MockEditProjectMember   func(pid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
 	MockDeleteProjectMember func(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockListProjectDeployTokens  func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error)
+	MockCreateProjectDeployToken func(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
+	MockDeleteProjectDeployToken func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetProject calls the underlying MockGetProject method.
@@ -102,4 +106,19 @@ func (c *MockClient) EditProjectMember(pid interface{}, user int, opt *gitlab.Ed
 // DeleteProjectMember calls the underlying MockDeleteProjectMember method.
 func (c *MockClient) DeleteProjectMember(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteProjectMember(pid, user)
+}
+
+// ListProjectDeployTokens calls the underlying MockListProjectDeployTokens method.
+func (c *MockClient) ListProjectDeployTokens(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
+	return c.MockListProjectDeployTokens(pid, opt)
+}
+
+// CreateProjectDeployToken calls the underlying MockCreateProjectDeployToken method.
+func (c *MockClient) CreateProjectDeployToken(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+	return c.MockCreateProjectDeployToken(pid, opt)
+}
+
+// DeleteProjectDeployToken calls the underlying MockDeleteProjectDeployToken method.
+func (c *MockClient) DeleteProjectDeployToken(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteProjectDeployToken(pid, deployToken)
 }
