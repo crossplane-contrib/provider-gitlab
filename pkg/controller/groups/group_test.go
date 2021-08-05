@@ -42,6 +42,7 @@ var (
 	unexpecedItem      resource.Managed
 	path               = "path/to/group"
 	name               = "example-group"
+	displayName        = "Example Group"
 	groupID            = 1234
 	extName            = strconv.Itoa(groupID)
 	errBoom            = errors.New("boom")
@@ -66,6 +67,10 @@ type groupModifier func(*v1alpha1.Group)
 
 func withConditions(c ...xpv1.Condition) groupModifier {
 	return func(cr *v1alpha1.Group) { cr.Status.ConditionedStatus.Conditions = c }
+}
+
+func withName(s string) groupModifier {
+	return func(r *v1alpha1.Group) { r.Spec.ForProvider.Name = &s }
 }
 
 func withPath(s string) groupModifier {
@@ -397,6 +402,11 @@ func TestObserve(t *testing.T) {
 			withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
 		}
 
+		if name == "Name" {
+			argsGroupModifier = append(argsGroupModifier, withName(displayName))
+			wantGroupModifier = append(wantGroupModifier, withName(displayName))
+		}
+
 		if name == "Path" {
 			argsGroupModifier = append(argsGroupModifier, withPath(path))
 			wantGroupModifier = append(wantGroupModifier, withPath(path))
@@ -407,7 +417,12 @@ func TestObserve(t *testing.T) {
 			wantGroupModifier = append(wantGroupModifier, withDescription(&description))
 		}
 
-		gitlabGroup := &gitlab.Group{Name: name}
+		gitlabGroup := &gitlab.Group{
+			Name:                  name,
+			Visibility:            gitlab.VisibilityValue(visibility),
+			ProjectCreationLevel:  *gitlab.ProjectCreationLevel(gitlab.ProjectCreationLevelValue(projectCreationLevel)),
+			SubGroupCreationLevel: *gitlab.SubGroupCreationLevel(gitlab.SubGroupCreationLevelValue(subGroupCreationLevel)),
+		}
 		structValue := reflect.ValueOf(gitlabGroup).Elem()
 		structFieldValue := structValue.FieldByName(name)
 		val := reflect.ValueOf(value)
