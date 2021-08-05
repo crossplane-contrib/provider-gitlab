@@ -1,8 +1,8 @@
 /*
 Copyright 2021 The Crossplane Authors.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
+
 You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
@@ -37,8 +37,18 @@ type GroupMemberSAMLIdentity struct {
 type GroupMemberParameters struct {
 
 	// The ID of the group owned by the authenticated user.
+	// +optional
 	// +immutable
-	GroupID int `json:"groupID"`
+	GroupID *int `json:"groupId,omitempty"`
+
+	// GroupIDRef is a reference to a group to retrieve its groupId
+	// +optional
+	// +immutable
+	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
+
+	// GroupIDSelector selects reference to a group to retrieve its groupId.
+	// +optional
+	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
 
 	// The user ID of the member.
 	// +immutable
@@ -84,7 +94,7 @@ type GroupMemberStatus struct {
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:printcolumn:name="Group ID",type="integer",JSONPath=".spec.forProvider.groupID"
+// +kubebuilder:printcolumn:name="Group ID",type="integer",JSONPath=".spec.forProvider.groupId"
 // +kubebuilder:printcolumn:name="Username",type="string",JSONPath=".status.atProvider.username"
 // +kubebuilder:printcolumn:name="Acceess Level",type="integer",JSONPath=".spec.forProvider.accessLevel"
 // +kubebuilder:subresource:status
