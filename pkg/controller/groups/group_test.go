@@ -360,6 +360,7 @@ func TestObserve(t *testing.T) {
 	}
 
 	isGroupUpToDateCases := map[string]interface{}{
+		"Name":                           "name",
 		"Path":                           "/new/group/path",
 		"Description":                    "description v2",
 		"MembershipLock":                 true,
