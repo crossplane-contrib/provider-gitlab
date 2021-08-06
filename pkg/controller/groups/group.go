@@ -164,6 +164,9 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 
 // isGroupUpToDate checks whether there is a change in any of the modifiable fields.
 func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) bool { // nolint:gocyclo
+	if p.Name != nil && !cmp.Equal(*p.Name, g.Name) {
+		return false
+	}
 	if !cmp.Equal(p.Path, g.Path) {
 		return false
 	}
@@ -174,6 +177,12 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) bool { // nol
 		return false
 	}
 	if (p.Visibility != nil) && (!cmp.Equal(string(*p.Visibility), string(g.Visibility))) {
+		return false
+	}
+	if (p.ProjectCreationLevel != nil) && (!cmp.Equal(string(*p.ProjectCreationLevel), string(g.ProjectCreationLevel))) {
+		return false
+	}
+	if (p.SubGroupCreationLevel != nil) && (!cmp.Equal(string(*p.SubGroupCreationLevel), string(g.SubGroupCreationLevel))) {
 		return false
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.ShareWithGroupLock, g.ShareWithGroupLock) {
