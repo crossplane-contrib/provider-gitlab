@@ -295,6 +295,7 @@ func TestObserve(t *testing.T) {
 	}
 
 	isProjectUpToDateCases := map[string]interface{}{
+		"Name":                                      "name",
 		"Path":                                      "path",
 		"DefaultBranch":                             "Default branch",
 		"Description":                               "description",
@@ -342,6 +343,7 @@ func TestObserve(t *testing.T) {
 	visibility := v1alpha1.PublicVisibility
 
 	projectParameters := v1alpha1.ProjectParameters{
+		Name:                             &s,
 		Path:                             &s,
 		DefaultBranch:                    &s,
 		Description:                      &s,
@@ -391,6 +393,7 @@ func TestObserve(t *testing.T) {
 			withConditions(xpv1.Available()),
 		}
 		gitlabProject := &gitlab.Project{
+			Name:                             s,
 			Path:                             s,
 			DefaultBranch:                    s,
 			Description:                      s,
@@ -434,7 +437,7 @@ func TestObserve(t *testing.T) {
 		val := reflect.ValueOf(value)
 
 		structFieldValue.Set(val)
-		cases["IsGroupUpToDate"+name] = struct {
+		cases["IsProjectUpToDate"+name] = struct {
 			args
 			want
 		}{
