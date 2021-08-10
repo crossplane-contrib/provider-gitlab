@@ -28,6 +28,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/projecthooks"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/projectmembers"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/variables"
 )
 
 // Setup creates all Gitlab API controllers with the supplied logger and adds
@@ -41,6 +42,7 @@ func Setup(mgr ctrl.Manager, l logging.Logger) error {
 		projecthooks.SetupProjectHook,
 		projectmembers.SetupProjectMember,
 		deploytokens.SetupProjectDeployToken,
+		variables.SetupVariable,
 	} {
 		if err := setup(mgr, l); err != nil {
 			return err
