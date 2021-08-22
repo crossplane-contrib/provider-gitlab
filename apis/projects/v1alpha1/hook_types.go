@@ -22,8 +22,8 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
-// A ProjectHookParameters defines the desired state of a Gitlab ProjectHook.
-type ProjectHookParameters struct {
+// A HookParameters defines the desired state of a Gitlab Hook.
+type HookParameters struct {
 	// URL is the hook URL.
 	URL *string `json:"url"`
 
@@ -94,11 +94,11 @@ type ProjectHookParameters struct {
 	Token *string `json:"token,omitempty"`
 }
 
-// ProjectHookObservation represents a project hook.
+// HookObservation represents a project hook.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/projects.html#list-project-hooks
-type ProjectHookObservation struct {
+type HookObservation struct {
 	// ID of the project hook at gitlab
 	ID int `json:"id,omitempty"`
 
@@ -106,39 +106,39 @@ type ProjectHookObservation struct {
 	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
 }
 
-// A ProjectHookSpec defines the desired state of a Gitlab ProjectHook.
-type ProjectHookSpec struct {
+// A HookSpec defines the desired state of a Gitlab Hook.
+type HookSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       ProjectHookParameters `json:"forProvider"`
+	ForProvider       HookParameters `json:"forProvider"`
 }
 
-// A ProjectHookStatus represents the observed state of a Gitlab ProjectHook.
-type ProjectHookStatus struct {
+// A HookStatus represents the observed state of a Gitlab Hook.
+type HookStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          ProjectHookObservation `json:"atProvider,omitempty"`
+	AtProvider          HookObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// A ProjectHook is a managed resource that represents a Gitlab ProjectHook
+// A Hook is a managed resource that represents a Gitlab Hook
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab}
-type ProjectHook struct {
+type Hook struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ProjectHookSpec   `json:"spec"`
-	Status ProjectHookStatus `json:"status,omitempty"`
+	Spec   HookSpec   `json:"spec"`
+	Status HookStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// ProjectHookList contains a list of ProjectHook items
-type ProjectHookList struct {
+// HookList contains a list of Hook items
+type HookList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ProjectHook `json:"items"`
+	Items           []Hook `json:"items"`
 }

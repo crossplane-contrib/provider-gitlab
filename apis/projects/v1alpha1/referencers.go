@@ -49,8 +49,8 @@ func toPtrValue(v string) *int {
 	return &r
 }
 
-// ResolveReferences of this ProjectHook
-func (mg *ProjectHook) ResolveReferences(ctx context.Context, c client.Reader) error {
+// ResolveReferences of this Hook
+func (mg *Hook) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 
 	// resolve spec.forProvider.projectIdRef

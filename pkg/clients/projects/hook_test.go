@@ -45,7 +45,7 @@ var (
 	token                    = "84B9C651-9025-47D2-9124-DD951BD268E8"
 )
 
-func TestGenerateProjectHookObservation(t *testing.T) {
+func TestGenerateHookObservation(t *testing.T) {
 	id := 0
 	createdAt := time.Now()
 
@@ -55,7 +55,7 @@ func TestGenerateProjectHookObservation(t *testing.T) {
 
 	cases := map[string]struct {
 		args args
-		want v1alpha1.ProjectHookObservation
+		want v1alpha1.HookObservation
 	}{
 		"Full": {
 			args: args{
@@ -64,7 +64,7 @@ func TestGenerateProjectHookObservation(t *testing.T) {
 					CreatedAt: &createdAt,
 				},
 			},
-			want: v1alpha1.ProjectHookObservation{
+			want: v1alpha1.HookObservation{
 				ID:        id,
 				CreatedAt: &metav1.Time{Time: createdAt},
 			},
@@ -72,21 +72,21 @@ func TestGenerateProjectHookObservation(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateProjectHookObservation(tc.args.ph)
+			got := GenerateHookObservation(tc.args.ph)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 		})
 	}
 }
-func TestLateInitializeProjectHook(t *testing.T) {
+func TestLateInitializeHook(t *testing.T) {
 	cases := map[string]struct {
-		parameters  *v1alpha1.ProjectHookParameters
+		parameters  *v1alpha1.HookParameters
 		projecthook *gitlab.ProjectHook
-		want        *v1alpha1.ProjectHookParameters
+		want        *v1alpha1.HookParameters
 	}{
 		"AllOptionalFields": {
-			parameters: &v1alpha1.ProjectHookParameters{},
+			parameters: &v1alpha1.HookParameters{},
 			projecthook: &gitlab.ProjectHook{
 				ConfidentialNoteEvents:   confidentialNoteEvents,
 				PushEvents:               pushEvents,
@@ -101,7 +101,7 @@ func TestLateInitializeProjectHook(t *testing.T) {
 				WikiPageEvents:           wikiPageEvents,
 				EnableSSLVerification:    enableSSLVerification,
 			},
-			want: &v1alpha1.ProjectHookParameters{
+			want: &v1alpha1.HookParameters{
 				ConfidentialNoteEvents:   &confidentialNoteEvents,
 				PushEvents:               &pushEvents,
 				PushEventsBranchFilter:   &pushEventsBranchFilter,
@@ -119,16 +119,16 @@ func TestLateInitializeProjectHook(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			LateInitializeProjectHook(tc.parameters, tc.projecthook)
+			LateInitializeHook(tc.parameters, tc.projecthook)
 			if diff := cmp.Diff(tc.want, tc.parameters); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 		})
 	}
 }
-func TestGenerateCreateProjectHookOptions(t *testing.T) {
+func TestGenerateCreateHookOptions(t *testing.T) {
 	type args struct {
-		parameters *v1alpha1.ProjectHookParameters
+		parameters *v1alpha1.HookParameters
 	}
 	cases := map[string]struct {
 		args args
@@ -136,7 +136,7 @@ func TestGenerateCreateProjectHookOptions(t *testing.T) {
 	}{
 		"AllFields": {
 			args: args{
-				parameters: &v1alpha1.ProjectHookParameters{
+				parameters: &v1alpha1.HookParameters{
 					URL:                      &url,
 					ConfidentialNoteEvents:   &confidentialNoteEvents,
 					PushEvents:               &pushEvents,
@@ -172,7 +172,7 @@ func TestGenerateCreateProjectHookOptions(t *testing.T) {
 		},
 		"SomeFields": {
 			args: args{
-				parameters: &v1alpha1.ProjectHookParameters{
+				parameters: &v1alpha1.HookParameters{
 					PushEvents:             &pushEvents,
 					PushEventsBranchFilter: &pushEventsBranchFilter,
 					IssuesEvents:           &issuesEvents,
@@ -187,16 +187,16 @@ func TestGenerateCreateProjectHookOptions(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateCreateProjectHookOptions(tc.args.parameters)
+			got := GenerateCreateHookOptions(tc.args.parameters)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 		})
 	}
 }
-func TestGenerateEditProjectHookOptions(t *testing.T) {
+func TestGenerateEditHookOptions(t *testing.T) {
 	type args struct {
-		parameters *v1alpha1.ProjectHookParameters
+		parameters *v1alpha1.HookParameters
 	}
 	cases := map[string]struct {
 		args args
@@ -204,7 +204,7 @@ func TestGenerateEditProjectHookOptions(t *testing.T) {
 	}{
 		"AllFields": {
 			args: args{
-				parameters: &v1alpha1.ProjectHookParameters{
+				parameters: &v1alpha1.HookParameters{
 					URL:                      &url,
 					ConfidentialNoteEvents:   &confidentialNoteEvents,
 					PushEvents:               &pushEvents,
@@ -241,17 +241,17 @@ func TestGenerateEditProjectHookOptions(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateEditProjectHookOptions(tc.args.parameters)
+			got := GenerateEditHookOptions(tc.args.parameters)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 		})
 	}
 }
-func TestIsProjectHookUpToDate(t *testing.T) {
+func TestIsHookUpToDate(t *testing.T) {
 	type args struct {
 		projecthook *gitlab.ProjectHook
-		p           *v1alpha1.ProjectHookParameters
+		p           *v1alpha1.HookParameters
 	}
 
 	cases := map[string]struct {
@@ -260,7 +260,7 @@ func TestIsProjectHookUpToDate(t *testing.T) {
 	}{
 		"SameFields": {
 			args: args{
-				p: &v1alpha1.ProjectHookParameters{
+				p: &v1alpha1.HookParameters{
 					URL:                      &url,
 					ConfidentialNoteEvents:   &confidentialNoteEvents,
 					PushEvents:               &pushEvents,
@@ -296,7 +296,7 @@ func TestIsProjectHookUpToDate(t *testing.T) {
 		},
 		"DifferentFields": {
 			args: args{
-				p: &v1alpha1.ProjectHookParameters{
+				p: &v1alpha1.HookParameters{
 					URL:                      &url,
 					ConfidentialNoteEvents:   &confidentialNoteEvents,
 					PushEvents:               &pushEvents,
@@ -333,7 +333,7 @@ func TestIsProjectHookUpToDate(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := IsProjectHookUpToDate(tc.args.p, tc.args.projecthook)
+			got := IsHookUpToDate(tc.args.p, tc.args.projecthook)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}

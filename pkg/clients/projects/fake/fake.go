@@ -78,7 +78,7 @@ func (c *MockClient) GetProjectHook(pid interface{}, hook int, options ...gitlab
 	return c.MockGetProjectHook(pid, hook)
 }
 
-// AddProjectHook calls the underlying MockAddProjectHook method.
+// AddProjectHook calls the underlying MockAddHook method.
 func (c *MockClient) AddProjectHook(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 	return c.MockAddProjectHook(pid, opt)
 }
