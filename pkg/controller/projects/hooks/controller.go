@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package projecthooks
+package hooks
 
 import (
 	"context"
@@ -40,24 +40,24 @@ import (
 )
 
 const (
-	errNotProjectHook   = "managed resource is not a Gitlab projecthook custom resource"
-	errGetFailed        = "cannot get Gitlab projecthook"
-	errKubeUpdateFailed = "cannot update Gitlab projecthook custom resource"
-	errCreateFailed     = "cannot create Gitlab projecthook"
-	errUpdateFailed     = "cannot update Gitlab projecthook"
-	errDeleteFailed     = "cannot delete Gitlab projecthook"
+	errNotHook          = "managed resource is not a Gitlab project hook custom resource"
+	errGetFailed        = "cannot get Gitlab project hook"
+	errKubeUpdateFailed = "cannot update Gitlab project hook custom resource"
+	errCreateFailed     = "cannot create Gitlab project hook"
+	errUpdateFailed     = "cannot update Gitlab project hook"
+	errDeleteFailed     = "cannot delete Gitlab project hook"
 )
 
-// SetupProjectHook adds a controller that reconciles ProjectHooks.
-func SetupProjectHook(mgr ctrl.Manager, l logging.Logger) error {
-	name := managed.ControllerName(v1alpha1.ProjectHookKind)
+// SetupHook adds a controller that reconciles Hooks.
+func SetupHook(mgr ctrl.Manager, l logging.Logger) error {
+	name := managed.ControllerName(v1alpha1.HookKind)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		For(&v1alpha1.ProjectHook{}).
+		For(&v1alpha1.Hook{}).
 		Complete(managed.NewReconciler(mgr,
-			resource.ManagedKind(v1alpha1.ProjectHookGroupVersionKind),
-			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProjectHookClient}),
+			resource.ManagedKind(v1alpha1.HookGroupVersionKind),
+			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewHookClient}),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
 			managed.WithLogger(l.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
@@ -65,13 +65,13 @@ func SetupProjectHook(mgr ctrl.Manager, l logging.Logger) error {
 
 type connector struct {
 	kube              client.Client
-	newGitlabClientFn func(cfg clients.Config) projects.ProjectHookClient
+	newGitlabClientFn func(cfg clients.Config) projects.HookClient
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	cr, ok := mg.(*v1alpha1.ProjectHook)
+	cr, ok := mg.(*v1alpha1.Hook)
 	if !ok {
-		return nil, errors.New(errNotProjectHook)
+		return nil, errors.New(errNotHook)
 	}
 	cfg, err := clients.GetConfig(ctx, c.kube, cr)
 	if err != nil {
@@ -82,13 +82,13 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 
 type external struct {
 	kube   client.Client
-	client projects.ProjectHookClient
+	client projects.HookClient
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*v1alpha1.ProjectHook)
+	cr, ok := mg.(*v1alpha1.Hook)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotProjectHook)
+		return managed.ExternalObservation{}, errors.New(errNotHook)
 	}
 
 	if meta.GetExternalName(cr) == "" {
@@ -99,54 +99,54 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	hookid, err := strconv.Atoi(meta.GetExternalName(cr))
 	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errNotProjectHook)
+		return managed.ExternalObservation{}, errors.New(errNotHook)
 	}
 
 	projecthook, _, err := e.client.GetProjectHook(*cr.Spec.ForProvider.ProjectID, hookid)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorProjectHookNotFound, err), errGetFailed)
+		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorHookNotFound, err), errGetFailed)
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
-	projects.LateInitializeProjectHook(&cr.Spec.ForProvider, projecthook)
+	projects.LateInitializeHook(&cr.Spec.ForProvider, projecthook)
 
-	cr.Status.AtProvider = projects.GenerateProjectHookObservation(projecthook)
+	cr.Status.AtProvider = projects.GenerateHookObservation(projecthook)
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        projects.IsProjectHookUpToDate(&cr.Spec.ForProvider, projecthook),
+		ResourceUpToDate:        projects.IsHookUpToDate(&cr.Spec.ForProvider, projecthook),
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 	}, nil
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.ProjectHook)
+	cr, ok := mg.(*v1alpha1.Hook)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotProjectHook)
+		return managed.ExternalCreation{}, errors.New(errNotHook)
 	}
 
 	cr.Status.SetConditions(xpv1.Creating())
-	projecthook, _, err := e.client.AddProjectHook(*cr.Spec.ForProvider.ProjectID, projects.GenerateCreateProjectHookOptions(&cr.Spec.ForProvider), gitlab.WithContext(ctx))
+	hook, _, err := e.client.AddProjectHook(*cr.Spec.ForProvider.ProjectID, projects.GenerateCreateHookOptions(&cr.Spec.ForProvider), gitlab.WithContext(ctx))
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
-	err = e.updateExternalName(cr, projecthook)
+	err = e.updateExternalName(cr, hook)
 	return managed.ExternalCreation{}, errors.Wrap(err, errKubeUpdateFailed)
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mg.(*v1alpha1.ProjectHook)
+	cr, ok := mg.(*v1alpha1.Hook)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotProjectHook)
+		return managed.ExternalUpdate{}, errors.New(errNotHook)
 	}
 
 	hookid, err := strconv.Atoi(meta.GetExternalName(cr))
 	if err != nil {
-		return managed.ExternalUpdate{}, errors.New(errNotProjectHook)
+		return managed.ExternalUpdate{}, errors.New(errNotHook)
 	}
 
-	_, _, err = e.client.EditProjectHook(*cr.Spec.ForProvider.ProjectID, hookid, projects.GenerateEditProjectHookOptions(&cr.Spec.ForProvider), gitlab.WithContext(ctx))
+	_, _, err = e.client.EditProjectHook(*cr.Spec.ForProvider.ProjectID, hookid, projects.GenerateEditHookOptions(&cr.Spec.ForProvider), gitlab.WithContext(ctx))
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}
@@ -155,9 +155,9 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
-	cr, ok := mg.(*v1alpha1.ProjectHook)
+	cr, ok := mg.(*v1alpha1.Hook)
 	if !ok {
-		return errors.New(errNotProjectHook)
+		return errors.New(errNotHook)
 	}
 
 	cr.Status.SetConditions(xpv1.Deleting())
@@ -166,7 +166,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	return errors.Wrap(err, errDeleteFailed)
 }
 
-func (e *external) updateExternalName(cr *v1alpha1.ProjectHook, projecthook *gitlab.ProjectHook) error {
+func (e *external) updateExternalName(cr *v1alpha1.Hook, projecthook *gitlab.ProjectHook) error {
 	meta.SetExternalName(cr, strconv.Itoa(projecthook.ID))
 	return e.kube.Update(context.Background(), cr)
 }

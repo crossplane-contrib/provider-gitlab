@@ -1,7 +1,7 @@
 apiVersion: projects.gitlab.crossplane.io/v1alpha1
-kind: ProjectHook
+kind: Hook
 metadata:
-  name: example-project-hook
+  name: example-hook
 spec:
   forProvider:
     projectIdRef:
@@ -10,5 +10,5 @@ spec:
   providerConfigRef:
     name: gitlab-provider
   writeConnectionSecretToRef:
-    name: gitlab-project-example-projecthook
+    name: gitlab-project-example-hook
     namespace: crossplane-system
