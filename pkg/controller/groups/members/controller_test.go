@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package groupmembers
+package members
 
 import (
 	"context"
@@ -53,43 +53,43 @@ var (
 )
 
 type args struct {
-	groupMember groups.GroupMemberClient
+	groupMember groups.MemberClient
 	kube        client.Client
 	cr          resource.Managed
 }
 
 func withAccessLevel(i int) groupModifier {
-	return func(r *v1alpha1.GroupMember) { r.Spec.ForProvider.AccessLevel = v1alpha1.AccessLevelValue(i) }
+	return func(r *v1alpha1.Member) { r.Spec.ForProvider.AccessLevel = v1alpha1.AccessLevelValue(i) }
 }
 
 func withExpiresAt(s string) groupModifier {
-	return func(r *v1alpha1.GroupMember) { r.Spec.ForProvider.ExpiresAt = &s }
+	return func(r *v1alpha1.Member) { r.Spec.ForProvider.ExpiresAt = &s }
 }
 
-type groupModifier func(*v1alpha1.GroupMember)
+type groupModifier func(*v1alpha1.Member)
 
 func withConditions(c ...xpv1.Condition) groupModifier {
-	return func(cr *v1alpha1.GroupMember) { cr.Status.ConditionedStatus.Conditions = c }
+	return func(cr *v1alpha1.Member) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
 func withExternalName(n string) groupModifier {
-	return func(r *v1alpha1.GroupMember) { meta.SetExternalName(r, n) }
+	return func(r *v1alpha1.Member) { meta.SetExternalName(r, n) }
 }
 
-func withStatus(s v1alpha1.GroupMemberObservation) groupModifier {
-	return func(r *v1alpha1.GroupMember) { r.Status.AtProvider = s }
+func withStatus(s v1alpha1.MemberObservation) groupModifier {
+	return func(r *v1alpha1.Member) { r.Status.AtProvider = s }
 }
 
-func withSpec(s v1alpha1.GroupMemberParameters) groupModifier {
-	return func(r *v1alpha1.GroupMember) { r.Spec.ForProvider = s }
+func withSpec(s v1alpha1.MemberParameters) groupModifier {
+	return func(r *v1alpha1.Member) { r.Spec.ForProvider = s }
 }
 
 func withAnnotations(a map[string]string) groupModifier {
-	return func(p *v1alpha1.GroupMember) { meta.AddAnnotations(p, a) }
+	return func(p *v1alpha1.Member) { meta.AddAnnotations(p, a) }
 }
 
-func groupMember(m ...groupModifier) *v1alpha1.GroupMember {
-	cr := &v1alpha1.GroupMember{}
+func groupMember(m ...groupModifier) *v1alpha1.Member {
+	cr := &v1alpha1.Member{}
 	for _, f := range m {
 		f(cr)
 	}
@@ -113,7 +113,7 @@ func TestConnect(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotGroupMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"ProviderConfigRefNotGivenError": {
@@ -161,7 +161,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotGroupMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"NoExternalName": {
@@ -180,7 +180,7 @@ func TestObserve(t *testing.T) {
 		"NotIDExternalName": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetGroupMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{}, &gitlab.Response{}, nil
 					},
 				},
@@ -188,13 +188,13 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr:  groupMember(withExternalName("fr")),
-				err: errors.New(errNotGroupMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"FailedGetRequest": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetGroupMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return nil, &gitlab.Response{}, errBoom
 					},
 				},
@@ -209,7 +209,7 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetGroupMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{}, &gitlab.Response{}, nil
 					},
 				},
@@ -233,7 +233,7 @@ func TestObserve(t *testing.T) {
 		"IsGroupUpToDateAccessLevel": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetGroupMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{
 							AccessLevel: accessLevel,
 						}, &gitlab.Response{}, nil
@@ -261,7 +261,7 @@ func TestObserve(t *testing.T) {
 		"IsGroupUpToDateExpiresAt": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetGroupMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{
 							ExpiresAt: &expiresAt,
 						}, &gitlab.Response{}, nil
@@ -323,7 +323,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotGroupMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"SuccessfulCreationWithoutExpiresAt": {
@@ -332,7 +332,7 @@ func TestCreate(t *testing.T) {
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
 				groupMember: &fake.MockClient{
-					MockAddGroupMember: func(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockAddMember: func(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{
 							ID:          ID,
 							Username:    username,
@@ -346,13 +346,13 @@ func TestCreate(t *testing.T) {
 				},
 				cr: groupMember(
 					withAnnotations(extNameAnnotation),
-					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+					withSpec(v1alpha1.MemberParameters{GroupID: &ID}),
 				),
 			},
 			want: want{
 				cr: groupMember(
 					withExternalName(extName),
-					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+					withSpec(v1alpha1.MemberParameters{GroupID: &ID}),
 				),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
 			},
@@ -363,7 +363,7 @@ func TestCreate(t *testing.T) {
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
 				groupMember: &fake.MockClient{
-					MockAddGroupMember: func(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockAddMember: func(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{
 							ID:          ID,
 							Username:    username,
@@ -378,13 +378,13 @@ func TestCreate(t *testing.T) {
 				},
 				cr: groupMember(
 					withAnnotations(extNameAnnotation),
-					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+					withSpec(v1alpha1.MemberParameters{GroupID: &ID}),
 				),
 			},
 			want: want{
 				cr: groupMember(
 					withExternalName(extName),
-					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+					withSpec(v1alpha1.MemberParameters{GroupID: &ID}),
 				),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
 			},
@@ -392,19 +392,19 @@ func TestCreate(t *testing.T) {
 		"FailedCreation": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockAddGroupMember: func(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockAddMember: func(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{}, &gitlab.Response{}, errBoom
 					},
 				},
 				cr: groupMember(
 					withAnnotations(extNameAnnotation),
-					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+					withSpec(v1alpha1.MemberParameters{GroupID: &ID}),
 				),
 			},
 			want: want{
 				cr: groupMember(
 					withExternalName(extName),
-					withSpec(v1alpha1.GroupMemberParameters{GroupID: &ID}),
+					withSpec(v1alpha1.MemberParameters{GroupID: &ID}),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
@@ -446,13 +446,13 @@ func TestUpdate(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotGroupMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"SuccessfulUpdate": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockEditGroupMember: func(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockEditMember: func(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{
 							ID:          ID,
 							Username:    username,
@@ -466,20 +466,20 @@ func TestUpdate(t *testing.T) {
 				},
 				cr: groupMember(
 					withExternalName(extName),
-					withStatus(v1alpha1.GroupMemberObservation{Username: "new username"}),
+					withStatus(v1alpha1.MemberObservation{Username: "new username"}),
 				),
 			},
 			want: want{
 				cr: groupMember(
 					withExternalName(extName),
-					withStatus(v1alpha1.GroupMemberObservation{Username: "new username"}),
+					withStatus(v1alpha1.MemberObservation{Username: "new username"}),
 				),
 			},
 		},
 		"FailedUpdate": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockEditGroupMember: func(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockEditMember: func(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -525,13 +525,13 @@ func TestDelete(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotGroupMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"SuccessfulDeletion": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockRemoveGroupMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRemoveMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -545,7 +545,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockRemoveGroupMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRemoveMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},

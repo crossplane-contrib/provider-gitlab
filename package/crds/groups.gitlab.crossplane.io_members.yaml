@@ -4,7 +4,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.5.0
   creationTimestamp: null
-  name: groupmembers.groups.gitlab.crossplane.io
+  name: members.groups.gitlab.crossplane.io
 spec:
   group: groups.gitlab.crossplane.io
   names:
@@ -12,10 +12,10 @@ spec:
     - crossplane
     - managed
     - gitlab
-    kind: GroupMember
-    listKind: GroupMemberList
-    plural: groupmembers
-    singular: groupmember
+    kind: Member
+    listKind: MemberList
+    plural: members
+    singular: member
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -40,7 +40,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A GroupMember is a managed resource that represents a Gitlab GroupMember
+        description: A Member is a managed resource that represents a Gitlab Group Member
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
@@ -51,7 +51,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: A GroupMemberSpec defines the desired state of a Gitlab GroupMember.
+            description: A MemberSpec defines the desired state of a Gitlab Group Member.
             properties:
               deletionPolicy:
                 description: DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted - either "Delete" or "Orphan" the external resource. The "Delete" policy is the default when no policy is specified.
@@ -60,7 +60,7 @@ spec:
                 - Delete
                 type: string
               forProvider:
-                description: A GroupMemberParameters defines the desired state of a Gitlab GroupMember.
+                description: A MemberParameters defines the desired state of a Gitlab Group Member.
                 properties:
                   accessLevel:
                     description: A valid access level.
@@ -134,15 +134,15 @@ spec:
             - forProvider
             type: object
           status:
-            description: A GroupMemberStatus represents the observed state of a Gitlab GroupMember.
+            description: A MemberStatus represents the observed state of a Gitlab Group Member.
             properties:
               atProvider:
-                description: "GroupMemberObservation represents a group member. \n GitLab API docs: https://docs.gitlab.com/ce/api/groups.html#list-group-members"
+                description: "MemberObservation represents a group member. \n GitLab API docs: https://docs.gitlab.com/ce/api/groups.html#list-group-members"
                 properties:
                   avatarURL:
                     type: string
                   groupSamlIdentity:
-                    description: "GroupMemberSAMLIdentity represents the SAML Identity link for the group member. \n GitLab API docs: https://docs.gitlab.com/ce/api/members.html#list-all-members-of-a-group-or-project Gitlab MR for API change: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/20357 Gitlab MR for API Doc change: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/25652"
+                    description: "MemberSAMLIdentity represents the SAML Identity link for the group member. \n GitLab API docs: https://docs.gitlab.com/ce/api/members.html#list-all-members-of-a-group-or-project Gitlab MR for API change: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/20357 Gitlab MR for API Doc change: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/25652"
                     properties:
                       externUID:
                         type: string
