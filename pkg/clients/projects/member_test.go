@@ -35,7 +35,7 @@ var (
 	createdAt                = time.Now()
 )
 
-func TestGenerateProjectMemberObservation(t *testing.T) {
+func TestGenerateMemberObservation(t *testing.T) {
 	username := "User Name"
 	state := "State"
 	avatarURL := "Avatar URL"
@@ -46,7 +46,7 @@ func TestGenerateProjectMemberObservation(t *testing.T) {
 	}
 	cases := map[string]struct {
 		args args
-		want v1alpha1.ProjectMemberObservation
+		want v1alpha1.MemberObservation
 	}{
 		"Full": {
 			args: args{
@@ -60,7 +60,7 @@ func TestGenerateProjectMemberObservation(t *testing.T) {
 					WebURL:    webURL,
 				},
 			},
-			want: v1alpha1.ProjectMemberObservation{
+			want: v1alpha1.MemberObservation{
 				Username:  username,
 				Name:      name,
 				Email:     email,
@@ -74,7 +74,7 @@ func TestGenerateProjectMemberObservation(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateProjectMemberObservation(tc.args.p)
+			got := GenerateMemberObservation(tc.args.p)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
@@ -82,9 +82,9 @@ func TestGenerateProjectMemberObservation(t *testing.T) {
 	}
 }
 
-func TestGenerateAddProjectMemberOptions(t *testing.T) {
+func TestGenerateAddMemberOptions(t *testing.T) {
 	type args struct {
-		parameters *v1alpha1.ProjectMemberParameters
+		parameters *v1alpha1.MemberParameters
 	}
 	cases := map[string]struct {
 		args args
@@ -92,7 +92,7 @@ func TestGenerateAddProjectMemberOptions(t *testing.T) {
 	}{
 		"AllFields": {
 			args: args{
-				parameters: &v1alpha1.ProjectMemberParameters{
+				parameters: &v1alpha1.MemberParameters{
 					ProjectID:   &projectID,
 					UserID:      userID,
 					AccessLevel: v1alpha1AccessLevelValue,
@@ -107,7 +107,7 @@ func TestGenerateAddProjectMemberOptions(t *testing.T) {
 		},
 		"SomeFields": {
 			args: args{
-				parameters: &v1alpha1.ProjectMemberParameters{
+				parameters: &v1alpha1.MemberParameters{
 					ProjectID:   &projectID,
 					UserID:      userID,
 					AccessLevel: v1alpha1.AccessLevelValue(accessLevel),
@@ -122,7 +122,7 @@ func TestGenerateAddProjectMemberOptions(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateAddProjectMemberOptions(tc.args.parameters)
+			got := GenerateAddMemberOptions(tc.args.parameters)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
@@ -130,9 +130,9 @@ func TestGenerateAddProjectMemberOptions(t *testing.T) {
 	}
 }
 
-func TestGenerateEditProjectMemberOptions(t *testing.T) {
+func TestGenerateEditMemberOptions(t *testing.T) {
 	type args struct {
-		parameters *v1alpha1.ProjectMemberParameters
+		parameters *v1alpha1.MemberParameters
 	}
 	cases := map[string]struct {
 		args args
@@ -140,7 +140,7 @@ func TestGenerateEditProjectMemberOptions(t *testing.T) {
 	}{
 		"AllFields": {
 			args: args{
-				parameters: &v1alpha1.ProjectMemberParameters{
+				parameters: &v1alpha1.MemberParameters{
 					ProjectID:   &projectID,
 					UserID:      userID,
 					AccessLevel: v1alpha1AccessLevelValue,
@@ -154,7 +154,7 @@ func TestGenerateEditProjectMemberOptions(t *testing.T) {
 		},
 		"SomeFields": {
 			args: args{
-				parameters: &v1alpha1.ProjectMemberParameters{
+				parameters: &v1alpha1.MemberParameters{
 					ProjectID:   &projectID,
 					UserID:      userID,
 					AccessLevel: v1alpha1AccessLevelValue,
@@ -168,7 +168,7 @@ func TestGenerateEditProjectMemberOptions(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateEditProjectMemberOptions(tc.args.parameters)
+			got := GenerateEditMemberOptions(tc.args.parameters)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}

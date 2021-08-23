@@ -70,7 +70,7 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 	return nil
 }
 
-// ResolveReferences of this ProjectMember
+// ResolveReferences of this Member
 func (mg *GroupMember) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 

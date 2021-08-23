@@ -22,8 +22,8 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
-// A ProjectMemberParameters defines the desired state of a Gitlab ProjectMember.
-type ProjectMemberParameters struct {
+// A MemberParameters defines the desired state of a Gitlab Project Member.
+type MemberParameters struct {
 
 	// The ID of the project owned by the authenticated user.
 	// +optional
@@ -52,11 +52,11 @@ type ProjectMemberParameters struct {
 	ExpiresAt *string `json:"expiresAt,omitempty"`
 }
 
-// ProjectMemberObservation represents a project member.
+// MemberObservation represents a project member.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/projects.html#list-project-team-members
-type ProjectMemberObservation struct {
+type MemberObservation struct {
 	Username  string       `json:"username,omitempty"`
 	Email     string       `json:"email,omitempty"`
 	Name      string       `json:"name,omitempty"`
@@ -66,21 +66,21 @@ type ProjectMemberObservation struct {
 	AvatarURL string       `json:"avatarURL,omitempty"`
 }
 
-// A ProjectMemberSpec defines the desired state of a Gitlab ProjectMember.
-type ProjectMemberSpec struct {
+// A MemberSpec defines the desired state of a Gitlab Project Member.
+type MemberSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       ProjectMemberParameters `json:"forProvider"`
+	ForProvider       MemberParameters `json:"forProvider"`
 }
 
-// A ProjectMemberStatus represents the observed state of a Gitlab ProjectMember.
-type ProjectMemberStatus struct {
+// A MemberStatus represents the observed state of a Gitlab Project Member.
+type MemberStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          ProjectMemberObservation `json:"atProvider,omitempty"`
+	AtProvider          MemberObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// A ProjectMember is a managed resource that represents a Gitlab ProjectMember
+// A Member is a managed resource that represents a Gitlab Project Member
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
@@ -89,19 +89,19 @@ type ProjectMemberStatus struct {
 // +kubebuilder:printcolumn:name="Acceess Level",type="integer",JSONPath=".spec.forProvider.accessLevel"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab}
-type ProjectMember struct {
+type Member struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ProjectMemberSpec   `json:"spec"`
-	Status ProjectMemberStatus `json:"status,omitempty"`
+	Spec   MemberSpec   `json:"spec"`
+	Status MemberStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// ProjectMemberList contains a list of ProjectMember items
-type ProjectMemberList struct {
+// MemberList contains a list of Member items
+type MemberList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ProjectMember `json:"items"`
+	Items           []Member `json:"items"`
 }
