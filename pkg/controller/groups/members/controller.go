@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package groupmembers
+package members
 
 import (
 	"context"
@@ -37,22 +37,22 @@ import (
 )
 
 const (
-	errNotGroupMember = "managed resource is not a Gitlab Group Member custom resource"
-	errCreateFailed   = "cannot create Gitlab Group Member"
-	errUpdateFailed   = "cannot update Gitlab Group Member"
-	errDeleteFailed   = "cannot delete Gitlab Group Member"
+	errNotMember    = "managed resource is not a Gitlab Group Member custom resource"
+	errCreateFailed = "cannot create Gitlab Group Member"
+	errUpdateFailed = "cannot update Gitlab Group Member"
+	errDeleteFailed = "cannot delete Gitlab Group Member"
 )
 
-// SetupGroupMember adds a controller that reconciles Group Members.
-func SetupGroupMember(mgr ctrl.Manager, l logging.Logger) error {
-	name := managed.ControllerName(v1alpha1.GroupMemberKind)
+// SetupMember adds a controller that reconciles Group Members.
+func SetupMember(mgr ctrl.Manager, l logging.Logger) error {
+	name := managed.ControllerName(v1alpha1.MemberKind)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		For(&v1alpha1.GroupMember{}).
+		For(&v1alpha1.Member{}).
 		Complete(managed.NewReconciler(mgr,
-			resource.ManagedKind(v1alpha1.GroupMemberKubernetesGroupVersionKind),
-			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewGroupMemberClient}),
+			resource.ManagedKind(v1alpha1.MemberKubernetesGroupVersionKind),
+			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewMemberClient}),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
 			managed.WithLogger(l.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
@@ -60,13 +60,13 @@ func SetupGroupMember(mgr ctrl.Manager, l logging.Logger) error {
 
 type connector struct {
 	kube              client.Client
-	newGitlabClientFn func(cfg clients.Config) groups.GroupMemberClient
+	newGitlabClientFn func(cfg clients.Config) groups.MemberClient
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	cr, ok := mg.(*v1alpha1.GroupMember)
+	cr, ok := mg.(*v1alpha1.Member)
 	if !ok {
-		return nil, errors.New(errNotGroupMember)
+		return nil, errors.New(errNotMember)
 	}
 	cfg, err := clients.GetConfig(ctx, c.kube, cr)
 	if err != nil {
@@ -77,13 +77,13 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 
 type external struct {
 	kube   client.Client
-	client groups.GroupMemberClient
+	client groups.MemberClient
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*v1alpha1.GroupMember)
+	cr, ok := mg.(*v1alpha1.Member)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotGroupMember)
+		return managed.ExternalObservation{}, errors.New(errNotMember)
 	}
 
 	externalName := meta.GetExternalName(cr)
@@ -93,7 +93,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	groupID, err := strconv.Atoi(externalName)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errNotGroupMember)
+		return managed.ExternalObservation{}, errors.New(errNotMember)
 	}
 
 	groupMember, _, _ := e.client.GetGroupMember(groupID, cr.Spec.ForProvider.UserID)
@@ -101,25 +101,25 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	cr.Status.AtProvider = groups.GenerateGroupMemberObservation(groupMember)
+	cr.Status.AtProvider = groups.GenerateMemberObservation(groupMember)
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        isGroupMemberUpToDate(&cr.Spec.ForProvider, groupMember),
+		ResourceUpToDate:        isMemberUpToDate(&cr.Spec.ForProvider, groupMember),
 		ResourceLateInitialized: false,
 	}, nil
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.GroupMember)
+	cr, ok := mg.(*v1alpha1.Member)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotGroupMember)
+		return managed.ExternalCreation{}, errors.New(errNotMember)
 	}
 
 	_, _, err := e.client.AddGroupMember(
 		*cr.Spec.ForProvider.GroupID,
-		groups.GenerateAddGroupMemberOptions(&cr.Spec.ForProvider),
+		groups.GenerateAddMemberOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
@@ -131,24 +131,24 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mg.(*v1alpha1.GroupMember)
+	cr, ok := mg.(*v1alpha1.Member)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotGroupMember)
+		return managed.ExternalUpdate{}, errors.New(errNotMember)
 	}
 
 	_, _, err := e.client.EditGroupMember(
 		meta.GetExternalName(cr),
 		cr.Spec.ForProvider.UserID,
-		groups.GenerateEditGroupMemberOptions(&cr.Spec.ForProvider),
+		groups.GenerateEditMemberOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
-	cr, ok := mg.(*v1alpha1.GroupMember)
+	cr, ok := mg.(*v1alpha1.Member)
 	if !ok {
-		return errors.New(errNotGroupMember)
+		return errors.New(errNotMember)
 	}
 
 	_, err := e.client.RemoveGroupMember(
@@ -159,8 +159,8 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	return errors.Wrap(err, errDeleteFailed)
 }
 
-// isGroupMemberUpToDate checks whether there is a change in any of the modifiable fields.
-func isGroupMemberUpToDate(p *v1alpha1.GroupMemberParameters, g *gitlab.GroupMember) bool {
+// isMemberUpToDate checks whether there is a change in any of the modifiable fields.
+func isMemberUpToDate(p *v1alpha1.MemberParameters, g *gitlab.GroupMember) bool {
 
 	if !cmp.Equal(int(p.AccessLevel), int(g.AccessLevel)) {
 		return false

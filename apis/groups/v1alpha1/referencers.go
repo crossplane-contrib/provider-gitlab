@@ -71,7 +71,7 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 }
 
 // ResolveReferences of this Member
-func (mg *GroupMember) ResolveReferences(ctx context.Context, c client.Reader) error {
+func (mg *Member) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 
 	// resolve spec.forProvider.projectIdRef
