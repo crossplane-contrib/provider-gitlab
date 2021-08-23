@@ -53,12 +53,12 @@ var (
 	HookGroupVersionKind = SchemeGroupVersion.WithKind(HookKind)
 )
 
-// ProjectMember type metadata
+// Member type metadata
 var (
-	ProjectMemberKind             = reflect.TypeOf(ProjectMember{}).Name()
-	ProjectMemberGroupKind        = schema.GroupKind{Group: Group, Kind: ProjectMemberKind}.String()
-	ProjectMemberKindAPIVersion   = ProjectMemberKind + "." + SchemeGroupVersion.String()
-	ProjectMemberGroupVersionKind = SchemeGroupVersion.WithKind(ProjectMemberKind)
+	MemberKind             = reflect.TypeOf(Member{}).Name()
+	MemberGroupKind        = schema.GroupKind{Group: Group, Kind: MemberKind}.String()
+	MemberKindAPIVersion   = MemberKind + "." + SchemeGroupVersion.String()
+	MemberGroupVersionKind = SchemeGroupVersion.WithKind(MemberKind)
 )
 
 // Deploy Token type metadata
@@ -69,7 +69,7 @@ var (
 	DeployTokenGroupVersionKind = SchemeGroupVersion.WithKind(DeployTokenKind)
 )
 
-// Deploy Token type metadata
+// Variable type metadata
 var (
 	VariableKind             = reflect.TypeOf(Variable{}).Name()
 	VariableGroupKind        = schema.GroupKind{Group: Group, Kind: VariableKind}.String()
@@ -80,7 +80,7 @@ var (
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
-	SchemeBuilder.Register(&ProjectMember{}, &ProjectMemberList{})
+	SchemeBuilder.Register(&Member{}, &MemberList{})
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
 }

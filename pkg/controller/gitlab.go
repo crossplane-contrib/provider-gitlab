@@ -27,7 +27,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploytokens"
 	projecthooks "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/hooks"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/projectmembers"
+	projectmembers "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/variables"
 )
 
@@ -40,7 +40,7 @@ func Setup(mgr ctrl.Manager, l logging.Logger) error {
 		groupmembers.SetupGroupMember,
 		projects.SetupProject,
 		projecthooks.SetupHook,
-		projectmembers.SetupProjectMember,
+		projectmembers.SetupMember,
 		deploytokens.SetupProjectDeployToken,
 		variables.SetupVariable,
 	} {

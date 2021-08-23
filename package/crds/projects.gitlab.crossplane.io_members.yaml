@@ -4,7 +4,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.5.0
   creationTimestamp: null
-  name: projectmembers.projects.gitlab.crossplane.io
+  name: members.projects.gitlab.crossplane.io
 spec:
   group: projects.gitlab.crossplane.io
   names:
@@ -12,10 +12,10 @@ spec:
     - crossplane
     - managed
     - gitlab
-    kind: ProjectMember
-    listKind: ProjectMemberList
-    plural: projectmembers
-    singular: projectmember
+    kind: Member
+    listKind: MemberList
+    plural: members
+    singular: member
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -40,7 +40,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A ProjectMember is a managed resource that represents a Gitlab ProjectMember
+        description: A Member is a managed resource that represents a Gitlab Project Member
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
@@ -51,7 +51,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: A ProjectMemberSpec defines the desired state of a Gitlab ProjectMember.
+            description: A MemberSpec defines the desired state of a Gitlab Project Member.
             properties:
               deletionPolicy:
                 description: DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted - either "Delete" or "Orphan" the external resource. The "Delete" policy is the default when no policy is specified.
@@ -60,7 +60,7 @@ spec:
                 - Delete
                 type: string
               forProvider:
-                description: A ProjectMemberParameters defines the desired state of a Gitlab ProjectMember.
+                description: A MemberParameters defines the desired state of a Gitlab Project Member.
                 properties:
                   accessLevel:
                     description: A valid access level.
@@ -134,10 +134,10 @@ spec:
             - forProvider
             type: object
           status:
-            description: A ProjectMemberStatus represents the observed state of a Gitlab ProjectMember.
+            description: A MemberStatus represents the observed state of a Gitlab Project Member.
             properties:
               atProvider:
-                description: "ProjectMemberObservation represents a project member. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html#list-project-team-members"
+                description: "MemberObservation represents a project member. \n GitLab API docs: https://docs.gitlab.com/ce/api/projects.html#list-project-team-members"
                 properties:
                   avatarURL:
                     type: string

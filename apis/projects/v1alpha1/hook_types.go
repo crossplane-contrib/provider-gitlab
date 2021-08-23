@@ -22,7 +22,7 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
-// A HookParameters defines the desired state of a Gitlab Hook.
+// HookParameters defines the desired state of a Gitlab Project Hook.
 type HookParameters struct {
 	// URL is the hook URL.
 	URL *string `json:"url"`
@@ -106,13 +106,13 @@ type HookObservation struct {
 	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
 }
 
-// A HookSpec defines the desired state of a Gitlab Hook.
+// A HookSpec defines the desired state of a Gitlab Project Hook.
 type HookSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
 	ForProvider       HookParameters `json:"forProvider"`
 }
 
-// A HookStatus represents the observed state of a Gitlab Hook.
+// A HookStatus represents the observed state of a Gitlab Project Hook.
 type HookStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
 	AtProvider          HookObservation `json:"atProvider,omitempty"`
@@ -120,7 +120,7 @@ type HookStatus struct {
 
 // +kubebuilder:object:root=true
 
-// A Hook is a managed resource that represents a Gitlab Hook
+// A Hook is a managed resource that represents a Gitlab Project Hook
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
@@ -136,7 +136,7 @@ type Hook struct {
 
 // +kubebuilder:object:root=true
 
-// HookList contains a list of Hook items
+// HookList contains a list of Project Hook items
 type HookList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

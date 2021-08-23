@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package projectmembers
+package members
 
 import (
 	"context"
@@ -54,43 +54,43 @@ var (
 )
 
 type args struct {
-	projectMember projects.ProjectMemberClient
+	projectMember projects.MemberClient
 	kube          client.Client
 	cr            resource.Managed
 }
 
 func withAccessLevel(i int) projectModifier {
-	return func(r *v1alpha1.ProjectMember) { r.Spec.ForProvider.AccessLevel = v1alpha1.AccessLevelValue(i) }
+	return func(r *v1alpha1.Member) { r.Spec.ForProvider.AccessLevel = v1alpha1.AccessLevelValue(i) }
 }
 
 func withExpiresAt(s string) projectModifier {
-	return func(r *v1alpha1.ProjectMember) { r.Spec.ForProvider.ExpiresAt = &s }
+	return func(r *v1alpha1.Member) { r.Spec.ForProvider.ExpiresAt = &s }
 }
 
-type projectModifier func(*v1alpha1.ProjectMember)
+type projectModifier func(*v1alpha1.Member)
 
 func withConditions(c ...xpv1.Condition) projectModifier {
-	return func(cr *v1alpha1.ProjectMember) { cr.Status.ConditionedStatus.Conditions = c }
+	return func(cr *v1alpha1.Member) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
 func withExternalName(n string) projectModifier {
-	return func(r *v1alpha1.ProjectMember) { meta.SetExternalName(r, n) }
+	return func(r *v1alpha1.Member) { meta.SetExternalName(r, n) }
 }
 
-func withStatus(s v1alpha1.ProjectMemberObservation) projectModifier {
-	return func(r *v1alpha1.ProjectMember) { r.Status.AtProvider = s }
+func withStatus(s v1alpha1.MemberObservation) projectModifier {
+	return func(r *v1alpha1.Member) { r.Status.AtProvider = s }
 }
 
-func withSpec(s v1alpha1.ProjectMemberParameters) projectModifier {
-	return func(r *v1alpha1.ProjectMember) { r.Spec.ForProvider = s }
+func withSpec(s v1alpha1.MemberParameters) projectModifier {
+	return func(r *v1alpha1.Member) { r.Spec.ForProvider = s }
 }
 
 func withAnnotations(a map[string]string) projectModifier {
-	return func(p *v1alpha1.ProjectMember) { meta.AddAnnotations(p, a) }
+	return func(p *v1alpha1.Member) { meta.AddAnnotations(p, a) }
 }
 
-func projectMember(m ...projectModifier) *v1alpha1.ProjectMember {
-	cr := &v1alpha1.ProjectMember{}
+func projectMember(m ...projectModifier) *v1alpha1.Member {
+	cr := &v1alpha1.Member{}
 	for _, f := range m {
 		f(cr)
 	}
@@ -114,7 +114,7 @@ func TestConnect(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotProjectMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"ProviderConfigRefNotGivenError": {
@@ -162,7 +162,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotProjectMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"NoExternalName": {
@@ -181,7 +181,7 @@ func TestObserve(t *testing.T) {
 		"NotIDExternalName": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetProjectMember: func(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{}, &gitlab.Response{}, nil
 					},
 				},
@@ -189,13 +189,13 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr:  projectMember(withExternalName("fr")),
-				err: errors.New(errNotProjectMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"FailedGetRequest": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetProjectMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return nil, &gitlab.Response{}, errBoom
 					},
 				},
@@ -210,7 +210,7 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetProjectMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{}, &gitlab.Response{}, nil
 					},
 				},
@@ -234,7 +234,7 @@ func TestObserve(t *testing.T) {
 		"IsGroupUpToDateAccessLevel": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetProjectMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{
 							AccessLevel: accessLevel,
 						}, &gitlab.Response{}, nil
@@ -262,7 +262,7 @@ func TestObserve(t *testing.T) {
 		"IsGroupUpToDateExpiresAt": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetProjectMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{
 							ExpiresAt: &expiresAt,
 						}, &gitlab.Response{}, nil
@@ -324,7 +324,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotProjectMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"SuccessfulCreationWithoutExpiresAt": {
@@ -333,7 +333,7 @@ func TestCreate(t *testing.T) {
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
 				projectMember: &fake.MockClient{
-					MockAddProjectMember: func(gid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockAddMember: func(gid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{
 							ID:          ID,
 							Username:    username,
@@ -348,13 +348,13 @@ func TestCreate(t *testing.T) {
 				},
 				cr: projectMember(
 					withAnnotations(extNameAnnotation),
-					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 			},
 			want: want{
 				cr: projectMember(
 					withExternalName(extName),
-					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
 			},
@@ -365,7 +365,7 @@ func TestCreate(t *testing.T) {
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
 				projectMember: &fake.MockClient{
-					MockAddProjectMember: func(gid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockAddMember: func(gid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{
 							ID:          ID,
 							Username:    username,
@@ -381,13 +381,13 @@ func TestCreate(t *testing.T) {
 				},
 				cr: projectMember(
 					withAnnotations(extNameAnnotation),
-					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 			},
 			want: want{
 				cr: projectMember(
 					withExternalName(extName),
-					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
 			},
@@ -395,19 +395,19 @@ func TestCreate(t *testing.T) {
 		"FailedCreation": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockAddProjectMember: func(gid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockAddMember: func(gid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{}, &gitlab.Response{}, errBoom
 					},
 				},
 				cr: projectMember(
 					withAnnotations(extNameAnnotation),
-					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 			},
 			want: want{
 				cr: projectMember(
 					withExternalName(extName),
-					withSpec(v1alpha1.ProjectMemberParameters{ProjectID: &ID}),
+					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
@@ -449,13 +449,13 @@ func TestUpdate(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotProjectMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"SuccessfulUpdate": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockEditProjectMember: func(gid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockEditMember: func(gid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{
 							ID:          ID,
 							Username:    username,
@@ -470,20 +470,20 @@ func TestUpdate(t *testing.T) {
 				},
 				cr: projectMember(
 					withExternalName(extName),
-					withStatus(v1alpha1.ProjectMemberObservation{Username: "new username"}),
+					withStatus(v1alpha1.MemberObservation{Username: "new username"}),
 				),
 			},
 			want: want{
 				cr: projectMember(
 					withExternalName(extName),
-					withStatus(v1alpha1.ProjectMemberObservation{Username: "new username"}),
+					withStatus(v1alpha1.MemberObservation{Username: "new username"}),
 				),
 			},
 		},
 		"FailedUpdate": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockEditProjectMember: func(gid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockEditMember: func(gid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -529,13 +529,13 @@ func TestDelete(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotProjectMember),
+				err: errors.New(errNotMember),
 			},
 		},
 		"SuccessfulDeletion": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockDeleteProjectMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -549,7 +549,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockDeleteProjectMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},

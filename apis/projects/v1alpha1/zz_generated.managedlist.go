@@ -38,8 +38,8 @@ func (l *HookList) GetItems() []resource.Managed {
 	return items
 }
 
-// GetItems of this ProjectList.
-func (l *ProjectList) GetItems() []resource.Managed {
+// GetItems of this MemberList.
+func (l *MemberList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
 	for i := range l.Items {
 		items[i] = &l.Items[i]
@@ -47,8 +47,8 @@ func (l *ProjectList) GetItems() []resource.Managed {
 	return items
 }
 
-// GetItems of this ProjectMemberList.
-func (l *ProjectMemberList) GetItems() []resource.Managed {
+// GetItems of this ProjectList.
+func (l *ProjectList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
 	for i := range l.Items {
 		items[i] = &l.Items[i]

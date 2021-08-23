@@ -119,8 +119,8 @@ func (mg *DeployToken) ResolveReferences(ctx context.Context, c client.Reader) e
 	return nil
 }
 
-// ResolveReferences of this ProjectMember
-func (mg *ProjectMember) ResolveReferences(ctx context.Context, c client.Reader) error {
+// ResolveReferences of this Project Member
+func (mg *Member) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 
 	// resolve spec.forProvider.projectIdRef
