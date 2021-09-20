@@ -1,7 +1,7 @@
 apiVersion: projects.gitlab.crossplane.io/v1alpha1
-kind: ProjectMember
+kind: Member
 metadata:
-  name: example-project-member
+  name: example-member
 spec:
   forProvider:
     projectIdRef:
@@ -12,5 +12,5 @@ spec:
   providerConfigRef:
     name: gitlab-provider
   writeConnectionSecretToRef:
-    name: gitlab-project-example-projectmember
+    name: gitlab-project-example-member
     namespace: crossplane-system
