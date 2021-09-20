@@ -27,39 +27,39 @@ import (
 )
 
 const (
-	errProjectMemberNotFound = "404 Project Member Not Found"
+	errMemberNotFound = "404 Project Member Not Found"
 )
 
-// ProjectMemberClient defines Gitlab ProjectMember service operations
-type ProjectMemberClient interface {
+// MemberClient defines Gitlab Member service operations
+type MemberClient interface {
 	GetProjectMember(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
 	AddProjectMember(pid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
 	EditProjectMember(pid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
 	DeleteProjectMember(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
-// NewProjectMemberClient returns a new Gitlab Project Member service
-func NewProjectMemberClient(cfg clients.Config) ProjectMemberClient {
+// NewMemberClient returns a new Gitlab Project Member service
+func NewMemberClient(cfg clients.Config) MemberClient {
 	git := clients.NewClient(cfg)
 	return git.ProjectMembers
 }
 
-// IsErrorProjectMemberNotFound helper function to test for errProjectMemberNotFound error.
-func IsErrorProjectMemberNotFound(err error) bool {
+// IsErrorMemberNotFound helper function to test for errMemberNotFound error.
+func IsErrorMemberNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	return strings.Contains(err.Error(), errProjectMemberNotFound)
+	return strings.Contains(err.Error(), errMemberNotFound)
 }
 
-// GenerateProjectMemberObservation is used to produce v1alpha1.ProjectMemberObservation from
-// gitlab.ProjectMember.
-func GenerateProjectMemberObservation(projectMember *gitlab.ProjectMember) v1alpha1.ProjectMemberObservation { // nolint:gocyclo
+// GenerateMemberObservation is used to produce v1alpha1.MemberObservation from
+// gitlab.Member.
+func GenerateMemberObservation(projectMember *gitlab.ProjectMember) v1alpha1.MemberObservation { // nolint:gocyclo
 	if projectMember == nil {
-		return v1alpha1.ProjectMemberObservation{}
+		return v1alpha1.MemberObservation{}
 	}
 
-	o := v1alpha1.ProjectMemberObservation{
+	o := v1alpha1.MemberObservation{
 		Username:  projectMember.Username,
 		Email:     projectMember.Email,
 		Name:      projectMember.Name,
@@ -75,8 +75,8 @@ func GenerateProjectMemberObservation(projectMember *gitlab.ProjectMember) v1alp
 	return o
 }
 
-// GenerateAddProjectMemberOptions generates project member add options
-func GenerateAddProjectMemberOptions(p *v1alpha1.ProjectMemberParameters) *gitlab.AddProjectMemberOptions {
+// GenerateAddMemberOptions generates project member add options
+func GenerateAddMemberOptions(p *v1alpha1.MemberParameters) *gitlab.AddProjectMemberOptions {
 	projectMember := &gitlab.AddProjectMemberOptions{
 		UserID:      &p.UserID,
 		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
@@ -87,8 +87,8 @@ func GenerateAddProjectMemberOptions(p *v1alpha1.ProjectMemberParameters) *gitla
 	return projectMember
 }
 
-// GenerateEditProjectMemberOptions generates project member edit options
-func GenerateEditProjectMemberOptions(p *v1alpha1.ProjectMemberParameters) *gitlab.EditProjectMemberOptions {
+// GenerateEditMemberOptions generates project member edit options
+func GenerateEditMemberOptions(p *v1alpha1.MemberParameters) *gitlab.EditProjectMemberOptions {
 	projectMember := &gitlab.EditProjectMemberOptions{
 		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
 	}

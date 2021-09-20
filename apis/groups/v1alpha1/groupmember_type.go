@@ -22,19 +22,19 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
-// GroupMemberSAMLIdentity represents the SAML Identity link for the group member.
+// MemberSAMLIdentity represents the SAML Identity link for the group member.
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/members.html#list-all-members-of-a-group-or-project
 // Gitlab MR for API change: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/20357
 // Gitlab MR for API Doc change: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/25652
-type GroupMemberSAMLIdentity struct {
+type MemberSAMLIdentity struct {
 	ExternUID      string `json:"externUID"`
 	Provider       string `json:"provider"`
 	SAMLProviderID int    `json:"samlProviderID"`
 }
 
-// A GroupMemberParameters defines the desired state of a Gitlab GroupMember.
-type GroupMemberParameters struct {
+// A MemberParameters defines the desired state of a Gitlab Group Member.
+type MemberParameters struct {
 
 	// The ID of the group owned by the authenticated user.
 	// +optional
@@ -63,34 +63,34 @@ type GroupMemberParameters struct {
 	ExpiresAt *string `json:"expiresAt,omitempty"`
 }
 
-// GroupMemberObservation represents a group member.
+// MemberObservation represents a group member.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/groups.html#list-group-members
-type GroupMemberObservation struct {
-	Username          string                   `json:"username,omitempty"`
-	Name              string                   `json:"name,omitempty"`
-	State             string                   `json:"state,omitempty"`
-	AvatarURL         string                   `json:"avatarURL,omitempty"`
-	WebURL            string                   `json:"webURL,omitempty"`
-	GroupSAMLIdentity *GroupMemberSAMLIdentity `json:"groupSamlIdentity,omitempty"`
+type MemberObservation struct {
+	Username          string              `json:"username,omitempty"`
+	Name              string              `json:"name,omitempty"`
+	State             string              `json:"state,omitempty"`
+	AvatarURL         string              `json:"avatarURL,omitempty"`
+	WebURL            string              `json:"webURL,omitempty"`
+	GroupSAMLIdentity *MemberSAMLIdentity `json:"groupSamlIdentity,omitempty"`
 }
 
-// A GroupMemberSpec defines the desired state of a Gitlab GroupMember.
-type GroupMemberSpec struct {
+// A MemberSpec defines the desired state of a Gitlab Group Member.
+type MemberSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       GroupMemberParameters `json:"forProvider"`
+	ForProvider       MemberParameters `json:"forProvider"`
 }
 
-// A GroupMemberStatus represents the observed state of a Gitlab GroupMember.
-type GroupMemberStatus struct {
+// A MemberStatus represents the observed state of a Gitlab Group Member.
+type MemberStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          GroupMemberObservation `json:"atProvider,omitempty"`
+	AtProvider          MemberObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// A GroupMember is a managed resource that represents a Gitlab GroupMember
+// A Member is a managed resource that represents a Gitlab Group Member
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
@@ -99,19 +99,19 @@ type GroupMemberStatus struct {
 // +kubebuilder:printcolumn:name="Acceess Level",type="integer",JSONPath=".spec.forProvider.accessLevel"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab}
-type GroupMember struct {
+type Member struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GroupMemberSpec   `json:"spec"`
-	Status GroupMemberStatus `json:"status,omitempty"`
+	Spec   MemberSpec   `json:"spec"`
+	Status MemberStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// GroupMemberList contains a list of GroupMember items
-type GroupMemberList struct {
+// MemberList contains a list of Member items
+type MemberList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []GroupMember `json:"items"`
+	Items           []Member `json:"items"`
 }

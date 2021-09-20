@@ -28,94 +28,94 @@ import (
 )
 
 const (
-	errProjectHookNotFound = "404 Not found"
+	errHookNotFound = "404 Not found"
 )
 
-// ProjectHookClient defines Gitlab ProjectHook service operations
-type ProjectHookClient interface {
+// HookClient defines Gitlab Hook service operations
+type HookClient interface {
 	GetProjectHook(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
 	AddProjectHook(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
 	EditProjectHook(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
 	DeleteProjectHook(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
-// NewProjectHookClient returns a new Gitlab Project service
-func NewProjectHookClient(cfg clients.Config) ProjectHookClient {
+// NewHookClient returns a new Gitlab Project service
+func NewHookClient(cfg clients.Config) HookClient {
 	git := clients.NewClient(cfg)
 	return git.Projects
 }
 
-// IsErrorProjectHookNotFound helper function to test for errProjectNotFound error.
-func IsErrorProjectHookNotFound(err error) bool {
+// IsErrorHookNotFound helper function to test for errProjectNotFound error.
+func IsErrorHookNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	return strings.Contains(err.Error(), errProjectHookNotFound)
+	return strings.Contains(err.Error(), errHookNotFound)
 }
 
-// LateInitializeProjectHook fills the empty fields in the projecthook spec with the
-// values seen in gitlab.ProjectHook.
-func LateInitializeProjectHook(in *v1alpha1.ProjectHookParameters, projecthook *gitlab.ProjectHook) { // nolint:gocyclo
-	if projecthook == nil {
+// LateInitializeHook fills the empty fields in the hook spec with the
+// values seen in gitlab.Hook.
+func LateInitializeHook(in *v1alpha1.HookParameters, hook *gitlab.ProjectHook) { // nolint:gocyclo
+	if hook == nil {
 		return
 	}
 
 	if in.ConfidentialNoteEvents == nil {
-		in.ConfidentialNoteEvents = &projecthook.ConfidentialNoteEvents
+		in.ConfidentialNoteEvents = &hook.ConfidentialNoteEvents
 	}
 	if in.PushEvents == nil {
-		in.PushEvents = &projecthook.PushEvents
+		in.PushEvents = &hook.PushEvents
 	}
 	if in.IssuesEvents == nil {
-		in.IssuesEvents = &projecthook.IssuesEvents
+		in.IssuesEvents = &hook.IssuesEvents
 	}
-	in.PushEventsBranchFilter = clients.LateInitializeStringPtr(in.PushEventsBranchFilter, projecthook.PushEventsBranchFilter)
+	in.PushEventsBranchFilter = clients.LateInitializeStringPtr(in.PushEventsBranchFilter, hook.PushEventsBranchFilter)
 	if in.ConfidentialIssuesEvents == nil {
-		in.ConfidentialIssuesEvents = &projecthook.ConfidentialIssuesEvents
+		in.ConfidentialIssuesEvents = &hook.ConfidentialIssuesEvents
 	}
 	if in.MergeRequestsEvents == nil {
-		in.MergeRequestsEvents = &projecthook.MergeRequestsEvents
+		in.MergeRequestsEvents = &hook.MergeRequestsEvents
 	}
 	if in.TagPushEvents == nil {
-		in.TagPushEvents = &projecthook.TagPushEvents
+		in.TagPushEvents = &hook.TagPushEvents
 	}
 	if in.NoteEvents == nil {
-		in.NoteEvents = &projecthook.NoteEvents
+		in.NoteEvents = &hook.NoteEvents
 	}
 	if in.JobEvents == nil {
-		in.JobEvents = &projecthook.JobEvents
+		in.JobEvents = &hook.JobEvents
 	}
 	if in.PipelineEvents == nil {
-		in.PipelineEvents = &projecthook.PipelineEvents
+		in.PipelineEvents = &hook.PipelineEvents
 	}
 	if in.WikiPageEvents == nil {
-		in.WikiPageEvents = &projecthook.WikiPageEvents
+		in.WikiPageEvents = &hook.WikiPageEvents
 	}
 	if in.EnableSSLVerification == nil {
-		in.EnableSSLVerification = &projecthook.EnableSSLVerification
+		in.EnableSSLVerification = &hook.EnableSSLVerification
 	}
 }
 
-// GenerateProjectHookObservation is used to produce v1alpha1.ProjectHookObservation from
-// gitlab.ProjectHook.
-func GenerateProjectHookObservation(projecthook *gitlab.ProjectHook) v1alpha1.ProjectHookObservation { // nolint:gocyclo
-	if projecthook == nil {
-		return v1alpha1.ProjectHookObservation{}
+// GenerateHookObservation is used to produce v1alpha1.HookObservation from
+// gitlab.Hook.
+func GenerateHookObservation(hook *gitlab.ProjectHook) v1alpha1.HookObservation { // nolint:gocyclo
+	if hook == nil {
+		return v1alpha1.HookObservation{}
 	}
 
-	o := v1alpha1.ProjectHookObservation{
-		ID: projecthook.ID,
+	o := v1alpha1.HookObservation{
+		ID: hook.ID,
 	}
 
-	if projecthook.CreatedAt != nil {
-		o.CreatedAt = &metav1.Time{Time: *projecthook.CreatedAt}
+	if hook.CreatedAt != nil {
+		o.CreatedAt = &metav1.Time{Time: *hook.CreatedAt}
 	}
 	return o
 }
 
-// GenerateCreateProjectHookOptions generates project creation options
-func GenerateCreateProjectHookOptions(p *v1alpha1.ProjectHookParameters) *gitlab.AddProjectHookOptions {
-	projecthook := &gitlab.AddProjectHookOptions{
+// GenerateCreateHookOptions generates project creation options
+func GenerateCreateHookOptions(p *v1alpha1.HookParameters) *gitlab.AddProjectHookOptions {
+	hook := &gitlab.AddProjectHookOptions{
 		URL:                      p.URL,
 		ConfidentialNoteEvents:   p.ConfidentialNoteEvents,
 		PushEvents:               p.PushEvents,
@@ -132,11 +132,11 @@ func GenerateCreateProjectHookOptions(p *v1alpha1.ProjectHookParameters) *gitlab
 		Token:                    p.Token,
 	}
 
-	return projecthook
+	return hook
 }
 
-// GenerateEditProjectHookOptions generates project edit options
-func GenerateEditProjectHookOptions(p *v1alpha1.ProjectHookParameters) *gitlab.EditProjectHookOptions {
+// GenerateEditHookOptions generates project edit options
+func GenerateEditHookOptions(p *v1alpha1.HookParameters) *gitlab.EditProjectHookOptions {
 	o := &gitlab.EditProjectHookOptions{
 		URL:                      p.URL,
 		ConfidentialNoteEvents:   p.ConfidentialNoteEvents,
@@ -157,8 +157,8 @@ func GenerateEditProjectHookOptions(p *v1alpha1.ProjectHookParameters) *gitlab.E
 	return o
 }
 
-// IsProjectHookUpToDate checks whether there is a change in any of the modifiable fields.
-func IsProjectHookUpToDate(p *v1alpha1.ProjectHookParameters, g *gitlab.ProjectHook) bool { // nolint:gocyclo
+// IsHookUpToDate checks whether there is a change in any of the modifiable fields.
+func IsHookUpToDate(p *v1alpha1.HookParameters, g *gitlab.ProjectHook) bool { // nolint:gocyclo
 	if !cmp.Equal(p.URL, clients.StringToPtr(g.URL)) {
 		return false
 	}

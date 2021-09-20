@@ -70,8 +70,8 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 	return nil
 }
 
-// ResolveReferences of this ProjectMember
-func (mg *GroupMember) ResolveReferences(ctx context.Context, c client.Reader) error {
+// ResolveReferences of this Member
+func (mg *Member) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 
 	// resolve spec.forProvider.projectIdRef

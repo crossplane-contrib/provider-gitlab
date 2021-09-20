@@ -1,7 +1,7 @@
 apiVersion: groups.gitlab.crossplane.io/v1alpha1
-kind: GroupMember
+kind: Member
 metadata:
-  name: example-group-member
+  name: example-member
 spec:
   forProvider:
     groupIdRef:
@@ -12,5 +12,5 @@ spec:
   providerConfigRef:
     name: gitlab-provider
   writeConnectionSecretToRef:
-    name: gitlab-group-example-groupmember
+    name: gitlab-group-example-member
     namespace: crossplane-system

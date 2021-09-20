@@ -33,10 +33,10 @@ type MockClient struct {
 	MockUpdateGroup func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	MockDeleteGroup func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
-	MockGetGroupMember    func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
-	MockAddGroupMember    func(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
-	MockEditGroupMember   func(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
-	MockRemoveGroupMember func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockGetMember    func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
+	MockAddMember    func(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
+	MockEditMember   func(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
+	MockRemoveMember func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetGroup calls the underlying MockGetGroup method.
@@ -59,22 +59,22 @@ func (c *MockClient) DeleteGroup(pid interface{}, options ...gitlab.RequestOptio
 	return c.MockDeleteGroup(pid)
 }
 
-// GetGroupMember calls the underlying MockGetGroupMember method.
+// GetGroupMember calls the underlying MockGetMember method.
 func (c *MockClient) GetGroupMember(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
-	return c.MockGetGroupMember(gid, user)
+	return c.MockGetMember(gid, user)
 }
 
-// AddGroupMember calls the underlying MockAddGroupMember method.
+// AddGroupMember calls the underlying MockAddMember method.
 func (c *MockClient) AddGroupMember(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
-	return c.MockAddGroupMember(gid, opt)
+	return c.MockAddMember(gid, opt)
 }
 
-// EditGroupMember calls the underlying MockEditGroupMember method.
+// EditGroupMember calls the underlying MockEditMember method.
 func (c *MockClient) EditGroupMember(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
-	return c.MockEditGroupMember(gid, user, opt)
+	return c.MockEditMember(gid, user, opt)
 }
 
-// RemoveGroupMember calls the underlying MockRemoveGroupMember method.
+// RemoveGroupMember calls the underlying MockRemoveMember method.
 func (c *MockClient) RemoveGroupMember(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-	return c.MockRemoveGroupMember(gid, user)
+	return c.MockRemoveMember(gid, user)
 }

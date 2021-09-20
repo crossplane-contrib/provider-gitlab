@@ -26,39 +26,39 @@ import (
 )
 
 const (
-	errGroupMemberNotFound = "404 Group Member Not Found"
+	errMemberNotFound = "404 Group Member Not Found"
 )
 
-// GroupMemberClient defines Gitlab GroupMember service operations
-type GroupMemberClient interface {
+// MemberClient defines Gitlab Member service operations
+type MemberClient interface {
 	GetGroupMember(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
 	AddGroupMember(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
 	EditGroupMember(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
 	RemoveGroupMember(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
-// NewGroupMemberClient returns a new Gitlab Group Member service
-func NewGroupMemberClient(cfg clients.Config) GroupMemberClient {
+// NewMemberClient returns a new Gitlab Group Member service
+func NewMemberClient(cfg clients.Config) MemberClient {
 	git := clients.NewClient(cfg)
 	return git.GroupMembers
 }
 
-// IsErrorGroupMemberNotFound helper function to test for errGroupMemberNotFound error.
-func IsErrorGroupMemberNotFound(err error) bool {
+// IsErrorMemberNotFound helper function to test for errMemberNotFound error.
+func IsErrorMemberNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	return strings.Contains(err.Error(), errGroupMemberNotFound)
+	return strings.Contains(err.Error(), errMemberNotFound)
 }
 
-// GenerateGroupMemberObservation is used to produce v1alpha1.GroupMemberObservation from
-// gitlab.GroupMember.
-func GenerateGroupMemberObservation(groupMember *gitlab.GroupMember) v1alpha1.GroupMemberObservation { // nolint:gocyclo
+// GenerateMemberObservation is used to produce v1alpha1.MemberObservation from
+// gitlab.Member.
+func GenerateMemberObservation(groupMember *gitlab.GroupMember) v1alpha1.MemberObservation { // nolint:gocyclo
 	if groupMember == nil {
-		return v1alpha1.GroupMemberObservation{}
+		return v1alpha1.MemberObservation{}
 	}
 
-	o := v1alpha1.GroupMemberObservation{
+	o := v1alpha1.MemberObservation{
 		Username:          groupMember.Username,
 		Name:              groupMember.Name,
 		State:             groupMember.State,
@@ -70,8 +70,8 @@ func GenerateGroupMemberObservation(groupMember *gitlab.GroupMember) v1alpha1.Gr
 	return o
 }
 
-// GenerateAddGroupMemberOptions generates group member add options
-func GenerateAddGroupMemberOptions(p *v1alpha1.GroupMemberParameters) *gitlab.AddGroupMemberOptions {
+// GenerateAddMemberOptions generates group member add options
+func GenerateAddMemberOptions(p *v1alpha1.MemberParameters) *gitlab.AddGroupMemberOptions {
 	groupMember := &gitlab.AddGroupMemberOptions{
 		UserID:      &p.UserID,
 		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
@@ -82,8 +82,8 @@ func GenerateAddGroupMemberOptions(p *v1alpha1.GroupMemberParameters) *gitlab.Ad
 	return groupMember
 }
 
-// GenerateEditGroupMemberOptions generates group member edit options
-func GenerateEditGroupMemberOptions(p *v1alpha1.GroupMemberParameters) *gitlab.EditGroupMemberOptions {
+// GenerateEditMemberOptions generates group member edit options
+func GenerateEditMemberOptions(p *v1alpha1.MemberParameters) *gitlab.EditGroupMemberOptions {
 	groupMember := &gitlab.EditGroupMemberOptions{
 		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
 	}
@@ -98,7 +98,7 @@ func accessLevelValueV1alpha1ToGitlab(from *v1alpha1.AccessLevelValue) *gitlab.A
 	return (*gitlab.AccessLevelValue)(from)
 }
 
-// groupMemberSAMLIdentityGitlabToV1alpha1 converts *gitlab.GroupMemberSAMLIdentity to *v1alpha1.GroupMemberSAMLIdentity
-func groupMemberSAMLIdentityGitlabToV1alpha1(from *gitlab.GroupMemberSAMLIdentity) *v1alpha1.GroupMemberSAMLIdentity {
-	return (*v1alpha1.GroupMemberSAMLIdentity)(from)
+// groupMemberSAMLIdentityGitlabToV1alpha1 converts *gitlab.MemberSAMLIdentity to *v1alpha1.MemberSAMLIdentity
+func groupMemberSAMLIdentityGitlabToV1alpha1(from *gitlab.GroupMemberSAMLIdentity) *v1alpha1.MemberSAMLIdentity {
+	return (*v1alpha1.MemberSAMLIdentity)(from)
 }

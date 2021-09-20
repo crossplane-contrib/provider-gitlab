@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package projecthooks
+package hooks
 
 import (
 	"context"
@@ -46,21 +46,21 @@ var (
 )
 
 type args struct {
-	projecthook projects.ProjectHookClient
+	projecthook projects.HookClient
 	kube        client.Client
-	cr          *v1alpha1.ProjectHook
+	cr          *v1alpha1.Hook
 }
 
-type projectHookModifier func(*v1alpha1.ProjectHook)
+type projectHookModifier func(*v1alpha1.Hook)
 
 func withConditions(c ...xpv1.Condition) projectHookModifier {
-	return func(r *v1alpha1.ProjectHook) { r.Status.ConditionedStatus.Conditions = c }
+	return func(r *v1alpha1.Hook) { r.Status.ConditionedStatus.Conditions = c }
 }
 
 func withDefaultValues() projectHookModifier {
-	return func(ph *v1alpha1.ProjectHook) {
+	return func(ph *v1alpha1.Hook) {
 		f := false
-		ph.Spec.ForProvider = v1alpha1.ProjectHookParameters{
+		ph.Spec.ForProvider = v1alpha1.HookParameters{
 			URL:                      nil,
 			ConfidentialNoteEvents:   &f,
 			ProjectID:                &projectID,
@@ -81,21 +81,21 @@ func withDefaultValues() projectHookModifier {
 }
 
 func withProjectID(pid int) projectHookModifier {
-	return func(r *v1alpha1.ProjectHook) {
+	return func(r *v1alpha1.Hook) {
 		r.Spec.ForProvider.ProjectID = &pid
 	}
 }
 
-func withStatus(s v1alpha1.ProjectHookObservation) projectHookModifier {
-	return func(r *v1alpha1.ProjectHook) { r.Status.AtProvider = s }
+func withStatus(s v1alpha1.HookObservation) projectHookModifier {
+	return func(r *v1alpha1.Hook) { r.Status.AtProvider = s }
 }
 
 func withExternalName(projectHookID int) projectHookModifier {
-	return func(r *v1alpha1.ProjectHook) { meta.SetExternalName(r, fmt.Sprint(projectHookID)) }
+	return func(r *v1alpha1.Hook) { meta.SetExternalName(r, fmt.Sprint(projectHookID)) }
 }
 
-func projecthook(m ...projectHookModifier) *v1alpha1.ProjectHook {
-	cr := &v1alpha1.ProjectHook{}
+func projecthook(m ...projectHookModifier) *v1alpha1.Hook {
+	cr := &v1alpha1.Hook{}
 	for _, f := range m {
 		f(cr)
 	}
@@ -104,7 +104,7 @@ func projecthook(m ...projectHookModifier) *v1alpha1.ProjectHook {
 
 func TestObserve(t *testing.T) {
 	type want struct {
-		cr     *v1alpha1.ProjectHook
+		cr     *v1alpha1.Hook
 		result managed.ExternalObservation
 		err    error
 	}
@@ -123,7 +123,7 @@ func TestObserve(t *testing.T) {
 				cr: projecthook(
 					withDefaultValues(),
 					withExternalName(projectHookID),
-					withStatus(v1alpha1.ProjectHookObservation{
+					withStatus(v1alpha1.HookObservation{
 						ID:        projectHookID,
 						CreatedAt: &metav1.Time{Time: createTime},
 					}),
@@ -153,7 +153,7 @@ func TestObserve(t *testing.T) {
 				cr: projecthook(
 					withDefaultValues(),
 					withExternalName(projectHookID),
-					withStatus(v1alpha1.ProjectHookObservation{
+					withStatus(v1alpha1.HookObservation{
 						ID:        projectHookID,
 						CreatedAt: &metav1.Time{Time: createTime},
 					}),
@@ -181,7 +181,7 @@ func TestObserve(t *testing.T) {
 				cr: projecthook(
 					withProjectID(projectID),
 					withExternalName(projectHookID),
-					withStatus(v1alpha1.ProjectHookObservation{
+					withStatus(v1alpha1.HookObservation{
 						ID:        projectHookID,
 						CreatedAt: &metav1.Time{Time: createTime},
 					}),
@@ -222,7 +222,7 @@ func TestObserve(t *testing.T) {
 
 func TestCreate(t *testing.T) {
 	type want struct {
-		cr     *v1alpha1.ProjectHook
+		cr     *v1alpha1.Hook
 		result managed.ExternalCreation
 		err    error
 	}
@@ -294,7 +294,7 @@ func TestCreate(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	type want struct {
-		cr     *v1alpha1.ProjectHook
+		cr     *v1alpha1.Hook
 		result managed.ExternalUpdate
 		err    error
 	}
@@ -313,14 +313,14 @@ func TestUpdate(t *testing.T) {
 				cr: projecthook(
 					withExternalName(projectHookID),
 					withProjectID(projectID),
-					withStatus(v1alpha1.ProjectHookObservation{ID: projectHookID}),
+					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
 				),
 			},
 			want: want{
 				cr: projecthook(
 					withExternalName(projectHookID),
 					withProjectID(projectID),
-					withStatus(v1alpha1.ProjectHookObservation{ID: projectHookID}),
+					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
 				),
 			},
 		},
@@ -334,14 +334,14 @@ func TestUpdate(t *testing.T) {
 				cr: projecthook(
 					withExternalName(projectHookID),
 					withProjectID(projectID),
-					withStatus(v1alpha1.ProjectHookObservation{ID: projectHookID}),
+					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
 				),
 			},
 			want: want{
 				cr: projecthook(
 					withExternalName(projectHookID),
 					withProjectID(projectID),
-					withStatus(v1alpha1.ProjectHookObservation{ID: projectHookID}),
+					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
 				),
 				err: errors.Wrap(errBoom, errUpdateFailed),
 			},
@@ -367,7 +367,7 @@ func TestUpdate(t *testing.T) {
 }
 func TestDelete(t *testing.T) {
 	type want struct {
-		cr  *v1alpha1.ProjectHook
+		cr  *v1alpha1.Hook
 		err error
 	}
 
@@ -384,7 +384,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: projecthook(
 					withProjectID(projectID),
-					withStatus(v1alpha1.ProjectHookObservation{
+					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
 					withConditions(xpv1.Available()),
@@ -393,7 +393,7 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: projecthook(
 					withProjectID(projectID),
-					withStatus(v1alpha1.ProjectHookObservation{
+					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
 					withConditions(xpv1.Deleting()),
@@ -409,7 +409,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: projecthook(
 					withProjectID(projectID),
-					withStatus(v1alpha1.ProjectHookObservation{
+					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
 					withConditions(xpv1.Available()),
@@ -418,7 +418,7 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: projecthook(
 					withProjectID(projectID),
-					withStatus(v1alpha1.ProjectHookObservation{
+					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
 					withConditions(xpv1.Deleting()),
@@ -426,7 +426,7 @@ func TestDelete(t *testing.T) {
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},
 		},
-		"InvalidProjectHookID": {
+		"InvalidHookID": {
 			args: args{
 				projecthook: &fake.MockClient{
 					MockDeleteProjectHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {

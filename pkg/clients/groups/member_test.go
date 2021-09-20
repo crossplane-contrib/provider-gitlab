@@ -31,7 +31,7 @@ var (
 	gitlabAccessLevelValue   = gitlab.AccessLevelValue(accessLevel)
 )
 
-func TestGenerateGroupMemberObservation(t *testing.T) {
+func TestGenerateMemberObservation(t *testing.T) {
 	username := "User Name"
 	state := "State"
 	avatarURL := "Avatar URL"
@@ -39,7 +39,7 @@ func TestGenerateGroupMemberObservation(t *testing.T) {
 	externUID := "ExternUID"
 	provider := "Provider"
 	samlProviderID := 0
-	v1alpha1GroupSAMLIdentity := v1alpha1.GroupMemberSAMLIdentity{
+	v1alpha1GroupSAMLIdentity := v1alpha1.MemberSAMLIdentity{
 		ExternUID:      externUID,
 		Provider:       provider,
 		SAMLProviderID: samlProviderID,
@@ -55,7 +55,7 @@ func TestGenerateGroupMemberObservation(t *testing.T) {
 	}
 	cases := map[string]struct {
 		args args
-		want v1alpha1.GroupMemberObservation
+		want v1alpha1.MemberObservation
 	}{
 		"Full": {
 			args: args{
@@ -68,7 +68,7 @@ func TestGenerateGroupMemberObservation(t *testing.T) {
 					GroupSAMLIdentity: &gitlabGroupSAMLIdentity,
 				},
 			},
-			want: v1alpha1.GroupMemberObservation{
+			want: v1alpha1.MemberObservation{
 				Username:          username,
 				Name:              name,
 				State:             state,
@@ -81,7 +81,7 @@ func TestGenerateGroupMemberObservation(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateGroupMemberObservation(tc.args.p)
+			got := GenerateMemberObservation(tc.args.p)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
@@ -89,9 +89,9 @@ func TestGenerateGroupMemberObservation(t *testing.T) {
 	}
 }
 
-func TestGenerateAddGroupMemberOptions(t *testing.T) {
+func TestGenerateAddMemberOptions(t *testing.T) {
 	type args struct {
-		parameters *v1alpha1.GroupMemberParameters
+		parameters *v1alpha1.MemberParameters
 	}
 	cases := map[string]struct {
 		args args
@@ -99,7 +99,7 @@ func TestGenerateAddGroupMemberOptions(t *testing.T) {
 	}{
 		"AllFields": {
 			args: args{
-				parameters: &v1alpha1.GroupMemberParameters{
+				parameters: &v1alpha1.MemberParameters{
 					GroupID:     &groupID,
 					UserID:      userID,
 					AccessLevel: v1alpha1AccessLevelValue,
@@ -114,7 +114,7 @@ func TestGenerateAddGroupMemberOptions(t *testing.T) {
 		},
 		"SomeFields": {
 			args: args{
-				parameters: &v1alpha1.GroupMemberParameters{
+				parameters: &v1alpha1.MemberParameters{
 					GroupID:     &groupID,
 					UserID:      userID,
 					AccessLevel: v1alpha1.AccessLevelValue(accessLevel),
@@ -129,7 +129,7 @@ func TestGenerateAddGroupMemberOptions(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateAddGroupMemberOptions(tc.args.parameters)
+			got := GenerateAddMemberOptions(tc.args.parameters)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
@@ -137,9 +137,9 @@ func TestGenerateAddGroupMemberOptions(t *testing.T) {
 	}
 }
 
-func TestGenerateEditGroupMemberOptions(t *testing.T) {
+func TestGenerateEditMemberOptions(t *testing.T) {
 	type args struct {
-		parameters *v1alpha1.GroupMemberParameters
+		parameters *v1alpha1.MemberParameters
 	}
 	cases := map[string]struct {
 		args args
@@ -147,7 +147,7 @@ func TestGenerateEditGroupMemberOptions(t *testing.T) {
 	}{
 		"AllFields": {
 			args: args{
-				parameters: &v1alpha1.GroupMemberParameters{
+				parameters: &v1alpha1.MemberParameters{
 					GroupID:     &groupID,
 					UserID:      userID,
 					AccessLevel: v1alpha1AccessLevelValue,
@@ -161,7 +161,7 @@ func TestGenerateEditGroupMemberOptions(t *testing.T) {
 		},
 		"SomeFields": {
 			args: args{
-				parameters: &v1alpha1.GroupMemberParameters{
+				parameters: &v1alpha1.MemberParameters{
 					GroupID:     &groupID,
 					UserID:      userID,
 					AccessLevel: v1alpha1AccessLevelValue,
@@ -175,7 +175,7 @@ func TestGenerateEditGroupMemberOptions(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateEditGroupMemberOptions(tc.args.parameters)
+			got := GenerateEditMemberOptions(tc.args.parameters)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}

@@ -38,10 +38,10 @@ type MockClient struct {
 	MockEditProjectHook   func(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
 	MockDeleteProjectHook func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
-	MockGetProjectMember    func(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
-	MockAddProjectMember    func(pid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
-	MockEditProjectMember   func(pid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
-	MockDeleteProjectMember func(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockGetMember    func(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
+	MockAddMember    func(pid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
+	MockEditMember   func(pid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
+	MockDeleteMember func(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
 	MockListProjectDeployTokens  func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error)
 	MockCreateProjectDeployToken func(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
@@ -78,7 +78,7 @@ func (c *MockClient) GetProjectHook(pid interface{}, hook int, options ...gitlab
 	return c.MockGetProjectHook(pid, hook)
 }
 
-// AddProjectHook calls the underlying MockAddProjectHook method.
+// AddProjectHook calls the underlying MockAddHook method.
 func (c *MockClient) AddProjectHook(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 	return c.MockAddProjectHook(pid, opt)
 }
@@ -93,24 +93,24 @@ func (c *MockClient) DeleteProjectHook(pid interface{}, hook int, options ...git
 	return c.MockDeleteProjectHook(pid, hook)
 }
 
-// GetProjectMember calls the underlying MockGetProjectMember method.
+// GetProjectMember calls the underlying MockGetMember method.
 func (c *MockClient) GetProjectMember(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
-	return c.MockGetProjectMember(pid, user)
+	return c.MockGetMember(pid, user)
 }
 
-// AddProjectMember calls the underlying MockAddProjectMember method.
+// AddProjectMember calls the underlying MockAddMember method.
 func (c *MockClient) AddProjectMember(pid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
-	return c.MockAddProjectMember(pid, opt)
+	return c.MockAddMember(pid, opt)
 }
 
-// EditProjectMember calls the underlying MockEditProjectMember method.
+// EditProjectMember calls the underlying MockEditMember method.
 func (c *MockClient) EditProjectMember(pid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
-	return c.MockEditProjectMember(pid, user, opt)
+	return c.MockEditMember(pid, user, opt)
 }
 
-// DeleteProjectMember calls the underlying MockDeleteProjectMember method.
+// DeleteProjectMember calls the underlying MockDeleteMember method.
 func (c *MockClient) DeleteProjectMember(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-	return c.MockDeleteProjectMember(pid, user)
+	return c.MockDeleteMember(pid, user)
 }
 
 // ListProjectDeployTokens calls the underlying MockListProjectDeployTokens method.

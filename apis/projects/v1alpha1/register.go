@@ -45,20 +45,20 @@ var (
 	ProjectGroupVersionKind = SchemeGroupVersion.WithKind(ProjectKind)
 )
 
-// ProjectHook type metadata
+// Hook type metadata
 var (
-	ProjectHookKind             = reflect.TypeOf(ProjectHook{}).Name()
-	ProjectHookGroupKind        = schema.GroupKind{Group: Group, Kind: ProjectHookKind}.String()
-	ProjectHookKindAPIVersion   = ProjectHookKind + "." + SchemeGroupVersion.String()
-	ProjectHookGroupVersionKind = SchemeGroupVersion.WithKind(ProjectHookKind)
+	HookKind             = reflect.TypeOf(Hook{}).Name()
+	HookGroupKind        = schema.GroupKind{Group: Group, Kind: HookKind}.String()
+	HookKindAPIVersion   = HookKind + "." + SchemeGroupVersion.String()
+	HookGroupVersionKind = SchemeGroupVersion.WithKind(HookKind)
 )
 
-// ProjectMember type metadata
+// Member type metadata
 var (
-	ProjectMemberKind             = reflect.TypeOf(ProjectMember{}).Name()
-	ProjectMemberGroupKind        = schema.GroupKind{Group: Group, Kind: ProjectMemberKind}.String()
-	ProjectMemberKindAPIVersion   = ProjectMemberKind + "." + SchemeGroupVersion.String()
-	ProjectMemberGroupVersionKind = SchemeGroupVersion.WithKind(ProjectMemberKind)
+	MemberKind             = reflect.TypeOf(Member{}).Name()
+	MemberGroupKind        = schema.GroupKind{Group: Group, Kind: MemberKind}.String()
+	MemberKindAPIVersion   = MemberKind + "." + SchemeGroupVersion.String()
+	MemberGroupVersionKind = SchemeGroupVersion.WithKind(MemberKind)
 )
 
 // Deploy Token type metadata
@@ -69,7 +69,7 @@ var (
 	DeployTokenGroupVersionKind = SchemeGroupVersion.WithKind(DeployTokenKind)
 )
 
-// Deploy Token type metadata
+// Variable type metadata
 var (
 	VariableKind             = reflect.TypeOf(Variable{}).Name()
 	VariableGroupKind        = schema.GroupKind{Group: Group, Kind: VariableKind}.String()
@@ -79,8 +79,8 @@ var (
 
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
-	SchemeBuilder.Register(&ProjectHook{}, &ProjectHookList{})
-	SchemeBuilder.Register(&ProjectMember{}, &ProjectMemberList{})
+	SchemeBuilder.Register(&Hook{}, &HookList{})
+	SchemeBuilder.Register(&Member{}, &MemberList{})
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
 }

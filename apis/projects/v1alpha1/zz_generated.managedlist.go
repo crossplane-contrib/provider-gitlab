@@ -29,8 +29,17 @@ func (l *DeployTokenList) GetItems() []resource.Managed {
 	return items
 }
 
-// GetItems of this ProjectHookList.
-func (l *ProjectHookList) GetItems() []resource.Managed {
+// GetItems of this HookList.
+func (l *HookList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
+// GetItems of this MemberList.
+func (l *MemberList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
 	for i := range l.Items {
 		items[i] = &l.Items[i]
@@ -40,15 +49,6 @@ func (l *ProjectHookList) GetItems() []resource.Managed {
 
 // GetItems of this ProjectList.
 func (l *ProjectList) GetItems() []resource.Managed {
-	items := make([]resource.Managed, len(l.Items))
-	for i := range l.Items {
-		items[i] = &l.Items[i]
-	}
-	return items
-}
-
-// GetItems of this ProjectMemberList.
-func (l *ProjectMemberList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
 	for i := range l.Items {
 		items[i] = &l.Items[i]
