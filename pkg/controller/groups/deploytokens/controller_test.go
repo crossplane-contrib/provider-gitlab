@@ -36,9 +36,9 @@ import (
 	"github.com/xanzy/go-gitlab"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects/fake"
+	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/groups/fake"
 )
 
 var (
@@ -74,7 +74,7 @@ var (
 )
 
 type args struct {
-	deployToken projects.DeployTokenClient
+	deployToken groups.DeployTokenClient
 	kube        client.Client
 	cr          resource.Managed
 }
@@ -141,7 +141,7 @@ func TestObserve(t *testing.T) {
 		"NotIDExternalName": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
+					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
 						return []*gitlab.DeployToken{}, &gitlab.Response{}, nil
 					},
 				},
@@ -155,14 +155,14 @@ func TestObserve(t *testing.T) {
 		"FailedGetRequest": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
+					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
 						return []*gitlab.DeployToken{}, &gitlab.Response{}, errBoom
 					},
 				},
 				cr: deployToken(
 					withExternalName(sDeployTokenID),
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 				),
 			},
@@ -170,7 +170,7 @@ func TestObserve(t *testing.T) {
 				cr: deployToken(
 					withAnnotations(extNameAnnotation),
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 				),
 				err: errors.Wrap(errBoom, errGetFailed),
@@ -179,13 +179,13 @@ func TestObserve(t *testing.T) {
 		"DeployTokenNotFound": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
+					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
 						return deployTokens, &gitlab.Response{}, nil
 					},
 				},
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID:   &deployTokenID,
 						Username:  &username,
 						ExpiresAt: &metav1.Time{Time: expiresAt},
 					}),
@@ -195,7 +195,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID:   &deployTokenID,
 						Username:  &username,
 						ExpiresAt: &metav1.Time{Time: expiresAt},
 					}),
@@ -211,13 +211,13 @@ func TestObserve(t *testing.T) {
 		"LateInitSuccess": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
+					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
 						return deployTokens, &gitlab.Response{}, nil
 					},
 				},
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 					withExternalName(sDeployTokenID),
 				),
@@ -225,7 +225,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID:   &deployTokenID,
 						Username:  &username,
 						ExpiresAt: &metav1.Time{Time: expiresAt},
 					}),
@@ -242,13 +242,13 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
+					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
 						return deployTokens, &gitlab.Response{}, nil
 					},
 				},
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID:   &deployTokenID,
 						Username:  &username,
 						ExpiresAt: &metav1.Time{Time: expiresAt},
 					}),
@@ -258,7 +258,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID:   &deployTokenID,
 						Username:  &username,
 						ExpiresAt: &metav1.Time{Time: expiresAt},
 					}),
@@ -318,14 +318,14 @@ func TestCreate(t *testing.T) {
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
 				deployToken: &fake.MockClient{
-					MockCreateDeployToken: func(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+					MockCreateDeployToken: func(pid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
 						return &deployTokenObj, &gitlab.Response{}, nil
 					},
 				},
 				cr: deployToken(
 					withAnnotations(extNameAnnotation),
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 				),
 			},
@@ -333,7 +333,7 @@ func TestCreate(t *testing.T) {
 				cr: deployToken(
 					withExternalName(sDeployTokenID),
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 				),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
@@ -342,13 +342,13 @@ func TestCreate(t *testing.T) {
 		"FailedCreation": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockCreateDeployToken: func(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+					MockCreateDeployToken: func(pid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
 						return &gitlab.DeployToken{}, &gitlab.Response{}, errBoom
 					},
 				},
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 					withExternalName("0"),
 				),
@@ -356,7 +356,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 					withExternalName("0"),
 				),
@@ -448,7 +448,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 					withExternalName(strconv.Itoa(id)),
 				),
@@ -456,7 +456,7 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 					withExternalName(strconv.Itoa(id)),
 				),
@@ -471,7 +471,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 					withExternalName("test"),
 				),
@@ -479,7 +479,7 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 					withExternalName("test"),
 				),
@@ -495,7 +495,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 					withExternalName(strconv.Itoa(id)),
 				),
@@ -503,7 +503,7 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: deployToken(
 					withSpec(v1alpha1.DeployTokenParameters{
-						ProjectID: &deployTokenID,
+						GroupID: &deployTokenID,
 					}),
 					withExternalName(strconv.Itoa(id)),
 				),

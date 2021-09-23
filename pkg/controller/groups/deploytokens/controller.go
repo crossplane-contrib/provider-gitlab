@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The Crossplane Authors.
+Copyright 2021 The Crossplane Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,9 +35,9 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/groups"
 )
 
 const (
@@ -47,7 +47,7 @@ const (
 	errDeleteFailed   = "cannot delete Gitlab deploytoken"
 )
 
-// SetupDeployToken adds a controller that reconciles ProjectDeployTokens.
+// SetupDeployToken adds a controller that reconciles GroupDeployTokens.
 func SetupDeployToken(mgr ctrl.Manager, l logging.Logger) error {
 	name := managed.ControllerName(v1alpha1.DeployTokenKind)
 
@@ -56,7 +56,7 @@ func SetupDeployToken(mgr ctrl.Manager, l logging.Logger) error {
 		For(&v1alpha1.DeployToken{}).
 		Complete(managed.NewReconciler(mgr,
 			resource.ManagedKind(v1alpha1.DeployTokenGroupVersionKind),
-			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewDeployTokenClient}),
+			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewDeployTokenClient}),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
 			managed.WithLogger(l.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
@@ -64,7 +64,7 @@ func SetupDeployToken(mgr ctrl.Manager, l logging.Logger) error {
 
 type connector struct {
 	kube              client.Client
-	newGitlabClientFn func(cfg clients.Config) projects.DeployTokenClient
+	newGitlabClientFn func(cfg clients.Config) groups.DeployTokenClient
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
@@ -81,7 +81,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 
 type external struct {
 	kube   client.Client
-	client projects.DeployTokenClient
+	client groups.DeployTokenClient
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -95,25 +95,25 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	projectDeployTokenID, err := strconv.Atoi(externalName)
+	groupDeployTokenID, err := strconv.Atoi(externalName)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.New(errNotDeployToken)
 	}
 
-	listProjectDeployTokensOptions := gitlab.ListProjectDeployTokensOptions{}
-	deploytokenArr, _, err := e.client.ListProjectDeployTokens(*cr.Spec.ForProvider.ProjectID, &listProjectDeployTokensOptions)
+	listGroupDeployTokensOptions := gitlab.ListGroupDeployTokensOptions{}
+	deploytokenArr, _, err := e.client.ListGroupDeployTokens(*cr.Spec.ForProvider.GroupID, &listGroupDeployTokensOptions)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorProjectDeployTokenNotFound, err), errGetFailed)
+		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(groups.IsErrorGroupDeployTokenNotFound, err), errGetFailed)
 	}
 
-	dt := findDeployToken(projectDeployTokenID, deploytokenArr)
+	dt := findDeployToken(groupDeployTokenID, deploytokenArr)
 
 	if dt == nil {
 		return managed.ExternalObservation{}, nil
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
-	lateInitializeProjectDeployToken(&cr.Spec.ForProvider, dt)
+	lateInitializeGroupDeployToken(&cr.Spec.ForProvider, dt)
 
 	cr.Status.AtProvider = v1alpha1.DeployTokenObservation{}
 	cr.Status.SetConditions(xpv1.Available())
@@ -131,9 +131,9 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotDeployToken)
 	}
 
-	dt, _, err := e.client.CreateProjectDeployToken(
-		*cr.Spec.ForProvider.ProjectID,
-		projects.GenerateCreateProjectDeployTokenOptions(cr.Name, &cr.Spec.ForProvider),
+	dt, _, err := e.client.CreateGroupDeployToken(
+		*cr.Spec.ForProvider.GroupID,
+		groups.GenerateCreateGroupDeployTokenOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 
@@ -146,7 +146,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	// it's not possible to update a ProjectDeployToken
+	// it's not possible to update a GroupDeployToken
 	return managed.ExternalUpdate{}, nil
 }
 
@@ -162,8 +162,8 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotDeployToken)
 	}
 
-	_, deleteError := e.client.DeleteProjectDeployToken(
-		*cr.Spec.ForProvider.ProjectID,
+	_, deleteError := e.client.DeleteGroupDeployToken(
+		*cr.Spec.ForProvider.GroupID,
 		deployTokenID,
 		gitlab.WithContext(ctx),
 	)
@@ -171,9 +171,9 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	return errors.Wrap(deleteError, errDeleteFailed)
 }
 
-// lateInitializeProjectDeployToken fills the empty fields in the deploy token spec with the
+// lateInitializeGroupDeployToken fills the empty fields in the deploy token spec with the
 // values seen in gitlab deploy token.
-func lateInitializeProjectDeployToken(in *v1alpha1.DeployTokenParameters, deployToken *gitlab.DeployToken) { // nolint:gocyclo
+func lateInitializeGroupDeployToken(in *v1alpha1.DeployTokenParameters, deployToken *gitlab.DeployToken) { // nolint:gocyclo
 	if deployToken == nil {
 		return
 	}

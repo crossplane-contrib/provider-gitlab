@@ -1,0 +1,15 @@
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: DeployToken
+metadata:
+  name: example-deploy-token
+spec:
+  forProvider:
+    groupIdRef:
+      name: example-group
+    scopes:
+      - "read_repository"
+  providerConfigRef:
+    name: gitlab-provider
+  writeConnectionSecretToRef:
+    name: gitlab-example-deploy-token
+    namespace: crossplane-system

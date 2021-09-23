@@ -116,7 +116,7 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockGetProjectHook: func(pid interface{}, projectHookID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockGetHook: func(pid interface{}, projectHookID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
 					},
 				},
@@ -144,7 +144,7 @@ func TestObserve(t *testing.T) {
 		"NotUpToDate": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockGetProjectHook: func(pid interface{}, projectHookID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockGetHook: func(pid interface{}, projectHookID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{
 							MergeRequestsEvents: true,
 						}, &gitlab.Response{}, nil
@@ -174,7 +174,7 @@ func TestObserve(t *testing.T) {
 		"LateInitSuccess": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockGetProjectHook: func(pid interface{}, projectHookID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockGetHook: func(pid interface{}, projectHookID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
 					},
 				},
@@ -237,7 +237,7 @@ func TestCreate(t *testing.T) {
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
 				projecthook: &fake.MockClient{
-					MockAddProjectHook: func(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockAddHook: func(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{ID: projectHookID}, &gitlab.Response{}, nil
 					},
 				},
@@ -257,7 +257,7 @@ func TestCreate(t *testing.T) {
 		"FailedCreation": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockAddProjectHook: func(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockAddHook: func(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -306,7 +306,7 @@ func TestUpdate(t *testing.T) {
 		"SuccessfulEditProject": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockEditProjectHook: func(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockEditHook: func(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
 					},
 				},
@@ -327,7 +327,7 @@ func TestUpdate(t *testing.T) {
 		"FailedEdit": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockEditProjectHook: func(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockEditHook: func(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -378,7 +378,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockDeleteProjectHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -403,7 +403,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockDeleteProjectHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
@@ -429,7 +429,7 @@ func TestDelete(t *testing.T) {
 		"InvalidHookID": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockDeleteProjectHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
