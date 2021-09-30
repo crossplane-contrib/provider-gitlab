@@ -23,9 +23,10 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/config"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups"
+	groupDeployToken "github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/deploytokens"
 	groupmembers "github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploytokens"
+	projectDeployToken "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploytokens"
 	projecthooks "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/hooks"
 	projectmembers "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/variables"
@@ -38,10 +39,11 @@ func Setup(mgr ctrl.Manager, l logging.Logger) error {
 		config.Setup,
 		groups.SetupGroup,
 		groupmembers.SetupMember,
+		groupDeployToken.SetupDeployToken,
 		projects.SetupProject,
 		projecthooks.SetupHook,
 		projectmembers.SetupMember,
-		deploytokens.SetupProjectDeployToken,
+		projectDeployToken.SetupDeployToken,
 		variables.SetupVariable,
 	} {
 		if err := setup(mgr, l); err != nil {
