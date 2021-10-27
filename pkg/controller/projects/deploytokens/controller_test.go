@@ -336,7 +336,10 @@ func TestCreate(t *testing.T) {
 						ProjectID: &deployTokenID,
 					}),
 				),
-				result: managed.ExternalCreation{ExternalNameAssigned: true},
+				result: managed.ExternalCreation{
+					ExternalNameAssigned: true,
+					ConnectionDetails:    managed.ConnectionDetails{"token": []byte("Token")},
+				},
 			},
 		},
 		"FailedCreation": {
