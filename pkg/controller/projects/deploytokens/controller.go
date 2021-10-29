@@ -141,8 +141,11 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
+	connectionDetails := managed.ConnectionDetails{}
+	connectionDetails["token"] = []byte(dt.Token)
+
 	meta.SetExternalName(cr, strconv.Itoa(dt.ID))
-	return managed.ExternalCreation{ExternalNameAssigned: true}, nil
+	return managed.ExternalCreation{ExternalNameAssigned: true, ConnectionDetails: connectionDetails}, nil
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
