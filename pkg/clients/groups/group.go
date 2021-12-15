@@ -75,13 +75,12 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { // nolin
 		return v1alpha1.GroupObservation{}
 	}
 	group := v1alpha1.GroupObservation{
-		ID:           grp.ID,
-		AvatarURL:    grp.AvatarURL,
-		WebURL:       grp.WebURL,
-		FullName:     grp.FullName,
-		FullPath:     grp.FullPath,
-		RunnersToken: grp.RunnersToken,
-		LDAPCN:       grp.LDAPCN,
+		ID:        grp.ID,
+		AvatarURL: grp.AvatarURL,
+		WebURL:    grp.WebURL,
+		FullName:  grp.FullName,
+		FullPath:  grp.FullPath,
+		LDAPCN:    grp.LDAPCN,
 	}
 
 	if grp.CreatedAt != nil {

@@ -224,8 +224,6 @@ spec:
                   markedForDeletionOn:
                     format: date-time
                     type: string
-                  runnersToken:
-                    type: string
                   sharedWithGroups:
                     items:
                       description: SharedWithGroups represents a GitLab Shared with groups.
