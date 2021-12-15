@@ -282,7 +282,7 @@ func TestObserve(t *testing.T) {
 					withConditions(xpv1.Available()),
 					withPath(&path),
 					withExternalName(extName),
-					withStatus(v1alpha1.ProjectObservation{RunnersToken: "token"}),
+					withStatus(v1alpha1.ProjectObservation{}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
