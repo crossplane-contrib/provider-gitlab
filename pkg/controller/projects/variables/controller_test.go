@@ -133,7 +133,7 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetProjectVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockGetVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						return &pv, &gitlab.Response{}, nil
 					},
 				},
@@ -153,7 +153,7 @@ func TestObserve(t *testing.T) {
 		"NotUpToDate": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetProjectVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockGetVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						rv := pv
 						rv.Value = "not-up-to-date"
 						return &rv, &gitlab.Response{}, nil
@@ -179,7 +179,7 @@ func TestObserve(t *testing.T) {
 		"LateInitSuccess": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetProjectVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockGetVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						rv := pv
 						rv.Masked = true
 						rv.VariableType = gitlab.FileVariableType
@@ -216,7 +216,7 @@ func TestObserve(t *testing.T) {
 		"GetError": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetProjectVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockGetVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						return &gitlab.ProjectVariable{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -271,7 +271,7 @@ func TestCreate(t *testing.T) {
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
 				variable: &fake.MockClient{
-					MockCreateProjectVariable: func(pid interface{}, opt *gitlab.CreateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockCreateVariable: func(pid interface{}, opt *gitlab.CreateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						return &gitlab.ProjectVariable{Key: variableKey}, &gitlab.Response{}, nil
 					},
 				},
@@ -290,7 +290,7 @@ func TestCreate(t *testing.T) {
 		"FailedCreation": {
 			args: args{
 				variable: &fake.MockClient{
-					MockCreateProjectVariable: func(pid interface{}, opt *gitlab.CreateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockCreateVariable: func(pid interface{}, opt *gitlab.CreateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						return &gitlab.ProjectVariable{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -339,7 +339,7 @@ func TestUpdate(t *testing.T) {
 		"SuccessfulEditProject": {
 			args: args{
 				variable: &fake.MockClient{
-					MockUpdateProjectVariable: func(pid interface{}, key string, opt *gitlab.UpdateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockUpdateVariable: func(pid interface{}, key string, opt *gitlab.UpdateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						return &gitlab.ProjectVariable{}, &gitlab.Response{}, nil
 					},
 				},
@@ -358,7 +358,7 @@ func TestUpdate(t *testing.T) {
 		"FailedEdit": {
 			args: args{
 				variable: &fake.MockClient{
-					MockUpdateProjectVariable: func(pid interface{}, key string, opt *gitlab.UpdateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockUpdateVariable: func(pid interface{}, key string, opt *gitlab.UpdateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						return &gitlab.ProjectVariable{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -407,7 +407,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				variable: &fake.MockClient{
-					MockRemoveProjectVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRemoveVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -426,7 +426,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				variable: &fake.MockClient{
-					MockRemoveProjectVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRemoveVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
@@ -446,7 +446,7 @@ func TestDelete(t *testing.T) {
 		"InvalidVariableID": {
 			args: args{
 				variable: &fake.MockClient{
-					MockRemoveProjectVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRemoveVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
