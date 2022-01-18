@@ -271,7 +271,7 @@ check_pods 2
 echo_step "installing ${PROJECT_NAME} into \"${CROSSPLANE_NAMESPACE}\" namespace"
 
 INSTALL_YAML="$( cat <<EOF
-apiVersion: pkg.crossplane.io/v1beta1
+apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
   name: "${PACKAGE_NAME}"
