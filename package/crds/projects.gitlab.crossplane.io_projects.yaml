@@ -627,8 +627,6 @@ spec:
                     type: boolean
                   readmeUrl:
                     type: string
-                  runnersToken:
-                    type: string
                   serviceDeskAddress:
                     type: string
                   sharedWithGroups:

@@ -81,7 +81,6 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 		Archived:             prj.Archived,
 		ForksCount:           prj.ForksCount,
 		StarCount:            prj.StarCount,
-		RunnersToken:         prj.RunnersToken,
 		EmptyRepo:            prj.EmptyRepo,
 		AvatarURL:            prj.AvatarURL,
 		LicenseURL:           prj.LicenseURL,

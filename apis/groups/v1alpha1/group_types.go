@@ -216,7 +216,6 @@ type GroupObservation struct {
 	FullPath            string             `json:"fullPath,omitempty"`
 	Statistics          *StorageStatistics `json:"statistics,omitempty"`
 	CustomAttributes    []CustomAttribute  `json:"customAttributes,omitempty"`
-	RunnersToken        string             `json:"runnersToken,omitempty"`
 	SharedWithGroups    []SharedWithGroups `json:"sharedWithGroups,omitempty"`
 	LDAPCN              string             `json:"ldapCn,omitempty"`
 	LDAPAccess          AccessLevelValue   `json:"ldapAccess,omitempty"`
