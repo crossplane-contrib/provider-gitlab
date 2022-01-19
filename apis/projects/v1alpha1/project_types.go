@@ -530,7 +530,6 @@ type ProjectObservation struct {
 	Permissions               *Permissions               `json:"permissions,omitempty"`
 	Public                    bool                       `json:"public,omitempty"`
 	ReadmeURL                 string                     `json:"readmeUrl,omitempty"`
-	RunnersToken              string                     `json:"runnersToken,omitempty"`
 	SSHURLToRepo              string                     `json:"sshUrlToRepo,omitempty"`
 	ServiceDeskAddress        string                     `json:"serviceDeskAddress,omitempty"`
 	SharedWithGroups          []SharedWithGroups         `json:"sharedWithGroups,omitempty"`
