@@ -1,8 +1,9 @@
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.5.0
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: projects.projects.gitlab.crossplane.io
 spec:
@@ -37,10 +38,14 @@ spec:
         description: A Project is a managed resource that represents a Gitlab Project
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -48,22 +53,30 @@ spec:
             description: A ProjectSpec defines the desired state of a Gitlab Project.
             properties:
               deletionPolicy:
-                description: DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted - either "Delete" or "Orphan" the external resource. The "Delete" policy is the default when no policy is specified.
+                default: Delete
+                description: DeletionPolicy specifies what will happen to the underlying
+                  external when this managed resource is deleted - either "Delete"
+                  or "Orphan" the external resource.
                 enum:
                 - Orphan
                 - Delete
                 type: string
               forProvider:
-                description: ProjectParameters define the desired state of a Gitlab Project
+                description: ProjectParameters define the desired state of a Gitlab
+                  Project
                 properties:
                   allowMergeOnSkippedPipeline:
-                    description: Set whether or not merge requests can be merged with skipped jobs.
+                    description: Set whether or not merge requests can be merged with
+                      skipped jobs.
                     type: boolean
                   approvalsBeforeMerge:
-                    description: How many approvers should approve merge request by default. To configure approval rules, see Merge request approvals API.
+                    description: How many approvers should approve merge request by
+                      default. To configure approval rules, see Merge request approvals
+                      API.
                     type: integer
                   autoCancelPendingPipelines:
-                    description: Auto-cancel pending pipelines. This isn’t a boolean, but enabled/disabled.
+                    description: Auto-cancel pending pipelines. This isn’t a boolean,
+                      but enabled/disabled.
                     type: string
                   autoDevopsDeployStrategy:
                     description: Auto Deploy strategy (continuous, manual or timedIncremental).
@@ -72,7 +85,8 @@ spec:
                     description: Enable Auto DevOps for this project.
                     type: boolean
                   autocloseReferencedIssues:
-                    description: Set whether auto-closing referenced issues on default branch.
+                    description: Set whether auto-closing referenced issues on default
+                      branch.
                     type: boolean
                   buildCoverageRegex:
                     description: Test coverage parsing.
@@ -81,7 +95,8 @@ spec:
                     description: The Git strategy. Defaults to fetch.
                     type: string
                   buildTimeout:
-                    description: The maximum amount of time, in seconds, that a job can run.
+                    description: The maximum amount of time, in seconds, that a job
+                      can run.
                     type: integer
                   buildsAccessLevel:
                     description: One of disabled, private, or enabled.
@@ -93,10 +108,14 @@ spec:
                     description: Default number of revisions for shallow cloning.
                     type: integer
                   ciForwardDeploymentEnabled:
-                    description: When a new deployment job starts, skip older deployment jobs that are still pending
+                    description: When a new deployment job starts, skip older deployment
+                      jobs that are still pending
                     type: boolean
                   containerExpirationPolicyAttributes:
-                    description: 'Update the image cleanup policy for this project. Accepts: cadence (string), keepN (integer), olderThan (string), nameRegex (string), nameRegexDelete (string), nameRegexKeep (string), enabled (boolean).'
+                    description: 'Update the image cleanup policy for this project.
+                      Accepts: cadence (string), keepN (integer), olderThan (string),
+                      nameRegex (string), nameRegexDelete (string), nameRegexKeep
+                      (string), enabled (boolean).'
                     properties:
                       cadence:
                         type: string
@@ -118,7 +137,8 @@ spec:
                     description: Enable container registry for this project.
                     type: boolean
                   defaultBranch:
-                    description: The default branch name. Requires initializeWithReadme to be true.
+                    description: The default branch name. Requires initializeWithReadme
+                      to be true.
                     type: string
                   description:
                     description: Short project description.
@@ -133,7 +153,10 @@ spec:
                     description: One of disabled, private, or enabled.
                     type: string
                   groupWithProjectTemplatesId:
-                    description: For group-level custom templates, specifies ID of group from which all the custom project templates are sourced. Leave empty for instance-level templates. Requires useCustomTemplate to be true.
+                    description: For group-level custom templates, specifies ID of
+                      group from which all the custom project templates are sourced.
+                      Leave empty for instance-level templates. Requires useCustomTemplate
+                      to be true.
                     type: integer
                   importUrl:
                     description: URL to import repository from.
@@ -145,7 +168,9 @@ spec:
                     description: One of disabled, private, or enabled.
                     type: string
                   issuesTemplate:
-                    description: Default description for Issues. Description is parsed with GitLab Flavored Markdown. See Templates for issues and merge requests.
+                    description: Default description for Issues. Description is parsed
+                      with GitLab Flavored Markdown. See Templates for issues and
+                      merge requests.
                     type: string
                   lfsEnabled:
                     description: Enable LFS.
@@ -157,7 +182,9 @@ spec:
                     description: One of disabled, private, or enabled.
                     type: string
                   mergeRequestsTemplate:
-                    description: Default description for Merge Requests. Description is parsed with GitLab Flavored Markdown. See Templates for issues and merge requests.
+                    description: Default description for Merge Requests. Description
+                      is parsed with GitLab Flavored Markdown. See Templates for issues
+                      and merge requests.
                     type: string
                   mirror:
                     description: Enables pull mirroring in a project.
@@ -169,41 +196,100 @@ spec:
                     description: Pull mirroring triggers builds.
                     type: boolean
                   mirrorUserId:
-                    description: User responsible for all the activity surrounding a pull mirror event. (admins only)
+                    description: User responsible for all the activity surrounding
+                      a pull mirror event. (admins only)
                     type: integer
                   name:
-                    description: Name is the human-readable name of the project. If set, it overrides metadata.name.
+                    description: Name is the human-readable name of the project. If
+                      set, it overrides metadata.name.
                     maxLength: 255
                     type: string
                   namespaceId:
-                    description: Namespace for the new project (defaults to the current user’s namespace).
+                    description: Namespace for the new project (defaults to the current
+                      user’s namespace).
                     type: integer
                   namespaceIdRef:
-                    description: NamespaceIDRef is a reference to a project to retrieve its namespaceId
+                    description: NamespaceIDRef is a reference to a project to retrieve
+                      its namespaceId
                     properties:
                       name:
                         description: Name of the referenced object.
                         type: string
+                      policy:
+                        description: Policies for referencing.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: Resolution specifies whether resolution of
+                              this reference is required. The default is 'Required',
+                              which means the reconcile will fail if the reference
+                              cannot be resolved. 'Optional' means this reference
+                              will be a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: Resolve specifies when this reference should
+                              be resolved. The default is 'IfNotPresent', which will
+                              attempt to resolve the reference only when the corresponding
+                              field is not present. Use 'Always' to resolve the reference
+                              on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
                     required:
                     - name
                     type: object
                   namespaceIdSelector:
-                    description: NamespaceIDSelector selects reference to a project to retrieve its namespaceId.
+                    description: NamespaceIDSelector selects reference to a project
+                      to retrieve its namespaceId.
                     properties:
                       matchControllerRef:
-                        description: MatchControllerRef ensures an object with the same controller reference as the selecting object is selected.
+                        description: MatchControllerRef ensures an object with the
+                          same controller reference as the selecting object is selected.
                         type: boolean
                       matchLabels:
                         additionalProperties:
                           type: string
-                        description: MatchLabels ensures an object with matching labels is selected.
+                        description: MatchLabels ensures an object with matching labels
+                          is selected.
+                        type: object
+                      policy:
+                        description: Policies for selection.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: Resolution specifies whether resolution of
+                              this reference is required. The default is 'Required',
+                              which means the reconcile will fail if the reference
+                              cannot be resolved. 'Optional' means this reference
+                              will be a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: Resolve specifies when this reference should
+                              be resolved. The default is 'IfNotPresent', which will
+                              attempt to resolve the reference only when the corresponding
+                              field is not present. Use 'Always' to resolve the reference
+                              on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
                         type: object
                     type: object
                   onlyAllowMergeIfAllDiscussionsAreResolved:
-                    description: Set whether merge requests can only be merged when all the discussions are resolved.
+                    description: Set whether merge requests can only be merged when
+                      all the discussions are resolved.
                     type: boolean
                   onlyAllowMergeIfPipelineSucceeds:
-                    description: Set whether merge requests can only be merged with successful jobs.
+                    description: Set whether merge requests can only be merged with
+                      successful jobs.
                     type: boolean
                   onlyMirrorProtectedBranches:
                     description: Only mirror protected branches.
@@ -218,16 +304,19 @@ spec:
                     description: One of disabled, private, enabled, or public.
                     type: string
                   path:
-                    description: Repository name for new project. Generated based on name if not provided (generated as lowercase with dashes).
+                    description: Repository name for new project. Generated based
+                      on name if not provided (generated as lowercase with dashes).
                     type: string
                   printingMergeRequestLinkEnabled:
-                    description: Show link to create/view merge request when pushing from the command line.
+                    description: Show link to create/view merge request when pushing
+                      from the command line.
                     type: boolean
                   publicBuilds:
                     description: If true, jobs can be viewed by non-project members.
                     type: boolean
                   removeSourceBranchAfterMerge:
-                    description: Enable Delete source branch option by default for all new merge requests.
+                    description: Enable Delete source branch option by default for
+                      all new merge requests.
                     type: boolean
                   repositoryAccessLevel:
                     description: One of disabled, private, or enabled.
@@ -236,7 +325,8 @@ spec:
                     description: Allow users to request member access.
                     type: boolean
                   resolveOutdatedDiffDiscussions:
-                    description: Automatically resolve merge request diffs discussions on lines changed with a push.
+                    description: Automatically resolve merge request diffs discussions
+                      on lines changed with a push.
                     type: boolean
                   serviceDeskEnabled:
                     description: Enable or disable Service Desk feature.
@@ -251,18 +341,24 @@ spec:
                     description: The commit message used to apply merge request suggestions.
                     type: string
                   tagList:
-                    description: The list of tags for a project; put array of tags, that should be finally assigned to a project. Use topics instead.
+                    description: The list of tags for a project; put array of tags,
+                      that should be finally assigned to a project. Use topics instead.
                     items:
                       type: string
                     type: array
                   templateName:
-                    description: When used without useCustomTemplate, name of a built-in project template. When used with useCustomTemplate, name of a custom project template.
+                    description: When used without useCustomTemplate, name of a built-in
+                      project template. When used with useCustomTemplate, name of
+                      a custom project template.
                     type: string
                   templateProjectId:
-                    description: When used with useCustomTemplate, project ID of a custom project template. This is preferable to using templateName since templateName may be ambiguous.
+                    description: When used with useCustomTemplate, project ID of a
+                      custom project template. This is preferable to using templateName
+                      since templateName may be ambiguous.
                     type: integer
                   useCustomTemplate:
-                    description: Use either custom instance or group (with groupWithProjectTemplatesId) project template.
+                    description: Use either custom instance or group (with groupWithProjectTemplatesId)
+                      project template.
                     type: boolean
                   visibility:
                     description: See project visibility level.
@@ -272,25 +368,162 @@ spec:
                     type: string
                 type: object
               providerConfigRef:
-                description: ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured.
+                default:
+                  name: default
+                description: ProviderConfigReference specifies how the provider that
+                  will be used to create, observe, update, and delete this managed
+                  resource should be configured.
                 properties:
                   name:
                     description: Name of the referenced object.
                     type: string
+                  policy:
+                    description: Policies for referencing.
+                    properties:
+                      resolution:
+                        default: Required
+                        description: Resolution specifies whether resolution of this
+                          reference is required. The default is 'Required', which
+                          means the reconcile will fail if the reference cannot be
+                          resolved. 'Optional' means this reference will be a no-op
+                          if it cannot be resolved.
+                        enum:
+                        - Required
+                        - Optional
+                        type: string
+                      resolve:
+                        description: Resolve specifies when this reference should
+                          be resolved. The default is 'IfNotPresent', which will attempt
+                          to resolve the reference only when the corresponding field
+                          is not present. Use 'Always' to resolve the reference on
+                          every reconcile.
+                        enum:
+                        - Always
+                        - IfNotPresent
+                        type: string
+                    type: object
                 required:
                 - name
                 type: object
               providerRef:
-                description: 'ProviderReference specifies the provider that will be used to create, observe, update, and delete this managed resource. Deprecated: Please use ProviderConfigReference, i.e. `providerConfigRef`'
+                description: 'ProviderReference specifies the provider that will be
+                  used to create, observe, update, and delete this managed resource.
+                  Deprecated: Please use ProviderConfigReference, i.e. `providerConfigRef`'
                 properties:
                   name:
                     description: Name of the referenced object.
+                    type: string
+                  policy:
+                    description: Policies for referencing.
+                    properties:
+                      resolution:
+                        default: Required
+                        description: Resolution specifies whether resolution of this
+                          reference is required. The default is 'Required', which
+                          means the reconcile will fail if the reference cannot be
+                          resolved. 'Optional' means this reference will be a no-op
+                          if it cannot be resolved.
+                        enum:
+                        - Required
+                        - Optional
+                        type: string
+                      resolve:
+                        description: Resolve specifies when this reference should
+                          be resolved. The default is 'IfNotPresent', which will attempt
+                          to resolve the reference only when the corresponding field
+                          is not present. Use 'Always' to resolve the reference on
+                          every reconcile.
+                        enum:
+                        - Always
+                        - IfNotPresent
+                        type: string
+                    type: object
+                required:
+                - name
+                type: object
+              publishConnectionDetailsTo:
+                description: PublishConnectionDetailsTo specifies the connection secret
+                  config which contains a name, metadata and a reference to secret
+                  store config to which any connection details for this managed resource
+                  should be written. Connection details frequently include the endpoint,
+                  username, and password required to connect to the managed resource.
+                properties:
+                  configRef:
+                    default:
+                      name: default
+                    description: SecretStoreConfigRef specifies which secret store
+                      config should be used for this ConnectionSecret.
+                    properties:
+                      name:
+                        description: Name of the referenced object.
+                        type: string
+                      policy:
+                        description: Policies for referencing.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: Resolution specifies whether resolution of
+                              this reference is required. The default is 'Required',
+                              which means the reconcile will fail if the reference
+                              cannot be resolved. 'Optional' means this reference
+                              will be a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: Resolve specifies when this reference should
+                              be resolved. The default is 'IfNotPresent', which will
+                              attempt to resolve the reference only when the corresponding
+                              field is not present. Use 'Always' to resolve the reference
+                              on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  metadata:
+                    description: Metadata is the metadata for connection secret.
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        description: Annotations are the annotations to be added to
+                          connection secret. - For Kubernetes secrets, this will be
+                          used as "metadata.annotations". - It is up to Secret Store
+                          implementation for others store types.
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        description: Labels are the labels/tags to be added to connection
+                          secret. - For Kubernetes secrets, this will be used as "metadata.labels".
+                          - It is up to Secret Store implementation for others store
+                          types.
+                        type: object
+                      type:
+                        description: Type is the SecretType for the connection secret.
+                          - Only valid for Kubernetes Secret Stores.
+                        type: string
+                    type: object
+                  name:
+                    description: Name is the name of the connection secret.
                     type: string
                 required:
                 - name
                 type: object
               writeConnectionSecretToRef:
-                description: WriteConnectionSecretToReference specifies the namespace and name of a Secret to which any connection details for this managed resource should be written. Connection details frequently include the endpoint, username, and password required to connect to the managed resource.
+                description: WriteConnectionSecretToReference specifies the namespace
+                  and name of a Secret to which any connection details for this managed
+                  resource should be written. Connection details frequently include
+                  the endpoint, username, and password required to connect to the
+                  managed resource. This field is planned to be replaced in a future
+                  release in favor of PublishConnectionDetailsTo. Currently, both
+                  could be set independently and connection details would be published
+                  to both without affecting each other.
                 properties:
                   name:
                     description: Name of the secret.
@@ -306,7 +539,8 @@ spec:
             - forProvider
             type: object
           status:
-            description: A ProjectStatus represents the observed state of a Gitlab Project.
+            description: A ProjectStatus represents the observed state of a Gitlab
+              Project.
             properties:
               atProvider:
                 description: ProjectObservation is the observed state of a Project.
@@ -320,7 +554,8 @@ spec:
                       type: string
                     type: array
                   containerExpirationPolicy:
-                    description: ContainerExpirationPolicy represents the container expiration policy.
+                    description: ContainerExpirationPolicy represents the container
+                      expiration policy.
                     properties:
                       cadence:
                         type: string
@@ -353,7 +588,8 @@ spec:
                     type: integer
                   customAttributes:
                     items:
-                      description: "CustomAttribute struct is used to unmarshal response to api calls. \n GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html"
+                      description: "CustomAttribute struct is used to unmarshal response
+                        to api calls. \n GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html"
                       properties:
                         key:
                           type: string
@@ -367,7 +603,8 @@ spec:
                   emptyRepo:
                     type: boolean
                   forkedFromProject:
-                    description: ForkParent represents the parent project when this is a fork.
+                    description: ForkParent represents the parent project when this
+                      is a fork.
                     properties:
                       HTTPURLToRepo:
                         type: string
@@ -432,7 +669,8 @@ spec:
                   licenseUrl:
                     type: string
                   links:
-                    description: Links represents a project web links for self, issues, mergeRequests, repoBranches, labels, events, members.
+                    description: Links represents a project web links for self, issues,
+                      mergeRequests, repoBranches, labels, events, members.
                     properties:
                       events:
                         type: string
@@ -493,7 +731,8 @@ spec:
                   openIssuesCount:
                     type: integer
                   owner:
-                    description: "User represents a GitLab user. \n GitLab API docs: https://docs.gitlab.com/ee/api/users.html"
+                    description: "User represents a GitLab user. \n GitLab API docs:
+                      https://docs.gitlab.com/ee/api/users.html"
                     properties:
                       ID:
                         type: integer
@@ -518,7 +757,8 @@ spec:
                         type: string
                       customAttributes:
                         items:
-                          description: "CustomAttribute struct is used to unmarshal response to api calls. \n GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html"
+                          description: "CustomAttribute struct is used to unmarshal
+                            response to api calls. \n GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html"
                           properties:
                             key:
                               type: string
@@ -600,10 +840,12 @@ spec:
                         description: GroupAccess represents group access.
                         properties:
                           accessLevel:
-                            description: "AccessLevelValue represents a permission level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
+                            description: "AccessLevelValue represents a permission
+                              level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
                             type: integer
                           notificationLevel:
-                            description: NotificationLevelValue represents a notification level.
+                            description: NotificationLevelValue represents a notification
+                              level.
                             type: integer
                         required:
                         - accessLevel
@@ -613,10 +855,12 @@ spec:
                         description: ProjectAccess represents project access.
                         properties:
                           accessLevel:
-                            description: "AccessLevelValue represents a permission level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
+                            description: "AccessLevelValue represents a permission
+                              level within GitLab. \n GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html"
                             type: integer
                           notificationLevel:
-                            description: NotificationLevelValue represents a notification level.
+                            description: NotificationLevelValue represents a notification
+                              level.
                             type: integer
                         required:
                         - accessLevel
@@ -648,7 +892,8 @@ spec:
                   starCount:
                     type: integer
                   statistics:
-                    description: ProjectStatistics represents a statistics record for a project.
+                    description: ProjectStatistics represents a statistics record
+                      for a project.
                     properties:
                       commitCount:
                         type: integer
@@ -682,20 +927,25 @@ spec:
                   description: A Condition that may apply to a resource.
                   properties:
                     lastTransitionTime:
-                      description: LastTransitionTime is the last time this condition transitioned from one status to another.
+                      description: LastTransitionTime is the last time this condition
+                        transitioned from one status to another.
                       format: date-time
                       type: string
                     message:
-                      description: A Message containing details about this condition's last transition from one status to another, if any.
+                      description: A Message containing details about this condition's
+                        last transition from one status to another, if any.
                       type: string
                     reason:
-                      description: A Reason for this condition's last transition from one status to another.
+                      description: A Reason for this condition's last transition from
+                        one status to another.
                       type: string
                     status:
-                      description: Status of this condition; is it currently True, False, or Unknown?
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
                       type: string
                     type:
-                      description: Type of this condition. At most one of each condition type may apply to a resource at any point in time.
+                      description: Type of this condition. At most one of each condition
+                        type may apply to a resource at any point in time.
                       type: string
                   required:
                   - lastTransitionTime
