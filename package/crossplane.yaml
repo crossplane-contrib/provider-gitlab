@@ -3,23 +3,19 @@ kind: Provider
 metadata:
   name: provider-gitlab
   annotations:
-    company: Crossplane
-    maintainer: Crossplane Maintainers <info@crossplane.io>
-    source: github.com/crossplane-contrib/provider-gitlab
-    license: Apache-2.0
-    descriptionShort: |
-      The Gitlab Crossplane provider enables resources management for Gitlab.
-
-    description: |
+    meta.crossplane.io/maintainer: Crossplane Maintainers <info@crossplane.io>
+    meta.crossplane.io/source: github.com/crossplane-contrib/provider-gitlab
+    meta.crossplane.io/license: Apache-2.0
+    meta.crossplane.io/description: |
       The Gitlab Crossplane provider adds support for
       managing Gitlab resources in Kubernetes.
 
-    readme: |
+    meta.crossplane.io/readme: |
       `provider-gitlab` is the Crossplane infrastructure provider for
       [Gitlab](https://gitlab.com/).
 
       Available resources and their fields can be found in the [CRD
-      Docs](https://doc.crds.dev/github.com/crossplane-contrib/provider-gitlab).
+      Docs](https://marketplace.upbound.io/providers/crossplane-contrib/provider-gitlab/latest/crds).
 
       If you encounter an issue please reach out on
       [slack.crossplane.io](https://slack.crossplane.io) and create an issue in
