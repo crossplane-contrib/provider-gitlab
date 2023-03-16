@@ -19,14 +19,15 @@ package variables
 import (
 	"context"
 
-	"github.com/xanzy/go-gitlab"
-
 	"github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
+	"github.com/xanzy/go-gitlab"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
@@ -38,11 +39,13 @@ import (
 )
 
 const (
-	errNotVariable  = "managed resource is not a Gitlab variable custom resource"
-	errGetFailed    = "cannot get Gitlab variable"
-	errCreateFailed = "cannot create Gitlab variable"
-	errUpdateFailed = "cannot update Gitlab variable"
-	errDeleteFailed = "cannot delete Gitlab variable"
+	errNotVariable       = "managed resource is not a Gitlab variable custom resource"
+	errGetFailed         = "cannot get Gitlab variable"
+	errCreateFailed      = "cannot create Gitlab variable"
+	errUpdateFailed      = "cannot update Gitlab variable"
+	errDeleteFailed      = "cannot delete Gitlab variable"
+	errGetSecretFailed   = "cannot get secret for Gitlab variable value"
+	errSecretKeyNotFound = "cannot find key in secret for Gitlab variable value"
 )
 
 // SetupVariable adds a controller that reconciles Variables.
@@ -87,9 +90,16 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotVariable)
 	}
-	variable, _, err := e.client.GetVariable(*cr.Spec.ForProvider.ProjectID, cr.Spec.ForProvider.Key)
+	variable, _, err := e.client.GetVariable(*cr.Spec.ForProvider.ProjectID, cr.Spec.ForProvider.Key, nil)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorVariableNotFound, err), errGetFailed)
+	}
+
+	if cr.Spec.ForProvider.ValueSecretRef != nil {
+		if err = e.updateVariableFromSecret(ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider); err != nil {
+			cr.Status.SetConditions(xpv1.ReconcileError(err))
+			return managed.ExternalObservation{}, errors.Wrap(err, errUpdateFailed)
+		}
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
@@ -110,6 +120,13 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotVariable)
 	}
 
+	if cr.Spec.ForProvider.ValueSecretRef != nil {
+		if err := e.updateVariableFromSecret(ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider); err != nil {
+			cr.Status.SetConditions(xpv1.ReconcileError(err))
+			return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
+		}
+	}
+
 	cr.Status.SetConditions(xpv1.Creating())
 	_, _, err := e.client.CreateVariable(*cr.Spec.ForProvider.ProjectID, projects.GenerateCreateVariableOptions(&cr.Spec.ForProvider), gitlab.WithContext(ctx))
 	if err != nil {
@@ -122,6 +139,13 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	cr, ok := mg.(*v1alpha1.Variable)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotVariable)
+	}
+
+	if cr.Spec.ForProvider.ValueSecretRef != nil {
+		if err := e.updateVariableFromSecret(ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider); err != nil {
+			cr.Status.SetConditions(xpv1.ReconcileError(err))
+			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+		}
 	}
 
 	_, _, err := e.client.UpdateVariable(
@@ -144,7 +168,42 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	_, err := e.client.RemoveVariable(
 		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.Key,
+		nil,
 		gitlab.WithContext(ctx),
 	)
 	return errors.Wrap(err, errDeleteFailed)
+}
+
+func (e *external) updateVariableFromSecret(ctx context.Context, selector *xpv1.SecretKeySelector, params *v1alpha1.VariableParameters) error {
+	// Fetch the Kubernetes secret.
+	secret := &corev1.Secret{}
+	nn := types.NamespacedName{
+		Namespace: selector.Namespace,
+		Name:      selector.Name,
+	}
+
+	err := e.kube.Get(ctx, nn, secret)
+	if err != nil {
+		return errors.Wrap(err, errGetSecretFailed)
+	}
+
+	// Obtain the data from the secret.
+	raw, ok := secret.Data[selector.Key]
+	if raw == nil || !ok {
+		return errors.New(errSecretKeyNotFound)
+	}
+
+	// Mask variable if it hasn't already been explicitly configured.
+	if params.Masked == nil {
+		params.Masked = gitlab.Bool(true)
+	}
+
+	// Make variable raw if it hasn't already been explicitly configured.
+	if params.Raw == nil {
+		params.Raw = gitlab.Bool(true)
+	}
+
+	params.Value = string(raw)
+
+	return nil
 }

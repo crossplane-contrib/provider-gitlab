@@ -62,10 +62,10 @@ var (
 		LfsObjectsSize:   lfsObjectsSize,
 		JobArtifactsSize: jobArtifactsSize,
 	}
-	gitlabStatistics = gitlab.StorageStatistics{
+	gitlabStatistics = gitlab.Statistics{
 		StorageSize:      storageSize,
 		RepositorySize:   repositorySize,
-		LfsObjectsSize:   lfsObjectsSize,
+		LFSObjectsSize:   lfsObjectsSize,
 		JobArtifactsSize: jobArtifactsSize,
 	}
 	LDAPAccess         = 0
@@ -316,7 +316,6 @@ func TestGenerateEditGroupOptions(t *testing.T) {
 				MentionsDisabled:               &mentionsDisabled,
 				LFSEnabled:                     &LFSEnabled,
 				RequestAccessEnabled:           &requestAccessEnabled,
-				ParentID:                       &parentID,
 				SharedRunnersMinutesLimit:      &sharedRunnersMinutesLimit,
 				ExtraSharedRunnersMinutesLimit: &extraSharedRunnersMinutesLimit,
 			},

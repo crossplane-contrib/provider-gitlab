@@ -35,6 +35,7 @@ const (
 
 // VariableParameters define the desired state of a Gitlab CI Variable
 // https://docs.gitlab.com/ee/api/project_level_variables.html
+// +kubebuilder:validation:XValidation:message="value and valueSecretRef are mutually exclusive",rule="exists_one(self.value != "", self.valueSecretRef != null"
 type VariableParameters struct {
 	// ProjectID is the ID of the project to create the variable on.
 	// +optional
@@ -56,8 +57,15 @@ type VariableParameters struct {
 	// +immutable
 	Key string `json:"key"`
 
-	// Value for the variable.
+	// Value for the variable. Mutually exclusive with ValueSecretRef.
+	// +optional
 	Value string `json:"value"`
+
+	// ValueSecretRef is used to obtain the value from a secret. This will set Masked and Raw to true if they
+	// have not been set implicitly. Mutually exclusive with Value.
+	// +optional
+	// +nullable
+	ValueSecretRef *xpv1.SecretKeySelector `json:"valueSecretRef,omitempty"`
 
 	// Masked enables or disables variable masking.
 	// +optional
@@ -66,6 +74,10 @@ type VariableParameters struct {
 	// Protected enables or disables variable protection.
 	// +optional
 	Protected *bool `json:"protected,omitempty"`
+
+	// Raw disables variable expansion of the variable.
+	// +optional
+	Raw *bool `json:"raw,omitempty"`
 
 	// VariableType is the type of the variable.
 	// +kubebuilder:validation:Enum:=env_var;file
