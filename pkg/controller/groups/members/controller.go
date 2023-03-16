@@ -154,6 +154,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	_, err := e.client.RemoveGroupMember(
 		meta.GetExternalName(cr),
 		cr.Spec.ForProvider.UserID,
+		nil,
 		gitlab.WithContext(ctx),
 	)
 	return errors.Wrap(err, errDeleteFailed)

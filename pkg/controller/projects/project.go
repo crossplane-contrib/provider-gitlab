@@ -239,7 +239,7 @@ func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { /
 	in.Path = clients.LateInitializeStringPtr(in.Path, project.Path)
 
 	if in.PublicBuilds == nil {
-		in.PublicBuilds = &project.PublicBuilds
+		in.PublicBuilds = &project.PublicJobs
 	}
 	if in.RemoveSourceBranchAfterMerge == nil {
 		in.RemoveSourceBranchAfterMerge = &project.RemoveSourceBranchAfterMerge
@@ -363,7 +363,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !cmp.Equal(p.Path, clients.StringToPtr(g.Path)) {
 		return false
 	}
-	if !clients.IsBoolEqualToBoolPtr(p.PublicBuilds, g.PublicBuilds) {
+	if !clients.IsBoolEqualToBoolPtr(p.PublicBuilds, g.PublicJobs) {
 		return false
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.RemoveSourceBranchAfterMerge, g.RemoveSourceBranchAfterMerge) {

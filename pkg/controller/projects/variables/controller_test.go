@@ -20,14 +20,15 @@ import (
 	"context"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/pkg/errors"
-
-	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
-	"github.com/crossplane/crossplane-runtime/pkg/test"
 	"github.com/google/go-cmp/cmp"
 	"github.com/xanzy/go-gitlab"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/pkg/test"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
@@ -52,6 +53,7 @@ var (
 		VariableType:     gitlab.VariableTypeValue(variableType),
 		Protected:        f,
 		Masked:           f,
+		Raw:              f,
 	}
 )
 
@@ -75,6 +77,7 @@ func withDefaultValues() variableModifier {
 			Value:            variableValue,
 			Protected:        &f,
 			Masked:           &f,
+			Raw:              &f,
 			VariableType:     &variableType,
 			EnvironmentScope: &variableEnvScope,
 		}
@@ -93,6 +96,12 @@ func withValue(value string) variableModifier {
 	}
 }
 
+func withValueSecretRef(selector *xpv1.SecretKeySelector) variableModifier {
+	return func(r *v1alpha1.Variable) {
+		r.Spec.ForProvider.ValueSecretRef = selector
+	}
+}
+
 func withKey(key string) variableModifier {
 	return func(r *v1alpha1.Variable) {
 		r.Spec.ForProvider.Key = key
@@ -105,9 +114,21 @@ func withMasked(masked bool) variableModifier {
 	}
 }
 
+func withRaw(raw bool) variableModifier {
+	return func(r *v1alpha1.Variable) {
+		r.Spec.ForProvider.Raw = &raw
+	}
+}
+
 func withVariableType(variableType v1alpha1.VariableType) variableModifier {
 	return func(r *v1alpha1.Variable) {
 		r.Spec.ForProvider.VariableType = &variableType
+	}
+}
+
+func withEnvironmentScope(scope string) variableModifier {
+	return func(r *v1alpha1.Variable) {
+		r.Spec.ForProvider.EnvironmentScope = &scope
 	}
 }
 
@@ -133,7 +154,7 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockGetVariable: func(pid interface{}, key string, opt *gitlab.GetProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						return &pv, &gitlab.Response{}, nil
 					},
 				},
@@ -153,7 +174,7 @@ func TestObserve(t *testing.T) {
 		"NotUpToDate": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockGetVariable: func(pid interface{}, key string, opt *gitlab.GetProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						rv := pv
 						rv.Value = "not-up-to-date"
 						return &rv, &gitlab.Response{}, nil
@@ -179,7 +200,7 @@ func TestObserve(t *testing.T) {
 		"LateInitSuccess": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockGetVariable: func(pid interface{}, key string, opt *gitlab.GetProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						rv := pv
 						rv.Masked = true
 						rv.VariableType = gitlab.FileVariableType
@@ -191,6 +212,7 @@ func TestObserve(t *testing.T) {
 					withKey(variableKey),
 					withValue(variableValue),
 					withVariableType(v1alpha1.VariableTypeEnvVar),
+					withRaw(false),
 				),
 			},
 			want: want{
@@ -216,7 +238,7 @@ func TestObserve(t *testing.T) {
 		"GetError": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+					MockGetVariable: func(pid interface{}, key string, opt *gitlab.GetProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
 						return &gitlab.ProjectVariable{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -232,6 +254,100 @@ func TestObserve(t *testing.T) {
 				),
 				result: managed.ExternalObservation{},
 				err:    errors.Wrap(errBoom, errGetFailed),
+			},
+		},
+		"ValueSecretRef": {
+			args: args{
+				kube: &test.MockClient{
+					MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
+						secret, ok := obj.(*corev1.Secret)
+						if !ok {
+							return errors.Wrapf(errBoom, "unexpected object type %T, expected %T", obj, secret)
+						}
+
+						secret.Data = map[string][]byte{
+							"blah": []byte(variableValue),
+						}
+
+						return nil
+					},
+				},
+				variable: &fake.MockClient{
+					MockGetVariable: func(pid interface{}, key string, opt *gitlab.GetProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+						return &gitlab.ProjectVariable{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: variable(
+					// We don't want to use the default values used in the other tests since we want value to be empty and
+					// Raw to be nil.
+					withProjectID(projectID),
+					withKey(variableKey),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "blah",
+					}),
+					withEnvironmentScope("*"),
+					withVariableType(v1alpha1.VariableTypeEnvVar),
+				),
+			},
+			want: want{
+				cr: variable(
+					withDefaultValues(),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "blah",
+					}),
+					withMasked(true),
+					withRaw(true),
+					withConditions(xpv1.Available()),
+					withVariableType(v1alpha1.VariableTypeEnvVar),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceLateInitialized: true,
+				},
+			},
+		},
+		"ValueSecretRefWrongKey": {
+			args: args{
+				kube: &test.MockClient{
+					MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
+						secret, ok := obj.(*corev1.Secret)
+						if !ok {
+							return errors.Wrapf(errBoom, "unexpected object type %T, expected %T", obj, secret)
+						}
+
+						secret.Data = map[string][]byte{
+							"blah": []byte(variableValue),
+						}
+
+						return nil
+					},
+				},
+				variable: &fake.MockClient{
+					MockGetVariable: func(pid interface{}, key string, opt *gitlab.GetProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+						return &gitlab.ProjectVariable{}, &gitlab.Response{}, errors.New(errSecretKeyNotFound)
+					},
+				},
+				cr: variable(
+					withProjectID(projectID),
+					withKey(variableKey),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "bad",
+					}),
+				),
+			},
+			want: want{
+				cr: variable(
+					withProjectID(projectID),
+					withKey(variableKey),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "bad",
+					}),
+				),
+				err: errors.Wrap(errors.New(errSecretKeyNotFound), errGetFailed),
 			},
 		},
 	}
@@ -306,6 +422,86 @@ func TestCreate(t *testing.T) {
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
 		},
+		"ValueSecretRef": {
+			args: args{
+				kube: &test.MockClient{
+					MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
+						secret := obj.(*corev1.Secret)
+						secret.Data = map[string][]byte{
+							"blah": []byte(variableValue),
+						}
+
+						return nil
+					},
+				},
+				variable: &fake.MockClient{
+					MockCreateVariable: func(pid interface{}, opt *gitlab.CreateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+						return &gitlab.ProjectVariable{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: variable(
+					withProjectID(projectID),
+					withKey(variableKey),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "blah",
+					}),
+				),
+			},
+			want: want{
+				cr: variable(
+					withProjectID(projectID),
+					withKey(variableKey),
+					withConditions(xpv1.Creating()),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "blah",
+					}),
+					withValue(variableValue),
+					withMasked(true),
+					withRaw(true),
+				),
+			},
+		},
+		"ValueSecretRefWrongKey": {
+			args: args{
+				kube: &test.MockClient{
+					MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
+						secret := obj.(*corev1.Secret)
+						secret.Data = map[string][]byte{
+							"blah": []byte(variableValue),
+						}
+
+						return nil
+					},
+				},
+				variable: &fake.MockClient{
+					MockCreateVariable: func(pid interface{}, opt *gitlab.CreateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+						return &gitlab.ProjectVariable{}, &gitlab.Response{}, errors.New(errSecretKeyNotFound)
+					},
+				},
+				cr: variable(
+					withProjectID(projectID),
+					withKey(variableKey),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "bad",
+					}),
+				),
+			},
+			want: want{
+				cr: variable(
+					withProjectID(projectID),
+					withKey(variableKey),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "bad",
+					}),
+					withConditions(xpv1.ReconcileError(errors.New(errSecretKeyNotFound))),
+				),
+				err: errors.Wrap(errors.New(errSecretKeyNotFound), errCreateFailed),
+			},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -375,6 +571,93 @@ func TestUpdate(t *testing.T) {
 				err: errors.Wrap(errBoom, errUpdateFailed),
 			},
 		},
+		"ValueSecretRef": {
+			args: args{
+				kube: &test.MockClient{
+					MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
+						secret, ok := obj.(*corev1.Secret)
+						if !ok {
+							return errors.Wrapf(errBoom, "unexpected object type %T, expected %T", obj, secret)
+						}
+
+						secret.Data = map[string][]byte{
+							"blah": []byte(variableValue),
+						}
+
+						return nil
+					},
+				},
+				variable: &fake.MockClient{
+					MockUpdateVariable: func(pid interface{}, key string, opt *gitlab.UpdateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+						return &gitlab.ProjectVariable{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: variable(
+					withProjectID(projectID),
+					withKey(variableKey),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "blah",
+					}),
+				),
+			},
+			want: want{
+				cr: variable(
+					withProjectID(projectID),
+					withKey(variableKey),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "blah",
+					}),
+					withValue(variableValue),
+					withMasked(true),
+					withRaw(true),
+				),
+			},
+		},
+		"ValueSecretRefWrongKey": {
+			args: args{
+				kube: &test.MockClient{
+					MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
+						secret, ok := obj.(*corev1.Secret)
+						if !ok {
+							return errors.Wrapf(errBoom, "unexpected object type %T, expected %T", obj, secret)
+						}
+
+						secret.Data = map[string][]byte{
+							"blah": []byte(variableValue),
+						}
+
+						return nil
+					},
+				},
+				variable: &fake.MockClient{
+					MockUpdateVariable: func(pid interface{}, key string, opt *gitlab.UpdateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+						return &gitlab.ProjectVariable{}, &gitlab.Response{}, errors.New(errSecretKeyNotFound)
+					},
+				},
+				cr: variable(
+					withProjectID(projectID),
+					withKey(variableKey),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "bad",
+					}),
+				),
+			},
+			want: want{
+				cr: variable(
+					withProjectID(projectID),
+					withKey(variableKey),
+					withValueSecretRef(&xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{},
+						Key:             "bad",
+					}),
+					withConditions(xpv1.ReconcileError(errors.New(errSecretKeyNotFound))),
+				),
+				err: errors.Wrap(errors.New(errSecretKeyNotFound), errUpdateFailed),
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -407,7 +690,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				variable: &fake.MockClient{
-					MockRemoveVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRemoveVariable: func(pid interface{}, key string, opt *gitlab.RemoveProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -426,7 +709,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				variable: &fake.MockClient{
-					MockRemoveVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRemoveVariable: func(pid interface{}, key string, opt *gitlab.RemoveProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
@@ -446,7 +729,7 @@ func TestDelete(t *testing.T) {
 		"InvalidVariableID": {
 			args: args{
 				variable: &fake.MockClient{
-					MockRemoveVariable: func(pid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRemoveVariable: func(pid interface{}, key string, opt *gitlab.RemoveProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},

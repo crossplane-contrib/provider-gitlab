@@ -32,6 +32,7 @@ var (
 	variableMasked    = true
 	variableProtected = false
 	variableEnvScope  = "blah/*"
+	variableRaw       = false
 )
 
 var (
@@ -56,6 +57,7 @@ func TestVariableToParameters(t *testing.T) {
 					Masked:           variableMasked,
 					Protected:        variableProtected,
 					EnvironmentScope: variableEnvScope,
+					Raw:              variableRaw,
 				},
 			},
 			want: v1alpha1.VariableParameters{
@@ -65,6 +67,7 @@ func TestVariableToParameters(t *testing.T) {
 				Masked:           &variableMasked,
 				Protected:        &variableProtected,
 				EnvironmentScope: &variableEnvScope,
+				Raw:              &variableRaw,
 			},
 		},
 	}
@@ -90,12 +93,14 @@ func TestLateInitializeVariable(t *testing.T) {
 				Protected:        variableProtected,
 				Masked:           variableMasked,
 				EnvironmentScope: variableEnvScope,
+				Raw:              variableRaw,
 			},
 			want: &v1alpha1.VariableParameters{
 				VariableType:     &variableTypeLocal,
 				Protected:        &variableProtected,
 				Masked:           &variableMasked,
 				EnvironmentScope: &variableEnvScope,
+				Raw:              &variableRaw,
 			},
 		},
 	}
@@ -126,6 +131,7 @@ func TestGenerateCreateVariableOptions(t *testing.T) {
 					Masked:           &variableMasked,
 					Protected:        &variableProtected,
 					EnvironmentScope: &variableEnvScope,
+					Raw:              &variableRaw,
 				},
 			},
 			want: &gitlab.CreateProjectVariableOptions{
@@ -135,6 +141,7 @@ func TestGenerateCreateVariableOptions(t *testing.T) {
 				Protected:        &variableProtected,
 				Masked:           &variableMasked,
 				EnvironmentScope: &variableEnvScope,
+				Raw:              &variableRaw,
 			},
 		},
 		"SomeFields": {
@@ -178,6 +185,7 @@ func TestGenerateUpdateVariableOptions(t *testing.T) {
 					Masked:           &variableMasked,
 					Protected:        &variableProtected,
 					EnvironmentScope: &variableEnvScope,
+					Raw:              &variableRaw,
 				},
 			},
 			want: &gitlab.UpdateProjectVariableOptions{
@@ -186,6 +194,7 @@ func TestGenerateUpdateVariableOptions(t *testing.T) {
 				Protected:        &variableProtected,
 				Masked:           &variableMasked,
 				EnvironmentScope: &variableEnvScope,
+				Raw:              &variableRaw,
 			},
 		},
 	}
@@ -218,6 +227,7 @@ func TestIsVariableUpToDate(t *testing.T) {
 					Protected:        &variableProtected,
 					Masked:           &variableMasked,
 					EnvironmentScope: &variableEnvScope,
+					Raw:              &variableRaw,
 				},
 				variable: &gitlab.ProjectVariable{
 					Key:              variableKey,
@@ -226,6 +236,7 @@ func TestIsVariableUpToDate(t *testing.T) {
 					Masked:           variableMasked,
 					Protected:        variableProtected,
 					EnvironmentScope: variableEnvScope,
+					Raw:              variableRaw,
 				},
 			},
 			want: true,
@@ -239,6 +250,7 @@ func TestIsVariableUpToDate(t *testing.T) {
 					Protected:        &variableProtected,
 					Masked:           &variableMasked,
 					EnvironmentScope: &variableEnvScope,
+					Raw:              &variableRaw,
 				},
 				variable: &gitlab.ProjectVariable{
 					Key:              variableKey,
@@ -247,6 +259,7 @@ func TestIsVariableUpToDate(t *testing.T) {
 					Masked:           variableMasked,
 					Protected:        variableProtected,
 					EnvironmentScope: variableEnvScope,
+					Raw:              variableRaw,
 				},
 			},
 			want: false,

@@ -197,6 +197,7 @@ func TestGenerateObservation(t *testing.T) {
 	sharedWithGroups := []struct {
 		GroupID          int    `json:"group_id"`
 		GroupName        string `json:"group_name"`
+		GroupFullPath    string `json:"group_full_path"`
 		GroupAccessLevel int    `json:"group_access_level"`
 	}{
 		{
@@ -208,12 +209,12 @@ func TestGenerateObservation(t *testing.T) {
 	storageStatistics := struct {
 		StorageSize      int64 `json:"storage_size"`
 		RepositorySize   int64 `json:"repository_size"`
-		LfsObjectsSize   int64 `json:"lfs_objects_size"`
+		LFSObjectsSize   int64 `json:"lfs_objects_size"`
 		JobArtifactsSize int64 `json:"job_artifacts_size"`
 	}{
 		StorageSize:      10,
 		RepositorySize:   20,
-		LfsObjectsSize:   30,
+		LFSObjectsSize:   30,
 		JobArtifactsSize: 40,
 	}
 	projectStatisticsCommitCount := 0
@@ -282,9 +283,12 @@ func TestGenerateObservation(t *testing.T) {
 					},
 					ServiceDeskAddress: serviceDeskAddress,
 					SharedWithGroups:   sharedWithGroups,
-					Statistics: &gitlab.ProjectStatistics{
-						StorageStatistics: storageStatistics,
-						CommitCount:       projectStatisticsCommitCount,
+					Statistics: &gitlab.Statistics{
+						StorageSize:      storageStatistics.StorageSize,
+						RepositorySize:   storageStatistics.RepositorySize,
+						LFSObjectsSize:   storageStatistics.LFSObjectsSize,
+						JobArtifactsSize: storageStatistics.JobArtifactsSize,
+						CommitCount:      int64(projectStatisticsCommitCount),
 					},
 					Links: &gitlab.Links{
 						Self: linksSelf,
@@ -360,7 +364,7 @@ func TestGenerateObservation(t *testing.T) {
 					StorageStatistics: v1alpha1.StorageStatistics{
 						StorageSize:      storageStatistics.StorageSize,
 						RepositorySize:   storageStatistics.RepositorySize,
-						LfsObjectsSize:   storageStatistics.LfsObjectsSize,
+						LfsObjectsSize:   storageStatistics.LFSObjectsSize,
 						JobArtifactsSize: storageStatistics.JobArtifactsSize,
 					},
 					CommitCount: projectStatisticsCommitCount,

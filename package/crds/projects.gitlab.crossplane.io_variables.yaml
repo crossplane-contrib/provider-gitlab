@@ -158,9 +158,32 @@ spec:
                   protected:
                     description: Protected enables or disables variable protection.
                     type: boolean
+                  raw:
+                    description: Raw disables variable expansion of the variable.
+                    type: boolean
                   value:
-                    description: Value for the variable.
+                    description: Value for the variable. Mutually exclusive with ValueSecretRef.
                     type: string
+                  valueSecretRef:
+                    description: ValueSecretRef is used to obtain the value from a
+                      secret. This will set Masked and Raw to true if they have not
+                      been set implicitly. Mutually exclusive with Value.
+                    nullable: true
+                    properties:
+                      key:
+                        description: The key to select.
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                      namespace:
+                        description: Namespace of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    - namespace
+                    type: object
                   variableType:
                     description: VariableType is the type of the variable.
                     enum:
@@ -169,7 +192,6 @@ spec:
                     type: string
                 required:
                 - key
-                - value
                 type: object
               providerConfigRef:
                 default:
