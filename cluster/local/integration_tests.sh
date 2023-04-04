@@ -187,17 +187,10 @@ echo_step "uninstalling ${PROJECT_NAME}"
 
 echo "${INSTALL_YAML}" | "${KUBECTL}" delete -f -
 
-# check pods deleted
-timeout=60
-current=0
-step=3
-while [[ $(kubectl get providerrevision.pkg.crossplane.io -o name | wc -l) != "0" ]]; do
-  echo "waiting for provider to be deleted for another $step seconds"
-  current=$current+$step
-  if ! [[ $timeout > $current ]]; then
-    echo_error "timeout of ${timeout}s has been reached"
-  fi
-  sleep $step;
-done
+# wait for pods to be deleted
+echo "waiting for provider to be deleted (times out after 60 seconds)"
+if ! kubectl wait providerrevision.pkg.crossplane.io --for=delete --all --timeout=60s ; then
+  echo_error "Waiting for deletion of providers failed"
+fi
 
 echo_success "Integration tests succeeded!"
