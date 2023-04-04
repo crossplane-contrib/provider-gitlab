@@ -53,7 +53,7 @@ func TestGenerateCreateProjectDeployTokenOptions(t *testing.T) {
 				Name:      &name,
 				Username:  &username,
 				ExpiresAt: &expiresAt,
-				Scopes:    scopes,
+				Scopes:    &scopes,
 			},
 		},
 		"SomeFields": {
@@ -65,7 +65,7 @@ func TestGenerateCreateProjectDeployTokenOptions(t *testing.T) {
 			},
 			want: &gitlab.CreateProjectDeployTokenOptions{
 				Name:   &name,
-				Scopes: scopes,
+				Scopes: &scopes,
 			},
 		},
 	}

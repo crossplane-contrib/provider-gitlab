@@ -136,7 +136,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 			StorageStatistics: v1alpha1.StorageStatistics{
 				StorageSize:      prj.Statistics.StorageSize,
 				RepositorySize:   prj.Statistics.RepositorySize,
-				LfsObjectsSize:   prj.Statistics.LfsObjectsSize,
+				LfsObjectsSize:   prj.Statistics.LFSObjectsSize,
 				JobArtifactsSize: prj.Statistics.JobArtifactsSize,
 			},
 		}

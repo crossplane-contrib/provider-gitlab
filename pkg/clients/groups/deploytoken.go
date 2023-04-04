@@ -50,7 +50,7 @@ func NewDeployTokenClient(cfg clients.Config) DeployTokenClient {
 func GenerateCreateGroupDeployTokenOptions(name string, p *v1alpha1.DeployTokenParameters) *gitlab.CreateGroupDeployTokenOptions {
 	deploytoken := &gitlab.CreateGroupDeployTokenOptions{
 		Name:   &name,
-		Scopes: p.Scopes,
+		Scopes: &p.Scopes,
 	}
 
 	if p.ExpiresAt != nil {
