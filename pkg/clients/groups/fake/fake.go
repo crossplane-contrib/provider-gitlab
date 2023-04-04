@@ -44,7 +44,7 @@ type MockClient struct {
 }
 
 // GetGroup calls the underlying MockGetGroup method.
-func (c *MockClient) GetGroup(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+func (c *MockClient) GetGroup(pid interface{}, opt *gitlab.GetGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
 	return c.MockGetGroup(pid)
 }
 
@@ -79,7 +79,7 @@ func (c *MockClient) EditGroupMember(gid interface{}, user int, opt *gitlab.Edit
 }
 
 // RemoveGroupMember calls the underlying MockRemoveMember method.
-func (c *MockClient) RemoveGroupMember(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+func (c *MockClient) RemoveGroupMember(gid interface{}, user int, opt *gitlab.RemoveGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockRemoveMember(gid, user)
 }
 

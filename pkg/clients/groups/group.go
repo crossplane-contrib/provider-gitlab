@@ -33,7 +33,7 @@ const (
 
 // Client defines Gitlab Group service operations
 type Client interface {
-	GetGroup(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
+	GetGroup(gid interface{}, opt *gitlab.GetGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	CreateGroup(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	UpdateGroup(gid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	DeleteGroup(gid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
@@ -95,7 +95,7 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { // nolin
 		group.Statistics = &v1alpha1.StorageStatistics{
 			StorageSize:      grp.Statistics.StorageSize,
 			RepositorySize:   grp.Statistics.RepositorySize,
-			LfsObjectsSize:   grp.Statistics.LfsObjectsSize,
+			LfsObjectsSize:   grp.Statistics.LFSObjectsSize,
 			JobArtifactsSize: grp.Statistics.JobArtifactsSize,
 		}
 	}
@@ -183,7 +183,6 @@ func GenerateEditGroupOptions(name string, p *v1alpha1.GroupParameters) *gitlab.
 		MentionsDisabled:               p.MentionsDisabled,
 		LFSEnabled:                     p.LFSEnabled,
 		RequestAccessEnabled:           p.RequestAccessEnabled,
-		ParentID:                       p.ParentID,
 		SharedRunnersMinutesLimit:      p.SharedRunnersMinutesLimit,
 		ExtraSharedRunnersMinutesLimit: p.ExtraSharedRunnersMinutesLimit,
 	}

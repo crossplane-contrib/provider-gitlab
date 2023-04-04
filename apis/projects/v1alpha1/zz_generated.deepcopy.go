@@ -1421,6 +1421,11 @@ func (in *VariableParameters) DeepCopyInto(out *VariableParameters) {
 		*out = new(v1.Selector)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ValueSecretRef != nil {
+		in, out := &in.ValueSecretRef, &out.ValueSecretRef
+		*out = new(v1.SecretKeySelector)
+		**out = **in
+	}
 	if in.Masked != nil {
 		in, out := &in.Masked, &out.Masked
 		*out = new(bool)
@@ -1428,6 +1433,11 @@ func (in *VariableParameters) DeepCopyInto(out *VariableParameters) {
 	}
 	if in.Protected != nil {
 		in, out := &in.Protected, &out.Protected
+		*out = new(bool)
+		**out = **in
+	}
+	if in.Raw != nil {
+		in, out := &in.Raw, &out.Raw
 		*out = new(bool)
 		**out = **in
 	}
