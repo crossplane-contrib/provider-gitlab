@@ -90,7 +90,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotVariable)
 	}
-	variable, _, err := e.client.GetVariable(*cr.Spec.ForProvider.ProjectID, cr.Spec.ForProvider.Key, nil)
+	variable, _, err := e.client.GetVariable(*cr.Spec.ForProvider.ProjectID, cr.Spec.ForProvider.Key, projects.GenerateGetVariableOptions(&cr.Spec.ForProvider), gitlab.WithContext(ctx))
 	if err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorVariableNotFound, err), errGetFailed)
 	}
@@ -168,7 +168,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	_, err := e.client.RemoveVariable(
 		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.Key,
-		nil,
+		projects.GenerateRemoveVariableOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 	return errors.Wrap(err, errDeleteFailed)
