@@ -195,6 +195,7 @@ func TestGenerateUpdateVariableOptions(t *testing.T) {
 				Masked:           &variableMasked,
 				EnvironmentScope: &variableEnvScope,
 				Raw:              &variableRaw,
+				Filter:           &gitlab.VariableFilter{EnvironmentScope: variableEnvScope},
 			},
 		},
 	}
@@ -274,4 +275,78 @@ func TestIsVariableUpToDate(t *testing.T) {
 		})
 	}
 
+}
+
+func TestGenerateGetVariableOptions(t *testing.T) {
+	type args struct {
+		p *v1alpha1.VariableParameters
+	}
+	tests := map[string]struct {
+		args args
+		want *gitlab.GetProjectVariableOptions
+	}{
+		"Scope": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					EnvironmentScope: &variableEnvScope,
+				},
+			},
+			want: &gitlab.GetProjectVariableOptions{
+				Filter: &gitlab.VariableFilter{
+					EnvironmentScope: variableEnvScope,
+				},
+			},
+		},
+		"NoScope": {
+			args: args{
+				p: &v1alpha1.VariableParameters{},
+			},
+			want: nil,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateGetVariableOptions(tc.args.p)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGenerateRemoveVariableOptions(t *testing.T) {
+	type args struct {
+		p *v1alpha1.VariableParameters
+	}
+	tests := map[string]struct {
+		args args
+		want *gitlab.RemoveProjectVariableOptions
+	}{
+		"Scope": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					EnvironmentScope: &variableEnvScope,
+				},
+			},
+			want: &gitlab.RemoveProjectVariableOptions{
+				Filter: &gitlab.VariableFilter{
+					EnvironmentScope: variableEnvScope,
+				},
+			},
+		},
+		"NoScope": {
+			args: args{
+				p: &v1alpha1.VariableParameters{},
+			},
+			want: nil,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateRemoveVariableOptions(tc.args.p)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
 }

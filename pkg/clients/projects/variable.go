@@ -121,9 +121,43 @@ func GenerateUpdateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.Updat
 		Masked:           p.Masked,
 		EnvironmentScope: p.EnvironmentScope,
 		Raw:              p.Raw,
+		Filter:           GenerateVariableFilter(p),
 	}
 
 	return variable
+}
+
+// GenerateGetVariableOptions generates project get options
+func GenerateGetVariableOptions(p *v1alpha1.VariableParameters) *gitlab.GetProjectVariableOptions {
+	if p.EnvironmentScope == nil {
+		return nil
+	}
+
+	return &gitlab.GetProjectVariableOptions{
+		Filter: GenerateVariableFilter(p),
+	}
+}
+
+// GenerateRemoveVariableOptions generates project remove options.
+func GenerateRemoveVariableOptions(p *v1alpha1.VariableParameters) *gitlab.RemoveProjectVariableOptions {
+	if p.EnvironmentScope == nil {
+		return nil
+	}
+
+	return &gitlab.RemoveProjectVariableOptions{
+		Filter: GenerateVariableFilter(p),
+	}
+}
+
+// GenerateVariableFilter generates a variable filter that matches the variable parameters' environment scope.
+func GenerateVariableFilter(p *v1alpha1.VariableParameters) *gitlab.VariableFilter {
+	if p.EnvironmentScope == nil {
+		return nil
+	}
+
+	return &gitlab.VariableFilter{
+		EnvironmentScope: *p.EnvironmentScope,
+	}
 }
 
 // IsVariableUpToDate checks whether there is a change in any of the modifiable fields.
