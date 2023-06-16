@@ -26,6 +26,7 @@ import (
 	groupDeployToken "github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/deploytokens"
 	groupmembers "github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects"
+	projectAccessToken "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/accesstokens"
 	projectDeployToken "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploytokens"
 	projecthooks "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/hooks"
 	projectmembers "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/members"
@@ -44,6 +45,7 @@ func Setup(mgr ctrl.Manager, l logging.Logger) error {
 		projecthooks.SetupHook,
 		projectmembers.SetupMember,
 		projectDeployToken.SetupDeployToken,
+		projectAccessToken.SetupAccessToken,
 		variables.SetupVariable,
 	} {
 		if err := setup(mgr, l); err != nil {

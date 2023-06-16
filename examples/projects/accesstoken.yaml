@@ -1,5 +1,5 @@
 apiVersion: projects.gitlab.crossplane.io/v1alpha1
-kind: ProjectAccessToken
+kind: AccessToken
 metadata:
   name: example-access-token
 spec:
