@@ -115,7 +115,10 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { // nolin
 			group.SharedWithGroups[i].GroupName = c.GroupName
 			group.SharedWithGroups[i].GroupFullPath = c.GroupFullPath
 			group.SharedWithGroups[i].GroupAccessLevel = c.GroupAccessLevel
-			group.SharedWithGroups[i].ExpiresAt = &metav1.Time{Time: time.Time(*c.ExpiresAt)}
+
+			if c.ExpiresAt != nil {
+				group.SharedWithGroups[i].ExpiresAt = &metav1.Time{Time: time.Time(*c.ExpiresAt)}
+			}
 		}
 	}
 

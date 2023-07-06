@@ -171,6 +171,30 @@ func TestGenerateObservation(t *testing.T) {
 				CreatedAt:           v1alpha1CreatedAt,
 			},
 		},
+		"SharedWithGroupExpiresAtIsNil": {
+			args: args{
+				p: &gitlab.Group{
+					SharedWithGroups: []struct {
+						GroupID          int             `json:"group_id"`
+						GroupName        string          `json:"group_name"`
+						GroupFullPath    string          `json:"group_full_path"`
+						GroupAccessLevel int             `json:"group_access_level"`
+						ExpiresAt        *gitlab.ISOTime `json:"expires_at"`
+					}{
+						{
+							ExpiresAt: nil,
+						},
+					},
+				},
+			},
+			want: v1alpha1.GroupObservation{
+				SharedWithGroups: []v1alpha1.SharedWithGroups{
+					{
+						ExpiresAt: nil,
+					},
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
