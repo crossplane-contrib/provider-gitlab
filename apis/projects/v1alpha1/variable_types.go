@@ -35,7 +35,6 @@ const (
 
 // VariableParameters define the desired state of a Gitlab CI Variable
 // https://docs.gitlab.com/ee/api/project_level_variables.html
-// +kubebuilder:validation:XValidation:message="value and valueSecretRef are mutually exclusive",rule="exists_one(self.value != "", self.valueSecretRef != null"
 type VariableParameters struct {
 	// ProjectID is the ID of the project to create the variable on.
 	// +optional

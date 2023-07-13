@@ -131,7 +131,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
-	err = e.updateExternalName(cr, hook)
+	err = e.updateExternalName(ctx, cr, hook)
 	return managed.ExternalCreation{}, errors.Wrap(err, errKubeUpdateFailed)
 }
 
@@ -166,7 +166,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	return errors.Wrap(err, errDeleteFailed)
 }
 
-func (e *external) updateExternalName(cr *v1alpha1.Hook, projecthook *gitlab.ProjectHook) error {
+func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.Hook, projecthook *gitlab.ProjectHook) error {
 	meta.SetExternalName(cr, strconv.Itoa(projecthook.ID))
-	return e.kube.Update(context.Background(), cr)
+	return e.kube.Update(ctx, cr)
 }
