@@ -10,6 +10,11 @@ spec:
       name: example-parent-group
     path: "example-group-path"
     description: "example group description"
+    sharedWithGroups:
+      - groupId: "example group id 1"
+        groupAccessLevel: "example access level 1"
+      - groupId: "example group id 2"
+        groupAccessLevel: "example access level 2"
   providerConfigRef:
     name: gitlab-provider
   # a reference to a Kubernetes secret to which the controller will write the runnersToken

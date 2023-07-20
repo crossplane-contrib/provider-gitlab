@@ -19,12 +19,14 @@ package groups
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/xanzy/go-gitlab"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -40,11 +42,15 @@ import (
 )
 
 const (
-	errNotGroup     = "managed resource is not a Gitlab Group custom resource"
-	errGetFailed    = "cannot get Gitlab Group"
-	errCreateFailed = "cannot create Gitlab Group"
-	errUpdateFailed = "cannot update Gitlab Group"
-	errDeleteFailed = "cannot delete Gitlab Group"
+	errNotGroup       = "managed resource is not a Gitlab Group custom resource"
+	errIDNotInt       = "specified ID is not an integer"
+	errGetFailed      = "cannot get Gitlab Group"
+	errCreateFailed   = "cannot create Gitlab Group"
+	errUpdateFailed   = "cannot update Gitlab Group"
+	errShareFailed    = "cannot share Gitlab Group with: %v"
+	errUnshareFailed  = "cannot unshare Gitlab Group from: %v"
+	errDeleteFailed   = "cannot delete Gitlab Group"
+	errMissingGroupID = "missing group ID for group to share with"
 )
 
 // SetupGroup adds a controller that reconciles Groups.
@@ -115,7 +121,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        isGroupUpToDate(&cr.Spec.ForProvider, grp),
+		ResourceUpToDate:        isGroupUpToDate(&cr.Spec.ForProvider, grp) && isSharedWithGroupsUpToDate(&cr.Spec.ForProvider, grp),
 		ResourceLateInitialized: resourceLateInitialized,
 		ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte(grp.RunnersToken)},
 	}, nil
@@ -139,17 +145,53 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalCreation{ExternalNameAssigned: true}, nil
 }
 
-func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
+func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) { // nolint:gocyclo
 	cr, ok := mg.(*v1alpha1.Group)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotGroup)
 	}
-	_, _, err := e.client.UpdateGroup(
+	grp, _, err := e.client.UpdateGroup(
 		meta.GetExternalName(cr),
 		groups.GenerateEditGroupOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
-	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	}
+
+	if len(cr.Spec.ForProvider.SharedWithGroups) > 0 {
+		for _, sh := range cr.Spec.ForProvider.SharedWithGroups {
+			if sh.GroupID == nil {
+				return managed.ExternalUpdate{}, errors.New(errMissingGroupID)
+			}
+			if notShared(sh.GroupID, grp) {
+				opt := gitlab.ShareGroupWithGroupOptions{
+					GroupID:     sh.GroupID,
+					GroupAccess: (*gitlab.AccessLevelValue)(&sh.GroupAccessLevel),
+				}
+				if sh.ExpiresAt != nil {
+					opt.ExpiresAt = (*gitlab.ISOTime)(&sh.ExpiresAt.Time)
+				}
+				_, _, err = e.client.ShareGroupWithGroup(grp.ID, &opt)
+				if err != nil {
+					return managed.ExternalUpdate{}, errors.Wrapf(err, errShareFailed, *sh.GroupID)
+				}
+			}
+		}
+	}
+
+	if len(grp.SharedWithGroups) > 0 {
+		for _, sh := range grp.SharedWithGroups {
+			if notUnshared(sh.GroupID, cr.Spec.ForProvider.SharedWithGroups) {
+				_, err = e.client.UnshareGroupFromGroup(grp.ID, sh.GroupID)
+				if err != nil {
+					return managed.ExternalUpdate{}, errors.Wrapf(err, errUnshareFailed, sh.GroupID)
+				}
+			}
+		}
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
@@ -221,13 +263,44 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) bool { // nol
 	return true
 }
 
+func isSharedWithGroupsUpToDate(cr *v1alpha1.GroupParameters, in *gitlab.Group) bool {
+	if len(cr.SharedWithGroups) != len(in.SharedWithGroups) {
+		return false
+	}
+
+	inIDs := make(map[int]any)
+	for _, v := range in.SharedWithGroups {
+		inIDs[v.GroupID] = nil
+	}
+
+	crIDs := make(map[int]any)
+	for _, v := range cr.SharedWithGroups {
+		crIDs[*v.GroupID] = nil
+	}
+
+	for ID := range inIDs {
+		_, ok := crIDs[ID]
+		if !ok {
+			return false
+		}
+	}
+
+	for ID := range crIDs {
+		_, ok := inIDs[ID]
+		if !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
 // lateInitialize fills the empty fields in the group spec with the
 // values seen in gitlab.Group.
 func lateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) { // nolint:gocyclo
 	if group == nil {
 		return
 	}
-
 	if in.Path == "" && group.Path != "" {
 		in.Path = group.Path
 	}
@@ -237,26 +310,24 @@ func lateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) { // noli
 	in.ProjectCreationLevel = lateInitializeProjectCreationLevelValue(in.ProjectCreationLevel, group.ProjectCreationLevel)
 	in.SubGroupCreationLevel = lateInitializeSubGroupCreationLevelValue(in.SubGroupCreationLevel, group.SubGroupCreationLevel)
 
+	if len(group.SharedWithGroups) > 0 && len(in.SharedWithGroups) > 0 {
+		lateInitializeSharedWithGroups(in, group)
+	}
 	if in.MembershipLock == nil {
 		in.MembershipLock = &group.MembershipLock
 	}
-
 	if in.ShareWithGroupLock == nil {
 		in.ShareWithGroupLock = &group.ShareWithGroupLock
 	}
-
 	if in.RequireTwoFactorAuth == nil {
 		in.RequireTwoFactorAuth = &group.RequireTwoFactorAuth
 	}
-
 	if in.TwoFactorGracePeriod == nil {
 		in.TwoFactorGracePeriod = &group.TwoFactorGracePeriod
 	}
-
 	if in.AutoDevopsEnabled == nil {
 		in.AutoDevopsEnabled = &group.AutoDevopsEnabled
 	}
-
 	if in.EmailsDisabled == nil {
 		in.EmailsDisabled = &group.EmailsDisabled
 	}
@@ -305,4 +376,45 @@ func lateInitializeProjectCreationLevelValue(in *v1alpha1.ProjectCreationLevelVa
 		return (*v1alpha1.ProjectCreationLevelValue)(&from)
 	}
 	return in
+}
+
+func lateInitializeSharedWithGroups(cr *v1alpha1.GroupParameters, in *gitlab.Group) {
+	inMap := map[int]struct {
+		GroupID          int             `json:"group_id"`
+		GroupName        string          `json:"group_name"`
+		GroupFullPath    string          `json:"group_full_path"`
+		GroupAccessLevel int             `json:"group_access_level"`
+		ExpiresAt        *gitlab.ISOTime `json:"expires_at"`
+	}{}
+
+	for _, inswg := range in.SharedWithGroups {
+		inMap[inswg.GroupID] = inswg
+	}
+
+	for i := range cr.SharedWithGroups {
+		inswg, ok := inMap[*cr.SharedWithGroups[i].GroupID]
+		if ok {
+			if cr.SharedWithGroups[i].ExpiresAt == nil && inswg.ExpiresAt != nil {
+				cr.SharedWithGroups[i].ExpiresAt = &metav1.Time{Time: time.Time(*inswg.ExpiresAt)}
+			}
+		}
+	}
+}
+
+func notUnshared(groupID int, sh []v1alpha1.SharedWithGroups) bool {
+	for _, cr := range sh {
+		if groupID == *cr.GroupID {
+			return false
+		}
+	}
+	return true
+}
+
+func notShared(groupID *int, grp *gitlab.Group) bool {
+	for _, in := range grp.SharedWithGroups {
+		if in.GroupID == *groupID {
+			return false
+		}
+	}
+	return true
 }
