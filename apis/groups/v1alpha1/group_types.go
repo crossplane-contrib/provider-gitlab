@@ -149,6 +149,10 @@ type GroupParameters struct {
 	// Extra pipeline minutes quota for this group (purchased in addition to the minutes included in the plan).
 	// +optional
 	ExtraSharedRunnersMinutesLimit *int `json:"extraSharedRunnersMinutesLimit,omitempty"`
+
+	// SharedWithGroups create links for sharing a group with another group.
+	// +optional
+	SharedWithGroups []SharedWithGroups `json:"sharedWithGroups,omitempty"`
 }
 
 // AccessLevelValue represents a permission level within GitLab.
@@ -199,29 +203,54 @@ type LDAPGroupLink struct {
 }
 
 // SharedWithGroups represents a GitLab Shared with groups.
+// At least one of the fields [GroupID, GroupIDRef, GroupIDSelector] must be set.
 type SharedWithGroups struct {
-	GroupID          int          `json:"groupId"`
-	GroupName        string       `json:"groupName"`
-	GroupFullPath    string       `json:"groupFullPath"`
-	GroupAccessLevel int          `json:"groupAccessLevel"`
-	ExpiresAt        *metav1.Time `json:"expiresAt"`
+	// The ID of the group to share with.
+	// +optional
+	GroupID *int `json:"groupId,omitempty"`
+
+	// GroupIDRef is a reference to a group to retrieve its ID.
+	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
+
+	// GroupIDSelector selects reference to a group to retrieve its ID.
+	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
+
+	// The role (access_level) to grant the group
+	// https://docs.gitlab.com/ee/api/members.html#roles
+	// +required
+	// +immutable
+	GroupAccessLevel int `json:"groupAccessLevel"`
+
+	// Share expiration date in ISO 8601 format: 2016-09-26
+	// +optional
+	// +immutable
+	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
 }
 
 // GroupObservation is the observed state of a Group.
 type GroupObservation struct {
-	ID                  int                `json:"id,omitempty"`
-	AvatarURL           string             `json:"avatarUrl,omitempty"`
-	WebURL              string             `json:"webUrl,omitempty"`
-	FullName            string             `json:"fullName,omitempty"`
-	FullPath            string             `json:"fullPath,omitempty"`
-	Statistics          *StorageStatistics `json:"statistics,omitempty"`
-	CustomAttributes    []CustomAttribute  `json:"customAttributes,omitempty"`
-	SharedWithGroups    []SharedWithGroups `json:"sharedWithGroups,omitempty"`
-	LDAPCN              string             `json:"ldapCn,omitempty"`
-	LDAPAccess          AccessLevelValue   `json:"ldapAccess,omitempty"`
-	LDAPGroupLinks      []LDAPGroupLink    `json:"ldapGroupLinks,omitempty"`
-	MarkedForDeletionOn *metav1.Time       `json:"markedForDeletionOn,omitempty"`
-	CreatedAt           *metav1.Time       `json:"createdAt,omitempty"`
+	ID                  *int                          `json:"id,omitempty"`
+	AvatarURL           *string                       `json:"avatarUrl,omitempty"`
+	WebURL              *string                       `json:"webUrl,omitempty"`
+	FullName            *string                       `json:"fullName,omitempty"`
+	FullPath            *string                       `json:"fullPath,omitempty"`
+	Statistics          *StorageStatistics            `json:"statistics,omitempty"`
+	CustomAttributes    []CustomAttribute             `json:"customAttributes,omitempty"`
+	LDAPCN              *string                       `json:"ldapCn,omitempty"`
+	LDAPAccess          *AccessLevelValue             `json:"ldapAccess,omitempty"`
+	LDAPGroupLinks      []LDAPGroupLink               `json:"ldapGroupLinks,omitempty"`
+	MarkedForDeletionOn *metav1.Time                  `json:"markedForDeletionOn,omitempty"`
+	CreatedAt           *metav1.Time                  `json:"createdAt,omitempty"`
+	SharedWithGroups    []SharedWithGroupsObservation `json:"sharedWithGroups,omitempty"`
+}
+
+// SharedWithGroupsObservation is the observed state of a SharedWithGroups.
+type SharedWithGroupsObservation struct {
+	GroupID          *int         `json:"groupId"`
+	GroupName        *string      `json:"groupName"`
+	GroupFullPath    *string      `json:"groupFullPath"`
+	GroupAccessLevel *int         `json:"groupAccessLevel"`
+	ExpiresAt        *metav1.Time `json:"expiresAt"`
 }
 
 // A GroupSpec defines the desired state of a Gitlab Group.

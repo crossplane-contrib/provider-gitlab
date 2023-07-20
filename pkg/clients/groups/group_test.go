@@ -31,6 +31,7 @@ var (
 	name                           = "example-group"
 	path                           = "example/path/to/group"
 	description                    = "group description"
+	ID                             = 123456
 	membershipLock                 = true
 	visibility                     = "private"
 	v1alpha1Visibility             = v1alpha1.VisibilityValue(visibility)
@@ -50,6 +51,7 @@ var (
 	LFSEnabled                     = true
 	requestAccessEnabled           = true
 	parentID                       = 0
+	parentIDint                    = 0
 	sharedRunnersMinutesLimit      = 0
 	extraSharedRunnersMinutesLimit = 0
 	storageSize                    = int64(10)
@@ -68,10 +70,9 @@ var (
 		LFSObjectsSize:   lfsObjectsSize,
 		JobArtifactsSize: jobArtifactsSize,
 	}
-	LDAPAccess         = 0
-	groupAccessLevel   = 50
-	v1alpha1LDAPAccess = v1alpha1.AccessLevelValue(LDAPAccess)
-	gitlabLDAPAccess   = gitlab.AccessLevelValue(LDAPAccess)
+	LDAPAccess       = 0
+	groupAccessLevel = 50
+	gitlabLDAPAccess = gitlab.AccessLevelValue(LDAPAccess)
 )
 
 func TestGenerateObservation(t *testing.T) {
@@ -82,6 +83,8 @@ func TestGenerateObservation(t *testing.T) {
 	now := time.Now()
 	customAttributeKey := "Key_1"
 	customAttributeValue := "Value_1"
+	i := 0
+	s := ""
 
 	v1alpha1MarkedForDeletionOn := &metav1.Time{Time: now}
 	gitlabMarkedForDeletionOn := gitlab.ISOTime(now)
@@ -91,9 +94,7 @@ func TestGenerateObservation(t *testing.T) {
 
 	sharedWithGroups := []v1alpha1.SharedWithGroups{
 		{
-			GroupID:          0,
-			GroupName:        "group name",
-			GroupFullPath:    "group full path",
+			GroupID:          &ID,
 			GroupAccessLevel: 1,
 			ExpiresAt:        &metav1.Time{Time: now},
 		},
@@ -127,9 +128,9 @@ func TestGenerateObservation(t *testing.T) {
 						ExpiresAt        *gitlab.ISOTime `json:"expires_at"`
 					}{
 						{
-							GroupID:          sharedWithGroups[0].GroupID,
-							GroupName:        sharedWithGroups[0].GroupName,
-							GroupFullPath:    sharedWithGroups[0].GroupFullPath,
+							GroupID:          ID,
+							GroupName:        name,
+							GroupFullPath:    path,
 							GroupAccessLevel: sharedWithGroups[0].GroupAccessLevel,
 							ExpiresAt:        &gitlabSharedWithGroupsExpireAt,
 						},
@@ -147,10 +148,11 @@ func TestGenerateObservation(t *testing.T) {
 				},
 			},
 			want: v1alpha1.GroupObservation{
-				ID:         id,
-				WebURL:     webURL,
-				FullName:   fullName,
-				FullPath:   fullPath,
+				ID:         &id,
+				AvatarURL:  &s,
+				WebURL:     &webURL,
+				FullName:   &fullName,
+				FullPath:   &fullPath,
 				Statistics: &v1alpha1Statistics,
 				CustomAttributes: []v1alpha1.CustomAttribute{
 					{
@@ -158,8 +160,8 @@ func TestGenerateObservation(t *testing.T) {
 						Value: customAttributeValue,
 					},
 				},
-				SharedWithGroups: sharedWithGroups,
-				LDAPAccess:       v1alpha1LDAPAccess,
+				LDAPCN:     &s,
+				LDAPAccess: nil,
 				LDAPGroupLinks: []v1alpha1.LDAPGroupLink{
 					{
 						CN:          "CN",
@@ -169,6 +171,15 @@ func TestGenerateObservation(t *testing.T) {
 				},
 				MarkedForDeletionOn: v1alpha1MarkedForDeletionOn,
 				CreatedAt:           v1alpha1CreatedAt,
+				SharedWithGroups: []v1alpha1.SharedWithGroupsObservation{
+					{
+						GroupID:          &ID,
+						GroupName:        &name,
+						GroupFullPath:    &path,
+						GroupAccessLevel: &sharedWithGroups[0].GroupAccessLevel,
+						ExpiresAt:        &metav1.Time{Time: time.Time(gitlabSharedWithGroupsExpireAt)},
+					},
+				},
 			},
 		},
 		"SharedWithGroupExpiresAtIsNil": {
@@ -188,11 +199,20 @@ func TestGenerateObservation(t *testing.T) {
 				},
 			},
 			want: v1alpha1.GroupObservation{
-				SharedWithGroups: []v1alpha1.SharedWithGroups{
-					{
-						ExpiresAt: nil,
-					},
-				},
+				ID:        &i,
+				AvatarURL: &s,
+				WebURL:    &s,
+				FullName:  &s,
+				FullPath:  &s,
+				LDAPCN:    &s,
+
+				SharedWithGroups: []v1alpha1.SharedWithGroupsObservation{{
+					GroupID:          &i,
+					GroupName:        &s,
+					GroupFullPath:    &s,
+					GroupAccessLevel: &i,
+					ExpiresAt:        nil,
+				}},
 			},
 		},
 	}
@@ -255,7 +275,7 @@ func TestGenerateCreateGroupOptions(t *testing.T) {
 				MentionsDisabled:               &mentionsDisabled,
 				LFSEnabled:                     &LFSEnabled,
 				RequestAccessEnabled:           &requestAccessEnabled,
-				ParentID:                       &parentID,
+				ParentID:                       &parentIDint,
 				SharedRunnersMinutesLimit:      &sharedRunnersMinutesLimit,
 				ExtraSharedRunnersMinutesLimit: &extraSharedRunnersMinutesLimit,
 			},
