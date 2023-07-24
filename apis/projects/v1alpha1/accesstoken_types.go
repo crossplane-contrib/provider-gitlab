@@ -28,7 +28,8 @@ type AccessTokenParameters struct {
 	// ProjectID is the ID of the project to create the access token in.
 	// +optional
 	// +immutable
-	ProjectID *int `json:"projectId,omitempty"`
+	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1.Project
+	ProjectID *string `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
@@ -39,9 +40,9 @@ type AccessTokenParameters struct {
 	// +optional
 	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
 
-	// Expiration date for the access token. Does not expire if no value is provided.
+	// Expiration date of the access token. The date cannot be set later than the maximum allowable lifetime of an access token.
+	//If not set, the maximum allowable lifetime of a personal access token is 365 days.
 	// Expected in ISO 8601 format (2019-03-15T08:00:00Z)
-	// +optional
 	// +immutable
 	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
 
@@ -56,13 +57,19 @@ type AccessTokenParameters struct {
 	// read_package_registry, or write_package_registry.
 	// +immutable
 	Scopes []string `json:"scopes"`
+
+	//Name of the project access token
+	//+required
+	Name string `json:"name,required"`
 }
 
 // AccessTokenObservation represents a access token.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/project_access_tokens.html
-type AccessTokenObservation struct{}
+type AccessTokenObservation struct {
+	TokenID *int `json:"id,omitempty"`
+}
 
 // A AccessTokenSpec defines the desired state of a Gitlab Project.
 type AccessTokenSpec struct {

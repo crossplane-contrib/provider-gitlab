@@ -69,14 +69,19 @@ spec:
                       and 50 (Owner).
                     type: integer
                   expiresAt:
-                    description: Expiration date for the access token. Does not expire
-                      if no value is provided. Expected in ISO 8601 format (2019-03-15T08:00:00Z)
+                    description: Expiration date of the access token. The date cannot
+                      be set later than the maximum allowable lifetime of an access
+                      token. If not set, the maximum allowable lifetime of a personal
+                      access token is 365 days. Expected in ISO 8601 format (2019-03-15T08:00:00Z)
                     format: date-time
+                    type: string
+                  name:
+                    description: Name of the project access token
                     type: string
                   projectId:
                     description: ProjectID is the ID of the project to create the
                       access token in.
-                    type: integer
+                    type: string
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
                       its projectId
@@ -160,6 +165,7 @@ spec:
                       type: string
                     type: array
                 required:
+                - name
                 - scopes
                 type: object
               providerConfigRef:
@@ -340,6 +346,9 @@ spec:
               atProvider:
                 description: "AccessTokenObservation represents a access token. \n
                   GitLab API docs: https://docs.gitlab.com/ee/api/project_access_tokens.html"
+                properties:
+                  id:
+                    type: integer
                 type: object
               conditions:
                 description: Conditions of the resource.

@@ -20,6 +20,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/xanzy/go-gitlab"
 
@@ -38,6 +39,7 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
 )
 
 const (
@@ -46,6 +48,7 @@ const (
 	errCreateFailed               = "cannot create Gitlab accesstoken"
 	errDeleteFailed               = "cannot delete Gitlab accesstoken"
 	errProjecAccessTokentNotFound = "cannot find Gitlab accesstoken"
+	errMissingProjectID           = "missing Spec.ForProvider.ProjectID"
 )
 
 // SetupAccessToken adds a controller that reconciles ProjectAccessTokens.
@@ -57,7 +60,7 @@ func SetupAccessToken(mgr ctrl.Manager, l logging.Logger) error {
 		For(&v1alpha1.AccessToken{}).
 		Complete(managed.NewReconciler(mgr,
 			resource.ManagedKind(v1alpha1.AccessTokenGroupVersionKind),
-			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: newAccessTokenClient}),
+			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewAccessTokenClient}),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
 			managed.WithLogger(l.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
@@ -65,7 +68,7 @@ func SetupAccessToken(mgr ctrl.Manager, l logging.Logger) error {
 
 type connector struct {
 	kube              client.Client
-	newGitlabClientFn func(cfg clients.Config) gitlab.ProjectAccessTokensService
+	newGitlabClientFn func(cfg clients.Config) projects.AccessTokenClient
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
@@ -82,7 +85,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 
 type external struct {
 	kube   client.Client
-	client gitlab.ProjectAccessTokensService
+	client projects.AccessTokenClient
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -93,28 +96,25 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	externalName := meta.GetExternalName(cr)
 	if externalName == "" {
-		return managed.ExternalObservation{ResourceExists: false}, nil
+		return managed.ExternalObservation{}, nil
 	}
 
-	projectAccessTokenID, err := strconv.Atoi(externalName)
+	AccessTokenID, err := strconv.Atoi(externalName)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.New(errNotAccessToken)
 	}
 
-	listProjectAccessTokensOptions := gitlab.ListProjectAccessTokensOptions{}
-	accesstokenArr, _, err := e.client.ListProjectAccessTokens(*cr.Spec.ForProvider.ProjectID, &listProjectAccessTokensOptions)
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalObservation{}, errors.New(errMissingProjectID)
+	}
+
+	at, _, err := e.client.GetProjectAccessToken(*cr.Spec.ForProvider.ProjectID, AccessTokenID)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(isErrorProjectAccessTokenNotFound, err), errGetFailed)
 	}
 
-	dt := findAccessToken(projectAccessTokenID, accesstokenArr)
-
-	if dt == nil {
-		return managed.ExternalObservation{}, nil
-	}
-
 	current := cr.Spec.ForProvider.DeepCopy()
-	lateInitializeProjectAccessToken(&cr.Spec.ForProvider, dt)
+	lateInitializeProjectAccessToken(&cr.Spec.ForProvider, at)
 
 	cr.Status.AtProvider = v1alpha1.AccessTokenObservation{}
 	cr.Status.SetConditions(xpv1.Available())
@@ -132,7 +132,11 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotAccessToken)
 	}
 
-	dt, _, err := e.client.CreateProjectAccessToken(
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalCreation{}, errors.New(errMissingProjectID)
+	}
+
+	at, _, err := e.client.CreateProjectAccessToken(
 		*cr.Spec.ForProvider.ProjectID,
 		generateCreateProjectAccessTokenOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
@@ -142,11 +146,13 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	connectionDetails := managed.ConnectionDetails{}
-	connectionDetails["token"] = []byte(dt.Token)
-
-	meta.SetExternalName(cr, strconv.Itoa(dt.ID))
-	return managed.ExternalCreation{ExternalNameAssigned: true, ConnectionDetails: connectionDetails}, nil
+	meta.SetExternalName(cr, strconv.Itoa(at.ID))
+	return managed.ExternalCreation{
+		ExternalNameAssigned: true,
+		ConnectionDetails: managed.ConnectionDetails{
+			"token": []byte(at.Token),
+		},
+	}, nil
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -164,6 +170,10 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 
 	if err != nil {
 		return errors.New(errNotAccessToken)
+	}
+
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return errors.New(errMissingProjectID)
 	}
 
 	_, deleteError := e.client.RevokeProjectAccessToken(
@@ -187,7 +197,7 @@ func lateInitializeProjectAccessToken(in *v1alpha1.AccessTokenParameters, access
 	}
 
 	if in.ExpiresAt == nil && accessToken.ExpiresAt != nil {
-		in.ExpiresAt = &metav1.Time{Time: in.ExpiresAt.Time}
+		in.ExpiresAt = &metav1.Time{Time: time.Time(*accessToken.ExpiresAt)}
 	}
 }
 

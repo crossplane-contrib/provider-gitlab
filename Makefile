@@ -37,7 +37,7 @@ GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/provider
 GO_LDFLAGS += -X $(GO_PROJECT)/pkg/version.Version=$(VERSION)
 GO_SUBDIRS += cmd pkg apis
 GO111MODULE = on
-GO_REQUIRED_VERSION := 1.19
+GO_REQUIRED_VERSION := 1.20
 -include build/makelib/golang.mk
 
 # ====================================================================================
