@@ -19,7 +19,6 @@ package accesstokens
 import (
 	"context"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/xanzy/go-gitlab"
@@ -43,12 +42,14 @@ import (
 )
 
 const (
-	errNotAccessToken             = "managed resource is not a Gitlab accesstoken custom resource"
-	errGetFailed                  = "cannot get Gitlab accesstoken"
-	errCreateFailed               = "cannot create Gitlab accesstoken"
-	errDeleteFailed               = "cannot delete Gitlab accesstoken"
-	errProjecAccessTokentNotFound = "cannot find Gitlab accesstoken"
-	errMissingProjectID           = "missing Spec.ForProvider.ProjectID"
+	errNotAccessToken       = "managed resource is not a Gitlab accesstoken custom resource"
+	errExternalNameNotInt   = "custom resource external name is not an integer"
+	errFailedParseID        = "cannot parse Access Token ID to int"
+	errGetFailed            = "cannot get Gitlab accesstoken"
+	errCreateFailed         = "cannot create Gitlab accesstoken"
+	errDeleteFailed         = "cannot delete Gitlab accesstoken"
+	errAccessTokentNotFound = "cannot find Gitlab accesstoken"
+	errMissingProjectID     = "missing Spec.ForProvider.ProjectID"
 )
 
 // SetupAccessToken adds a controller that reconciles ProjectAccessTokens.
@@ -99,24 +100,23 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, nil
 	}
 
-	AccessTokenID, err := strconv.Atoi(externalName)
+	accessTokenID, err := strconv.Atoi(externalName)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errNotAccessToken)
+		return managed.ExternalObservation{}, errors.Wrap(err, errFailedParseID)
 	}
 
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalObservation{}, errors.New(errMissingProjectID)
 	}
 
-	at, _, err := e.client.GetProjectAccessToken(*cr.Spec.ForProvider.ProjectID, AccessTokenID)
+	at, _, err := e.client.GetProjectAccessToken(*cr.Spec.ForProvider.ProjectID, accessTokenID)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(isErrorProjectAccessTokenNotFound, err), errGetFailed)
+		return managed.ExternalObservation{}, errors.Wrap(err, errAccessTokentNotFound)
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
 	lateInitializeProjectAccessToken(&cr.Spec.ForProvider, at)
 
-	cr.Status.AtProvider = v1alpha1.AccessTokenObservation{}
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
@@ -138,7 +138,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	at, _, err := e.client.CreateProjectAccessToken(
 		*cr.Spec.ForProvider.ProjectID,
-		generateCreateProjectAccessTokenOptions(cr.Name, &cr.Spec.ForProvider),
+		projects.GenerateCreateProjectAccessTokenOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 
@@ -169,20 +169,19 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	accessTokenID, err := strconv.Atoi(meta.GetExternalName(cr))
 
 	if err != nil {
-		return errors.New(errNotAccessToken)
+		return errors.New(errExternalNameNotInt)
 	}
 
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return errors.New(errMissingProjectID)
 	}
-
-	_, deleteError := e.client.RevokeProjectAccessToken(
+	_, err = e.client.RevokeProjectAccessToken(
 		*cr.Spec.ForProvider.ProjectID,
 		accessTokenID,
 		gitlab.WithContext(ctx),
 	)
 
-	return errors.Wrap(deleteError, errDeleteFailed)
+	return errors.Wrap(err, errDeleteFailed)
 }
 
 // lateInitializeProjectAccessToken fills the empty fields in the access token spec with the
@@ -199,49 +198,4 @@ func lateInitializeProjectAccessToken(in *v1alpha1.AccessTokenParameters, access
 	if in.ExpiresAt == nil && accessToken.ExpiresAt != nil {
 		in.ExpiresAt = &metav1.Time{Time: time.Time(*accessToken.ExpiresAt)}
 	}
-}
-
-// findAccessToken try to find a access token with the ID in the access token array,
-// if found return a access token otherwise return nil.
-func findAccessToken(accessTokenID int, accessTokens []*gitlab.ProjectAccessToken) *gitlab.ProjectAccessToken {
-	for _, v := range accessTokens {
-		if v.ID == accessTokenID {
-			return v
-		}
-	}
-	return nil
-}
-
-//-- What was from interface file --//
-
-// IsErrorProjectAccessTokenNotFound helper function to test for errProjectAccessTokenNotFound error.
-func isErrorProjectAccessTokenNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errProjecAccessTokentNotFound)
-}
-
-// NewAccessTokenClient returns a new Gitlab ProjectAccessToken service
-func newAccessTokenClient(cfg clients.Config) gitlab.ProjectAccessTokensService {
-	git := clients.NewClient(cfg)
-	return *git.ProjectAccessTokens
-}
-
-// GenerateCreateProjectAccessTokenOptions generates project creation options
-func generateCreateProjectAccessTokenOptions(name string, p *v1alpha1.AccessTokenParameters) *gitlab.CreateProjectAccessTokenOptions {
-	accesstoken := &gitlab.CreateProjectAccessTokenOptions{
-		Name:   &name,
-		Scopes: &p.Scopes,
-	}
-
-	if p.ExpiresAt != nil {
-		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
-	}
-
-	if p.AccessLevel != nil {
-		accesstoken.AccessLevel = (*gitlab.AccessLevelValue)(p.AccessLevel)
-	}
-
-	return accesstoken
 }

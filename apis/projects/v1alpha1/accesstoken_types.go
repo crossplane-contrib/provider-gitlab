@@ -41,7 +41,7 @@ type AccessTokenParameters struct {
 	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
 
 	// Expiration date of the access token. The date cannot be set later than the maximum allowable lifetime of an access token.
-	//If not set, the maximum allowable lifetime of a personal access token is 365 days.
+	// If not set, the maximum allowable lifetime of a personal access token is 365 days.
 	// Expected in ISO 8601 format (2019-03-15T08:00:00Z)
 	// +immutable
 	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
@@ -58,9 +58,9 @@ type AccessTokenParameters struct {
 	// +immutable
 	Scopes []string `json:"scopes"`
 
-	//Name of the project access token
-	//+required
-	Name string `json:"name,required"`
+	// Name of the project access token
+	// +required
+	Name string `json:"name"`
 }
 
 // AccessTokenObservation represents a access token.

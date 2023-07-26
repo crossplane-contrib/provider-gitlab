@@ -42,7 +42,8 @@ import (
 
 var (
 	errBoom        = errors.New("boom")
-	projectId      = ""
+	projectID      = ""
+	wrongIDstr     = "fr"
 	accessTokenID  = 1234
 	sAccessTokenID = strconv.Itoa(accessTokenID)
 	invalidInput   resource.Managed
@@ -57,17 +58,6 @@ var (
 		Token:       token,
 		Scopes:      []string{"scope1", "scope2"},
 		AccessLevel: 40, // Access level. Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner). Defaults to 40.
-	}
-
-	accessTokens = []*gitlab.ProjectAccessToken{
-		{
-			ID:          accessTokenID,
-			Name:        "Name",
-			ExpiresAt:   (*gitlab.ISOTime)(&expiresAt),
-			Token:       token,
-			Scopes:      []string{"scope1", "scope2"},
-			AccessLevel: gitlab.AccessLevelValue(accessLevel),
-		},
 	}
 
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: fmt.Sprint(accessTokenID)}
@@ -137,12 +127,12 @@ func TestObserve(t *testing.T) {
 		},
 		"ExternalNameNotID": {
 			args: args{
-				cr: accessToken(withExternalName("fr")),
+				cr: accessToken(withExternalName(wrongIDstr)),
 			},
 			want: want{
-				cr:     accessToken(withExternalName("fr")),
+				cr:     accessToken(withExternalName(wrongIDstr)),
 				result: managed.ExternalObservation{},
-				err:    errors.New(errNotAccessToken),
+				err:    errors.Wrap(getConversionError(), errFailedParseID),
 			},
 		},
 		"NoProjectID": {
@@ -165,7 +155,7 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 				),
 			},
@@ -173,24 +163,24 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 				),
 				result: managed.ExternalObservation{},
-				err:    errors.Wrap(errBoom, errGetFailed),
+				err:    errors.Wrap(errBoom, errAccessTokentNotFound),
 			},
 		},
 		"AccessTokenDoNotExist": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
 					MockGetAccessTokens: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
-						return nil, nil, errors.New(errProjecAccessTokentNotFound)
+						return nil, nil, errBoom
 					},
 				},
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 				),
 			},
@@ -198,10 +188,11 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 				),
 				result: managed.ExternalObservation{},
+				err:    errors.Wrap(errBoom, errAccessTokentNotFound),
 			},
 		},
 		"ResourceLateInitializedFalse": {
@@ -214,7 +205,7 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID:   &projectId,
+						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
 						ExpiresAt:   &v1.Time{Time: expiresAt},
 					}),
@@ -225,7 +216,7 @@ func TestObserve(t *testing.T) {
 					withExternalName(sAccessTokenID),
 					withConditions(xpv1.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID:   &projectId,
+						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
 						ExpiresAt:   &v1.Time{Time: expiresAt},
 					}),
@@ -250,7 +241,7 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 				),
 			},
@@ -259,7 +250,7 @@ func TestObserve(t *testing.T) {
 					withExternalName(sAccessTokenID),
 					withConditions(xpv1.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID:   &projectId,
+						ProjectID:   &projectID,
 						ExpiresAt:   &v1.Time{Time: expiresAt},
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
 					}),
@@ -281,7 +272,7 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID:   &projectId,
+						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
 						ExpiresAt:   &v1.Time{Time: expiresAt},
 					}),
@@ -292,7 +283,7 @@ func TestObserve(t *testing.T) {
 					withExternalName(sAccessTokenID),
 					withConditions(xpv1.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID:   &projectId,
+						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
 						ExpiresAt:   &v1.Time{Time: expiresAt},
 					}),
@@ -365,7 +356,7 @@ func TestCreate(t *testing.T) {
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 				),
 			},
@@ -373,7 +364,7 @@ func TestCreate(t *testing.T) {
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 				),
 				result: managed.ExternalCreation{},
@@ -389,7 +380,7 @@ func TestCreate(t *testing.T) {
 				},
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 					withExternalName("0"),
 				),
@@ -397,7 +388,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 					withExternalName("0"),
 				),
@@ -416,7 +407,7 @@ func TestCreate(t *testing.T) {
 				},
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 					withAnnotations(extNameAnnotation),
 				),
@@ -424,7 +415,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 					withExternalName(sAccessTokenID),
 				),
@@ -510,7 +501,7 @@ func TestDelete(t *testing.T) {
 				err: errors.New(errNotAccessToken),
 			},
 		},
-		"FailedDeletionNotAccessTokenID": {
+		"FailedDeletionExternalNameNotInt": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
 					MockRevokeAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
@@ -519,7 +510,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 					withExternalName("test"),
 				),
@@ -527,11 +518,11 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 					withExternalName("test"),
 				),
-				err: errors.New(errNotAccessToken),
+				err: errors.New(errExternalNameNotInt),
 			},
 		},
 		"FailedDeletion": {
@@ -543,7 +534,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 					withExternalName(strconv.Itoa(0)),
 				),
@@ -551,7 +542,7 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 					withExternalName(strconv.Itoa(0)),
 				),
@@ -567,7 +558,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 					withExternalName(strconv.Itoa(accessTokenID)),
 				),
@@ -575,7 +566,7 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID: &projectId,
+						ProjectID: &projectID,
 					}),
 					withExternalName(strconv.Itoa(accessTokenID)),
 				),
@@ -595,4 +586,9 @@ func TestDelete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func getConversionError() error {
+	_, err := strconv.Atoi(wrongIDstr)
+	return err
 }
