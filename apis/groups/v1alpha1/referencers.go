@@ -47,29 +47,6 @@ func toPtrValue(v string) *int {
 	return &r
 }
 
-// ResolveReferences of this Group
-func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
-	r := reference.NewAPIResolver(c, mg)
-
-	// resolve spec.forProvider.parentIdRef
-	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
-		CurrentValue: fromPtrValue(mg.Spec.ForProvider.ParentID),
-		Reference:    mg.Spec.ForProvider.ParentIDRef,
-		Selector:     mg.Spec.ForProvider.ParentIDSelector,
-		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
-	})
-
-	if err != nil {
-		return errors.Wrap(err, "spec.forProvider.parentId")
-	}
-
-	mg.Spec.ForProvider.ParentID = toPtrValue(rsp.ResolvedValue)
-	mg.Spec.ForProvider.ParentIDRef = rsp.ResolvedReference
-
-	return nil
-}
-
 // ResolveReferences of this Member
 func (mg *Member) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
@@ -112,6 +89,65 @@ func (mg *DeployToken) ResolveReferences(ctx context.Context, c client.Reader) e
 
 	mg.Spec.ForProvider.GroupID = toPtrValue(rsp.ResolvedValue)
 	mg.Spec.ForProvider.GroupIDRef = rsp.ResolvedReference
+
+	return nil
+}
+
+// ResolveReferences of this Group.
+func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPIResolver(c, mg)
+
+	var rsp reference.ResolutionResponse
+	var err error
+
+	idstr := strconv.Itoa(*mg.Spec.ForProvider.ParentID)
+
+	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+		CurrentValue: reference.FromPtrValue(&idstr),
+		Extract:      reference.ExternalName(),
+		Reference:    mg.Spec.ForProvider.ParentIDRef,
+		Selector:     mg.Spec.ForProvider.ParentIDSelector,
+		To: reference.To{
+			List:    &GroupList{},
+			Managed: &Group{},
+		},
+	})
+	if err != nil {
+		return errors.Wrap(err, "mg.Spec.ForProvider.ParentID")
+	}
+
+	id, err := strconv.Atoi(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "mg.Spec.ForProvider.ParentID")
+	}
+
+	mg.Spec.ForProvider.ParentID = &id
+	mg.Spec.ForProvider.ParentIDRef = rsp.ResolvedReference
+
+	for i3 := 0; i3 < len(mg.Spec.ForProvider.SharedWithGroups); i3++ {
+		idstr = strconv.Itoa(*mg.Spec.ForProvider.SharedWithGroups[i3].GroupID)
+		rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			CurrentValue: reference.FromPtrValue(&idstr),
+			Extract:      reference.ExternalName(),
+			Reference:    mg.Spec.ForProvider.SharedWithGroups[i3].GroupIDRef,
+			Selector:     mg.Spec.ForProvider.SharedWithGroups[i3].GroupIDSelector,
+			To: reference.To{
+				List:    &GroupList{},
+				Managed: &Group{},
+			},
+		})
+		if err != nil {
+			return errors.Wrap(err, "mg.Spec.ForProvider.SharedWithGroups[i3].GroupID")
+		}
+
+		id, err = strconv.Atoi(rsp.ResolvedValue)
+		if err != nil {
+			return errors.Wrap(err, "mg.Spec.ForProvider.SharedWithGroups[i3].GroupID")
+		}
+		mg.Spec.ForProvider.SharedWithGroups[i3].GroupID = &id
+		mg.Spec.ForProvider.SharedWithGroups[i3].GroupIDRef = rsp.ResolvedReference
+
+	}
 
 	return nil
 }

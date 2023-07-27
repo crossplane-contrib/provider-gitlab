@@ -37,6 +37,8 @@ type Client interface {
 	CreateGroup(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	UpdateGroup(gid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	DeleteGroup(gid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	ShareGroupWithGroup(gid interface{}, opt *gitlab.ShareGroupWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
+	UnshareGroupFromGroup(gid interface{}, groupID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewGroupClient returns a new Gitlab Group service
@@ -75,12 +77,12 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { // nolin
 		return v1alpha1.GroupObservation{}
 	}
 	group := v1alpha1.GroupObservation{
-		ID:        grp.ID,
-		AvatarURL: grp.AvatarURL,
-		WebURL:    grp.WebURL,
-		FullName:  grp.FullName,
-		FullPath:  grp.FullPath,
-		LDAPCN:    grp.LDAPCN,
+		ID:        &grp.ID,
+		AvatarURL: &grp.AvatarURL,
+		WebURL:    &grp.WebURL,
+		FullName:  &grp.FullName,
+		FullPath:  &grp.FullPath,
+		LDAPCN:    &grp.LDAPCN,
 	}
 
 	if grp.CreatedAt != nil {
@@ -108,21 +110,7 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { // nolin
 		}
 	}
 
-	if len(group.SharedWithGroups) == 0 && len(grp.SharedWithGroups) > 0 {
-		group.SharedWithGroups = make([]v1alpha1.SharedWithGroups, len(grp.SharedWithGroups))
-		for i, c := range grp.SharedWithGroups {
-			group.SharedWithGroups[i].GroupID = c.GroupID
-			group.SharedWithGroups[i].GroupName = c.GroupName
-			group.SharedWithGroups[i].GroupFullPath = c.GroupFullPath
-			group.SharedWithGroups[i].GroupAccessLevel = c.GroupAccessLevel
-
-			if c.ExpiresAt != nil {
-				group.SharedWithGroups[i].ExpiresAt = &metav1.Time{Time: time.Time(*c.ExpiresAt)}
-			}
-		}
-	}
-
-	if len(group.LDAPGroupLinks) == 0 && len(grp.LDAPGroupLinks) > 0 {
+	if len(grp.LDAPGroupLinks) > 0 {
 		group.LDAPGroupLinks = make([]v1alpha1.LDAPGroupLink, len(grp.LDAPGroupLinks))
 		for i, c := range grp.LDAPGroupLinks {
 			group.LDAPGroupLinks[i].CN = c.CN
@@ -131,6 +119,22 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { // nolin
 		}
 	}
 
+	if len(grp.SharedWithGroups) > 0 {
+		arr := make([]v1alpha1.SharedWithGroupsObservation, 0)
+		for _, v := range grp.SharedWithGroups {
+			sg := v1alpha1.SharedWithGroupsObservation{
+				GroupID:          &v.GroupID,
+				GroupName:        &v.GroupName,
+				GroupFullPath:    &v.GroupFullPath,
+				GroupAccessLevel: &v.GroupAccessLevel,
+			}
+			if v.ExpiresAt != nil {
+				sg.ExpiresAt = &metav1.Time{Time: time.Time(*v.ExpiresAt)}
+			}
+			arr = append(arr, sg)
+		}
+		group.SharedWithGroups = arr
+	}
 	return group
 }
 

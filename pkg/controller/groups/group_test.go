@@ -19,13 +19,14 @@ package groups
 import (
 	"context"
 	"reflect"
-	"strconv"
 	"testing"
+	"time"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -43,9 +44,13 @@ var (
 	path               = "path/to/group"
 	name               = "example-group"
 	displayName        = "Example Group"
+	groupAccessLevel   = 40
 	groupID            = 1234
-	extName            = strconv.Itoa(groupID)
+	groupIDtwo         = 123456
+	extName            = "1234"
 	errBoom            = errors.New("boom")
+	expiresAt          = time.Now()
+	expiresAtIso       = (gitlab.ISOTime)(expiresAt)
 	extNameAnnotation  = map[string]string{meta.AnnotationKeyExternalName: extName}
 	visibility         = "private"
 	v1alpha1Visibility = v1alpha1.VisibilityValue(visibility)
@@ -102,6 +107,7 @@ func withClientDefaultValues() groupModifier {
 	return func(p *v1alpha1.Group) {
 		f := false
 		i := 0
+		s := ""
 		p.Spec.ForProvider = v1alpha1.GroupParameters{
 			MembershipLock:                 &f,
 			ShareWithGroupLock:             &f,
@@ -116,6 +122,14 @@ func withClientDefaultValues() groupModifier {
 			SharedRunnersMinutesLimit:      &i,
 			ExtraSharedRunnersMinutesLimit: &i,
 		}
+		p.Status.AtProvider = v1alpha1.GroupObservation{
+			ID:        &i,
+			AvatarURL: &s,
+			WebURL:    &s,
+			FullName:  &s,
+			FullPath:  &s,
+			LDAPCN:    &s,
+		}
 	}
 }
 
@@ -125,6 +139,14 @@ func withStatus(s v1alpha1.GroupObservation) groupModifier {
 
 func withAnnotations(a map[string]string) groupModifier {
 	return func(p *v1alpha1.Group) { meta.AddAnnotations(p, a) }
+}
+
+func withSharedWithGroups(s []v1alpha1.SharedWithGroups) groupModifier {
+	return func(g *v1alpha1.Group) { g.Spec.ForProvider.SharedWithGroups = s }
+}
+
+func withSharedWithGroupsObservation(s []v1alpha1.SharedWithGroupsObservation) groupModifier {
+	return func(g *v1alpha1.Group) { g.Status.AtProvider.SharedWithGroups = s }
 }
 
 func group(m ...groupModifier) *v1alpha1.Group {
@@ -261,23 +283,66 @@ func TestObserve(t *testing.T) {
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
 						return &gitlab.Group{
-							Path:         path,
+							Path:         "",
 							RunnersToken: "token",
+							SharedWithGroups: []struct {
+								GroupID          int             "json:\"group_id\""
+								GroupName        string          "json:\"group_name\""
+								GroupFullPath    string          "json:\"group_full_path\""
+								GroupAccessLevel int             "json:\"group_access_level\""
+								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
+							}{
+								{
+									GroupID:          groupID,
+									GroupName:        name,
+									GroupFullPath:    path,
+									GroupAccessLevel: 40,
+									ExpiresAt:        &expiresAtIso,
+								},
+							},
 						}, &gitlab.Response{}, nil
 					},
 				},
 				cr: group(
 					withClientDefaultValues(),
 					withExternalName(extName),
+					withSharedWithGroups(
+						[]v1alpha1.SharedWithGroups{
+							{
+								GroupID:          &groupID,
+								GroupAccessLevel: 40,
+							},
+						},
+					),
 				),
 			},
 			want: want{
 				cr: group(
-					withClientDefaultValues(),
 					withConditions(xpv1.Available()),
 					withPath(path),
 					withAnnotations(extNameAnnotation),
 					withStatus(v1alpha1.GroupObservation{}),
+					withClientDefaultValues(),
+					withSharedWithGroupsObservation(
+						[]v1alpha1.SharedWithGroupsObservation{
+							{
+								GroupID:          &groupID,
+								GroupName:        &name,
+								GroupFullPath:    &path,
+								GroupAccessLevel: &groupAccessLevel,
+								ExpiresAt:        &metav1.Time{Time: time.Time(expiresAtIso)},
+							},
+						},
+					),
+					withSharedWithGroups(
+						[]v1alpha1.SharedWithGroups{
+							{
+								GroupID:          &groupID,
+								GroupAccessLevel: 40,
+								ExpiresAt:        &metav1.Time{Time: expiresAt},
+							},
+						},
+					),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -497,13 +562,13 @@ func TestCreate(t *testing.T) {
 				},
 				group: &fake.MockClient{
 					MockCreateGroup: func(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{Name: extName, Path: extName, ID: 0}, &gitlab.Response{}, nil
+						return &gitlab.Group{Name: extName, Path: extName, ID: groupID}, &gitlab.Response{}, nil
 					},
 				},
 				cr: group(withAnnotations(extNameAnnotation)),
 			},
 			want: want{
-				cr:     group(withExternalName("0")),
+				cr:     group(withExternalName(extName)),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
 			},
 		},
@@ -514,10 +579,10 @@ func TestCreate(t *testing.T) {
 						return &gitlab.Group{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: group(withStatus(v1alpha1.GroupObservation{ID: 0})),
+				cr: group(withStatus(v1alpha1.GroupObservation{ID: &groupID})),
 			},
 			want: want{
-				cr:  group(withStatus(v1alpha1.GroupObservation{ID: 0})),
+				cr:  group(withStatus(v1alpha1.GroupObservation{ID: &groupID})),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
 		},
@@ -538,7 +603,6 @@ func TestCreate(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestUpdate(t *testing.T) {
@@ -568,13 +632,168 @@ func TestUpdate(t *testing.T) {
 						return &gitlab.Group{ID: 1234}, &gitlab.Response{}, nil
 					},
 				},
-				cr: group(withStatus(v1alpha1.GroupObservation{ID: 1234}), withExternalName("1234")),
+				cr: group(withStatus(v1alpha1.GroupObservation{ID: &groupID}), withExternalName("1234")),
 			},
 			want: want{
 				cr: group(
-					withStatus(v1alpha1.GroupObservation{ID: 1234}),
+					withStatus(v1alpha1.GroupObservation{ID: &groupID}),
 					withExternalName("1234"),
 				),
+			},
+		},
+		"SharedWithGroups": {
+			args: args{
+				group: &fake.MockClient{
+					MockUpdateGroup: func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return &gitlab.Group{
+							ID: groupID,
+							SharedWithGroups: []struct {
+								GroupID          int             "json:\"group_id\""
+								GroupName        string          "json:\"group_name\""
+								GroupFullPath    string          "json:\"group_full_path\""
+								GroupAccessLevel int             "json:\"group_access_level\""
+								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
+							}{
+								{
+									GroupID: groupID,
+								},
+							},
+						}, nil, nil
+					},
+					MockShareGroupWithGroup: func(gid interface{}, opt *gitlab.ShareGroupWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return nil, nil, nil
+					},
+				},
+				cr: group(
+					withStatus(v1alpha1.GroupObservation{ID: &groupID}),
+					withSharedWithGroups([]v1alpha1.SharedWithGroups{
+						{
+							GroupID:          &groupID,
+							GroupAccessLevel: 40,
+							ExpiresAt:        &metav1.Time{Time: expiresAt},
+						},
+						{
+							GroupID: &groupIDtwo,
+						},
+					}),
+				),
+			},
+			want: want{
+				cr: group(
+					withStatus(v1alpha1.GroupObservation{ID: &groupID}),
+					withSharedWithGroups([]v1alpha1.SharedWithGroups{
+						{
+							GroupID:          &groupID,
+							GroupAccessLevel: 40,
+							ExpiresAt:        &metav1.Time{Time: expiresAt},
+						},
+						{
+							GroupID: &groupIDtwo,
+						},
+					}),
+				),
+				result: managed.ExternalUpdate{},
+				err:    nil,
+			},
+		},
+		"UnsharedWithGroups": {
+			args: args{
+				group: &fake.MockClient{
+					MockUpdateGroup: func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return &gitlab.Group{
+							SharedWithGroups: []struct {
+								GroupID          int             "json:\"group_id\""
+								GroupName        string          "json:\"group_name\""
+								GroupFullPath    string          "json:\"group_full_path\""
+								GroupAccessLevel int             "json:\"group_access_level\""
+								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
+							}{
+								{GroupID: groupID},
+								{GroupID: 123456},
+							},
+						}, nil, nil
+					},
+					MockUnshareGroupFromGroup: func(gid interface{}, groupID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return nil, nil
+					},
+				},
+				cr: group(
+					withSharedWithGroups([]v1alpha1.SharedWithGroups{
+						{GroupID: &groupIDtwo},
+					}),
+				),
+			},
+			want: want{
+				cr: group(
+					withSharedWithGroups([]v1alpha1.SharedWithGroups{
+						{GroupID: &groupIDtwo},
+					}),
+				),
+				result: managed.ExternalUpdate{},
+				err:    nil,
+			},
+		},
+		"SharedWithGroupsFailed": {
+			args: args{
+				group: &fake.MockClient{
+					MockShareGroupWithGroup: func(gid interface{}, opt *gitlab.ShareGroupWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return nil, nil, errBoom
+					},
+					MockUpdateGroup: func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return &gitlab.Group{}, nil, nil
+					},
+				},
+				cr: group(
+					withSharedWithGroups(
+						[]v1alpha1.SharedWithGroups{
+							{
+								GroupID: &groupID,
+							},
+						},
+					),
+				),
+			},
+			want: want{
+				cr: group(
+					withSharedWithGroups(
+						[]v1alpha1.SharedWithGroups{
+							{
+								GroupID: &groupID,
+							},
+						},
+					),
+				),
+				err:    errors.Wrapf(errBoom, errShareFailed, groupID),
+				result: managed.ExternalUpdate{},
+			},
+		},
+		"UnsharedWithGroupsFailed": {
+			args: args{
+				group: &fake.MockClient{
+					MockUpdateGroup: func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return &gitlab.Group{
+							SharedWithGroups: []struct {
+								GroupID          int             "json:\"group_id\""
+								GroupName        string          "json:\"group_name\""
+								GroupFullPath    string          "json:\"group_full_path\""
+								GroupAccessLevel int             "json:\"group_access_level\""
+								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
+							}{
+								{GroupID: groupID},
+								{GroupID: 123456},
+							},
+						}, nil, nil
+					},
+					MockUnshareGroupFromGroup: func(gid interface{}, groupID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return nil, errBoom
+					},
+				},
+				cr: group(),
+			},
+			want: want{
+				cr:     group(),
+				result: managed.ExternalUpdate{},
+				err:    errors.Wrapf(errBoom, errUnshareFailed, groupID),
 			},
 		},
 		"FailedUpdate": {
@@ -584,10 +803,10 @@ func TestUpdate(t *testing.T) {
 						return &gitlab.Group{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: group(withStatus(v1alpha1.GroupObservation{ID: 1234})),
+				cr: group(withStatus(v1alpha1.GroupObservation{ID: &groupID})),
 			},
 			want: want{
-				cr:  group(withStatus(v1alpha1.GroupObservation{ID: 1234})),
+				cr:  group(withStatus(v1alpha1.GroupObservation{ID: &groupID})),
 				err: errors.Wrap(errBoom, errUpdateFailed),
 			},
 		},
@@ -671,5 +890,4 @@ func TestDelete(t *testing.T) {
 			}
 		})
 	}
-
 }
