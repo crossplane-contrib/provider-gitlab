@@ -41,10 +41,12 @@ import (
 )
 
 const (
-	errNotDeployToken = "managed resource is not a Gitlab deploytoken custom resource"
-	errGetFailed      = "cannot get Gitlab deploytoken"
-	errCreateFailed   = "cannot create Gitlab deploytoken"
-	errDeleteFailed   = "cannot delete Gitlab deploytoken"
+	errNotDeployToken   = "managed resource is not a Gitlab deploytoken custom resource"
+	errIDnotInt         = "ID is not an integer"
+	errGetFailed        = "cannot get Gitlab deploytoken"
+	errCreateFailed     = "cannot create Gitlab deploytoken"
+	errDeleteFailed     = "cannot delete Gitlab deploytoken"
+	errProjectIDMissing = "projectID missing"
 )
 
 // SetupDeployToken adds a controller that reconciles ProjectDeployTokens.
@@ -95,18 +97,20 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	projectDeployTokenID, err := strconv.Atoi(externalName)
+	id, err := strconv.Atoi(externalName)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errNotDeployToken)
+		return managed.ExternalObservation{}, errors.New(errIDnotInt)
 	}
 
-	listProjectDeployTokensOptions := gitlab.ListProjectDeployTokensOptions{}
-	deploytokenArr, _, err := e.client.ListProjectDeployTokens(*cr.Spec.ForProvider.ProjectID, &listProjectDeployTokensOptions)
-	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorProjectDeployTokenNotFound, err), errGetFailed)
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
 
-	dt := findDeployToken(projectDeployTokenID, deploytokenArr)
+	dt, _, err := e.client.GetProjectDeployToken(*cr.Spec.ForProvider.ProjectID, id)
+
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
+	}
 
 	if dt == nil {
 		return managed.ExternalObservation{}, nil
@@ -188,15 +192,4 @@ func lateInitializeProjectDeployToken(in *v1alpha1.DeployTokenParameters, deploy
 	if in.ExpiresAt == nil && deployToken.ExpiresAt != nil {
 		in.ExpiresAt = &metav1.Time{Time: *deployToken.ExpiresAt}
 	}
-}
-
-// findDeployToken try to find a deploy token with the ID in the deploy token array,
-// if found return a deploy token otherwise return nil.
-func findDeployToken(deployTokenID int, deployTokens []*gitlab.DeployToken) *gitlab.DeployToken {
-	for _, v := range deployTokens {
-		if v.ID == deployTokenID {
-			return v
-		}
-	}
-	return nil
 }
