@@ -59,17 +59,6 @@ var (
 		Scopes:    []string{"scope1", "scope2"},
 	}
 
-	deployTokens = []*gitlab.DeployToken{
-		{
-			ID:        deployTokenID,
-			Name:      "Name",
-			Username:  username,
-			ExpiresAt: &expiresAt,
-			Token:     token,
-			Scopes:    []string{"scope1", "scope2"},
-		},
-	}
-
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: fmt.Sprint(deployTokenID)}
 )
 
@@ -140,23 +129,18 @@ func TestObserve(t *testing.T) {
 		},
 		"NotIDExternalName": {
 			args: args{
-				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-						return []*gitlab.DeployToken{}, &gitlab.Response{}, nil
-					},
-				},
 				cr: deployToken(withExternalName("fr")),
 			},
 			want: want{
 				cr:  deployToken(withExternalName("fr")),
-				err: errors.New(errNotDeployToken),
+				err: errors.New(errIDnotInt),
 			},
 		},
 		"FailedGetRequest": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-						return []*gitlab.DeployToken{}, &gitlab.Response{}, errBoom
+					MockGetProjectDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return nil, nil, errBoom
 					},
 				},
 				cr: deployToken(
@@ -179,8 +163,8 @@ func TestObserve(t *testing.T) {
 		"DeployTokenNotFound": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-						return deployTokens, &gitlab.Response{}, nil
+					MockGetProjectDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return nil, &gitlab.Response{}, nil
 					},
 				},
 				cr: deployToken(
@@ -211,8 +195,8 @@ func TestObserve(t *testing.T) {
 		"LateInitSuccess": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-						return deployTokens, &gitlab.Response{}, nil
+					MockGetProjectDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &deployTokenObj, &gitlab.Response{}, nil
 					},
 				},
 				cr: deployToken(
@@ -242,8 +226,8 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-						return deployTokens, &gitlab.Response{}, nil
+					MockGetProjectDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &deployTokenObj, &gitlab.Response{}, nil
 					},
 				},
 				cr: deployToken(

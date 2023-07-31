@@ -43,9 +43,9 @@ type MockClient struct {
 	MockEditMember   func(pid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
 	MockDeleteMember func(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
-	MockListDeployTokens  func(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error)
-	MockCreateDeployToken func(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
-	MockDeleteDeployToken func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockCreateDeployToken     func(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
+	MockDeleteDeployToken     func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockGetProjectDeployToken func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
 
 	MockGetVariable    func(pid interface{}, key string, opt *gitlab.GetProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error)
 	MockCreateVariable func(pid interface{}, opt *gitlab.CreateProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error)
@@ -124,11 +124,6 @@ func (c *MockClient) DeleteProjectMember(pid interface{}, user int, options ...g
 	return c.MockDeleteMember(pid, user)
 }
 
-// ListProjectDeployTokens calls the underlying MockListProjectDeployTokens method.
-func (c *MockClient) ListProjectDeployTokens(pid interface{}, opt *gitlab.ListProjectDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-	return c.MockListDeployTokens(pid, opt)
-}
-
 // CreateProjectDeployToken calls the underlying MockCreateProjectDeployToken method.
 func (c *MockClient) CreateProjectDeployToken(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
 	return c.MockCreateDeployToken(pid, opt)
@@ -137,6 +132,11 @@ func (c *MockClient) CreateProjectDeployToken(pid interface{}, opt *gitlab.Creat
 // DeleteProjectDeployToken calls the underlying MockDeleteProjectDeployToken method.
 func (c *MockClient) DeleteProjectDeployToken(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteDeployToken(pid, deployToken)
+}
+
+// GetProjectDeployToken calls the underlying MockGetProjectDeployToken method.
+func (c *MockClient) GetProjectDeployToken(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+	return c.MockGetProjectDeployToken(pid, deployToken)
 }
 
 // GetVariable calls the underlying MockGetProjectVariable
