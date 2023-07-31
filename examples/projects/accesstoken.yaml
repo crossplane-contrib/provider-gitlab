@@ -1,0 +1,18 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: AccessToken
+metadata:
+  name: example-access-token
+spec:
+  forProvider:
+    name: example-access-token
+    projectIdRef:
+      name: example-project
+    accessLevel: 40
+    expiresAt: 2024-03-15T08:00:00Z
+    scopes:
+      - "read_repository"
+  providerConfigRef:
+    name: gitlab-provider
+  writeConnectionSecretToRef:
+    name: gitlab-example-access-token
+    namespace: crossplane-system
