@@ -30,6 +30,7 @@ import (
 	projectDeployToken "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploytokens"
 	projecthooks "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/hooks"
 	projectmembers "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/members"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/pipelineschedules"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/variables"
 )
 
@@ -47,6 +48,7 @@ func Setup(mgr ctrl.Manager, l logging.Logger) error {
 		projectDeployToken.SetupDeployToken,
 		variables.SetupVariable,
 		deploykeys.SetupDeployKey,
+		pipelineschedules.SetupPipelineSchedule,
 	} {
 		if err := setup(mgr, l); err != nil {
 			return err
