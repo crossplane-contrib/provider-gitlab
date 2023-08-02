@@ -204,58 +204,65 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // n
 	}
 
 	if prj.Owner != nil {
-		o.Owner = &v1alpha1.User{
-			ID:                        prj.Owner.ID,
-			Username:                  prj.Owner.Username,
-			Email:                     prj.Owner.Email,
-			Name:                      prj.Owner.Name,
-			State:                     prj.Owner.Name,
-			WebURL:                    prj.Owner.WebURL,
-			Bio:                       prj.Owner.Bio,
-			Location:                  prj.Owner.Location,
-			PublicEmail:               prj.Owner.PublicEmail,
-			Skype:                     prj.Owner.Skype,
-			Linkedin:                  prj.Owner.Linkedin,
-			Twitter:                   prj.Owner.Twitter,
-			WebsiteURL:                prj.Owner.WebsiteURL,
-			Organization:              prj.Owner.Organization,
-			ExternUID:                 prj.Owner.ExternUID,
-			Provider:                  prj.Owner.Provider,
-			ThemeID:                   prj.Owner.ThemeID,
-			ColorSchemeID:             prj.Owner.ColorSchemeID,
-			IsAdmin:                   prj.Owner.IsAdmin,
-			AvatarURL:                 prj.Owner.AvatarURL,
-			CanCreateGroup:            prj.Owner.CanCreateGroup,
-			CanCreateProject:          prj.Owner.CanCreateProject,
-			ProjectsLimit:             prj.Owner.ProjectsLimit,
-			TwoFactorEnabled:          prj.Owner.TwoFactorEnabled,
-			External:                  prj.Owner.External,
-			PrivateProfile:            prj.Owner.PrivateProfile,
-			SharedRunnersMinutesLimit: prj.Owner.SharedRunnersMinutesLimit,
-		}
-		if prj.Owner.CreatedAt != nil {
-			o.Owner.CreatedAt = &metav1.Time{Time: *prj.Owner.CreatedAt}
-		}
-		if prj.Owner.LastActivityOn != nil {
-			o.Owner.LastActivityOn = &metav1.Time{Time: time.Time(*prj.Owner.LastActivityOn)}
-		}
-		if prj.Owner.CurrentSignInAt != nil {
-			o.Owner.CurrentSignInAt = &metav1.Time{Time: *prj.Owner.CurrentSignInAt}
-		}
-		if prj.Owner.LastSignInAt != nil {
-			o.Owner.LastSignInAt = &metav1.Time{Time: *prj.Owner.LastSignInAt}
-		}
-		if prj.Owner.ConfirmedAt != nil {
-			o.Owner.ConfirmedAt = &metav1.Time{Time: *prj.Owner.ConfirmedAt}
-		}
-		for i, c := range prj.Owner.CustomAttributes {
-			o.Owner.CustomAttributes[i].Key = c.Key
-			o.Owner.CustomAttributes[i].Value = c.Value
-		}
-		for i, id := range prj.Owner.Identities {
-			o.Owner.Identities[i].Provider = id.Provider
-			o.Owner.Identities[i].ExternUID = id.ExternUID
-		}
+		o.Owner = GenerateOwnerObservation(prj.Owner)
+	}
+
+	return o
+}
+
+// GenerateOwnerObservation generates v1alpha.User from gitlab.User.
+func GenerateOwnerObservation(usr *gitlab.User) *v1alpha1.User {
+	o := &v1alpha1.User{
+		ID:                        usr.ID,
+		Username:                  usr.Username,
+		Email:                     usr.Email,
+		Name:                      usr.Name,
+		State:                     usr.Name,
+		WebURL:                    usr.WebURL,
+		Bio:                       usr.Bio,
+		Location:                  usr.Location,
+		PublicEmail:               usr.PublicEmail,
+		Skype:                     usr.Skype,
+		Linkedin:                  usr.Linkedin,
+		Twitter:                   usr.Twitter,
+		WebsiteURL:                usr.WebsiteURL,
+		Organization:              usr.Organization,
+		ExternUID:                 usr.ExternUID,
+		Provider:                  usr.Provider,
+		ThemeID:                   usr.ThemeID,
+		ColorSchemeID:             usr.ColorSchemeID,
+		IsAdmin:                   usr.IsAdmin,
+		AvatarURL:                 usr.AvatarURL,
+		CanCreateGroup:            usr.CanCreateGroup,
+		CanCreateProject:          usr.CanCreateProject,
+		ProjectsLimit:             usr.ProjectsLimit,
+		TwoFactorEnabled:          usr.TwoFactorEnabled,
+		External:                  usr.External,
+		PrivateProfile:            usr.PrivateProfile,
+		SharedRunnersMinutesLimit: usr.SharedRunnersMinutesLimit,
+	}
+	if usr.CreatedAt != nil {
+		o.CreatedAt = &metav1.Time{Time: *usr.CreatedAt}
+	}
+	if usr.LastActivityOn != nil {
+		o.LastActivityOn = &metav1.Time{Time: time.Time(*usr.LastActivityOn)}
+	}
+	if usr.CurrentSignInAt != nil {
+		o.CurrentSignInAt = &metav1.Time{Time: *usr.CurrentSignInAt}
+	}
+	if usr.LastSignInAt != nil {
+		o.LastSignInAt = &metav1.Time{Time: *usr.LastSignInAt}
+	}
+	if usr.ConfirmedAt != nil {
+		o.ConfirmedAt = &metav1.Time{Time: *usr.ConfirmedAt}
+	}
+	for i, c := range usr.CustomAttributes {
+		o.CustomAttributes[i].Key = c.Key
+		o.CustomAttributes[i].Value = c.Value
+	}
+	for i, id := range usr.Identities {
+		o.Identities[i].Provider = id.Provider
+		o.Identities[i].ExternUID = id.ExternUID
 	}
 
 	return o
