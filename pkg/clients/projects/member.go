@@ -78,7 +78,7 @@ func GenerateMemberObservation(projectMember *gitlab.ProjectMember) v1alpha1.Mem
 // GenerateAddMemberOptions generates project member add options
 func GenerateAddMemberOptions(p *v1alpha1.MemberParameters) *gitlab.AddProjectMemberOptions {
 	projectMember := &gitlab.AddProjectMemberOptions{
-		UserID:      &p.UserID,
+		UserID:      p.UserID,
 		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
 	}
 	if p.ExpiresAt != nil {
