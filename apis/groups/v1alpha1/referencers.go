@@ -100,10 +100,14 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 	var rsp reference.ResolutionResponse
 	var err error
 
-	idstr := strconv.Itoa(*mg.Spec.ForProvider.ParentID)
+	var idstrp *string
+	if mg.Spec.ForProvider.ParentID != nil {
+		str := strconv.Itoa(*mg.Spec.ForProvider.ParentID)
+		idstrp = &str
+	}
 
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-		CurrentValue: reference.FromPtrValue(&idstr),
+		CurrentValue: reference.FromPtrValue(idstrp),
 		Extract:      reference.ExternalName(),
 		Reference:    mg.Spec.ForProvider.ParentIDRef,
 		Selector:     mg.Spec.ForProvider.ParentIDSelector,
@@ -125,7 +129,7 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 	mg.Spec.ForProvider.ParentIDRef = rsp.ResolvedReference
 
 	for i3 := 0; i3 < len(mg.Spec.ForProvider.SharedWithGroups); i3++ {
-		idstr = strconv.Itoa(*mg.Spec.ForProvider.SharedWithGroups[i3].GroupID)
+		idstr := strconv.Itoa(*mg.Spec.ForProvider.SharedWithGroups[i3].GroupID)
 		rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 			CurrentValue: reference.FromPtrValue(&idstr),
 			Extract:      reference.ExternalName(),
