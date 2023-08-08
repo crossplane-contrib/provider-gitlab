@@ -102,8 +102,11 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotHook)
 	}
 
-	projecthook, _, err := e.client.GetProjectHook(*cr.Spec.ForProvider.ProjectID, hookid)
+	projecthook, res, err := e.client.GetProjectHook(*cr.Spec.ForProvider.ProjectID, hookid)
 	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
 		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorHookNotFound, err), errGetFailed)
 	}
 

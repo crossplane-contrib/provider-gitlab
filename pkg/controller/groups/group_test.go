@@ -18,6 +18,7 @@ package groups
 
 import (
 	"context"
+	"net/http"
 	"reflect"
 	"testing"
 	"time"
@@ -258,14 +259,14 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr:  group(withExternalName("fr")),
-				err: errors.New(errNotGroup),
+				err: errors.New(errIDNotInt),
 			},
 		},
 		"FailedGetRequest": {
 			args: args{
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{}, &gitlab.Response{}, errBoom
+						return &gitlab.Group{}, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errBoom
 					},
 				},
 				cr: group(withExternalName(extName)),
@@ -273,6 +274,20 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr:  group(withAnnotations(extNameAnnotation)),
 				err: errors.Wrap(errBoom, errGetFailed),
+			},
+		},
+		"ErrGet404": {
+			args: args{
+				group: &fake.MockClient{
+					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return &gitlab.Group{}, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: group(withExternalName(extName)),
+			},
+			want: want{
+				cr:  group(withAnnotations(extNameAnnotation)),
+				err: nil,
 			},
 		},
 		"LateInitSuccess": {

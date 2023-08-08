@@ -53,9 +53,9 @@ type MockClient struct {
 	MockListVariables  func(pid interface{}, opt *gitlab.ListProjectVariablesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.ProjectVariable, *gitlab.Response, error)
 	MockRemoveVariable func(pid interface{}, key string, opt *gitlab.RemoveProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
-	MockGetAccessTokens   func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
-	MockCreateAccessToken func(pid interface{}, opt *gitlab.CreateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
-	MockRevokeAccessToken func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockGetProjectAccessToken    func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
+	MockCreateProjectAccessToken func(pid interface{}, opt *gitlab.CreateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
+	MockRevokeProjectAccessToken func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
 	MockAddDeployKey    func(pid interface{}, opt *gitlab.AddDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error)
 	MockDeleteDeployKey func(pid interface{}, deployKey int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
@@ -231,17 +231,17 @@ func (c *MockClient) UpdateDeployKey(pid interface{}, deployKey int, opt *gitlab
 	return c.MockUpdateDeployKey(pid, deployKey, opt)
 }
 
-// GetProjectAccessToken calls the underlying MockGetAccessTokens method.
+// GetProjectAccessToken calls the underlying MockGetProjectAccessToken method.
 func (c *MockClient) GetProjectAccessToken(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
-	return c.MockGetAccessTokens(pid, id)
+	return c.MockGetProjectAccessToken(pid, id)
 }
 
 // CreateProjectAccessToken calls the underlying MockCreateProjectAccessToken method.
 func (c *MockClient) CreateProjectAccessToken(pid interface{}, opt *gitlab.CreateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
-	return c.MockCreateAccessToken(pid, opt)
+	return c.MockCreateProjectAccessToken(pid, opt)
 }
 
-// RevokeProjectAccessToken calls the underlying MockDeleteProjectAccessToken method.
+// RevokeProjectAccessToken calls the underlying MockRevokeProjectAccessToken method.
 func (c *MockClient) RevokeProjectAccessToken(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-	return c.MockRevokeAccessToken(pid, id)
+	return c.MockRevokeProjectAccessToken(pid, id)
 }

@@ -18,6 +18,7 @@ package variables
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -239,7 +240,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				variable: &fake.MockClient{
 					MockGetVariable: func(pid interface{}, key string, opt *gitlab.GetProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
-						return &gitlab.ProjectVariable{}, &gitlab.Response{}, errBoom
+						return &gitlab.ProjectVariable{}, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errBoom
 					},
 				},
 				cr: variable(
@@ -254,6 +255,27 @@ func TestObserve(t *testing.T) {
 				),
 				result: managed.ExternalObservation{},
 				err:    errors.Wrap(errBoom, errGetFailed),
+			},
+		},
+		"ErrGet404": {
+			args: args{
+				variable: &fake.MockClient{
+					MockGetVariable: func(pid interface{}, key string, opt *gitlab.GetProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
+						return &gitlab.ProjectVariable{}, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: variable(
+					withDefaultValues(),
+					withValue("blah"),
+				),
+			},
+			want: want{
+				cr: variable(
+					withDefaultValues(),
+					withValue("blah"),
+				),
+				result: managed.ExternalObservation{},
+				err:    nil,
 			},
 		},
 		"ValueSecretRef": {
@@ -326,7 +348,7 @@ func TestObserve(t *testing.T) {
 				},
 				variable: &fake.MockClient{
 					MockGetVariable: func(pid interface{}, key string, opt *gitlab.GetProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectVariable, *gitlab.Response, error) {
-						return &gitlab.ProjectVariable{}, &gitlab.Response{}, errors.New(errSecretKeyNotFound)
+						return &gitlab.ProjectVariable{}, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errors.New(errSecretKeyNotFound)
 					},
 				},
 				cr: variable(
