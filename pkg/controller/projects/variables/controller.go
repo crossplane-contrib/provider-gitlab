@@ -90,9 +90,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotVariable)
 	}
-	variable, _, err := e.client.GetVariable(*cr.Spec.ForProvider.ProjectID, cr.Spec.ForProvider.Key, projects.GenerateGetVariableOptions(&cr.Spec.ForProvider), gitlab.WithContext(ctx))
+	variable, res, err := e.client.GetVariable(*cr.Spec.ForProvider.ProjectID, cr.Spec.ForProvider.Key, projects.GenerateGetVariableOptions(&cr.Spec.ForProvider), gitlab.WithContext(ctx))
 	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorVariableNotFound, err), errGetFailed)
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	if cr.Spec.ForProvider.ValueSecretRef != nil {

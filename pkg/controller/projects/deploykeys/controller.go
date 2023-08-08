@@ -3,7 +3,6 @@ package deploykeys
 import (
 	"context"
 	"strconv"
-	"strings"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
@@ -101,18 +100,16 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errIDNotAnInt)
 	}
 
-	dk, _, err := e.client.GetDeployKey(
+	dk, res, err := e.client.GetDeployKey(
 		*cr.Spec.ForProvider.ProjectID,
 		id,
 	)
 
 	if err != nil {
-		return managed.ExternalObservation{},
-			errors.Wrap(resource.Ignore(isErrorProjectDeployKeyNotFound, err), errGetFail)
-	}
-
-	if dk == nil {
-		return managed.ExternalObservation{}, nil
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFail)
 	}
 
 	currentState := cr.Spec.ForProvider.DeepCopy()
@@ -227,14 +224,6 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	)
 
 	return errors.Wrap(err, errDeleteFail)
-}
-
-func isErrorProjectDeployKeyNotFound(err error) bool {
-	if err != nil {
-		return false
-	}
-
-	return strings.Contains(err.Error(), errNotFound)
 }
 
 func lateInitializeProjectDeployKey(local *v1alpha1.DeployKeyParameters, external *gitlab.ProjectDeployKey) {

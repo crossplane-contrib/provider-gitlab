@@ -18,6 +18,7 @@ package deploykeys
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"testing"
 	"time"
@@ -168,7 +169,7 @@ func TestObserve(t *testing.T) {
 				cr: buildDeployKey(withExternalName(testExternalName)),
 				deployKeyService: &fake.MockClient{
 					MockGetDeployKey: func(pid interface{}, deployKey int, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
-						return nil, &gitlab.Response{}, errors.New(testGetKeyErrorMessage)
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errors.New(testGetKeyErrorMessage)
 					},
 				},
 			},
@@ -178,12 +179,12 @@ func TestObserve(t *testing.T) {
 				result: managed.ExternalObservation{},
 			},
 		},
-		"GetKeyNotFound": {
+		"GetErr404": {
 			args: args{
 				cr: buildDeployKey(withExternalName(testExternalName)),
 				deployKeyService: &fake.MockClient{
 					MockGetDeployKey: func(pid interface{}, deployKey int, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
-						return nil, nil, nil
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("")
 					},
 				},
 			},

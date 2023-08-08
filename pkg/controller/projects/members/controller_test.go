@@ -15,6 +15,7 @@ package members
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"testing"
 	"time"
@@ -192,11 +193,11 @@ func TestObserve(t *testing.T) {
 				err: errors.New(errNotMember),
 			},
 		},
-		"FailedGetRequest": {
+		"ErrGet404": {
 			args: args{
 				projectMember: &fake.MockClient{
 					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
-						return nil, &gitlab.Response{}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
 				cr: projectMember(withExternalName(extName)),
@@ -205,6 +206,21 @@ func TestObserve(t *testing.T) {
 				cr:     projectMember(withAnnotations(extNameAnnotation)),
 				result: managed.ExternalObservation{ResourceExists: false},
 				err:    nil,
+			},
+		},
+		"ErrGet": {
+			args: args{
+				projectMember: &fake.MockClient{
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+						return nil, nil, errBoom
+					},
+				},
+				cr: projectMember(withExternalName(extName)),
+			},
+			want: want{
+				cr:     projectMember(withAnnotations(extNameAnnotation)),
+				result: managed.ExternalObservation{ResourceExists: false},
+				err:    errors.Wrap(errBoom, errObserveFailed),
 			},
 		},
 		"SuccessfulAvailable": {
