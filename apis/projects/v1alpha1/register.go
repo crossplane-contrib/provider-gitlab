@@ -93,6 +93,14 @@ var (
 	DeployKeyGroupVersionKind = SchemeGroupVersion.WithKind(DeployKeyKind)
 )
 
+// Pipeline Sharing type metadata
+var (
+	PipelineScheduleKind             = reflect.TypeOf(PipelineSchedule{}).Name()
+	PipelineScheduleGroupKind        = schema.GroupKind{Group: Group, Kind: PipelineScheduleKind}.String()
+	PipelineScheduleKindAPIVersion   = PipelineScheduleKind + "." + SchemeGroupVersion.String()
+	PipelineScheduleGroupVersionKind = SchemeGroupVersion.WithKind(PipelineScheduleKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
@@ -100,4 +108,5 @@ func init() {
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
 	SchemeBuilder.Register(&DeployKey{}, &DeployKeyList{})
+	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})
 }

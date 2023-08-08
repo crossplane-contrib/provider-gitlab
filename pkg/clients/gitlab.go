@@ -191,3 +191,21 @@ func IsIntEqualToIntPtr(ip *int, i int) bool {
 	}
 	return true
 }
+
+// IsStringEqualToStringPtr compares a *string with string
+func IsStringEqualToStringPtr(sp *string, s string) bool {
+	if sp != nil {
+		if !cmp.Equal(*sp, s) {
+			return false
+		}
+	}
+	return true
+}
+
+// IsResponseNotFound returns true of Gitlab Response indicates CR was not found
+func IsResponseNotFound(res *gitlab.Response) bool {
+	if res != nil && res.StatusCode == 404 {
+		return true
+	}
+	return false
+}

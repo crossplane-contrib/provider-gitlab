@@ -1,0 +1,21 @@
+
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: PipelineSchedule
+metadata:
+  name: example-pipeline-schedule
+spec:
+  forProvider:
+    projectId: "example-project-id"
+    cron: "0 0 * * *"
+    ref: master
+    description: "example-pipeline-schedule-description-update"
+    variables:
+      - key: example_key_1
+        value: example_value_1
+      - key: example_key_2
+        value: example_value_2
+  providerConfigRef:
+    name: gitlab-provider
+  writeConnectionSecretToRef:
+    name: gitlab-pipeline-schedule-secret-ref-example
+    namespace: crossplane-system
