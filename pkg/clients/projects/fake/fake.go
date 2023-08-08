@@ -61,6 +61,49 @@ type MockClient struct {
 	MockDeleteDeployKey func(pid interface{}, deployKey int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockUpdateDeployKey func(pid interface{}, deployKey int, opt *gitlab.UpdateDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error)
 	MockGetDeployKey    func(pid interface{}, deployKey int, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error)
+
+	MockGetPipelineSchedule            func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error)
+	MockCreatePipelineSchedule         func(pid interface{}, opt *gitlab.CreatePipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error)
+	MockEditPipelineSchedule           func(pid interface{}, schedule int, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error)
+	MockDeletePipelineSchedule         func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockCreatePipelineScheduleVariable func(pid interface{}, schedule int, opt *gitlab.CreatePipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
+	MockEditPipelineScheduleVariable   func(pid interface{}, schedule int, key string, opt *gitlab.EditPipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
+	MockDeletePipelineScheduleVariable func(pid interface{}, schedule int, key string, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
+}
+
+// GetPipelineSchedule calls the underlying MockGetPipelineSchedule method.
+func (c *MockClient) GetPipelineSchedule(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+	return c.MockGetPipelineSchedule(pid, schedule, options...)
+}
+
+// CreatePipelineSchedule calls the underlying MockCreatePipelineSchedule method.
+func (c *MockClient) CreatePipelineSchedule(pid interface{}, opt *gitlab.CreatePipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+	return c.MockCreatePipelineSchedule(pid, opt)
+}
+
+// EditPipelineSchedule calls the underlying MockEditPipelineSchedule method.
+func (c *MockClient) EditPipelineSchedule(pid interface{}, schedule int, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+	return c.MockEditPipelineSchedule(pid, schedule, opt)
+}
+
+// DeletePipelineSchedule calls the underlying MockDeletePipelineSchedule method.
+func (c *MockClient) DeletePipelineSchedule(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeletePipelineSchedule(pid, schedule)
+}
+
+// CreatePipelineScheduleVariable calls the underlying MockCreatePipelineScheduleVariable method.
+func (c *MockClient) CreatePipelineScheduleVariable(pid interface{}, schedule int, opt *gitlab.CreatePipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error) {
+	return c.MockCreatePipelineScheduleVariable(pid, schedule, opt)
+}
+
+// EditPipelineScheduleVariable calls the underlying MockEditPipelineScheduleVariable method.
+func (c *MockClient) EditPipelineScheduleVariable(pid interface{}, schedule int, key string, opt *gitlab.EditPipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error) {
+	return c.MockEditPipelineScheduleVariable(pid, schedule, key, opt)
+}
+
+// DeletePipelineScheduleVariable calls the underlying MockDeletePipelineScheduleVariable method.
+func (c *MockClient) DeletePipelineScheduleVariable(pid interface{}, schedule int, key string, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error) {
+	return c.MockDeletePipelineScheduleVariable(pid, schedule, key)
 }
 
 // GetProject calls the underlying MockGetProject method.
