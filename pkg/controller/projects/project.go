@@ -216,7 +216,7 @@ func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { /
 	if in.MirrorTriggerBuilds == nil {
 		in.MirrorTriggerBuilds = &project.MirrorTriggerBuilds
 	}
-	if in.MirrorUserID == nil {
+	if in.MirrorUserID == nil && project.MirrorUserID != 0 { // since project.MirrorUserID is non-nullable, value `0` treated as `not set`
 		in.MirrorUserID = &project.MirrorUserID
 	}
 	if in.OnlyAllowMergeIfAllDiscussionsAreResolved == nil {
