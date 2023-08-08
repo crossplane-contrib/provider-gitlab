@@ -118,6 +118,10 @@ func withAnnotations(a map[string]string) projectModifier {
 	return func(p *v1alpha1.Project) { meta.AddAnnotations(p, a) }
 }
 
+func withMirrorUserIDNil() projectModifier {
+	return func(p *v1alpha1.Project) { p.Spec.ForProvider.MirrorUserID = nil }
+}
+
 func project(m ...projectModifier) *v1alpha1.Project {
 	cr := &v1alpha1.Project{}
 	for _, f := range m {
@@ -289,6 +293,37 @@ func TestObserve(t *testing.T) {
 					ResourceUpToDate:        true,
 					ResourceLateInitialized: true,
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("token")},
+				},
+			},
+		},
+		"LateInitSuccessMirrorUserIdZero": {
+			args: args{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{MirrorUserID: 0}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					withMirrorUserIDNil(),
+					withExternalName(extName),
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withMirrorUserIDNil(),
+					withExternalName(extName),
+					withConditions(xpv1.Available()),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": {}},
 				},
 			},
 		},
