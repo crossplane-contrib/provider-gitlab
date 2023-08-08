@@ -46,6 +46,7 @@ const (
 	errCreateFailed     = "cannot create Gitlab project"
 	errUpdateFailed     = "cannot update Gitlab project"
 	errDeleteFailed     = "cannot delete Gitlab project"
+	errGetFailed        = "cannot retrieve Gitlab project with"
 )
 
 // SetupProject adds a controller that reconciles Projects.
@@ -101,9 +102,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotProject)
 	}
 
-	prj, _, _ := e.client.GetProject(projectID, nil)
-	if prj == nil {
-		return managed.ExternalObservation{ResourceExists: false}, nil
+	prj, res, err := e.client.GetProject(projectID, nil)
+	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()

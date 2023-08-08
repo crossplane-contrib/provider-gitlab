@@ -18,6 +18,7 @@ package projects
 
 import (
 	"context"
+	"net/http"
 	"reflect"
 	"strconv"
 	"testing"
@@ -224,7 +225,22 @@ func TestObserve(t *testing.T) {
 			args: args{
 				project: &fake.MockClient{
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return nil, &gitlab.Response{}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errBoom
+					},
+				},
+				cr: project(withExternalName(extName)),
+			},
+			want: want{
+				cr:     project(withExternalName(extName)),
+				result: managed.ExternalObservation{ResourceExists: false},
+				err:    errors.Wrap(errBoom, errGetFailed),
+			},
+		},
+		"ErrGet404": {
+			args: args{
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
 				cr: project(withExternalName(extName)),

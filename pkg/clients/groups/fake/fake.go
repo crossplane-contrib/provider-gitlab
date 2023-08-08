@@ -40,9 +40,9 @@ type MockClient struct {
 	MockEditMember   func(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
 	MockRemoveMember func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
-	MockListDeployTokens  func(gid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error)
-	MockCreateDeployToken func(gid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
-	MockDeleteDeployToken func(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockGetGroupDeployToken    func(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
+	MockCreateGroupDeployToken func(gid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
+	MockDeleteGroupDeployToken func(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetGroup calls the underlying MockGetGroup method.
@@ -95,17 +95,17 @@ func (c *MockClient) RemoveGroupMember(gid interface{}, user int, opt *gitlab.Re
 	return c.MockRemoveMember(gid, user)
 }
 
-// ListGroupDeployTokens calls the underlying MockListGroupDeployTokens method.
-func (c *MockClient) ListGroupDeployTokens(gid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-	return c.MockListDeployTokens(gid, opt)
+// GetGroupDeployToken calls the underlying MockGetGroupDeployToken method.
+func (c *MockClient) GetGroupDeployToken(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+	return c.MockGetGroupDeployToken(gid, deployToken)
 }
 
 // CreateGroupDeployToken calls the underlying MockCreateGroupDeployToken method.
 func (c *MockClient) CreateGroupDeployToken(gid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
-	return c.MockCreateDeployToken(gid, opt)
+	return c.MockCreateGroupDeployToken(gid, opt)
 }
 
 // DeleteGroupDeployToken calls the underlying MockDeleteGroupDeployToken method.
 func (c *MockClient) DeleteGroupDeployToken(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-	return c.MockDeleteDeployToken(gid, deployToken)
+	return c.MockDeleteGroupDeployToken(gid, deployToken)
 }

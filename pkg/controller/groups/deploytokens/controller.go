@@ -45,6 +45,8 @@ const (
 	errGetFailed      = "cannot get Gitlab deploytoken"
 	errCreateFailed   = "cannot create Gitlab deploytoken"
 	errDeleteFailed   = "cannot delete Gitlab deploytoken"
+	errIDNotInt       = "ID is not integer value"
+	errGroupIDMissing = "GroupID is missing"
 )
 
 // SetupDeployToken adds a controller that reconciles GroupDeployTokens.
@@ -95,21 +97,21 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	groupDeployTokenID, err := strconv.Atoi(externalName)
+	id, err := strconv.Atoi(externalName)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errNotDeployToken)
+		return managed.ExternalObservation{}, errors.New(errIDNotInt)
 	}
 
-	listGroupDeployTokensOptions := gitlab.ListGroupDeployTokensOptions{}
-	deploytokenArr, _, err := e.client.ListGroupDeployTokens(*cr.Spec.ForProvider.GroupID, &listGroupDeployTokensOptions)
-	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(groups.IsErrorGroupDeployTokenNotFound, err), errGetFailed)
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalObservation{}, errors.New(errGroupIDMissing)
 	}
 
-	dt := findDeployToken(groupDeployTokenID, deploytokenArr)
-
-	if dt == nil {
-		return managed.ExternalObservation{}, nil
+	dt, res, err := e.client.GetGroupDeployToken(*cr.Spec.ForProvider.GroupID, id)
+	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
@@ -192,15 +194,4 @@ func lateInitializeGroupDeployToken(in *v1alpha1.DeployTokenParameters, deployTo
 	if in.ExpiresAt == nil && deployToken.ExpiresAt != nil {
 		in.ExpiresAt = &metav1.Time{Time: *deployToken.ExpiresAt}
 	}
-}
-
-// findDeployToken try to find a deploy token with the ID in the deploy token array,
-// if found return a deploy token otherwise return nil.
-func findDeployToken(deployTokenID int, deployTokens []*gitlab.DeployToken) *gitlab.DeployToken {
-	for _, v := range deployTokens {
-		if v.ID == deployTokenID {
-			return v
-		}
-	}
-	return nil
 }

@@ -19,6 +19,7 @@ package hooks
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -198,6 +199,27 @@ func TestObserve(t *testing.T) {
 					ResourceUpToDate:        true,
 					ResourceLateInitialized: true,
 				},
+			},
+		},
+		"ErrGet404": {
+			args: args{
+				projecthook: &fake.MockClient{
+					MockGetHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: projecthook(
+					withProjectID(projectID),
+					withExternalName(projectHookID),
+				),
+			},
+			want: want{
+				cr: projecthook(
+					withProjectID(projectID),
+					withExternalName(projectHookID),
+				),
+				result: managed.ExternalObservation{},
+				err:    nil,
 			},
 		},
 	}

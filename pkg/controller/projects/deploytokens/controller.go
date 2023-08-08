@@ -106,14 +106,13 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
 
-	dt, _, err := e.client.GetProjectDeployToken(*cr.Spec.ForProvider.ProjectID, id)
+	dt, res, err := e.client.GetProjectDeployToken(*cr.Spec.ForProvider.ProjectID, id)
 
 	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
-	}
-
-	if dt == nil {
-		return managed.ExternalObservation{}, nil
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()

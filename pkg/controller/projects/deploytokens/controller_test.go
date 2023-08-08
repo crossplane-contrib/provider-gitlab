@@ -19,6 +19,7 @@ package deploytokens
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 	"testing"
 	"time"
@@ -160,11 +161,11 @@ func TestObserve(t *testing.T) {
 				err: errors.Wrap(errBoom, errGetFailed),
 			},
 		},
-		"DeployTokenNotFound": {
+		"ErrGet404": {
 			args: args{
 				deployToken: &fake.MockClient{
 					MockGetProjectDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
-						return nil, &gitlab.Response{}, nil
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
 				cr: deployToken(
@@ -190,6 +191,7 @@ func TestObserve(t *testing.T) {
 					ResourceUpToDate:        false,
 					ResourceLateInitialized: false,
 				},
+				err: nil,
 			},
 		},
 		"LateInitSuccess": {

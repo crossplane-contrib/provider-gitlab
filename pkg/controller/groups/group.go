@@ -103,12 +103,15 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	groupID, err := strconv.Atoi(externalName)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errNotGroup)
+		return managed.ExternalObservation{}, errors.New(errIDNotInt)
 	}
 
-	grp, _, err := e.client.GetGroup(groupID, nil)
+	grp, res, err := e.client.GetGroup(groupID, nil)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(groups.IsErrorGroupNotFound, err), errGetFailed)
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()

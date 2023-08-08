@@ -19,6 +19,7 @@ package deploytokens
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 	"testing"
 	"time"
@@ -140,23 +141,18 @@ func TestObserve(t *testing.T) {
 		},
 		"NotIDExternalName": {
 			args: args{
-				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-						return []*gitlab.DeployToken{}, &gitlab.Response{}, nil
-					},
-				},
 				cr: deployToken(withExternalName("fr")),
 			},
 			want: want{
 				cr:  deployToken(withExternalName("fr")),
-				err: errors.New(errNotDeployToken),
+				err: errors.New(errIDNotInt),
 			},
 		},
 		"FailedGetRequest": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-						return []*gitlab.DeployToken{}, &gitlab.Response{}, errBoom
+					MockGetGroupDeployToken: func(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errBoom
 					},
 				},
 				cr: deployToken(
@@ -176,11 +172,11 @@ func TestObserve(t *testing.T) {
 				err: errors.Wrap(errBoom, errGetFailed),
 			},
 		},
-		"DeployTokenNotFound": {
+		"ErrGet404": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-						return deployTokens, &gitlab.Response{}, nil
+					MockGetGroupDeployToken: func(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
 				cr: deployToken(
@@ -206,13 +202,14 @@ func TestObserve(t *testing.T) {
 					ResourceUpToDate:        false,
 					ResourceLateInitialized: false,
 				},
+				err: nil,
 			},
 		},
 		"LateInitSuccess": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-						return deployTokens, &gitlab.Response{}, nil
+					MockGetGroupDeployToken: func(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return deployTokens[0], nil, nil
 					},
 				},
 				cr: deployToken(
@@ -242,8 +239,8 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockListDeployTokens: func(pid interface{}, opt *gitlab.ListGroupDeployTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
-						return deployTokens, &gitlab.Response{}, nil
+					MockGetGroupDeployToken: func(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return deployTokens[0], nil, nil
 					},
 				},
 				cr: deployToken(
@@ -318,7 +315,7 @@ func TestCreate(t *testing.T) {
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
 				deployToken: &fake.MockClient{
-					MockCreateDeployToken: func(pid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+					MockCreateGroupDeployToken: func(pid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
 						return &deployTokenObj, &gitlab.Response{}, nil
 					},
 				},
@@ -345,7 +342,7 @@ func TestCreate(t *testing.T) {
 		"FailedCreation": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockCreateDeployToken: func(pid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+					MockCreateGroupDeployToken: func(pid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
 						return &gitlab.DeployToken{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -445,7 +442,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockDeleteDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteGroupDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -468,7 +465,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletionErrNotDeployToken": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockDeleteDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteGroupDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -492,7 +489,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockDeleteDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteGroupDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
