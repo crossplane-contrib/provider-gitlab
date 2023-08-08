@@ -37,10 +37,11 @@ import (
 )
 
 const (
-	errNotMember    = "managed resource is not a Gitlab Project Member custom resource"
-	errCreateFailed = "cannot create Gitlab Project Member"
-	errUpdateFailed = "cannot update Gitlab Project Member"
-	errDeleteFailed = "cannot delete Gitlab Project Member"
+	errNotMember     = "managed resource is not a Gitlab Project Member custom resource"
+	errCreateFailed  = "cannot create Gitlab Project Member"
+	errUpdateFailed  = "cannot update Gitlab Project Member"
+	errDeleteFailed  = "cannot delete Gitlab Project Member"
+	errObserveFailed = "cannot observe Gitlab Project Member"
 )
 
 // SetupMember adds a controller that reconciles Project Members.
@@ -96,9 +97,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotMember)
 	}
 
-	projectMember, _, _ := e.client.GetProjectMember(projectMemberID, cr.Spec.ForProvider.UserID)
-	if projectMember == nil {
-		return managed.ExternalObservation{ResourceExists: false}, nil
+	projectMember, res, err := e.client.GetProjectMember(projectMemberID, cr.Spec.ForProvider.UserID)
+	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errObserveFailed)
 	}
 
 	cr.Status.AtProvider = projects.GenerateMemberObservation(projectMember)

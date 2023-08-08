@@ -38,9 +38,11 @@ import (
 
 const (
 	errNotMember    = "managed resource is not a Gitlab Group Member custom resource"
+	errIDNotInt     = "ID is not an integer value"
 	errCreateFailed = "cannot create Gitlab Group Member"
 	errUpdateFailed = "cannot update Gitlab Group Member"
 	errDeleteFailed = "cannot delete Gitlab Group Member"
+	errGetFailed    = "cannot get Gitlab Group Member"
 )
 
 // SetupMember adds a controller that reconciles Group Members.
@@ -93,12 +95,15 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	groupID, err := strconv.Atoi(externalName)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errNotMember)
+		return managed.ExternalObservation{}, errors.New(errIDNotInt)
 	}
 
-	groupMember, _, _ := e.client.GetGroupMember(groupID, cr.Spec.ForProvider.UserID)
-	if groupMember == nil {
-		return managed.ExternalObservation{ResourceExists: false}, nil
+	groupMember, res, err := e.client.GetGroupMember(groupID, cr.Spec.ForProvider.UserID)
+	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	cr.Status.AtProvider = groups.GenerateMemberObservation(groupMember)

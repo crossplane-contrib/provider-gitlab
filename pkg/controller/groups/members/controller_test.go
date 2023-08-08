@@ -15,6 +15,7 @@ package members
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"testing"
 	"time"
@@ -188,14 +189,29 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr:  groupMember(withExternalName("fr")),
-				err: errors.New(errNotMember),
+				err: errors.New(errIDNotInt),
 			},
 		},
 		"FailedGetRequest": {
 			args: args{
 				groupMember: &fake.MockClient{
 					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
-						return nil, &gitlab.Response{}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errBoom
+					},
+				},
+				cr: groupMember(withExternalName(extName)),
+			},
+			want: want{
+				cr:     groupMember(withAnnotations(extNameAnnotation)),
+				result: managed.ExternalObservation{ResourceExists: false},
+				err:    errors.Wrap(errBoom, errGetFailed),
+			},
+		},
+		"ErrGet404": {
+			args: args{
+				groupMember: &fake.MockClient{
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
 				cr: groupMember(withExternalName(extName)),

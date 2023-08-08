@@ -109,8 +109,11 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errMissingProjectID)
 	}
 
-	at, _, err := e.client.GetProjectAccessToken(*cr.Spec.ForProvider.ProjectID, accessTokenID)
+	at, res, err := e.client.GetProjectAccessToken(*cr.Spec.ForProvider.ProjectID, accessTokenID)
 	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errAccessTokentNotFound)
 	}
 
