@@ -94,7 +94,7 @@ func TestGenerateAddMemberOptions(t *testing.T) {
 			args: args{
 				parameters: &v1alpha1.MemberParameters{
 					ProjectID:   &projectID,
-					UserID:      userID,
+					UserID:      &userID,
 					AccessLevel: v1alpha1AccessLevelValue,
 					ExpiresAt:   &expiresAt,
 				},
@@ -109,7 +109,7 @@ func TestGenerateAddMemberOptions(t *testing.T) {
 			args: args{
 				parameters: &v1alpha1.MemberParameters{
 					ProjectID:   &projectID,
-					UserID:      userID,
+					UserID:      &userID,
 					AccessLevel: v1alpha1.AccessLevelValue(accessLevel),
 				},
 			},
@@ -142,7 +142,7 @@ func TestGenerateEditMemberOptions(t *testing.T) {
 			args: args{
 				parameters: &v1alpha1.MemberParameters{
 					ProjectID:   &projectID,
-					UserID:      userID,
+					UserID:      &userID,
 					AccessLevel: v1alpha1AccessLevelValue,
 					ExpiresAt:   &expiresAt,
 				},
@@ -156,7 +156,7 @@ func TestGenerateEditMemberOptions(t *testing.T) {
 			args: args{
 				parameters: &v1alpha1.MemberParameters{
 					ProjectID:   &projectID,
-					UserID:      userID,
+					UserID:      &userID,
 					AccessLevel: v1alpha1AccessLevelValue,
 				},
 			},
