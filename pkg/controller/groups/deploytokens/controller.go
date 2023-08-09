@@ -171,6 +171,10 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotDeployToken)
 	}
 
+	if cr.Spec.ForProvider.GroupID == nil {
+		return errors.New(errGroupIDMissing)
+	}
+
 	_, deleteError := e.client.DeleteGroupDeployToken(
 		*cr.Spec.ForProvider.GroupID,
 		deployTokenID,
