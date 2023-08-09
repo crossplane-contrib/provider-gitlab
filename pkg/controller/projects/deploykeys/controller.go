@@ -15,7 +15,6 @@ import (
 	"github.com/xanzy/go-gitlab"
 
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	controller "sigs.k8s.io/controller-runtime"
@@ -118,7 +117,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	cr.Status.AtProvider = v1alpha1.DeployKeyObservation{
 		ID:        &dk.ID,
-		CreatedAt: &metav1.Time{Time: *dk.CreatedAt},
+		CreatedAt: clients.TimeToMetaTime(dk.CreatedAt),
 	}
 
 	cr.Status.SetConditions(xpv1.Available())
