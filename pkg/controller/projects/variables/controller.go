@@ -46,6 +46,7 @@ const (
 	errDeleteFailed      = "cannot delete Gitlab variable"
 	errGetSecretFailed   = "cannot get secret for Gitlab variable value"
 	errSecretKeyNotFound = "cannot find key in secret for Gitlab variable value"
+	errProjectIDMissing  = "ProjectID is missing"
 )
 
 // SetupVariable adds a controller that reconciles Variables.
@@ -90,7 +91,16 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotVariable)
 	}
-	variable, res, err := e.client.GetVariable(*cr.Spec.ForProvider.ProjectID, cr.Spec.ForProvider.Key, projects.GenerateGetVariableOptions(&cr.Spec.ForProvider), gitlab.WithContext(ctx))
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
+	}
+
+	variable, res, err := e.client.GetVariable(
+		*cr.Spec.ForProvider.ProjectID,
+		cr.Spec.ForProvider.Key,
+		projects.GenerateGetVariableOptions(&cr.Spec.ForProvider),
+		gitlab.WithContext(ctx))
+
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -129,9 +139,16 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 			return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 		}
 	}
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalCreation{}, errors.New(errProjectIDMissing)
+	}
 
 	cr.Status.SetConditions(xpv1.Creating())
-	_, _, err := e.client.CreateVariable(*cr.Spec.ForProvider.ProjectID, projects.GenerateCreateVariableOptions(&cr.Spec.ForProvider), gitlab.WithContext(ctx))
+	_, _, err := e.client.CreateVariable(
+		*cr.Spec.ForProvider.ProjectID,
+		projects.GenerateCreateVariableOptions(&cr.Spec.ForProvider),
+		gitlab.WithContext(ctx))
+
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
@@ -150,6 +167,9 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 		}
 	}
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalUpdate{}, errors.New(errProjectIDMissing)
+	}
 
 	_, _, err := e.client.UpdateVariable(
 		*cr.Spec.ForProvider.ProjectID,
@@ -166,8 +186,11 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotVariable)
 	}
 
-	cr.Status.SetConditions(xpv1.Deleting())
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return errors.New(errProjectIDMissing)
+	}
 
+	cr.Status.SetConditions(xpv1.Deleting())
 	_, err := e.client.RemoveVariable(
 		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.Key,
