@@ -37,11 +37,12 @@ import (
 )
 
 const (
-	errNotMember     = "managed resource is not a Gitlab Project Member custom resource"
-	errCreateFailed  = "cannot create Gitlab Project Member"
-	errUpdateFailed  = "cannot update Gitlab Project Member"
-	errDeleteFailed  = "cannot delete Gitlab Project Member"
-	errObserveFailed = "cannot observe Gitlab Project Member"
+	errNotMember        = "managed resource is not a Gitlab Project Member custom resource"
+	errProjectIDMissing = "Project ID missing"
+	errCreateFailed     = "cannot create Gitlab Project Member"
+	errUpdateFailed     = "cannot update Gitlab Project Member"
+	errDeleteFailed     = "cannot delete Gitlab Project Member"
+	errObserveFailed    = "cannot observe Gitlab Project Member"
 )
 
 // SetupMember adds a controller that reconciles Project Members.
@@ -119,6 +120,9 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	cr, ok := mg.(*v1alpha1.Member)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotMember)
+	}
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalCreation{}, errors.New(errProjectIDMissing)
 	}
 
 	_, _, err := e.client.AddProjectMember(
