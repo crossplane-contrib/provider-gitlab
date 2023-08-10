@@ -37,12 +37,13 @@ import (
 )
 
 const (
-	errNotMember    = "managed resource is not a Gitlab Group Member custom resource"
-	errIDNotInt     = "ID is not an integer value"
-	errCreateFailed = "cannot create Gitlab Group Member"
-	errUpdateFailed = "cannot update Gitlab Group Member"
-	errDeleteFailed = "cannot delete Gitlab Group Member"
-	errGetFailed    = "cannot get Gitlab Group Member"
+	errNotMember      = "managed resource is not a Gitlab Group Member custom resource"
+	errIDNotInt       = "ID is not an integer value"
+	errCreateFailed   = "cannot create Gitlab Group Member"
+	errUpdateFailed   = "cannot update Gitlab Group Member"
+	errDeleteFailed   = "cannot delete Gitlab Group Member"
+	errGetFailed      = "cannot get Gitlab Group Member"
+	errMissingGroupID = "Group ID not set"
 )
 
 // SetupMember adds a controller that reconciles Group Members.
@@ -120,6 +121,10 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	cr, ok := mg.(*v1alpha1.Member)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotMember)
+	}
+
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalCreation{}, errors.New(errMissingGroupID)
 	}
 
 	_, _, err := e.client.AddGroupMember(
