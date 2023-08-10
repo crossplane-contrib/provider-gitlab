@@ -133,6 +133,9 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotDeployToken)
 	}
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalCreation{}, errors.New(errProjectIDMissing)
+	}
 
 	dt, _, err := e.client.CreateProjectDeployToken(
 		*cr.Spec.ForProvider.ProjectID,
@@ -163,11 +166,13 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	}
 
 	deployTokenID, err := strconv.Atoi(meta.GetExternalName(cr))
-
 	if err != nil {
 		return errors.New(errNotDeployToken)
 	}
 
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return errors.New(errProjectIDMissing)
+	}
 	_, deleteError := e.client.DeleteProjectDeployToken(
 		*cr.Spec.ForProvider.ProjectID,
 		deployTokenID,
