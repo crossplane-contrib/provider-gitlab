@@ -16,7 +16,6 @@ package members
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"testing"
 	"time"
 
@@ -26,7 +25,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/pkg/test"
@@ -37,21 +35,20 @@ import (
 )
 
 var (
-	unexpecedItem     resource.Managed
-	errBoom           = errors.New("boom")
-	ID                = 0
-	extName           = strconv.Itoa(ID)
-	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: extName}
-	username          = "username"
-	name              = "name"
-	state             = "state"
-	avatarURL         = "http://avatarURL"
-	webURL            = "http://webURL"
-	email             = "email@gmail.com"
-	accessLevel       = gitlab.AccessLevelValue(30)
-	now               = time.Now()
-	expiresAt         = gitlab.ISOTime(now.AddDate(0, 0, 7*3))
-	expiresAtNew      = gitlab.ISOTime(now.AddDate(0, 0, 7*4))
+	unexpecedItem resource.Managed
+	errBoom       = errors.New("boom")
+	ID            = 0
+	username      = "username"
+	name          = "name"
+	state         = "state"
+	avatarURL     = "http://avatarURL"
+	webURL        = "http://webURL"
+	email         = "email@gmail.com"
+	accessLevel   = gitlab.AccessLevelValue(30)
+	now           = time.Now()
+	expiresAt     = gitlab.ISOTime(now.AddDate(0, 0, 7*3))
+	expiresAtNew  = gitlab.ISOTime(now.AddDate(0, 0, 7*4))
+	projectID     = 1234
 )
 
 type args struct {
@@ -74,8 +71,8 @@ func withConditions(c ...xpv1.Condition) projectModifier {
 	return func(cr *v1alpha1.Member) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
-func withExternalName(n string) projectModifier {
-	return func(r *v1alpha1.Member) { meta.SetExternalName(r, n) }
+func withProjectID() projectModifier {
+	return func(r *v1alpha1.Member) { r.Spec.ForProvider.ProjectID = &projectID }
 }
 
 func withStatus(s v1alpha1.MemberObservation) projectModifier {
@@ -84,10 +81,6 @@ func withStatus(s v1alpha1.MemberObservation) projectModifier {
 
 func withSpec(s v1alpha1.MemberParameters) projectModifier {
 	return func(r *v1alpha1.Member) { r.Spec.ForProvider = s }
-}
-
-func withAnnotations(a map[string]string) projectModifier {
-	return func(p *v1alpha1.Member) { meta.AddAnnotations(p, a) }
 }
 
 func projectMember(m ...projectModifier) *v1alpha1.Member {
@@ -166,7 +159,7 @@ func TestObserve(t *testing.T) {
 				err: errors.New(errNotMember),
 			},
 		},
-		"NoExternalName": {
+		"ErrProjectIDMissing": {
 			args: args{
 				cr: projectMember(),
 			},
@@ -177,20 +170,7 @@ func TestObserve(t *testing.T) {
 					ResourceUpToDate:        false,
 					ResourceLateInitialized: false,
 				},
-			},
-		},
-		"NotIDExternalName": {
-			args: args{
-				projectMember: &fake.MockClient{
-					MockGetMember: func(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
-						return &gitlab.ProjectMember{}, &gitlab.Response{}, nil
-					},
-				},
-				cr: projectMember(withExternalName("fr")),
-			},
-			want: want{
-				cr:  projectMember(withExternalName("fr")),
-				err: errors.New(errNotMember),
+				err: errors.New(errProjectIDMissing),
 			},
 		},
 		"ErrGet404": {
@@ -200,10 +180,10 @@ func TestObserve(t *testing.T) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
-				cr: projectMember(withExternalName(extName)),
+				cr: projectMember(withProjectID()),
 			},
 			want: want{
-				cr:     projectMember(withAnnotations(extNameAnnotation)),
+				cr:     projectMember(withProjectID()),
 				result: managed.ExternalObservation{ResourceExists: false},
 				err:    nil,
 			},
@@ -215,10 +195,10 @@ func TestObserve(t *testing.T) {
 						return nil, nil, errBoom
 					},
 				},
-				cr: projectMember(withExternalName(extName)),
+				cr: projectMember(withProjectID()),
 			},
 			want: want{
-				cr:     projectMember(withAnnotations(extNameAnnotation)),
+				cr:     projectMember(withProjectID()),
 				result: managed.ExternalObservation{ResourceExists: false},
 				err:    errors.Wrap(errBoom, errObserveFailed),
 			},
@@ -231,14 +211,14 @@ func TestObserve(t *testing.T) {
 					},
 				},
 				cr: projectMember(
-					withExternalName(extName),
+					withProjectID(),
 				),
 			},
 			want: want{
 				cr: projectMember(
 					withConditions(xpv1.Available()),
-					withAnnotations(extNameAnnotation),
-					withExternalName(extName),
+					withProjectID(),
+					withProjectID(),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -257,15 +237,15 @@ func TestObserve(t *testing.T) {
 					},
 				},
 				cr: projectMember(
-					withExternalName(extName),
+					withProjectID(),
 					withAccessLevel(10),
 				),
 			},
 			want: want{
 				cr: projectMember(
 					withConditions(xpv1.Available()),
-					withAnnotations(extNameAnnotation),
-					withExternalName(extName),
+					withProjectID(),
+					withProjectID(),
 					withAccessLevel(10),
 				),
 				result: managed.ExternalObservation{
@@ -285,15 +265,15 @@ func TestObserve(t *testing.T) {
 					},
 				},
 				cr: projectMember(
-					withExternalName(extName),
+					withProjectID(),
 					withExpiresAt(expiresAtNew.String()),
 				),
 			},
 			want: want{
 				cr: projectMember(
 					withConditions(xpv1.Available()),
-					withAnnotations(extNameAnnotation),
-					withExternalName(extName),
+					withProjectID(),
+					withProjectID(),
 					withExpiresAt(expiresAtNew.String()),
 				),
 				result: managed.ExternalObservation{
@@ -363,13 +343,13 @@ func TestCreate(t *testing.T) {
 					},
 				},
 				cr: projectMember(
-					withAnnotations(extNameAnnotation),
+					withProjectID(),
 					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 			},
 			want: want{
 				cr: projectMember(
-					withExternalName(extName),
+					withProjectID(),
 					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
@@ -396,13 +376,13 @@ func TestCreate(t *testing.T) {
 					},
 				},
 				cr: projectMember(
-					withAnnotations(extNameAnnotation),
+					withProjectID(),
 					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 			},
 			want: want{
 				cr: projectMember(
-					withExternalName(extName),
+					withProjectID(),
 					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 				result: managed.ExternalCreation{ExternalNameAssigned: true},
@@ -416,13 +396,13 @@ func TestCreate(t *testing.T) {
 					},
 				},
 				cr: projectMember(
-					withAnnotations(extNameAnnotation),
+					withProjectID(),
 					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 			},
 			want: want{
 				cr: projectMember(
-					withExternalName(extName),
+					withProjectID(),
 					withSpec(v1alpha1.MemberParameters{ProjectID: &ID}),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
@@ -485,13 +465,13 @@ func TestUpdate(t *testing.T) {
 					},
 				},
 				cr: projectMember(
-					withExternalName(extName),
+					withProjectID(),
 					withStatus(v1alpha1.MemberObservation{Username: "new username"}),
 				),
 			},
 			want: want{
 				cr: projectMember(
-					withExternalName(extName),
+					withProjectID(),
 					withStatus(v1alpha1.MemberObservation{Username: "new username"}),
 				),
 			},
@@ -503,10 +483,10 @@ func TestUpdate(t *testing.T) {
 						return &gitlab.ProjectMember{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: projectMember(),
+				cr: projectMember(withProjectID()),
 			},
 			want: want{
-				cr:  projectMember(),
+				cr:  projectMember(withProjectID()),
 				err: errors.Wrap(errBoom, errUpdateFailed),
 			},
 		},
@@ -555,10 +535,10 @@ func TestDelete(t *testing.T) {
 						return &gitlab.Response{}, nil
 					},
 				},
-				cr: projectMember(withExternalName(extName)),
+				cr: projectMember(withProjectID()),
 			},
 			want: want{
-				cr:  projectMember(withExternalName(extName)),
+				cr:  projectMember(withProjectID()),
 				err: nil,
 			},
 		},
@@ -569,10 +549,10 @@ func TestDelete(t *testing.T) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
-				cr: projectMember(),
+				cr: projectMember(withProjectID()),
 			},
 			want: want{
-				cr:  projectMember(),
+				cr:  projectMember(withProjectID()),
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},
 		},

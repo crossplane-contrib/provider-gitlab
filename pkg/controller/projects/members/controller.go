@@ -15,7 +15,6 @@ package members
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/xanzy/go-gitlab"
 
@@ -27,7 +26,6 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
@@ -38,11 +36,11 @@ import (
 
 const (
 	errNotMember        = "managed resource is not a Gitlab Project Member custom resource"
-	errProjectIDMissing = "Project ID missing"
 	errCreateFailed     = "cannot create Gitlab Project Member"
 	errUpdateFailed     = "cannot update Gitlab Project Member"
 	errDeleteFailed     = "cannot delete Gitlab Project Member"
 	errObserveFailed    = "cannot observe Gitlab Project Member"
+	errProjectIDMissing = "ProjectID is missing"
 )
 
 // SetupMember adds a controller that reconciles Project Members.
@@ -87,18 +85,15 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotMember)
 	}
-
-	externalName := meta.GetExternalName(cr)
-	if externalName == "" {
-		return managed.ExternalObservation{ResourceExists: false}, nil
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
 
-	projectMemberID, err := strconv.Atoi(externalName)
-	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errNotMember)
-	}
+	projectMember, res, err := e.client.GetProjectMember(
+		*cr.Spec.ForProvider.ProjectID,
+		cr.Spec.ForProvider.UserID,
+	)
 
-	projectMember, res, err := e.client.GetProjectMember(projectMemberID, cr.Spec.ForProvider.UserID)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -134,7 +129,6 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(*cr.Spec.ForProvider.ProjectID))
 	return managed.ExternalCreation{ExternalNameAssigned: true}, nil
 }
 
@@ -143,8 +137,12 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotMember)
 	}
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalUpdate{}, errors.New(errProjectIDMissing)
+	}
+
 	_, _, err := e.client.EditProjectMember(
-		meta.GetExternalName(cr),
+		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.UserID,
 		projects.GenerateEditMemberOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
@@ -157,9 +155,12 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	if !ok {
 		return errors.New(errNotMember)
 	}
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return errors.New(errProjectIDMissing)
+	}
 
 	_, err := e.client.DeleteProjectMember(
-		meta.GetExternalName(cr),
+		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.UserID,
 		gitlab.WithContext(ctx),
 	)
@@ -168,7 +169,6 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 
 // isMemberUpToDate checks whether there is a change in any of the modifiable fields.
 func isMemberUpToDate(p *v1alpha1.MemberParameters, g *gitlab.ProjectMember) bool { // nolint:gocyclo
-
 	if !cmp.Equal(int(p.AccessLevel), int(g.AccessLevel)) {
 		return false
 	}
