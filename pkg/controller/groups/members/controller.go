@@ -15,7 +15,6 @@ package members
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/xanzy/go-gitlab"
 
@@ -27,7 +26,6 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
@@ -89,17 +87,13 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotMember)
 	}
 
-	externalName := meta.GetExternalName(cr)
-	if externalName == "" {
-		return managed.ExternalObservation{ResourceExists: false}, nil
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalObservation{}, errors.New(errMissingGroupID)
 	}
-
-	groupID, err := strconv.Atoi(externalName)
-	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errIDNotInt)
-	}
-
-	groupMember, res, err := e.client.GetGroupMember(groupID, cr.Spec.ForProvider.UserID)
+	groupMember, res, err := e.client.GetGroupMember(
+		*cr.Spec.ForProvider.GroupID,
+		cr.Spec.ForProvider.UserID,
+	)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -136,7 +130,6 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(*cr.Spec.ForProvider.GroupID))
 	return managed.ExternalCreation{ExternalNameAssigned: true}, nil
 }
 
@@ -145,9 +138,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotMember)
 	}
-
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalUpdate{}, errors.New(errMissingGroupID)
+	}
 	_, _, err := e.client.EditGroupMember(
-		meta.GetExternalName(cr),
+		*cr.Spec.ForProvider.GroupID,
 		cr.Spec.ForProvider.UserID,
 		groups.GenerateEditMemberOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
@@ -160,9 +155,11 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	if !ok {
 		return errors.New(errNotMember)
 	}
-
+	if cr.Spec.ForProvider.GroupID == nil {
+		return errors.New(errMissingGroupID)
+	}
 	_, err := e.client.RemoveGroupMember(
-		meta.GetExternalName(cr),
+		*cr.Spec.ForProvider.GroupID,
 		cr.Spec.ForProvider.UserID,
 		nil,
 		gitlab.WithContext(ctx),
