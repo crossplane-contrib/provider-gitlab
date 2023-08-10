@@ -368,14 +368,8 @@ func isVariablesUpToDate(crv []v1alpha1.PipelineVariable, inv []*gitlab.Pipeline
 }
 
 func notDeleted(inv *gitlab.PipelineVariable, crvArr []v1alpha1.PipelineVariable) bool {
-	victim := v1alpha1.PipelineVariable{
-		Key:          inv.Key,
-		Value:        inv.Value,
-		VariableType: &inv.Value,
-	}
-
 	for _, v := range crvArr {
-		if victim.Key == v.Key {
+		if inv.Key == v.Key {
 			return false
 		}
 	}
@@ -383,17 +377,8 @@ func notDeleted(inv *gitlab.PipelineVariable, crvArr []v1alpha1.PipelineVariable
 }
 
 func notSaved(crv v1alpha1.PipelineVariable, invArr []*gitlab.PipelineVariable) bool {
-	victim := gitlab.PipelineVariable{
-		Key:   crv.Key,
-		Value: crv.Value,
-	}
-
-	if crv.VariableType != nil {
-		victim.VariableType = *crv.VariableType
-	}
-
 	for _, v := range invArr {
-		if victim.Key == v.Key {
+		if crv.Key == v.Key {
 			return false
 		}
 	}
