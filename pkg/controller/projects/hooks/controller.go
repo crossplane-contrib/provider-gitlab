@@ -41,6 +41,7 @@ import (
 
 const (
 	errNotHook          = "managed resource is not a Gitlab project hook custom resource"
+	errProjectIDMissing = "ProjectID is missing"
 	errGetFailed        = "cannot get Gitlab project hook"
 	errKubeUpdateFailed = "cannot update Gitlab project hook custom resource"
 	errCreateFailed     = "cannot create Gitlab project hook"
@@ -101,6 +102,9 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if err != nil {
 		return managed.ExternalObservation{}, errors.New(errNotHook)
 	}
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
+	}
 
 	projecthook, res, err := e.client.GetProjectHook(*cr.Spec.ForProvider.ProjectID, hookid)
 	if err != nil {
@@ -148,6 +152,9 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.New(errNotHook)
 	}
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalUpdate{}, errors.New(errProjectIDMissing)
+	}
 
 	_, _, err = e.client.EditProjectHook(*cr.Spec.ForProvider.ProjectID, hookid, projects.GenerateEditHookOptions(&cr.Spec.ForProvider), gitlab.WithContext(ctx))
 	if err != nil {
@@ -165,6 +172,9 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 
 	cr.Status.SetConditions(xpv1.Deleting())
 
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return errors.New(errProjectIDMissing)
+	}
 	_, err := e.client.DeleteProjectHook(*cr.Spec.ForProvider.ProjectID, cr.Status.AtProvider.ID, gitlab.WithContext(ctx))
 	return errors.Wrap(err, errDeleteFailed)
 }
