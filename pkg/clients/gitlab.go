@@ -18,11 +18,13 @@ package clients
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "github.com/xanzy/go-gitlab"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -208,4 +210,12 @@ func IsResponseNotFound(res *gitlab.Response) bool {
 		return true
 	}
 	return false
+}
+
+// TimeToMetaTime returns nil if parameter is nil, otherwise metav1.Time value
+func TimeToMetaTime(t *time.Time) *metav1.Time {
+	if t == nil {
+		return nil
+	}
+	return &metav1.Time{Time: *t}
 }
