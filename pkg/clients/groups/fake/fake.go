@@ -43,6 +43,8 @@ type MockClient struct {
 	MockGetGroupDeployToken    func(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
 	MockCreateGroupDeployToken func(gid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
 	MockDeleteGroupDeployToken func(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockListUsers func(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error)
 }
 
 // GetGroup calls the underlying MockGetGroup method.
@@ -108,4 +110,9 @@ func (c *MockClient) CreateGroupDeployToken(gid interface{}, opt *gitlab.CreateG
 // DeleteGroupDeployToken calls the underlying MockDeleteGroupDeployToken method.
 func (c *MockClient) DeleteGroupDeployToken(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteGroupDeployToken(gid, deployToken)
+}
+
+// ListUsers calls the underlying MockListUsers method.
+func (c *MockClient) ListUsers(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error) {
+	return c.MockListUsers(opt)
 }
