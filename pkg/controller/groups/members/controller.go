@@ -32,16 +32,19 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/users"
 )
 
 const (
-	errNotMember      = "managed resource is not a Gitlab Group Member custom resource"
-	errIDNotInt       = "ID is not an integer value"
-	errCreateFailed   = "cannot create Gitlab Group Member"
-	errUpdateFailed   = "cannot update Gitlab Group Member"
-	errDeleteFailed   = "cannot delete Gitlab Group Member"
-	errGetFailed      = "cannot get Gitlab Group Member"
-	errMissingGroupID = "Group ID not set"
+	errNotMember       = "managed resource is not a Gitlab Group Member custom resource"
+	errIDNotInt        = "ID is not an integer value"
+	errCreateFailed    = "cannot create Gitlab Group Member"
+	errUpdateFailed    = "cannot update Gitlab Group Member"
+	errDeleteFailed    = "cannot delete Gitlab Group Member"
+	errGetFailed       = "cannot get Gitlab Group Member"
+	errMissingGroupID  = "Group ID not set"
+	errMissingUserInfo = "UserID or UserName not set"
+	errFetchFailed     = "can not fetch userID by userName"
 )
 
 // SetupMember adds a controller that reconciles Group Members.
@@ -53,7 +56,10 @@ func SetupMember(mgr ctrl.Manager, l logging.Logger) error {
 		For(&v1alpha1.Member{}).
 		Complete(managed.NewReconciler(mgr,
 			resource.ManagedKind(v1alpha1.MemberKubernetesGroupVersionKind),
-			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewMemberClient}),
+			managed.WithExternalConnecter(&connector{
+				kube:              mgr.GetClient(),
+				newGitlabClientFn: groups.NewMemberClient,
+				newUserClientFn:   users.NewUserClient}),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
 			managed.WithLogger(l.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
@@ -62,6 +68,7 @@ func SetupMember(mgr ctrl.Manager, l logging.Logger) error {
 type connector struct {
 	kube              client.Client
 	newGitlabClientFn func(cfg clients.Config) groups.MemberClient
+	newUserClientFn   func(cfg clients.Config) users.UserClient
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
@@ -73,12 +80,13 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if err != nil {
 		return nil, err
 	}
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
+	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), userClient: c.newUserClientFn(*cfg)}, nil
 }
 
 type external struct {
-	kube   client.Client
-	client groups.MemberClient
+	kube       client.Client
+	client     groups.MemberClient
+	userClient users.UserClient
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -90,9 +98,22 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if cr.Spec.ForProvider.GroupID == nil {
 		return managed.ExternalObservation{}, errors.New(errMissingGroupID)
 	}
+
+	userID, err := cr.Spec.ForProvider.UserID, error(nil)
+	if cr.Spec.ForProvider.UserID == nil {
+		if cr.Spec.ForProvider.UserName == nil {
+			return managed.ExternalObservation{}, errors.New(errMissingUserInfo)
+		}
+		userID, err = users.GetUserID(e.userClient, *cr.Spec.ForProvider.UserName)
+		if err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, errFetchFailed)
+		}
+	}
+	cr.Spec.ForProvider.UserID = userID
+
 	groupMember, res, err := e.client.GetGroupMember(
 		*cr.Spec.ForProvider.GroupID,
-		cr.Spec.ForProvider.UserID,
+		*cr.Spec.ForProvider.UserID,
 	)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
@@ -138,12 +159,18 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotMember)
 	}
+
 	if cr.Spec.ForProvider.GroupID == nil {
 		return managed.ExternalUpdate{}, errors.New(errMissingGroupID)
 	}
+
+	if cr.Spec.ForProvider.UserID == nil {
+		return managed.ExternalUpdate{}, errors.New(errMissingUserInfo)
+	}
+
 	_, _, err := e.client.EditGroupMember(
 		*cr.Spec.ForProvider.GroupID,
-		cr.Spec.ForProvider.UserID,
+		*cr.Spec.ForProvider.UserID,
 		groups.GenerateEditMemberOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
@@ -155,12 +182,18 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	if !ok {
 		return errors.New(errNotMember)
 	}
+
 	if cr.Spec.ForProvider.GroupID == nil {
 		return errors.New(errMissingGroupID)
 	}
+
+	if cr.Spec.ForProvider.UserID == nil {
+		return errors.New(errMissingUserInfo)
+	}
+
 	_, err := e.client.RemoveGroupMember(
 		*cr.Spec.ForProvider.GroupID,
-		cr.Spec.ForProvider.UserID,
+		*cr.Spec.ForProvider.UserID,
 		nil,
 		gitlab.WithContext(ctx),
 	)

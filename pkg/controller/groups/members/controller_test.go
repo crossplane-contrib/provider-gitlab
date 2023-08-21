@@ -32,6 +32,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/groups/fake"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/users"
 )
 
 var (
@@ -39,6 +40,7 @@ var (
 	errBoom       = errors.New("boom")
 	ID            = 0
 	username      = "username"
+	userID        = 123
 	name          = "name"
 	state         = "state"
 	avatarURL     = "http://avatarURL"
@@ -52,6 +54,7 @@ var (
 
 type args struct {
 	groupMember groups.MemberClient
+	user        users.UserClient
 	kube        client.Client
 	cr          resource.Managed
 }
@@ -165,10 +168,14 @@ func TestObserve(t *testing.T) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errBoom
 					},
 				},
-				cr: groupMember(withGroupID()),
+				cr: groupMember(
+					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID})),
 			},
 			want: want{
-				cr:     groupMember(withGroupID()),
+				cr: groupMember(
+					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID})),
 				result: managed.ExternalObservation{ResourceExists: false},
 				err:    errors.Wrap(errBoom, errGetFailed),
 			},
@@ -180,10 +187,14 @@ func TestObserve(t *testing.T) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
-				cr: groupMember(withGroupID()),
+				cr: groupMember(
+					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID})),
 			},
 			want: want{
-				cr:     groupMember(withGroupID()),
+				cr: groupMember(
+					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID})),
 				result: managed.ExternalObservation{ResourceExists: false},
 				err:    nil,
 			},
@@ -197,12 +208,14 @@ func TestObserve(t *testing.T) {
 				},
 				cr: groupMember(
 					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID}),
 				),
 			},
 			want: want{
 				cr: groupMember(
 					withConditions(xpv1.Available()),
 					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -222,6 +235,7 @@ func TestObserve(t *testing.T) {
 				},
 				cr: groupMember(
 					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID}),
 					withAccessLevel(10),
 				),
 			},
@@ -229,6 +243,7 @@ func TestObserve(t *testing.T) {
 				cr: groupMember(
 					withConditions(xpv1.Available()),
 					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID}),
 					withAccessLevel(10),
 				),
 				result: managed.ExternalObservation{
@@ -242,13 +257,12 @@ func TestObserve(t *testing.T) {
 			args: args{
 				groupMember: &fake.MockClient{
 					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
-						return &gitlab.GroupMember{
-							ExpiresAt: &expiresAt,
-						}, &gitlab.Response{}, nil
+						return &gitlab.GroupMember{ExpiresAt: &expiresAt}, &gitlab.Response{}, nil
 					},
 				},
 				cr: groupMember(
 					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID}),
 					withExpiresAt(expiresAtNew.String()),
 				),
 			},
@@ -256,6 +270,7 @@ func TestObserve(t *testing.T) {
 				cr: groupMember(
 					withConditions(xpv1.Available()),
 					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID}),
 					withExpiresAt(expiresAtNew.String()),
 				),
 				result: managed.ExternalObservation{
@@ -265,11 +280,71 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
+		"NoUserIDandNoUserName": {
+			args: args{
+				groupMember: &fake.MockClient{
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+						return nil, nil, errBoom
+					},
+				},
+				cr: groupMember(
+					withSpec(v1alpha1.MemberParameters{
+						GroupID:  &groupID,
+						UserID:   nil,
+						UserName: nil,
+					}))},
+			want: want{
+				cr: groupMember(
+					withSpec(v1alpha1.MemberParameters{
+						GroupID:  &groupID,
+						UserID:   nil,
+						UserName: nil,
+					})),
+				result: managed.ExternalObservation{},
+				err:    errors.New(errMissingUserInfo),
+			},
+		},
+		"NoUserIDSuccess": {
+			args: args{
+				groupMember: &fake.MockClient{
+					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+						return &gitlab.GroupMember{}, &gitlab.Response{}, nil
+					},
+				},
+				user: &fake.MockClient{
+					MockListUsers: func(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error) {
+						return []*gitlab.User{{ID: userID}}, &gitlab.Response{}, nil
+					},
+				},
+				cr: groupMember(
+					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{
+						UserName: &username,
+						GroupID:  &groupID,
+					})),
+			},
+			want: want{
+				cr: groupMember(
+					withGroupID(),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.MemberObservation{}),
+					withSpec(v1alpha1.MemberParameters{
+						UserName: &username,
+						UserID:   &userID,
+						GroupID:  &groupID,
+					})),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{kube: tc.kube, client: tc.groupMember}
+			e := &external{kube: tc.kube, client: tc.groupMember, userClient: tc.user}
 			o, err := e.Observe(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
@@ -442,12 +517,14 @@ func TestUpdate(t *testing.T) {
 				},
 				cr: groupMember(
 					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID}),
 					withStatus(v1alpha1.MemberObservation{Username: "new username"}),
 				),
 			},
 			want: want{
 				cr: groupMember(
 					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID}),
 					withStatus(v1alpha1.MemberObservation{Username: "new username"}),
 				),
 			},
@@ -459,10 +536,14 @@ func TestUpdate(t *testing.T) {
 						return &gitlab.GroupMember{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: groupMember(withGroupID()),
+				cr: groupMember(
+					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID})),
 			},
 			want: want{
-				cr:  groupMember(withGroupID()),
+				cr: groupMember(
+					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID})),
 				err: errors.Wrap(errBoom, errUpdateFailed),
 			},
 		},
@@ -511,10 +592,14 @@ func TestDelete(t *testing.T) {
 						return &gitlab.Response{}, nil
 					},
 				},
-				cr: groupMember(withGroupID()),
+				cr: groupMember(
+					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID})),
 			},
 			want: want{
-				cr:  groupMember(withGroupID()),
+				cr: groupMember(
+					withGroupID(),
+					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID})),
 				err: nil,
 			},
 		},
@@ -529,7 +614,7 @@ func TestDelete(t *testing.T) {
 			},
 			want: want{
 				cr:  groupMember(withGroupID()),
-				err: errors.Wrap(errBoom, errDeleteFailed),
+				err: errors.New(errMissingUserInfo),
 			},
 		},
 	}
