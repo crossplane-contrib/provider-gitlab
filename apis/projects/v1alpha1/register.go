@@ -69,12 +69,12 @@ var (
 	DeployTokenGroupVersionKind = SchemeGroupVersion.WithKind(DeployTokenKind)
 )
 
-// Deploy Token type metadata
+// Access Token type metadata
 var (
-	AccessTokenKind             = reflect.TypeOf(DeployToken{}).Name()
-	AccessTokenGroupKind        = schema.GroupKind{Group: Group, Kind: DeployTokenKind}.String()
-	AccessTokenKindAPIVersion   = DeployTokenKind + "." + SchemeGroupVersion.String()
-	AccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(DeployTokenKind)
+	AccessTokenKind             = reflect.TypeOf(AccessToken{}).Name()
+	AccessTokenGroupKind        = schema.GroupKind{Group: Group, Kind: AccessTokenKind}.String()
+	AccessTokenKindAPIVersion   = AccessTokenKind + "." + SchemeGroupVersion.String()
+	AccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(AccessTokenKind)
 )
 
 // Variable type metadata
@@ -108,5 +108,6 @@ func init() {
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
 	SchemeBuilder.Register(&DeployKey{}, &DeployKeyList{})
+	SchemeBuilder.Register(&AccessToken{}, &AccessTokenList{})
 	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})
 }

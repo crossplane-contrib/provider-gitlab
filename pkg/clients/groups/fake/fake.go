@@ -44,6 +44,12 @@ type MockClient struct {
 	MockCreateGroupDeployToken func(gid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
 	MockDeleteGroupDeployToken func(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
+	MockListGroupVariables  func(gid interface{}, opt *gitlab.ListGroupVariablesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.GroupVariable, *gitlab.Response, error)
+	MockGetGroupVariable    func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
+	MockCreateGroupVariable func(gid interface{}, opt *gitlab.CreateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
+	MockUpdateGroupVariable func(gid interface{}, key string, opt *gitlab.UpdateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
+	MockRemoveGroupVariable func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
 	MockListUsers func(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error)
 }
 
@@ -110,6 +116,31 @@ func (c *MockClient) CreateGroupDeployToken(gid interface{}, opt *gitlab.CreateG
 // DeleteGroupDeployToken calls the underlying MockDeleteGroupDeployToken method.
 func (c *MockClient) DeleteGroupDeployToken(gid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteGroupDeployToken(gid, deployToken)
+}
+
+// ListVariables calls the underlying MockListGroupVariables method.
+func (c *MockClient) ListVariables(gid interface{}, opt *gitlab.ListGroupVariablesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.GroupVariable, *gitlab.Response, error) {
+	return c.MockListGroupVariables(gid, opt)
+}
+
+// GetVariable calls the underlying MockGetGrouptVariable method.
+func (c *MockClient) GetVariable(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+	return c.MockGetGroupVariable(gid, key)
+}
+
+// CreateVariable calls the underlying MockCreateGroupVariable method.
+func (c *MockClient) CreateVariable(gid interface{}, opt *gitlab.CreateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+	return c.MockCreateGroupVariable(gid, opt)
+}
+
+// UpdateVariable calls the underlying MockUpdateGroupVariable method.
+func (c *MockClient) UpdateVariable(gid interface{}, key string, opt *gitlab.UpdateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+	return c.MockUpdateGroupVariable(gid, key, opt)
+}
+
+// RemoveVariable calls the underlying MockRemoveGroupVariable method.
+func (c *MockClient) RemoveVariable(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockRemoveGroupVariable(gid, key)
 }
 
 // ListUsers calls the underlying MockListUsers method.
