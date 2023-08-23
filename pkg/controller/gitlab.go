@@ -23,15 +23,17 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/config"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups"
-	groupDeployToken "github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/deploytokens"
-	groupmembers "github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/members"
+	groupsDeployToken "github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/deploytokens"
+	groupsMembers "github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/members"
+	groupsVariables "github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/variables"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploykeys"
-	projectDeployToken "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploytokens"
-	projecthooks "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/hooks"
-	projectmembers "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/members"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/pipelineschedules"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/variables"
+	projectsAccessToken "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/accesstokens"
+	projectsDeployKeys "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploykeys"
+	projectsDeployToken "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploytokens"
+	projectsHooks "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/hooks"
+	projectsMembers "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/members"
+	projectsPipelineschedules "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/pipelineschedules"
+	projectsVariables "github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/variables"
 )
 
 // Setup creates all Gitlab API controllers with the supplied logger and adds
@@ -40,15 +42,17 @@ func Setup(mgr ctrl.Manager, l logging.Logger) error {
 	for _, setup := range []func(ctrl.Manager, logging.Logger) error{
 		config.Setup,
 		groups.SetupGroup,
-		groupmembers.SetupMember,
-		groupDeployToken.SetupDeployToken,
+		groupsMembers.SetupMember,
+		groupsDeployToken.SetupDeployToken,
+		groupsVariables.SetupVariable,
 		projects.SetupProject,
-		projecthooks.SetupHook,
-		projectmembers.SetupMember,
-		projectDeployToken.SetupDeployToken,
-		variables.SetupVariable,
-		deploykeys.SetupDeployKey,
-		pipelineschedules.SetupPipelineSchedule,
+		projectsHooks.SetupHook,
+		projectsMembers.SetupMember,
+		projectsDeployToken.SetupDeployToken,
+		projectsAccessToken.SetupAccessToken,
+		projectsVariables.SetupVariable,
+		projectsDeployKeys.SetupDeployKey,
+		projectsPipelineschedules.SetupPipelineSchedule,
 	} {
 		if err := setup(mgr, l); err != nil {
 			return err
