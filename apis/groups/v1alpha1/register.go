@@ -61,8 +61,17 @@ var (
 	DeployTokenGroupVersionKind = SchemeGroupVersion.WithKind(DeployTokenKind)
 )
 
+// Variable type metadata
+var (
+	VariableKind             = reflect.TypeOf(Variable{}).Name()
+	VariableGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: VariableKind}.String()
+	VariableKindAPIVersion   = VariableKind + "." + SchemeGroupVersion.String()
+	VariableGroupVersionKind = SchemeGroupVersion.WithKind(VariableKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Group{}, &GroupList{})
 	SchemeBuilder.Register(&Member{}, &MemberList{})
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
+	SchemeBuilder.Register(&Variable{}, &VariableList{})
 }
