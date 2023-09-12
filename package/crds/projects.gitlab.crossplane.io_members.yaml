@@ -161,9 +161,11 @@ spec:
                   userID:
                     description: The user ID of the member.
                     type: integer
+                  userName:
+                    description: The username of the member.
+                    type: string
                 required:
                 - accessLevel
-                - userID
                 type: object
               providerConfigRef:
                 default:

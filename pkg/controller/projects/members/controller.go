@@ -32,6 +32,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/users"
 )
 
 const (
@@ -41,6 +42,8 @@ const (
 	errDeleteFailed     = "cannot delete Gitlab Project Member"
 	errObserveFailed    = "cannot observe Gitlab Project Member"
 	errProjectIDMissing = "ProjectID is missing"
+	errUserInfoMissing  = "UserID or UserName is missing"
+	errFetchFailed      = "can not fetch userID by UserName"
 )
 
 // SetupMember adds a controller that reconciles Project Members.
@@ -52,7 +55,10 @@ func SetupMember(mgr ctrl.Manager, l logging.Logger) error {
 		For(&v1alpha1.Member{}).
 		Complete(managed.NewReconciler(mgr,
 			resource.ManagedKind(v1alpha1.MemberGroupVersionKind),
-			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewMemberClient}),
+			managed.WithExternalConnecter(&connector{
+				kube:              mgr.GetClient(),
+				newGitlabClientFn: projects.NewMemberClient,
+				newUserClientFn:   users.NewUserClient}),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
 			managed.WithLogger(l.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
@@ -61,6 +67,7 @@ func SetupMember(mgr ctrl.Manager, l logging.Logger) error {
 type connector struct {
 	kube              client.Client
 	newGitlabClientFn func(cfg clients.Config) projects.MemberClient
+	newUserClientFn   func(cfg clients.Config) users.UserClient
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
@@ -72,12 +79,13 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if err != nil {
 		return nil, err
 	}
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
+	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), userClient: c.newUserClientFn(*cfg)}, nil
 }
 
 type external struct {
-	kube   client.Client
-	client projects.MemberClient
+	kube       client.Client
+	client     projects.MemberClient
+	userClient users.UserClient
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -89,9 +97,21 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
 
+	userID, err := cr.Spec.ForProvider.UserID, error(nil)
+	if cr.Spec.ForProvider.UserID == nil {
+		if cr.Spec.ForProvider.UserName == nil {
+			return managed.ExternalObservation{}, errors.New(errUserInfoMissing)
+		}
+		userID, err = users.GetUserID(e.userClient, *cr.Spec.ForProvider.UserName)
+		if err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, errFetchFailed)
+		}
+	}
+	cr.Spec.ForProvider.UserID = userID
+
 	projectMember, res, err := e.client.GetProjectMember(
 		*cr.Spec.ForProvider.ProjectID,
-		cr.Spec.ForProvider.UserID,
+		*cr.Spec.ForProvider.UserID,
 	)
 
 	if err != nil {
@@ -140,10 +160,13 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalUpdate{}, errors.New(errProjectIDMissing)
 	}
+	if cr.Spec.ForProvider.UserID == nil {
+		return managed.ExternalUpdate{}, errors.New(errUserInfoMissing)
+	}
 
 	_, _, err := e.client.EditProjectMember(
 		*cr.Spec.ForProvider.ProjectID,
-		cr.Spec.ForProvider.UserID,
+		*cr.Spec.ForProvider.UserID,
 		projects.GenerateEditMemberOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
@@ -158,10 +181,13 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return errors.New(errProjectIDMissing)
 	}
+	if cr.Spec.ForProvider.UserID == nil {
+		return errors.New(errUserInfoMissing)
+	}
 
 	_, err := e.client.DeleteProjectMember(
 		*cr.Spec.ForProvider.ProjectID,
-		cr.Spec.ForProvider.UserID,
+		*cr.Spec.ForProvider.UserID,
 		gitlab.WithContext(ctx),
 	)
 	return errors.Wrap(err, errDeleteFailed)

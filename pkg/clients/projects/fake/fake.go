@@ -69,6 +69,8 @@ type MockClient struct {
 	MockCreatePipelineScheduleVariable func(pid interface{}, schedule int, opt *gitlab.CreatePipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
 	MockEditPipelineScheduleVariable   func(pid interface{}, schedule int, key string, opt *gitlab.EditPipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
 	MockDeletePipelineScheduleVariable func(pid interface{}, schedule int, key string, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
+
+	MockListUsers func(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error)
 }
 
 // GetPipelineSchedule calls the underlying MockGetPipelineSchedule method.
@@ -244,4 +246,9 @@ func (c *MockClient) CreateProjectAccessToken(pid interface{}, opt *gitlab.Creat
 // RevokeProjectAccessToken calls the underlying MockRevokeProjectAccessToken method.
 func (c *MockClient) RevokeProjectAccessToken(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockRevokeProjectAccessToken(pid, id)
+}
+
+// ListUsers calls the underlying MockListUsers method.
+func (c *MockClient) ListUsers(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error) {
+	return c.MockListUsers(opt)
 }
