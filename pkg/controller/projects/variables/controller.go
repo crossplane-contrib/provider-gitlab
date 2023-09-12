@@ -110,7 +110,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	if cr.Spec.ForProvider.ValueSecretRef != nil {
 		if err = e.updateVariableFromSecret(ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider); err != nil {
-			cr.Status.SetConditions(xpv1.ReconcileError(err))
 			return managed.ExternalObservation{}, errors.Wrap(err, errUpdateFailed)
 		}
 	}
@@ -135,7 +134,6 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	if cr.Spec.ForProvider.ValueSecretRef != nil {
 		if err := e.updateVariableFromSecret(ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider); err != nil {
-			cr.Status.SetConditions(xpv1.ReconcileError(err))
 			return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 		}
 	}
@@ -163,7 +161,6 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	if cr.Spec.ForProvider.ValueSecretRef != nil {
 		if err := e.updateVariableFromSecret(ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider); err != nil {
-			cr.Status.SetConditions(xpv1.ReconcileError(err))
 			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 		}
 	}
@@ -229,7 +226,8 @@ func (e *external) updateVariableFromSecret(ctx context.Context, selector *xpv1.
 		params.Raw = gitlab.Bool(true)
 	}
 
-	params.Value = string(raw)
+	value := string(raw)
+	params.Value = &value
 
 	return nil
 }

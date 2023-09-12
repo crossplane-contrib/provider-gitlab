@@ -58,7 +58,7 @@ type VariableParameters struct {
 
 	// Value for the variable. Mutually exclusive with ValueSecretRef.
 	// +optional
-	Value string `json:"value"`
+	Value *string `json:"value,omitempty"`
 
 	// ValueSecretRef is used to obtain the value from a secret. This will set Masked and Raw to true if they
 	// have not been set implicitly. Mutually exclusive with Value.
