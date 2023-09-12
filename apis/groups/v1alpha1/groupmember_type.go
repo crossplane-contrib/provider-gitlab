@@ -51,8 +51,12 @@ type MemberParameters struct {
 	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
 
 	// The user ID of the member.
-	// +immutable
-	UserID int `json:"userID"`
+	// +optional
+	UserID *int `json:"userID,omitempty"`
+
+	// The userName of the member.
+	// +optional
+	UserName *string `json:"userName,omitempty"`
 
 	// A valid access level.
 	// +immutable
