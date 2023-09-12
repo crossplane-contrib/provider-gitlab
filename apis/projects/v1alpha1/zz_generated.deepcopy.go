@@ -944,6 +944,16 @@ func (in *MemberParameters) DeepCopyInto(out *MemberParameters) {
 		*out = new(v1.Selector)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.UserID != nil {
+		in, out := &in.UserID, &out.UserID
+		*out = new(int)
+		**out = **in
+	}
+	if in.UserName != nil {
+		in, out := &in.UserName, &out.UserName
+		*out = new(string)
+		**out = **in
+	}
 	if in.ExpiresAt != nil {
 		in, out := &in.ExpiresAt, &out.ExpiresAt
 		*out = new(string)
