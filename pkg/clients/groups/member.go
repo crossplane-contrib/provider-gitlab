@@ -73,7 +73,7 @@ func GenerateMemberObservation(groupMember *gitlab.GroupMember) v1alpha1.MemberO
 // GenerateAddMemberOptions generates group member add options
 func GenerateAddMemberOptions(p *v1alpha1.MemberParameters) *gitlab.AddGroupMemberOptions {
 	groupMember := &gitlab.AddGroupMemberOptions{
-		UserID:      &p.UserID,
+		UserID:      p.UserID,
 		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
 	}
 	if p.ExpiresAt != nil {
