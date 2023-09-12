@@ -1952,6 +1952,11 @@ func (in *VariableParameters) DeepCopyInto(out *VariableParameters) {
 		*out = new(v1.Selector)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Value != nil {
+		in, out := &in.Value, &out.Value
+		*out = new(string)
+		**out = **in
+	}
 	if in.ValueSecretRef != nil {
 		in, out := &in.ValueSecretRef, &out.ValueSecretRef
 		*out = new(v1.SecretKeySelector)
