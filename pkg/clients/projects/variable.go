@@ -88,7 +88,7 @@ func LateInitializeVariable(in *v1alpha1.VariableParameters, variable *gitlab.Pr
 func VariableToParameters(in gitlab.ProjectVariable) v1alpha1.VariableParameters {
 	return v1alpha1.VariableParameters{
 		Key:              in.Key,
-		Value:            in.Value,
+		Value:            &in.Value,
 		VariableType:     (*v1alpha1.VariableType)(&in.VariableType),
 		Protected:        &in.Protected,
 		Masked:           &in.Masked,
@@ -101,7 +101,7 @@ func VariableToParameters(in gitlab.ProjectVariable) v1alpha1.VariableParameters
 func GenerateCreateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.CreateProjectVariableOptions {
 	variable := &gitlab.CreateProjectVariableOptions{
 		Key:              &p.Key,
-		Value:            &p.Value,
+		Value:            p.Value,
 		VariableType:     (*gitlab.VariableTypeValue)(p.VariableType),
 		Protected:        p.Protected,
 		Masked:           p.Masked,
@@ -115,7 +115,7 @@ func GenerateCreateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.Creat
 // GenerateUpdateVariableOptions generates project update options
 func GenerateUpdateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.UpdateProjectVariableOptions {
 	variable := &gitlab.UpdateProjectVariableOptions{
-		Value:            &p.Value,
+		Value:            p.Value,
 		VariableType:     (*gitlab.VariableTypeValue)(p.VariableType),
 		Protected:        p.Protected,
 		Masked:           p.Masked,

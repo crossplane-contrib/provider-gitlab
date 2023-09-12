@@ -75,7 +75,7 @@ func withDefaultValues() variableModifier {
 		pv.Spec.ForProvider = v1alpha1.VariableParameters{
 			ProjectID:        &projectID,
 			Key:              variableKey,
-			Value:            variableValue,
+			Value:            &variableValue,
 			Protected:        &f,
 			Masked:           &f,
 			Raw:              &f,
@@ -93,7 +93,7 @@ func withProjectID(pid int) variableModifier {
 
 func withValue(value string) variableModifier {
 	return func(r *v1alpha1.Variable) {
-		r.Spec.ForProvider.Value = value
+		r.Spec.ForProvider.Value = &value
 	}
 }
 
@@ -519,7 +519,6 @@ func TestCreate(t *testing.T) {
 						SecretReference: xpv1.SecretReference{},
 						Key:             "bad",
 					}),
-					withConditions(xpv1.ReconcileError(errors.New(errSecretKeyNotFound))),
 				),
 				err: errors.Wrap(errors.New(errSecretKeyNotFound), errCreateFailed),
 			},
@@ -675,7 +674,6 @@ func TestUpdate(t *testing.T) {
 						SecretReference: xpv1.SecretReference{},
 						Key:             "bad",
 					}),
-					withConditions(xpv1.ReconcileError(errors.New(errSecretKeyNotFound))),
 				),
 				err: errors.Wrap(errors.New(errSecretKeyNotFound), errUpdateFailed),
 			},

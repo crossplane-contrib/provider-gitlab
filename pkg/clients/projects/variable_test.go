@@ -62,7 +62,7 @@ func TestVariableToParameters(t *testing.T) {
 			},
 			want: v1alpha1.VariableParameters{
 				Key:              variableKey,
-				Value:            variableValue,
+				Value:            &variableValue,
 				VariableType:     &variableTypeLocal,
 				Masked:           &variableMasked,
 				Protected:        &variableProtected,
@@ -126,7 +126,7 @@ func TestGenerateCreateVariableOptions(t *testing.T) {
 			args: args{
 				parameters: &v1alpha1.VariableParameters{
 					Key:              variableKey,
-					Value:            variableValue,
+					Value:            &variableValue,
 					VariableType:     &variableTypeLocal,
 					Masked:           &variableMasked,
 					Protected:        &variableProtected,
@@ -148,7 +148,7 @@ func TestGenerateCreateVariableOptions(t *testing.T) {
 			args: args{
 				parameters: &v1alpha1.VariableParameters{
 					Key:          variableKey,
-					Value:        variableValue,
+					Value:        &variableValue,
 					VariableType: &variableTypeLocal,
 				},
 			},
@@ -180,7 +180,7 @@ func TestGenerateUpdateVariableOptions(t *testing.T) {
 		"AllFields": {
 			args: args{
 				parameters: &v1alpha1.VariableParameters{
-					Value:            variableValue,
+					Value:            &variableValue,
 					VariableType:     &variableTypeLocal,
 					Masked:           &variableMasked,
 					Protected:        &variableProtected,
@@ -223,7 +223,7 @@ func TestIsVariableUpToDate(t *testing.T) {
 			args: args{
 				p: &v1alpha1.VariableParameters{
 					Key:              variableKey,
-					Value:            variableValue,
+					Value:            &variableValue,
 					VariableType:     &variableTypeLocal,
 					Protected:        &variableProtected,
 					Masked:           &variableMasked,
@@ -246,7 +246,7 @@ func TestIsVariableUpToDate(t *testing.T) {
 			args: args{
 				p: &v1alpha1.VariableParameters{
 					Key:              variableKey,
-					Value:            variableValue,
+					Value:            &variableValue,
 					VariableType:     &variableTypeLocal,
 					Protected:        &variableProtected,
 					Masked:           &variableMasked,
