@@ -16,7 +16,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	controller "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -255,7 +255,7 @@ func generateUpdateOptions(customResourse *v1alpha1.DeployKey) *gitlab.UpdateDep
 }
 
 func isUpToDate(cr *v1alpha1.DeployKey, dk *gitlab.ProjectDeployKey) bool {
-	isCanPushUpToDate := pointer.BoolEqual(cr.Spec.ForProvider.CanPush, &dk.CanPush)
+	isCanPushUpToDate := ptr.Equal(cr.Spec.ForProvider.CanPush, &dk.CanPush)
 	isTitleUpToDate := cr.Spec.ForProvider.Title == dk.Title
 
 	return isCanPushUpToDate && isTitleUpToDate

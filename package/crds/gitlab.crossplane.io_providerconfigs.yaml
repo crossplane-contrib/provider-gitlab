@@ -104,6 +104,10 @@ spec:
                 required:
                 - source
                 type: object
+              insecureSkipVerify:
+                description: InsecureSkipVerify ignores self signed TLS certificates
+                  when connecting to Gitlab.
+                type: boolean
             required:
             - credentials
             type: object
