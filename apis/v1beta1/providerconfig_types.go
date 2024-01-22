@@ -29,6 +29,10 @@ type ProviderConfigSpec struct {
 
 	// Credentials required to authenticate to this provider.
 	Credentials ProviderCredentials `json:"credentials"`
+
+	// InsecureSkipVerify ignores self signed TLS certificates when connecting
+	// to Gitlab.
+	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
 }
 
 // ProviderCredentials required to authenticate.
