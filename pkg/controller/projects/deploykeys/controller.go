@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	crpc "github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -48,7 +48,7 @@ type connector struct {
 }
 
 // SetupDeployKey adds a controller that reconciles ProjectDeployKey.
-func SetupDeployKey(manager controller.Manager, log logging.Logger) error {
+func SetupDeployKey(manager controller.Manager, o crpc.Options) error {
 	name := managed.ControllerName(v1alpha1.DeployKeyKind)
 
 	connector := &connector{kube: manager.GetClient(), newGitlabClientFn: newDeployKeyClient}
@@ -57,7 +57,7 @@ func SetupDeployKey(manager controller.Manager, log logging.Logger) error {
 		resource.ManagedKind(v1alpha1.DeployKeyGroupVersionKind),
 		managed.WithExternalConnecter(connector),
 		managed.WithInitializers(managed.NewDefaultProviderConfig(manager.GetClient())),
-		managed.WithLogger(log.WithValues("controller", name)),
+		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(manager.GetEventRecorderFor(name))))
 
 	return controller.NewControllerManagedBy(manager).

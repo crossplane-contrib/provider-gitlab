@@ -21,8 +21,8 @@ import (
 	"strconv"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -53,7 +53,7 @@ const (
 )
 
 // SetupPipelineSchedule adds a controller that reconciles PipelineSchedule.
-func SetupPipelineSchedule(mgr ctrl.Manager, l logging.Logger) error {
+func SetupPipelineSchedule(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v1alpha1.PipelineScheduleKind)
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -68,7 +68,7 @@ func SetupPipelineSchedule(mgr ctrl.Manager, l logging.Logger) error {
 				},
 			),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
-			managed.WithLogger(l.WithValues("controller", name)),
+			managed.WithLogger(o.Logger.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
 }
 

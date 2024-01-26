@@ -27,9 +27,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
@@ -50,7 +50,7 @@ const (
 )
 
 // SetupVariable adds a controller that reconciles Variables.
-func SetupVariable(mgr ctrl.Manager, l logging.Logger) error {
+func SetupVariable(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v1alpha1.VariableKind)
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -60,7 +60,7 @@ func SetupVariable(mgr ctrl.Manager, l logging.Logger) error {
 			resource.ManagedKind(v1alpha1.VariableGroupVersionKind),
 			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewVariableClient}),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
-			managed.WithLogger(l.WithValues("controller", name)),
+			managed.WithLogger(o.Logger.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
 }
 
