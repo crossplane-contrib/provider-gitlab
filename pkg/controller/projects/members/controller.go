@@ -24,8 +24,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
@@ -47,7 +47,7 @@ const (
 )
 
 // SetupMember adds a controller that reconciles Project Members.
-func SetupMember(mgr ctrl.Manager, l logging.Logger) error {
+func SetupMember(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v1alpha1.MemberKind)
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -60,7 +60,7 @@ func SetupMember(mgr ctrl.Manager, l logging.Logger) error {
 				newGitlabClientFn: projects.NewMemberClient,
 				newUserClientFn:   users.NewUserClient}),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
-			managed.WithLogger(l.WithValues("controller", name)),
+			managed.WithLogger(o.Logger.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
 }
 

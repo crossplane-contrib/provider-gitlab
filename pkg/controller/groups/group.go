@@ -30,8 +30,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -56,7 +56,7 @@ const (
 )
 
 // SetupGroup adds a controller that reconciles Groups.
-func SetupGroup(mgr ctrl.Manager, l logging.Logger) error {
+func SetupGroup(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v1alpha1.GroupKind)
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -66,7 +66,7 @@ func SetupGroup(mgr ctrl.Manager, l logging.Logger) error {
 			resource.ManagedKind(v1alpha1.GroupKubernetesGroupVersionKind),
 			managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewGroupClient}),
 			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
-			managed.WithLogger(l.WithValues("controller", name)),
+			managed.WithLogger(o.Logger.WithValues("controller", name)),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
 }
 
