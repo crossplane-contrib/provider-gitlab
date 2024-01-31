@@ -19,7 +19,7 @@ package controller
 import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
+	"github.com/crossplane/crossplane-runtime/pkg/controller"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/config"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups"
@@ -38,8 +38,8 @@ import (
 
 // Setup creates all Gitlab API controllers with the supplied logger and adds
 // them to the supplied manager.
-func Setup(mgr ctrl.Manager, l logging.Logger) error {
-	for _, setup := range []func(ctrl.Manager, logging.Logger) error{
+func Setup(mgr ctrl.Manager, o controller.Options) error {
+	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		config.Setup,
 		groups.SetupGroup,
 		groupsMembers.SetupMember,
@@ -54,7 +54,7 @@ func Setup(mgr ctrl.Manager, l logging.Logger) error {
 		projectsDeployKeys.SetupDeployKey,
 		projectsPipelineschedules.SetupPipelineSchedule,
 	} {
-		if err := setup(mgr, l); err != nil {
+		if err := setup(mgr, o); err != nil {
 			return err
 		}
 	}
