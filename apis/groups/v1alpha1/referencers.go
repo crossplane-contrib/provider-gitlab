@@ -34,17 +34,13 @@ func fromPtrValue(v *int) string {
 }
 
 // resolve string value to int pointer
-func toPtrValue(v string) *int {
+func toPtrValue(v string) (*int, error) {
 	if v == "" {
-		return nil
+		return nil, nil
 	}
 
 	r, err := strconv.Atoi(v)
-	if err != nil {
-		return nil
-	}
-
-	return &r
+	return &r, err
 }
 
 // ResolveReferences of this Variable
@@ -64,7 +60,12 @@ func (mg *Variable) ResolveReferences(ctx context.Context, c client.Reader) erro
 		return errors.Wrap(err, "spec.forProvider.groupId")
 	}
 
-	mg.Spec.ForProvider.GroupID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.groupId")
+	}
+
+	mg.Spec.ForProvider.GroupID = resolvedID
 	mg.Spec.ForProvider.GroupIDRef = rsp.ResolvedReference
 
 	return nil
@@ -87,7 +88,12 @@ func (mg *Member) ResolveReferences(ctx context.Context, c client.Reader) error 
 		return errors.Wrap(err, "spec.forProvider.groupId")
 	}
 
-	mg.Spec.ForProvider.GroupID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.groupId")
+	}
+
+	mg.Spec.ForProvider.GroupID = resolvedID
 	mg.Spec.ForProvider.GroupIDRef = rsp.ResolvedReference
 
 	return nil
@@ -110,7 +116,12 @@ func (mg *DeployToken) ResolveReferences(ctx context.Context, c client.Reader) e
 		return errors.Wrap(err, "spec.forProvider.groupId")
 	}
 
-	mg.Spec.ForProvider.GroupID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.groupId")
+	}
+
+	mg.Spec.ForProvider.GroupID = resolvedID
 	mg.Spec.ForProvider.GroupIDRef = rsp.ResolvedReference
 
 	return nil
@@ -143,12 +154,12 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 		return errors.Wrap(err, "mg.Spec.ForProvider.ParentID")
 	}
 
-	id, err := strconv.Atoi(rsp.ResolvedValue)
+	id, err := toPtrValue(rsp.ResolvedValue)
 	if err != nil {
 		return errors.Wrap(err, "mg.Spec.ForProvider.ParentID")
 	}
 
-	mg.Spec.ForProvider.ParentID = &id
+	mg.Spec.ForProvider.ParentID = id
 	mg.Spec.ForProvider.ParentIDRef = rsp.ResolvedReference
 
 	for i3 := 0; i3 < len(mg.Spec.ForProvider.SharedWithGroups); i3++ {
@@ -167,11 +178,11 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 			return errors.Wrap(err, "mg.Spec.ForProvider.SharedWithGroups[i3].GroupID")
 		}
 
-		id, err = strconv.Atoi(rsp.ResolvedValue)
+		id, err := toPtrValue(rsp.ResolvedValue)
 		if err != nil {
 			return errors.Wrap(err, "mg.Spec.ForProvider.SharedWithGroups[i3].GroupID")
 		}
-		mg.Spec.ForProvider.SharedWithGroups[i3].GroupID = &id
+		mg.Spec.ForProvider.SharedWithGroups[i3].GroupID = id
 		mg.Spec.ForProvider.SharedWithGroups[i3].GroupIDRef = rsp.ResolvedReference
 
 	}
