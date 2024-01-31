@@ -407,7 +407,7 @@ func TestCreate(t *testing.T) {
 					withGroupID(),
 					withSpec(v1alpha1.MemberParameters{GroupID: &ID}),
 				),
-				result: managed.ExternalCreation{ExternalNameAssigned: true},
+				result: managed.ExternalCreation{},
 			},
 		},
 		"SuccessfulCreationWithExpiresAt": {
@@ -438,7 +438,7 @@ func TestCreate(t *testing.T) {
 					withGroupID(),
 					withSpec(v1alpha1.MemberParameters{GroupID: &ID}),
 				),
-				result: managed.ExternalCreation{ExternalNameAssigned: true},
+				result: managed.ExternalCreation{},
 			},
 		},
 		"FailedCreation": {

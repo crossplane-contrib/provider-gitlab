@@ -584,7 +584,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: want{
 				cr:     group(withExternalName(extName)),
-				result: managed.ExternalCreation{ExternalNameAssigned: true},
+				result: managed.ExternalCreation{},
 			},
 		},
 		"FailedCreation": {

@@ -323,8 +323,7 @@ func TestCreate(t *testing.T) {
 					}),
 				),
 				result: managed.ExternalCreation{
-					ExternalNameAssigned: true,
-					ConnectionDetails:    managed.ConnectionDetails{"token": []byte("Token")},
+					ConnectionDetails: managed.ConnectionDetails{"token": []byte("Token")},
 				},
 			},
 		},
