@@ -21,6 +21,7 @@ import (
 	"strconv"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -34,8 +35,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/features"
 )
 
 const (
@@ -56,20 +59,32 @@ const (
 func SetupPipelineSchedule(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v1alpha1.PipelineScheduleKind)
 
+	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
+	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
+		cps = append(cps, connection.NewDetailsManager(mgr.GetClient(), secretstoreapi.StoreConfigGroupVersionKind))
+	}
+
+	reconcilerOpts := []managed.ReconcilerOption{
+		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: newPipelineScheduleClient}),
+		managed.WithInitializers(),
+		managed.WithPollInterval(o.PollInterval),
+		managed.WithLogger(o.Logger.WithValues("controller", name)),
+		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
+		managed.WithConnectionPublishers(cps...),
+	}
+
+	if o.Features.Enabled(features.EnableAlphaManagementPolicies) {
+		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
+	}
+
+	r := managed.NewReconciler(mgr,
+		resource.ManagedKind(v1alpha1.PipelineScheduleGroupVersionKind),
+		reconcilerOpts...)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		For(&v1alpha1.PipelineSchedule{}).
-		Complete(managed.NewReconciler(mgr,
-			resource.ManagedKind(v1alpha1.PipelineScheduleGroupVersionKind),
-			managed.WithExternalConnecter(
-				&connector{
-					kube:              mgr.GetClient(),
-					newGitlabClientFn: newPipelineScheduleClient,
-				},
-			),
-			managed.WithInitializers(managed.NewDefaultProviderConfig(mgr.GetClient())),
-			managed.WithLogger(o.Logger.WithValues("controller", name)),
-			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
+		Complete(r)
 }
 
 type external struct {
@@ -171,8 +186,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	for _, v := range cr.Spec.ForProvider.Variables {
 		opt := &gitlab.CreatePipelineScheduleVariableOptions{
-			Key:          &v.Key,
-			Value:        &v.Value,
+			Key:          &v.Key,   //nolint:gosec
+			Value:        &v.Value, //nolint:gosec
 			VariableType: v.VariableType,
 		}
 		_, _, err := e.client.CreatePipelineScheduleVariable(
@@ -232,8 +247,8 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		for _, v := range cr.Spec.ForProvider.Variables {
 			if notSaved(v, ps.Variables) {
 				opt := &gitlab.CreatePipelineScheduleVariableOptions{
-					Key:          &v.Key,
-					Value:        &v.Value,
+					Key:          &v.Key,   //nolint:gosec
+					Value:        &v.Value, //nolint:gosec
 					VariableType: v.VariableType,
 				}
 				_, _, err := e.client.CreatePipelineScheduleVariable(
@@ -247,7 +262,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			}
 			if notUpdated(v, ps.Variables) {
 				opt := &gitlab.EditPipelineScheduleVariableOptions{
-					Value:        &v.Value,
+					Value:        &v.Value, //nolint:gosec
 					VariableType: v.VariableType,
 				}
 				_, _, err := e.client.EditPipelineScheduleVariable(
