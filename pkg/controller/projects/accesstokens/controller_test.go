@@ -444,8 +444,7 @@ func TestCreate(t *testing.T) {
 					withExternalName(sAccessTokenID),
 				),
 				result: managed.ExternalCreation{
-					ExternalNameAssigned: true,
-					ConnectionDetails:    managed.ConnectionDetails{"token": []byte(token)},
+					ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)},
 				},
 			},
 		},
