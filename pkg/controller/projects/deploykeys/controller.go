@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	crpc "github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -17,12 +18,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
-	controller "sigs.k8s.io/controller-runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/features"
 )
 
 const (
@@ -48,22 +51,35 @@ type connector struct {
 }
 
 // SetupDeployKey adds a controller that reconciles ProjectDeployKey.
-func SetupDeployKey(manager controller.Manager, o crpc.Options) error {
+func SetupDeployKey(mgr ctrl.Manager, o crpc.Options) error {
 	name := managed.ControllerName(v1alpha1.DeployKeyKind)
 
-	connector := &connector{kube: manager.GetClient(), newGitlabClientFn: newDeployKeyClient}
+	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
+	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
+		cps = append(cps, connection.NewDetailsManager(mgr.GetClient(), secretstoreapi.StoreConfigGroupVersionKind))
+	}
 
-	reconciler := managed.NewReconciler(manager,
-		resource.ManagedKind(v1alpha1.DeployKeyGroupVersionKind),
-		managed.WithExternalConnecter(connector),
-		managed.WithInitializers(managed.NewDefaultProviderConfig(manager.GetClient())),
+	reconcilerOpts := []managed.ReconcilerOption{
+		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: newDeployKeyClient}),
+		managed.WithInitializers(),
+		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(manager.GetEventRecorderFor(name))))
+		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
+		managed.WithConnectionPublishers(cps...),
+	}
 
-	return controller.NewControllerManagedBy(manager).
+	if o.Features.Enabled(features.EnableAlphaManagementPolicies) {
+		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
+	}
+
+	r := managed.NewReconciler(mgr,
+		resource.ManagedKind(v1alpha1.DeployKeyGroupVersionKind),
+		reconcilerOpts...)
+
+	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		For(&v1alpha1.DeployKey{}).
-		Complete(reconciler)
+		Complete(r)
 }
 
 func (c *connector) Connect(ctx context.Context, mgd resource.Managed) (managed.ExternalClient, error) {
@@ -169,7 +185,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	id := strconv.Itoa(keyResponse.ID)
 	meta.SetExternalName(cr, id)
 
-	return managed.ExternalCreation{ExternalNameAssigned: true}, nil
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {

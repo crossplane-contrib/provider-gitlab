@@ -350,8 +350,7 @@ func TestCreate(t *testing.T) {
 					withExternalName(testExternalName),
 				),
 				result: managed.ExternalCreation{
-					ExternalNameAssigned: true,
-					ConnectionDetails:    nil,
+					ConnectionDetails: nil,
 				},
 			},
 		},

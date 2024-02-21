@@ -444,7 +444,7 @@ func TestCreate(t *testing.T) {
 					withProjectID(),
 					withSpec(v1alpha1.MemberParameters{ProjectID: &projectID}),
 				),
-				result: managed.ExternalCreation{ExternalNameAssigned: true},
+				result: managed.ExternalCreation{},
 			},
 		},
 		"SuccessfulCreationWithExpiresAt": {
@@ -476,7 +476,7 @@ func TestCreate(t *testing.T) {
 					withProjectID(),
 					withSpec(v1alpha1.MemberParameters{ProjectID: &projectID}),
 				),
-				result: managed.ExternalCreation{ExternalNameAssigned: true},
+				result: managed.ExternalCreation{},
 			},
 		},
 		"FailedCreation": {

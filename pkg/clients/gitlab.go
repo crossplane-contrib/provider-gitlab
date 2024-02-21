@@ -77,7 +77,7 @@ func GetConfig(ctx context.Context, c client.Client, mg resource.Managed) (*Conf
 	}
 }
 
-// UseProviderConfig to produce a config that can be used to authenticate to AWS.
+// UseProviderConfig to produce a config that can be used to authenticate to Gitlab.
 func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed) (*Config, error) {
 	pc := &v1beta1.ProviderConfig{}
 	if err := c.Get(ctx, types.NamespacedName{Name: mg.GetProviderConfigReference().Name}, pc); err != nil {
