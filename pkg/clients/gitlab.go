@@ -18,6 +18,7 @@ package clients
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"time"
 
@@ -53,6 +54,11 @@ func NewClient(c Config) *gitlab.Client {
 	}
 	if c.InsecureSkipVerify {
 		transport := cleanhttp.DefaultPooledTransport()
+		if transport.TLSClientConfig == nil {
+			transport.TLSClientConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
+		}
 		transport.TLSClientConfig.InsecureSkipVerify = true
 		httpclient := &http.Client{
 			Transport: transport,
