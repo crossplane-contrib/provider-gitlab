@@ -54,7 +54,7 @@ const (
 
 // SetupProject adds a controller that reconciles Projects.
 func SetupProject(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.VariableKind)
+	name := managed.ControllerName(v1alpha1.ProjectKind)
 
 	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
 	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
@@ -75,12 +75,12 @@ func SetupProject(mgr ctrl.Manager, o controller.Options) error {
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.VariableGroupVersionKind),
+		resource.ManagedKind(v1alpha1.ProjectGroupVersionKind),
 		reconcilerOpts...)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		For(&v1alpha1.Variable{}).
+		For(&v1alpha1.Project{}).
 		Complete(r)
 }
 
