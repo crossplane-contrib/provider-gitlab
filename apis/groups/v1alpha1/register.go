@@ -61,6 +61,14 @@ var (
 	DeployTokenGroupVersionKind = SchemeGroupVersion.WithKind(DeployTokenKind)
 )
 
+// Access Token type metadata
+var (
+	AccessTokenKind             = reflect.TypeOf(AccessToken{}).Name()
+	AccessTokenGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: AccessTokenKind}.String()
+	AccessTokenKindAPIVersion   = AccessTokenKind + "." + SchemeGroupVersion.String()
+	AccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(AccessTokenKind)
+)
+
 // Variable type metadata
 var (
 	VariableKind             = reflect.TypeOf(Variable{}).Name()
