@@ -21,6 +21,7 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/accesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/members"
@@ -32,6 +33,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		groups.SetupGroup,
 		members.SetupMember,
+		accesstokens.SetupAccessToken,
 		deploytokens.SetupDeployToken,
 		variables.SetupVariable,
 	} {
