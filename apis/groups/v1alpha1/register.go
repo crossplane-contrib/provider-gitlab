@@ -80,6 +80,7 @@ var (
 func init() {
 	SchemeBuilder.Register(&Group{}, &GroupList{})
 	SchemeBuilder.Register(&Member{}, &MemberList{})
+	SchemeBuilder.Register(&AccessToken{}, &AccessTokenList{})
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
 }
