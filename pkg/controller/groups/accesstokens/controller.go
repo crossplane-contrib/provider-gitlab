@@ -57,7 +57,7 @@ const (
 
 // SetupAccessToken adds a controller that reconciles GroupAccessTokens.
 func SetupAccessToken(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.DeployTokenKind)
+	name := managed.ControllerName(v1alpha1.AccessTokenKind)
 
 	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
 	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
