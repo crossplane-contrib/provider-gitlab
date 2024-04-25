@@ -148,6 +148,14 @@ type ContainerExpirationPolicyAttributes struct {
 	NameRegex *string `url:"name_regex,omitempty" json:"name_regex,omitempty"`
 }
 
+// Struct representing the secret name and the secret namespace to use when importing a project with secret
+type ImportUrlSecretRef struct {
+	Name        string `json:"secretName"`
+	Namespace   string `json:"secretNamespace"`
+	UsernameKey string `json:"username" default:"username"`
+	PasswordKey string `json:"password" default:"password"`
+}
+
 // ProjectParameters define the desired state of a Gitlab Project
 type ProjectParameters struct {
 	// Set whether or not merge requests can be merged with skipped jobs.
@@ -244,9 +252,14 @@ type ProjectParameters struct {
 	// +immutable
 	GroupWithProjectTemplatesID *int `json:"groupWithProjectTemplatesId,omitempty"`
 
-	// URL to import repository from.
+	// URL to import repository from. Provided credentials in the URL will be overwritten in case a valid secretRef is present in ImportUrlSecretRef.
 	// +optional
+	// +kubebuilder:validation:MinLength=11
 	ImportURL *string `json:"importUrl,omitempty"`
+
+	// Secret to use when importing project with secret. Provided credentials in ImportUrl will be overwitten with the credentials found in ImportUrlSecretRel.
+	// +optional
+	ImportUrlSecretRef *ImportUrlSecretRef `json:"importUrlSecretRef,omitempty"`
 
 	// false by default.
 	// +optional

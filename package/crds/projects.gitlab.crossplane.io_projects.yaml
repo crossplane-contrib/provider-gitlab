@@ -162,8 +162,30 @@ spec:
                       to be true.
                     type: integer
                   importUrl:
-                    description: URL to import repository from.
+                    description: URL to import repository from. Provided credentials
+                      in the URL will be overwritten in case a valid secretRef is
+                      present in ImportUrlSecretRef.
+                    minLength: 11
                     type: string
+                  importUrlSecretRef:
+                    description: Secret to use when importing project with secret.
+                      Provided credentials in ImportUrl will be overwitten with the
+                      credentials found in ImportUrlSecretRel.
+                    properties:
+                      password:
+                        type: string
+                      secretName:
+                        type: string
+                      secretNamespace:
+                        type: string
+                      username:
+                        type: string
+                    required:
+                    - password
+                    - secretName
+                    - secretNamespace
+                    - username
+                    type: object
                   initializeWithReadme:
                     description: false by default.
                     type: boolean
