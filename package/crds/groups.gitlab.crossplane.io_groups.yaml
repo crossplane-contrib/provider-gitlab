@@ -552,12 +552,6 @@ spec:
                           type: integer
                         groupName:
                           type: string
-                      required:
-                      - expiresAt
-                      - groupAccessLevel
-                      - groupFullPath
-                      - groupId
-                      - groupName
                       type: object
                     type: array
                   statistics:
