@@ -246,11 +246,11 @@ type GroupObservation struct {
 
 // SharedWithGroupsObservation is the observed state of a SharedWithGroups.
 type SharedWithGroupsObservation struct {
-	GroupID          *int         `json:"groupId"`
-	GroupName        *string      `json:"groupName"`
-	GroupFullPath    *string      `json:"groupFullPath"`
-	GroupAccessLevel *int         `json:"groupAccessLevel"`
-	ExpiresAt        *metav1.Time `json:"expiresAt"`
+	GroupID          *int         `json:"groupId,omitempty"`
+	GroupName        *string      `json:"groupName,omitempty"`
+	GroupFullPath    *string      `json:"groupFullPath,omitempty"`
+	GroupAccessLevel *int         `json:"groupAccessLevel,omitempty"`
+	ExpiresAt        *metav1.Time `json:"expiresAt,omitempty"`
 }
 
 // A GroupSpec defines the desired state of a Gitlab Group.
