@@ -48,6 +48,10 @@ type MockClient struct {
 	MockCreateGroupAccessToken func(gid interface{}, opt *gitlab.CreateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
 	MockRevokeGroupAccessToken func(gid interface{}, accessToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
+	MockGetGroupSAMLLink    func(pid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error)
+	MockAddGroupSAMLLink    func(pid interface{}, opt *gitlab.AddGroupSAMLLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error)
+	MockDeleteGroupSAMLLink func(pid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
 	MockListGroupVariables  func(gid interface{}, opt *gitlab.ListGroupVariablesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.GroupVariable, *gitlab.Response, error)
 	MockGetGroupVariable    func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
 	MockCreateGroupVariable func(gid interface{}, opt *gitlab.CreateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
@@ -165,4 +169,19 @@ func (c *MockClient) RemoveVariable(gid interface{}, key string, options ...gitl
 // ListUsers calls the underlying MockListUsers method.
 func (c *MockClient) ListUsers(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error) {
 	return c.MockListUsers(opt)
+}
+
+// GetGroupSAMLLink calls the underlying MockGetGroupSAMLLink method.
+func (c *MockClient) GetGroupSAMLLink(pid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error) {
+	return c.MockGetGroupSAMLLink(pid, samlGroupName)
+}
+
+// AddGroupSAMLLink call the underlying MockAddGroupSAMLLink method.
+func (c *MockClient) AddGroupSAMLLink(pid interface{}, opt *gitlab.AddGroupSAMLLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error) {
+	return c.MockAddGroupSAMLLink(pid, opt)
+}
+
+// DeleteGroupSAMLLink calls the underlying MockDeleteGroupSAMLLink method.
+func (c *MockClient) DeleteGroupSAMLLink(pid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteGroupSAMLLink(pid, samlGroupName)
 }

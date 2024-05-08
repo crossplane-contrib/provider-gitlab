@@ -53,6 +53,14 @@ var (
 	MemberKubernetesGroupVersionKind = SchemeGroupVersion.WithKind(MemberKind)
 )
 
+// SamlGroupLink type metadata
+var (
+	SamlGroupLinkKind             = reflect.TypeOf(SamlGroupLink{}).Name()
+	SamlGroupLinkGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: SamlGroupLinkKind}.String()
+	SamlGroupLinkKindAPIVersion   = SamlGroupLinkKind + "." + SchemeGroupVersion.String()
+	SamlGroupLinkGroupVersionKind = SchemeGroupVersion.WithKind(SamlGroupLinkKind)
+)
+
 // Deploy Token type metadata
 var (
 	DeployTokenKind             = reflect.TypeOf(DeployToken{}).Name()
@@ -83,4 +91,6 @@ func init() {
 	SchemeBuilder.Register(&AccessToken{}, &AccessTokenList{})
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
+	SchemeBuilder.Register(&SamlGroupLink{}, &SamlGroupLinkList{})
+
 }
