@@ -22,6 +22,7 @@ import (
 
 	"github.com/xanzy/go-gitlab"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -153,11 +154,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}, nil
 }
 
-func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.Project)
-	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotProject)
-	}
+func buildImportUrl(ctx context.Context, cr *v1alpha1.Project, e *external) error {
 
 	keySecretRef := cr.Spec.ForProvider.ImportUrlSecretRef
 	importUrl := cr.Spec.ForProvider.ImportURL
@@ -165,7 +162,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	// User has provided secret for the import
 	secretRefIsNotEmpty := keySecretRef != nil && keySecretRef.Namespace != "" && keySecretRef.Name != ""
 	keysAreNotEmpty := keySecretRef != nil && keySecretRef.PasswordKey != "" && keySecretRef.UsernameKey != ""
-	importUrlIsNotEmpty := importUrl != nil && *importUrl != ""
+	importUrlIsNotEmpty := ptr.Deref(importUrl, "") != ""
 
 	if secretRefIsNotEmpty && keysAreNotEmpty && importUrlIsNotEmpty {
 		// Retrieve secret from k8s
@@ -179,19 +176,19 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		err := e.kube.Get(ctx, namespacedName, secret)
 
 		if err != nil {
-			return managed.ExternalCreation{}, errors.Wrap(err, errNoImportSecret)
+			return errors.Wrap(err, errNoImportSecret)
 		}
 
 		// Obtain the password from the secret.
 		password := string(secret.Data[keySecretRef.PasswordKey])
 		if password == "" {
-			return managed.ExternalCreation{}, errors.Wrap(err, errPasswordNotFound)
+			return errors.Wrap(err, errPasswordNotFound)
 		}
 
 		// Obtain the username from the secret.
 		username := string(secret.Data[keySecretRef.UsernameKey])
 		if username == "" {
-			return managed.ExternalCreation{}, errors.Wrap(err, errUsernameNotFound)
+			return errors.Wrap(err, errUsernameNotFound)
 		}
 
 		// manipulate url to add the secret. If secret is already in the url, it should be overridden
@@ -199,7 +196,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		parsedUrl, err := url.Parse(*importUrl)
 
 		if err != nil {
-			return managed.ExternalCreation{}, errors.Wrap(err, errParseUrlFailed)
+			return errors.Wrap(err, errParseUrlFailed)
 		}
 
 		userInfo := url.UserPassword(username, password)
@@ -208,6 +205,21 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 		// Override importUrl with the manipulated URL containing the credentials found in ImportSecretRef.
 		*importUrl = parsedUrl.String()
+	}
+
+	return nil
+}
+
+func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
+	cr, ok := mg.(*v1alpha1.Project)
+	if !ok {
+		return managed.ExternalCreation{}, errors.New(errNotProject)
+	}
+
+	err := buildImportUrl(ctx, cr, e)
+
+	if err != nil {
+		return managed.ExternalCreation{}, errors.WithStack(err)
 	}
 
 	prj, _, err := e.client.CreateProject(

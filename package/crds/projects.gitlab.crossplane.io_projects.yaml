@@ -165,7 +165,7 @@ spec:
                     description: URL to import repository from. Provided credentials
                       in the URL will be overwritten in case a valid secretRef is
                       present in ImportUrlSecretRef.
-                    minLength: 11
+                    minLength: 9
                     type: string
                   importUrlSecretRef:
                     description: Secret to use when importing project with secret.
@@ -173,12 +173,14 @@ spec:
                       credentials found in ImportUrlSecretRel.
                     properties:
                       password:
+                        default: password
                         type: string
                       secretName:
                         type: string
                       secretNamespace:
                         type: string
                       username:
+                        default: username
                         type: string
                     required:
                     - password

@@ -150,10 +150,12 @@ type ContainerExpirationPolicyAttributes struct {
 
 // Struct representing the secret name and the secret namespace to use when importing a project with secret
 type ImportUrlSecretRef struct {
-	Name        string `json:"secretName"`
-	Namespace   string `json:"secretNamespace"`
-	UsernameKey string `json:"username" default:"username"`
-	PasswordKey string `json:"password" default:"password"`
+	Name      string `json:"secretName"`
+	Namespace string `json:"secretNamespace"`
+	// +kubebuilder:default:=username
+	UsernameKey string `json:"username"`
+	// +kubebuilder:default:=password
+	PasswordKey string `json:"password"`
 }
 
 // ProjectParameters define the desired state of a Gitlab Project
@@ -254,7 +256,7 @@ type ProjectParameters struct {
 
 	// URL to import repository from. Provided credentials in the URL will be overwritten in case a valid secretRef is present in ImportUrlSecretRef.
 	// +optional
-	// +kubebuilder:validation:MinLength=11
+	// +kubebuilder:validation:MinLength=9
 	ImportURL *string `json:"importUrl,omitempty"`
 
 	// Secret to use when importing project with secret. Provided credentials in ImportUrl will be overwitten with the credentials found in ImportUrlSecretRel.
