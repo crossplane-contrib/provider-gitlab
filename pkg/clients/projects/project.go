@@ -55,7 +55,7 @@ func IsErrorProjectNotFound(err error) bool {
 
 // GenerateObservation is used to produce v1alpha1.ProjectObservation from
 // gitlab.Project.
-func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { // nolint:gocyclo
+func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //nolint:gocyclo
 	if prj == nil {
 		return v1alpha1.ProjectObservation{}
 	}
