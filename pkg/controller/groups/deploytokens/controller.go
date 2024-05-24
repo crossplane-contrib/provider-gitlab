@@ -20,14 +20,6 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/xanzy/go-gitlab"
-
-	"github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
@@ -35,6 +27,12 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
+	"github.com/xanzy/go-gitlab"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
@@ -206,7 +204,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 
 // lateInitializeGroupDeployToken fills the empty fields in the deploy token spec with the
 // values seen in gitlab deploy token.
-func lateInitializeGroupDeployToken(in *v1alpha1.DeployTokenParameters, deployToken *gitlab.DeployToken) { // nolint:gocyclo
+func lateInitializeGroupDeployToken(in *v1alpha1.DeployTokenParameters, deployToken *gitlab.DeployToken) {
 	if deployToken == nil {
 		return
 	}

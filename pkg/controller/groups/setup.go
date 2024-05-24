@@ -17,9 +17,8 @@ limitations under the License.
 package groups
 
 import (
-	ctrl "sigs.k8s.io/controller-runtime"
-
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/accesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/deploytokens"

@@ -16,19 +16,17 @@ package members
 import (
 	"context"
 
-	"github.com/xanzy/go-gitlab"
-
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
+	"github.com/xanzy/go-gitlab"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"

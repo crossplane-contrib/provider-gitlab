@@ -204,7 +204,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 // Update implements managed.ExternalClient.
-func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) { // nolint:gocyclo
+func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) { //nolint:gocyclo
 	cr, ok := mg.(*v1alpha1.PipelineSchedule)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotPipelineSchedule)
