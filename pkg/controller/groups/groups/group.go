@@ -21,21 +21,19 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xanzy/go-gitlab"
-
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
+	"github.com/xanzy/go-gitlab"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
@@ -177,7 +175,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalCreation{}, nil
 }
 
-func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) { // nolint:gocyclo
+func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) { //nolint:gocyclo
 	cr, ok := mg.(*v1alpha1.Group)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotGroup)
@@ -241,7 +239,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 }
 
 // isGroupUpToDate checks whether there is a change in any of the modifiable fields.
-func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) (bool, error) { // nolint:gocyclo
+func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) (bool, error) { //nolint:gocyclo
 	if p.Name != nil && !cmp.Equal(*p.Name, g.Name) {
 		return false, nil
 	}
@@ -339,7 +337,7 @@ func isSharedWithGroupsUpToDate(cr *v1alpha1.GroupParameters, in *gitlab.Group) 
 
 // lateInitialize fills the empty fields in the group spec with the
 // values seen in gitlab.Group.
-func lateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) error { // nolint:gocyclo
+func lateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) error { //nolint:gocyclo
 	if group == nil {
 		return nil
 	}

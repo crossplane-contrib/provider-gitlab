@@ -20,11 +20,11 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
-
 	"github.com/crossplane/crossplane-runtime/pkg/reference"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 )
 
 // resolve int ptr to string value

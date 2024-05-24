@@ -72,7 +72,7 @@ func SubGroupCreationLevelValueV1alpha1ToGitlab(from *v1alpha1.SubGroupCreationL
 
 // GenerateObservation is used to produce v1alpha1.GroupGitLabObservation from
 // gitlab.Group.
-func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { // nolint:gocyclo
+func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { //nolint:gocyclo
 	if grp == nil {
 		return v1alpha1.GroupObservation{}
 	}

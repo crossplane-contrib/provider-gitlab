@@ -20,14 +20,6 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/xanzy/go-gitlab"
-
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/pkg/errors"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
@@ -35,6 +27,12 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/pkg/errors"
+	"github.com/xanzy/go-gitlab"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
@@ -189,7 +187,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 
 // lateInitialize fills the empty fields in the project spec with the
 // values seen in gitlab.Project.
-func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { // nolint:gocyclo
+func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { //nolint:gocyclo
 	if project == nil {
 		return
 	}
@@ -296,7 +294,7 @@ func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { /
 }
 
 // isProjectUpToDate checks whether there is a change in any of the modifiable fields.
-func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { // nolint:gocyclo
+func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { //nolint:gocyclo
 	if p.Name != nil && !cmp.Equal(*p.Name, g.Name) {
 		return false
 	}

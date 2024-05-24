@@ -57,7 +57,7 @@ func IsErrorVariableNotFound(err error) bool {
 
 // LateInitializeVariable fills the empty fields in the projecthook spec with the
 // values seen in gitlab.Variable.
-func LateInitializeVariable(in *v1alpha1.VariableParameters, variable *gitlab.ProjectVariable) { // nolint:gocyclo
+func LateInitializeVariable(in *v1alpha1.VariableParameters, variable *gitlab.ProjectVariable) {
 	if variable == nil {
 		return
 	}

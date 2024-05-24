@@ -55,7 +55,7 @@ func IsErrorHookNotFound(err error) bool {
 
 // LateInitializeHook fills the empty fields in the hook spec with the
 // values seen in gitlab.Hook.
-func LateInitializeHook(in *v1alpha1.HookParameters, hook *gitlab.ProjectHook) { // nolint:gocyclo
+func LateInitializeHook(in *v1alpha1.HookParameters, hook *gitlab.ProjectHook) { //nolint:gocyclo
 	if hook == nil {
 		return
 	}
@@ -98,7 +98,7 @@ func LateInitializeHook(in *v1alpha1.HookParameters, hook *gitlab.ProjectHook) {
 
 // GenerateHookObservation is used to produce v1alpha1.HookObservation from
 // gitlab.Hook.
-func GenerateHookObservation(hook *gitlab.ProjectHook) v1alpha1.HookObservation { // nolint:gocyclo
+func GenerateHookObservation(hook *gitlab.ProjectHook) v1alpha1.HookObservation {
 	if hook == nil {
 		return v1alpha1.HookObservation{}
 	}
@@ -158,7 +158,7 @@ func GenerateEditHookOptions(p *v1alpha1.HookParameters) *gitlab.EditProjectHook
 }
 
 // IsHookUpToDate checks whether there is a change in any of the modifiable fields.
-func IsHookUpToDate(p *v1alpha1.HookParameters, g *gitlab.ProjectHook) bool { // nolint:gocyclo
+func IsHookUpToDate(p *v1alpha1.HookParameters, g *gitlab.ProjectHook) bool { //nolint:gocyclo
 	if !cmp.Equal(p.URL, clients.StringToPtr(g.URL)) {
 		return false
 	}
