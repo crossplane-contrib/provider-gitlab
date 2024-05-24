@@ -53,7 +53,7 @@ func IsErrorMemberNotFound(err error) bool {
 
 // GenerateMemberObservation is used to produce v1alpha1.MemberObservation from
 // gitlab.Member.
-func GenerateMemberObservation(groupMember *gitlab.GroupMember) v1alpha1.MemberObservation { // nolint:gocyclo
+func GenerateMemberObservation(groupMember *gitlab.GroupMember) v1alpha1.MemberObservation {
 	if groupMember == nil {
 		return v1alpha1.MemberObservation{}
 	}

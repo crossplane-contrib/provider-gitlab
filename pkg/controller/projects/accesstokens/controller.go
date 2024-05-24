@@ -21,14 +21,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xanzy/go-gitlab"
-
-	"github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
@@ -36,6 +28,12 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
+	"github.com/xanzy/go-gitlab"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
@@ -208,7 +206,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 
 // lateInitializeProjectAccessToken fills the empty fields in the access token spec with the
 // values seen in gitlab access token.
-func lateInitializeProjectAccessToken(in *v1alpha1.AccessTokenParameters, accessToken *gitlab.ProjectAccessToken) { // nolint:gocyclo
+func lateInitializeProjectAccessToken(in *v1alpha1.AccessTokenParameters, accessToken *gitlab.ProjectAccessToken) {
 	if accessToken == nil {
 		return
 	}

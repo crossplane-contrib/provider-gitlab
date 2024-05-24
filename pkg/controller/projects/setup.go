@@ -17,9 +17,8 @@ limitations under the License.
 package projects
 
 import (
-	ctrl "sigs.k8s.io/controller-runtime"
-
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/accesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploykeys"
