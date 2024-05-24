@@ -10,8 +10,8 @@ on:
 
 env:
   # Common versions
-  GO_VERSION: '1.21.6'
-  GOLANGCI_VERSION: 'v1.56.1'
+  GO_VERSION: '1.22.3'
+  GOLANGCI_VERSION: 'v1.58.1'
   DOCKER_BUILDX_VERSION: 'v0.8.2'
 
   # Common users. We can't run a step 'if secrets.AWS_USR != ""' but we can run
