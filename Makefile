@@ -44,6 +44,10 @@ GOLANGCILINT_VERSION = 1.56.1
 # ====================================================================================
 # Setup Kubernetes tools
 
+UP_VERSION = v0.27.0
+UP_CHANNEL = stable
+UPTEST_VERSION = v0.12.0
+
 -include build/makelib/k8s_tools.mk
 
 # ====================================================================================
