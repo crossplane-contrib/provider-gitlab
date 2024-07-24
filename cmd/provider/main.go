@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -60,6 +61,8 @@ func main() {
 
 	zl := zap.New(zap.UseDevMode(*debug), UseISO8601())
 	log := logging.NewLogrLogger(zl.WithName("provider-gitlab"))
+	// explicitly  provide a no-op logger by default, otherwise controller-runtime gives a warning
+	ctrl.SetLogger(zap.New(zap.WriteTo(io.Discard)))
 	if *debug {
 		// The controller-runtime runs with a no-op logger by default. It is
 		// *very* verbose even at info level, so we only provide it a real
