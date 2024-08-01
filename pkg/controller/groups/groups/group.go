@@ -234,7 +234,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotGroup)
 	}
 
-	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), gitlab.WithContext(ctx))
+	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{}, gitlab.WithContext(ctx))
 	return errors.Wrap(err, errDeleteFailed)
 }
 
@@ -273,7 +273,10 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) (bool, error)
 	if !clients.IsBoolEqualToBoolPtr(p.AutoDevopsEnabled, g.AutoDevopsEnabled) {
 		return false, nil
 	}
-	if !clients.IsBoolEqualToBoolPtr(p.EmailsDisabled, g.EmailsDisabled) {
+	if !clients.IsBoolEqualToBoolPtr(p.EmailsDisabled, !g.EmailsEnabled) {
+		return false, nil
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.EmailsEnabled, g.EmailsEnabled) {
 		return false, nil
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.MentionsDisabled, g.MentionsDisabled) {
@@ -370,8 +373,8 @@ func lateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) error { /
 	if in.AutoDevopsEnabled == nil {
 		in.AutoDevopsEnabled = &group.AutoDevopsEnabled
 	}
-	if in.EmailsDisabled == nil {
-		in.EmailsDisabled = &group.EmailsDisabled
+	if in.EmailsEnabled == nil {
+		in.EmailsEnabled = &group.EmailsEnabled
 	}
 	if in.MentionsDisabled == nil {
 		in.MentionsDisabled = &group.MentionsDisabled
