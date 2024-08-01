@@ -36,7 +36,7 @@ type Client interface {
 	GetGroup(gid interface{}, opt *gitlab.GetGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	CreateGroup(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	UpdateGroup(gid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
-	DeleteGroup(gid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	DeleteGroup(gid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	ShareGroupWithGroup(gid interface{}, opt *gitlab.ShareGroupWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	UnshareGroupFromGroup(gid interface{}, groupID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
@@ -144,6 +144,12 @@ func GenerateCreateGroupOptions(name string, p *v1alpha1.GroupParameters) *gitla
 	if p.Name != nil {
 		name = *p.Name
 	}
+
+	if p.EmailsDisabled != nil && p.EmailsEnabled == nil {
+		value := !(*p.EmailsDisabled)
+		p.EmailsEnabled = &value
+	}
+
 	group := &gitlab.CreateGroupOptions{
 		Name:                           &name,
 		Path:                           &p.Path,
@@ -156,8 +162,8 @@ func GenerateCreateGroupOptions(name string, p *v1alpha1.GroupParameters) *gitla
 		ProjectCreationLevel:           ProjectCreationLevelValueV1alpha1ToGitlab(p.ProjectCreationLevel),
 		AutoDevopsEnabled:              p.AutoDevopsEnabled,
 		SubGroupCreationLevel:          SubGroupCreationLevelValueV1alpha1ToGitlab(p.SubGroupCreationLevel),
-		EmailsDisabled:                 p.EmailsDisabled,
 		MentionsDisabled:               p.MentionsDisabled,
+		EmailsEnabled:                  p.EmailsEnabled,
 		LFSEnabled:                     p.LFSEnabled,
 		RequestAccessEnabled:           p.RequestAccessEnabled,
 		ParentID:                       p.ParentID,
@@ -174,6 +180,12 @@ func GenerateEditGroupOptions(name string, p *v1alpha1.GroupParameters) *gitlab.
 	if p.Name != nil {
 		name = *p.Name
 	}
+
+	if p.EmailsDisabled != nil && p.EmailsEnabled == nil {
+		value := !(*p.EmailsDisabled)
+		p.EmailsEnabled = &value
+	}
+
 	group := &gitlab.UpdateGroupOptions{
 		Name:                           &name,
 		Path:                           &p.Path,
@@ -186,7 +198,7 @@ func GenerateEditGroupOptions(name string, p *v1alpha1.GroupParameters) *gitlab.
 		ProjectCreationLevel:           ProjectCreationLevelValueV1alpha1ToGitlab(p.ProjectCreationLevel),
 		AutoDevopsEnabled:              p.AutoDevopsEnabled,
 		SubGroupCreationLevel:          SubGroupCreationLevelValueV1alpha1ToGitlab(p.SubGroupCreationLevel),
-		EmailsDisabled:                 p.EmailsDisabled,
+		EmailsEnabled:                  p.EmailsEnabled,
 		MentionsDisabled:               p.MentionsDisabled,
 		LFSEnabled:                     p.LFSEnabled,
 		RequestAccessEnabled:           p.RequestAccessEnabled,
