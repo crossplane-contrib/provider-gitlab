@@ -212,7 +212,7 @@ func TestObserve(t *testing.T) {
 	v1alpha1VisibilityNew := v1alpha1.VisibilityValue("public")
 	gitlabProjectCreationLevelNew := gitlab.ProjectCreationLevel("noone")
 	v1alpha1ProjectCreationLevelNew := v1alpha1.ProjectCreationLevelValue("noone")
-	gitlabSubGroupCreationLevelNew := gitlab.SubGroupCreationLevel("owner")
+	gitlabSubGroupCreationLevelNew := gitlab.Ptr("owner")
 	v1alpha1SubGroupCreationLevelNew := v1alpha1.SubGroupCreationLevelValue("owner")
 
 	type want struct {
@@ -500,7 +500,7 @@ func TestObserve(t *testing.T) {
 			Name:                  name,
 			Visibility:            gitlab.VisibilityValue(visibility),
 			ProjectCreationLevel:  *gitlab.ProjectCreationLevel(gitlab.ProjectCreationLevelValue(projectCreationLevel)),
-			SubGroupCreationLevel: *gitlab.SubGroupCreationLevel(gitlab.SubGroupCreationLevelValue(subGroupCreationLevel)),
+			SubGroupCreationLevel: *gitlab.Ptr(gitlab.SubGroupCreationLevelValue(subGroupCreationLevel)),
 		}
 		structValue := reflect.ValueOf(gitlabGroup).Elem()
 		structFieldValue := structValue.FieldByName(name)
