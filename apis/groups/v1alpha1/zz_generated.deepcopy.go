@@ -541,11 +541,6 @@ func (in *GroupParameters) DeepCopyInto(out *GroupParameters) {
 		*out = new(SubGroupCreationLevelValue)
 		**out = **in
 	}
-	if in.EmailsDisabled != nil {
-		in, out := &in.EmailsDisabled, &out.EmailsDisabled
-		*out = new(bool)
-		**out = **in
-	}
 	if in.EmailsEnabled != nil {
 		in, out := &in.EmailsEnabled, &out.EmailsEnabled
 		*out = new(bool)

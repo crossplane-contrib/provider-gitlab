@@ -145,11 +145,6 @@ func GenerateCreateGroupOptions(name string, p *v1alpha1.GroupParameters) *gitla
 		name = *p.Name
 	}
 
-	if p.EmailsDisabled != nil && p.EmailsEnabled == nil {
-		value := !(*p.EmailsDisabled)
-		p.EmailsEnabled = &value
-	}
-
 	group := &gitlab.CreateGroupOptions{
 		Name:                           &name,
 		Path:                           &p.Path,
@@ -179,11 +174,6 @@ func GenerateEditGroupOptions(name string, p *v1alpha1.GroupParameters) *gitlab.
 	// Name field overrides resource name
 	if p.Name != nil {
 		name = *p.Name
-	}
-
-	if p.EmailsDisabled != nil && p.EmailsEnabled == nil {
-		value := !(*p.EmailsDisabled)
-		p.EmailsEnabled = &value
 	}
 
 	group := &gitlab.UpdateGroupOptions{

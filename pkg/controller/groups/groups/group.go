@@ -273,9 +273,6 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) (bool, error)
 	if !clients.IsBoolEqualToBoolPtr(p.AutoDevopsEnabled, g.AutoDevopsEnabled) {
 		return false, nil
 	}
-	if !clients.IsBoolEqualToBoolPtr(p.EmailsDisabled, !g.EmailsEnabled) {
-		return false, nil
-	}
 	if !clients.IsBoolEqualToBoolPtr(p.EmailsEnabled, g.EmailsEnabled) {
 		return false, nil
 	}
