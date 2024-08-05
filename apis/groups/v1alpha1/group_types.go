@@ -113,7 +113,7 @@ type GroupParameters struct {
 
 	// Disable email notifications.
 	// +optional
-	EmailsDisabled *bool `json:"emailsDisabled,omitempty"`
+	EmailsEnabled *bool `json:"emailsEnabled,omitempty"`
 
 	// Disable the capability of a group from getting mentioned.
 	// +optional

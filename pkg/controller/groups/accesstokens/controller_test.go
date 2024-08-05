@@ -257,7 +257,7 @@ func TestObserve(t *testing.T) {
 					MockGetGroupAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
 						return &gitlab.GroupAccessToken{
 							ExpiresAt:   accessTokenObj.ExpiresAt,
-							AccessLevel: *gitlab.AccessLevel(accessTokenObj.AccessLevel),
+							AccessLevel: accessTokenObj.AccessLevel,
 						}, &gitlab.Response{}, nil
 					},
 				},

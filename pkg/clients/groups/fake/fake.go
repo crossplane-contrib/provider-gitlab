@@ -31,7 +31,7 @@ type MockClient struct {
 	MockGetGroup              func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	MockCreateGroup           func(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	MockUpdateGroup           func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
-	MockDeleteGroup           func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockDeleteGroup           func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockShareGroupWithGroup   func(gid interface{}, opt *gitlab.ShareGroupWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	MockUnshareGroupFromGroup func(gid interface{}, groupID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
@@ -77,8 +77,8 @@ func (c *MockClient) UpdateGroup(pid interface{}, opt *gitlab.UpdateGroupOptions
 }
 
 // DeleteGroup calls the underlying MockDeleteGroup method
-func (c *MockClient) DeleteGroup(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-	return c.MockDeleteGroup(pid)
+func (c *MockClient) DeleteGroup(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteGroup(pid, opt)
 }
 
 // ShareGroupWithGroup calls the underlying MockShareGroupWithGroup method

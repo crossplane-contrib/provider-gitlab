@@ -81,7 +81,7 @@ spec:
                   description:
                     description: The group’s description.
                     type: string
-                  emailsDisabled:
+                  emailsEnabled:
                     description: Disable email notifications.
                     type: boolean
                   extraSharedRunnersMinutesLimit:

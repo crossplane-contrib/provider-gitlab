@@ -188,7 +188,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		opt := &gitlab.CreatePipelineScheduleVariableOptions{
 			Key:          &v.Key,   //nolint:gosec
 			Value:        &v.Value, //nolint:gosec
-			VariableType: v.VariableType,
+			VariableType: (*gitlab.VariableTypeValue)(v.VariableType),
 		}
 		_, _, err := e.client.CreatePipelineScheduleVariable(
 			*cr.Spec.ForProvider.ProjectID,
@@ -249,7 +249,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 				opt := &gitlab.CreatePipelineScheduleVariableOptions{
 					Key:          &v.Key,   //nolint:gosec
 					Value:        &v.Value, //nolint:gosec
-					VariableType: v.VariableType,
+					VariableType: (*gitlab.VariableTypeValue)(v.VariableType),
 				}
 				_, _, err := e.client.CreatePipelineScheduleVariable(
 					*cr.Spec.ForProvider.ProjectID,
@@ -263,7 +263,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			if notUpdated(v, ps.Variables) {
 				opt := &gitlab.EditPipelineScheduleVariableOptions{
 					Value:        &v.Value, //nolint:gosec
-					VariableType: v.VariableType,
+					VariableType: (*gitlab.VariableTypeValue)(v.VariableType),
 				}
 				_, _, err := e.client.EditPipelineScheduleVariable(
 					*cr.Spec.ForProvider.ProjectID,
@@ -337,8 +337,7 @@ func lateInitialize(cr *v1alpha1.PipelineScheduleParameters, ps *gitlab.Pipeline
 			varr[i] = v1alpha1.PipelineVariable{
 				Key:          vv.Key,
 				Value:        vv.Value,
-				VariableType: &vv.VariableType,
-			}
+				VariableType: (*string)(&vv.VariableType)}
 		}
 		cr.Variables = varr
 	}
@@ -407,7 +406,7 @@ func notUpdated(crv v1alpha1.PipelineVariable, invArr []*gitlab.PipelineVariable
 	}
 
 	if crv.VariableType != nil {
-		victim.VariableType = *crv.VariableType
+		victim.VariableType = gitlab.VariableTypeValue(*crv.VariableType)
 	}
 
 	for _, v := range invArr {
