@@ -62,7 +62,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 
 	o := v1alpha1.ProjectObservation{
 		ID:                   prj.ID,
-		Public:               prj.Public,
+		Public:               prj.PublicJobs,
 		SSHURLToRepo:         prj.SSHURLToRepo,
 		HTTPURLToRepo:        prj.HTTPURLToRepo,
 		WebURL:               prj.WebURL,

@@ -397,11 +397,14 @@ spec:
                         type: string
                       status:
                         type: string
+                      webUrl:
+                        type: string
                     required:
                     - id
                     - ref
                     - sha
                     - status
+                    - webUrl
                     type: object
                   nextRunAt:
                     format: date-time
