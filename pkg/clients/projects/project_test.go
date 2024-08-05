@@ -234,7 +234,7 @@ func TestGenerateObservation(t *testing.T) {
 			args: args{
 				p: &gitlab.Project{
 					ID:            id,
-					Public:        public,
+					PublicJobs:    public,
 					SSHURLToRepo:  sshURLToRepo,
 					HTTPURLToRepo: httpURLToRepo,
 					WebURL:        webURL,
@@ -385,7 +385,7 @@ func TestGenerateObservation(t *testing.T) {
 			args: args{
 				p: &gitlab.Project{
 					ID:             id,
-					Public:         public,
+					PublicJobs:     public,
 					CreatedAt:      &now,
 					LastActivityAt: &now,
 					Namespace: &gitlab.ProjectNamespace{

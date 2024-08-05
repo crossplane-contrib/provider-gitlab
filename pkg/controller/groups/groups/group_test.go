@@ -114,7 +114,7 @@ func withClientDefaultValues() groupModifier {
 			RequireTwoFactorAuth:           &f,
 			TwoFactorGracePeriod:           &i,
 			AutoDevopsEnabled:              &f,
-			EmailsDisabled:                 &f,
+			EmailsEnabled:                  &f,
 			MentionsDisabled:               &f,
 			LFSEnabled:                     &f,
 			RequestAccessEnabled:           &f,
@@ -381,7 +381,7 @@ func TestObserve(t *testing.T) {
 							RequireTwoFactorAuth:           false,
 							TwoFactorGracePeriod:           0,
 							AutoDevopsEnabled:              false,
-							EmailsDisabled:                 false,
+							EmailsEnabled:                  false,
 							MentionsDisabled:               false,
 							LFSEnabled:                     false,
 							RequestAccessEnabled:           false,
@@ -455,7 +455,7 @@ func TestObserve(t *testing.T) {
 		"RequireTwoFactorAuth":           true,
 		"TwoFactorGracePeriod":           1,
 		"AutoDevopsEnabled":              true,
-		"EmailsDisabled":                 true,
+		"EmailsEnabled":                  true,
 		"MentionsDisabled":               true,
 		"LFSEnabled":                     true,
 		"RequestAccessEnabled":           true,
@@ -865,7 +865,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				group: &fake.MockClient{
-					MockDeleteGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -879,7 +879,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				group: &fake.MockClient{
-					MockDeleteGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
