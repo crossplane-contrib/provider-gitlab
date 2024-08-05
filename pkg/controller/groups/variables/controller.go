@@ -235,12 +235,12 @@ func (e *external) updateVariableFromSecret(ctx context.Context, selector *xpv1.
 
 	// Mask variable if it hasn't already been explicitly configured.
 	if params.Masked == nil {
-		params.Masked = gitlab.Bool(true)
+		params.Masked = gitlab.Ptr(true)
 	}
 
 	// Make variable raw if it hasn't already been explicitly configured.
 	if params.Raw == nil {
-		params.Raw = gitlab.Bool(true)
+		params.Raw = gitlab.Ptr(true)
 	}
 
 	value := string(raw)
