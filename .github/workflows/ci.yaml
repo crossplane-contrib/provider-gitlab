@@ -21,6 +21,9 @@ env:
   XPKG_ACCESS_ID: ${{ secrets.XPKG_ACCESS_ID }}
   AWS_USR: ${{ secrets.AWS_USR }}
 
+  UPBOUND_MARKETPLACE_PUSH_ROBOT_USR: ${{ secrets.UPBOUND_MARKETPLACE_PUSH_ROBOT_USR }}
+  UPBOUND_MARKETPLACE_PUSH_ROBOT_PSW: ${{ secrets.UPBOUND_MARKETPLACE_PUSH_ROBOT_PSW }}
+
 jobs:
   check-diff:
     runs-on: ubuntu-22.04
@@ -365,18 +368,18 @@ jobs:
           # builds by default. Specifying --load does so.
           BUILD_ARGS: "--load"
 
-      - name: Publish Artifacts to GitHub
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
-        with:
-          name: output
-          path: _output/**
+      # - name: Publish Artifacts to GitHub
+      #   uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
+      #   with:
+      #     name: output
+      #     path: _output/**
 
-      - name: Login to DockerHub
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
-        if: env.CONTRIB_DOCKER_USR != ''
-        with:
-          username: ${{ secrets.CONTRIB_DOCKER_USR }}
-          password: ${{ secrets.CONTRIB_DOCKER_PSW }}
+      # - name: Login to DockerHub
+      #   uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
+      #   if: env.CONTRIB_DOCKER_USR != ''
+      #   with:
+      #     username: ${{ secrets.CONTRIB_DOCKER_USR }}
+      #     password: ${{ secrets.CONTRIB_DOCKER_PSW }}
 
       - name: Login to Upbound
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
