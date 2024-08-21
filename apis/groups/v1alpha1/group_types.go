@@ -112,8 +112,14 @@ type GroupParameters struct {
 	SubGroupCreationLevel *SubGroupCreationLevelValue `json:"subgroupCreationLevel,omitempty"`
 
 	// Disable email notifications.
+	//
+	// Deprecated: Use emailsEnabled instead.
 	// +optional
 	EmailsDisabled *bool `json:"emailsDisabled,omitempty"`
+
+	// Enable email notifications.
+	// +optional
+	EmailsEnabled *bool `json:"emailsEnabled,omitempty"`
 
 	// Disable the capability of a group from getting mentioned.
 	// +optional
