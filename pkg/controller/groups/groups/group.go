@@ -126,6 +126,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errIDNotInt)
 	}
 
+	cr.Spec.ForProvider.EmailsEnabled = lateInitializeEmailsEnabled(cr.Spec.ForProvider.EmailsEnabled, cr.Spec.ForProvider.EmailsDisabled)
+
 	grp, res, err := e.client.GetGroup(groupID, nil)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
@@ -409,6 +411,15 @@ func lateInitializeSubGroupCreationLevelValue(in *v1alpha1.SubGroupCreationLevel
 	if in == nil && from != "" {
 		return (*v1alpha1.SubGroupCreationLevelValue)(&from)
 	}
+	return in
+}
+
+func lateInitializeEmailsEnabled(in *bool, from *bool) *bool {
+	if in == nil && from != nil {
+		value := !(*from)
+		return &value
+	}
+
 	return in
 }
 
