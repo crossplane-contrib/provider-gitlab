@@ -82,7 +82,14 @@ spec:
                     description: The group’s description.
                     type: string
                   emailsDisabled:
-                    description: Disable email notifications.
+                    description: |-
+                      Disable email notifications.
+
+
+                      Deprecated: Use emailsEnabled instead.
+                    type: boolean
+                  emailsEnabled:
+                    description: Enable email notifications.
                     type: boolean
                   extraSharedRunnersMinutesLimit:
                     description: Extra pipeline minutes quota for this group (purchased

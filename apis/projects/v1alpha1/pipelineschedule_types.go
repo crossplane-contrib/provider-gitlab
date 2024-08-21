@@ -89,6 +89,7 @@ type LastPipeline struct {
 	SHA    string `json:"sha"`
 	Ref    string `json:"ref"`
 	Status string `json:"status"`
+	WebURL string `json:"webUrl"`
 }
 
 // PipelineVariable represents a pipeline variable.

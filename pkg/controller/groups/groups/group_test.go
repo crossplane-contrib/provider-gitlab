@@ -114,7 +114,7 @@ func withClientDefaultValues() groupModifier {
 			RequireTwoFactorAuth:           &f,
 			TwoFactorGracePeriod:           &i,
 			AutoDevopsEnabled:              &f,
-			EmailsDisabled:                 &f,
+			EmailsEnabled:                  &f,
 			MentionsDisabled:               &f,
 			LFSEnabled:                     &f,
 			RequestAccessEnabled:           &f,
@@ -212,7 +212,7 @@ func TestObserve(t *testing.T) {
 	v1alpha1VisibilityNew := v1alpha1.VisibilityValue("public")
 	gitlabProjectCreationLevelNew := gitlab.ProjectCreationLevel("noone")
 	v1alpha1ProjectCreationLevelNew := v1alpha1.ProjectCreationLevelValue("noone")
-	gitlabSubGroupCreationLevelNew := gitlab.SubGroupCreationLevel("owner")
+	gitlabSubGroupCreationLevelNew := gitlab.Ptr("owner")
 	v1alpha1SubGroupCreationLevelNew := v1alpha1.SubGroupCreationLevelValue("owner")
 
 	type want struct {
@@ -375,13 +375,13 @@ func TestObserve(t *testing.T) {
 							Description:                    description,
 							Visibility:                     gitlabVisibilityNew,
 							ProjectCreationLevel:           *gitlabProjectCreationLevelNew,
-							SubGroupCreationLevel:          *gitlabSubGroupCreationLevelNew,
+							SubGroupCreationLevel:          gitlab.SubGroupCreationLevelValue(*gitlabSubGroupCreationLevelNew),
 							MembershipLock:                 false,
 							ShareWithGroupLock:             false,
 							RequireTwoFactorAuth:           false,
 							TwoFactorGracePeriod:           0,
 							AutoDevopsEnabled:              false,
-							EmailsDisabled:                 false,
+							EmailsEnabled:                  false,
 							MentionsDisabled:               false,
 							LFSEnabled:                     false,
 							RequestAccessEnabled:           false,
@@ -449,13 +449,13 @@ func TestObserve(t *testing.T) {
 		"Description":                    "description v2",
 		"MembershipLock":                 true,
 		"ProjectCreationLevel":           *gitlabProjectCreationLevelNew,
-		"SubGroupCreationLevel":          *gitlabSubGroupCreationLevelNew,
+		"SubGroupCreationLevel":          gitlab.SubGroupCreationLevelValue(*gitlabSubGroupCreationLevelNew),
 		"Visibility":                     gitlabVisibilityNew,
 		"ShareWithGroupLock":             true,
 		"RequireTwoFactorAuth":           true,
 		"TwoFactorGracePeriod":           1,
 		"AutoDevopsEnabled":              true,
-		"EmailsDisabled":                 true,
+		"EmailsEnabled":                  true,
 		"MentionsDisabled":               true,
 		"LFSEnabled":                     true,
 		"RequestAccessEnabled":           true,
@@ -500,7 +500,7 @@ func TestObserve(t *testing.T) {
 			Name:                  name,
 			Visibility:            gitlab.VisibilityValue(visibility),
 			ProjectCreationLevel:  *gitlab.ProjectCreationLevel(gitlab.ProjectCreationLevelValue(projectCreationLevel)),
-			SubGroupCreationLevel: *gitlab.SubGroupCreationLevel(gitlab.SubGroupCreationLevelValue(subGroupCreationLevel)),
+			SubGroupCreationLevel: *gitlab.Ptr(gitlab.SubGroupCreationLevelValue(subGroupCreationLevel)),
 		}
 		structValue := reflect.ValueOf(gitlabGroup).Elem()
 		structFieldValue := structValue.FieldByName(name)
@@ -865,7 +865,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				group: &fake.MockClient{
-					MockDeleteGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -879,7 +879,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				group: &fake.MockClient{
-					MockDeleteGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},

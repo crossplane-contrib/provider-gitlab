@@ -126,6 +126,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errIDNotInt)
 	}
 
+	cr.Spec.ForProvider.EmailsEnabled = lateInitializeEmailsEnabled(cr.Spec.ForProvider.EmailsEnabled, cr.Spec.ForProvider.EmailsDisabled) //nolint:staticcheck
+
 	grp, res, err := e.client.GetGroup(groupID, nil)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
@@ -234,7 +236,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotGroup)
 	}
 
-	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), gitlab.WithContext(ctx))
+	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{}, gitlab.WithContext(ctx))
 	return errors.Wrap(err, errDeleteFailed)
 }
 
@@ -273,7 +275,7 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) (bool, error)
 	if !clients.IsBoolEqualToBoolPtr(p.AutoDevopsEnabled, g.AutoDevopsEnabled) {
 		return false, nil
 	}
-	if !clients.IsBoolEqualToBoolPtr(p.EmailsDisabled, g.EmailsDisabled) {
+	if !clients.IsBoolEqualToBoolPtr(p.EmailsEnabled, g.EmailsEnabled) {
 		return false, nil
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.MentionsDisabled, g.MentionsDisabled) {
@@ -370,8 +372,8 @@ func lateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) error { /
 	if in.AutoDevopsEnabled == nil {
 		in.AutoDevopsEnabled = &group.AutoDevopsEnabled
 	}
-	if in.EmailsDisabled == nil {
-		in.EmailsDisabled = &group.EmailsDisabled
+	if in.EmailsEnabled == nil {
+		in.EmailsEnabled = &group.EmailsEnabled
 	}
 	if in.MentionsDisabled == nil {
 		in.MentionsDisabled = &group.MentionsDisabled
@@ -409,6 +411,15 @@ func lateInitializeSubGroupCreationLevelValue(in *v1alpha1.SubGroupCreationLevel
 	if in == nil && from != "" {
 		return (*v1alpha1.SubGroupCreationLevelValue)(&from)
 	}
+	return in
+}
+
+func lateInitializeEmailsEnabled(in *bool, from *bool) *bool {
+	if in == nil && from != nil {
+		value := !(*from)
+		return &value
+	}
+
 	return in
 }
 

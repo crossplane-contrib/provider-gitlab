@@ -46,7 +46,7 @@ var (
 	subGroupCreationLevel          = "maintainer"
 	v1alpha1SubGroupCreationLevel  = v1alpha1.SubGroupCreationLevelValue(subGroupCreationLevel)
 	gitlabSubGroupCreationLevel    = gitlab.SubGroupCreationLevelValue(subGroupCreationLevel)
-	emailsDisabled                 = true
+	emailsEnabled                  = true
 	mentionsDisabled               = true
 	LFSEnabled                     = true
 	requestAccessEnabled           = true
@@ -250,7 +250,7 @@ func TestGenerateCreateGroupOptions(t *testing.T) {
 					ProjectCreationLevel:           &v1alpha1ProjectCreationLevel,
 					AutoDevopsEnabled:              &autoDevopsEnabled,
 					SubGroupCreationLevel:          &v1alpha1SubGroupCreationLevel,
-					EmailsDisabled:                 &emailsDisabled,
+					EmailsEnabled:                  &emailsEnabled,
 					MentionsDisabled:               &mentionsDisabled,
 					LFSEnabled:                     &LFSEnabled,
 					RequestAccessEnabled:           &requestAccessEnabled,
@@ -271,7 +271,7 @@ func TestGenerateCreateGroupOptions(t *testing.T) {
 				ProjectCreationLevel:           &gitlabProjectCreationLevel,
 				AutoDevopsEnabled:              &autoDevopsEnabled,
 				SubGroupCreationLevel:          &gitlabSubGroupCreationLevel,
-				EmailsDisabled:                 &emailsDisabled,
+				EmailsEnabled:                  &emailsEnabled,
 				MentionsDisabled:               &mentionsDisabled,
 				LFSEnabled:                     &LFSEnabled,
 				RequestAccessEnabled:           &requestAccessEnabled,
@@ -335,8 +335,8 @@ func TestGenerateEditGroupOptions(t *testing.T) {
 					ProjectCreationLevel:           &v1alpha1ProjectCreationLevel,
 					AutoDevopsEnabled:              &autoDevopsEnabled,
 					SubGroupCreationLevel:          &v1alpha1SubGroupCreationLevel,
-					EmailsDisabled:                 &emailsDisabled,
 					MentionsDisabled:               &mentionsDisabled,
+					EmailsEnabled:                  &emailsEnabled,
 					LFSEnabled:                     &LFSEnabled,
 					RequestAccessEnabled:           &requestAccessEnabled,
 					ParentID:                       &parentID,
@@ -356,7 +356,7 @@ func TestGenerateEditGroupOptions(t *testing.T) {
 				ProjectCreationLevel:           &gitlabProjectCreationLevel,
 				AutoDevopsEnabled:              &autoDevopsEnabled,
 				SubGroupCreationLevel:          &gitlabSubGroupCreationLevel,
-				EmailsDisabled:                 &emailsDisabled,
+				EmailsEnabled:                  &emailsEnabled,
 				MentionsDisabled:               &mentionsDisabled,
 				LFSEnabled:                     &LFSEnabled,
 				RequestAccessEnabled:           &requestAccessEnabled,
@@ -368,18 +368,18 @@ func TestGenerateEditGroupOptions(t *testing.T) {
 			args: args{
 				name: name,
 				parameters: &v1alpha1.GroupParameters{
-					Path:           path,
-					Description:    &description,
-					Visibility:     &v1alpha1Visibility,
-					EmailsDisabled: &emailsDisabled,
+					Path:          path,
+					Description:   &description,
+					Visibility:    &v1alpha1Visibility,
+					EmailsEnabled: &emailsEnabled,
 				},
 			},
 			want: &gitlab.UpdateGroupOptions{
-				Name:           &name,
-				Path:           &path,
-				Description:    &description,
-				Visibility:     &gitlabVisibility,
-				EmailsDisabled: &emailsDisabled,
+				Name:          &name,
+				Path:          &path,
+				Description:   &description,
+				Visibility:    &gitlabVisibility,
+				EmailsEnabled: &emailsEnabled,
 			},
 		},
 	}
