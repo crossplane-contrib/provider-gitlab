@@ -20,8 +20,13 @@ import (
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
+	"golang.org/x/net/context"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
@@ -114,7 +119,13 @@ func GenerateHookObservation(hook *gitlab.ProjectHook) v1alpha1.HookObservation 
 }
 
 // GenerateCreateHookOptions generates project creation options
-func GenerateCreateHookOptions(p *v1alpha1.HookParameters) *gitlab.AddProjectHookOptions {
+func GenerateCreateHookOptions(p *v1alpha1.HookParameters, client client.Client, ctx context.Context) (*gitlab.AddProjectHookOptions, error) {
+	token, err := getTokenValueFromSecret(p, client, ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
 	hook := &gitlab.AddProjectHookOptions{
 		URL:                      p.URL,
 		ConfidentialNoteEvents:   p.ConfidentialNoteEvents,
@@ -129,14 +140,39 @@ func GenerateCreateHookOptions(p *v1alpha1.HookParameters) *gitlab.AddProjectHoo
 		PipelineEvents:           p.PipelineEvents,
 		WikiPageEvents:           p.WikiPageEvents,
 		EnableSSLVerification:    p.EnableSSLVerification,
-		Token:                    p.Token,
+		Token:                    token,
 	}
 
-	return hook
+	return hook, nil
+}
+
+func getTokenValueFromSecret(p *v1alpha1.HookParameters, client client.Client, ctx context.Context) (*string, error) {
+	secret := &v1.Secret{}
+
+	if err := client.Get(ctx, types.NamespacedName{Name: p.Token.SecretRef.Name, Namespace: p.Token.SecretRef.Namespace}, secret); err != nil {
+		return nil, errors.Wrap(err, "Cannot get referenced Secret")
+
+	}
+
+	value := secret.Data[p.Token.SecretRef.Key]
+
+	if value == nil {
+		return nil, errors.Errorf("Could not find key %v in the referenced secret", p.Token.SecretRef.Key)
+	}
+
+	data := string(value)
+
+	return &data, nil
 }
 
 // GenerateEditHookOptions generates project edit options
-func GenerateEditHookOptions(p *v1alpha1.HookParameters) *gitlab.EditProjectHookOptions {
+func GenerateEditHookOptions(p *v1alpha1.HookParameters, client client.Client, ctx context.Context) (*gitlab.EditProjectHookOptions, error) {
+	token, err := getTokenValueFromSecret(p, client, ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
 	o := &gitlab.EditProjectHookOptions{
 		URL:                      p.URL,
 		ConfidentialNoteEvents:   p.ConfidentialNoteEvents,
@@ -151,10 +187,10 @@ func GenerateEditHookOptions(p *v1alpha1.HookParameters) *gitlab.EditProjectHook
 		PipelineEvents:           p.PipelineEvents,
 		WikiPageEvents:           p.WikiPageEvents,
 		EnableSSLVerification:    p.EnableSSLVerification,
-		Token:                    p.Token,
+		Token:                    token,
 	}
 
-	return o
+	return o, nil
 }
 
 // IsHookUpToDate checks whether there is a change in any of the modifiable fields.

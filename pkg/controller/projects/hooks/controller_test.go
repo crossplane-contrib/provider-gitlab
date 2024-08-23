@@ -23,6 +23,7 @@ import (
 	"testing"
 	"time"
 
+	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
@@ -30,6 +31,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -43,6 +45,13 @@ var (
 	createTime    = time.Now()
 	projectID     = 5678
 	projectHookID = 1234
+	tokenValue    = "test"
+	tokenSecret   = corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
+		Data: map[string][]byte{
+			"token": []byte(tokenValue),
+		},
+	}
 )
 
 type args struct {
@@ -75,7 +84,11 @@ func withDefaultValues() projectHookModifier {
 			PipelineEvents:           &f,
 			WikiPageEvents:           &f,
 			EnableSSLVerification:    &f,
-			Token:                    nil,
+			Token: &v1alpha1.Token{
+				SecretRef: &v1.SecretKeySelector{
+					Key: "token", SecretReference: v1.SecretReference{Name: "test", Namespace: "test"},
+				},
+			},
 		}
 	}
 }
@@ -83,6 +96,16 @@ func withDefaultValues() projectHookModifier {
 func withProjectID(pid int) projectHookModifier {
 	return func(r *v1alpha1.Hook) {
 		r.Spec.ForProvider.ProjectID = &pid
+	}
+}
+
+func withTokenRef() projectHookModifier {
+	return func(r *v1alpha1.Hook) {
+		r.Spec.ForProvider.Token = &v1alpha1.Token{
+			SecretRef: &v1.SecretKeySelector{
+				Key: "token", SecretReference: v1.SecretReference{Name: "test", Namespace: "test"},
+			},
+		}
 	}
 }
 
@@ -180,6 +203,7 @@ func TestObserve(t *testing.T) {
 				},
 				cr: projecthook(
 					withProjectID(projectID),
+					withTokenRef(),
 					withExternalName(projectHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID:        projectHookID,
@@ -256,6 +280,10 @@ func TestCreate(t *testing.T) {
 			args: args{
 				kube: &test.MockClient{
 					MockUpdate: test.NewMockUpdateFn(nil),
+					MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+						*obj.(*corev1.Secret) = tokenSecret
+						return nil
+					}),
 				},
 				projecthook: &fake.MockClient{
 					MockAddHook: func(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
@@ -277,6 +305,12 @@ func TestCreate(t *testing.T) {
 		},
 		"FailedCreation": {
 			args: args{
+				kube: &test.MockClient{
+					MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+						*obj.(*corev1.Secret) = tokenSecret
+						return nil
+					}),
+				},
 				projecthook: &fake.MockClient{
 					MockAddHook: func(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, errBoom
@@ -324,8 +358,14 @@ func TestUpdate(t *testing.T) {
 		args
 		want
 	}{
-		"SuccessfulEditProject": {
+		"SuccessfulEditHook": {
 			args: args{
+				kube: &test.MockClient{
+					MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+						*obj.(*corev1.Secret) = tokenSecret
+						return nil
+					}),
+				},
 				projecthook: &fake.MockClient{
 					MockEditHook: func(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
@@ -334,12 +374,14 @@ func TestUpdate(t *testing.T) {
 				cr: projecthook(
 					withExternalName(projectHookID),
 					withProjectID(projectID),
+					withTokenRef(),
 					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
 				),
 			},
 			want: want{
 				cr: projecthook(
 					withExternalName(projectHookID),
+					withTokenRef(),
 					withProjectID(projectID),
 					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
 				),
@@ -347,6 +389,13 @@ func TestUpdate(t *testing.T) {
 		},
 		"FailedEdit": {
 			args: args{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+					MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+						*obj.(*corev1.Secret) = tokenSecret
+						return nil
+					}),
+				},
 				projecthook: &fake.MockClient{
 					MockEditHook: func(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, errBoom
@@ -355,6 +404,7 @@ func TestUpdate(t *testing.T) {
 				cr: projecthook(
 					withExternalName(projectHookID),
 					withProjectID(projectID),
+					withTokenRef(),
 					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
 				),
 			},
@@ -362,6 +412,7 @@ func TestUpdate(t *testing.T) {
 				cr: projecthook(
 					withExternalName(projectHookID),
 					withProjectID(projectID),
+					withTokenRef(),
 					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
 				),
 				err: errors.Wrap(errBoom, errUpdateFailed),

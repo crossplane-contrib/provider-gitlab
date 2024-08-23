@@ -17,12 +17,18 @@ limitations under the License.
 package projects
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/pkg/test"
 	"github.com/google/go-cmp/cmp"
 	"github.com/xanzy/go-gitlab"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 )
@@ -41,7 +47,13 @@ var (
 	pipelineEvents           = true
 	wikiPageEvents           = true
 	enableSSLVerification    = true
-	token                    = "84B9C651-9025-47D2-9124-DD951BD268E8"
+	token                    = v1alpha1.Token{
+		SecretRef: &v1.SecretKeySelector{
+			Key: "token", SecretReference: v1.SecretReference{Name: "test", Namespace: "test"},
+		},
+	}
+
+	tokenValue = "84B9C651-9025-47D2-9124-DD951BD268E8"
 )
 
 func TestGenerateHookObservation(t *testing.T) {
@@ -128,10 +140,15 @@ func TestLateInitializeHook(t *testing.T) {
 func TestGenerateCreateHookOptions(t *testing.T) {
 	type args struct {
 		parameters *v1alpha1.HookParameters
+		secret     *corev1.Secret
+	}
+	type want struct {
+		addProjectHookOptions *gitlab.AddProjectHookOptions
+		err                   error
 	}
 	cases := map[string]struct {
 		args args
-		want *gitlab.AddProjectHookOptions
+		want want
 	}{
 		"AllFields": {
 			args: args{
@@ -149,24 +166,32 @@ func TestGenerateCreateHookOptions(t *testing.T) {
 					PipelineEvents:           &pipelineEvents,
 					WikiPageEvents:           &wikiPageEvents,
 					EnableSSLVerification:    &enableSSLVerification,
-					Token:                    &token,
+					Token:                    &token},
+				secret: &corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
+					Data: map[string][]byte{
+						"token": []byte(tokenValue),
+					},
 				},
 			},
-			want: &gitlab.AddProjectHookOptions{
-				URL:                      &url,
-				ConfidentialNoteEvents:   &confidentialNoteEvents,
-				PushEvents:               &pushEvents,
-				PushEventsBranchFilter:   &pushEventsBranchFilter,
-				IssuesEvents:             &issuesEvents,
-				ConfidentialIssuesEvents: &confidentialIssuesEvents,
-				MergeRequestsEvents:      &mergeRequestsEvents,
-				TagPushEvents:            &tagPushEvents,
-				NoteEvents:               &noteEvents,
-				JobEvents:                &jobEvents,
-				PipelineEvents:           &pipelineEvents,
-				WikiPageEvents:           &wikiPageEvents,
-				EnableSSLVerification:    &enableSSLVerification,
-				Token:                    &token,
+			want: want{
+				err: nil,
+				addProjectHookOptions: &gitlab.AddProjectHookOptions{
+					URL:                      &url,
+					ConfidentialNoteEvents:   &confidentialNoteEvents,
+					PushEvents:               &pushEvents,
+					PushEventsBranchFilter:   &pushEventsBranchFilter,
+					IssuesEvents:             &issuesEvents,
+					ConfidentialIssuesEvents: &confidentialIssuesEvents,
+					MergeRequestsEvents:      &mergeRequestsEvents,
+					TagPushEvents:            &tagPushEvents,
+					NoteEvents:               &noteEvents,
+					JobEvents:                &jobEvents,
+					PipelineEvents:           &pipelineEvents,
+					WikiPageEvents:           &wikiPageEvents,
+					EnableSSLVerification:    &enableSSLVerification,
+					Token:                    &tokenValue,
+				},
 			},
 		},
 		"SomeFields": {
@@ -175,19 +200,78 @@ func TestGenerateCreateHookOptions(t *testing.T) {
 					PushEvents:             &pushEvents,
 					PushEventsBranchFilter: &pushEventsBranchFilter,
 					IssuesEvents:           &issuesEvents,
+					Token:                  &token,
+				},
+				secret: &corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
+					Data: map[string][]byte{
+						"token": []byte(tokenValue),
+					},
 				},
 			},
-			want: &gitlab.AddProjectHookOptions{
-				PushEvents:             &pushEvents,
-				PushEventsBranchFilter: &pushEventsBranchFilter,
-				IssuesEvents:           &issuesEvents,
+			want: want{
+				err: nil,
+				addProjectHookOptions: &gitlab.AddProjectHookOptions{
+					PushEvents:             &pushEvents,
+					PushEventsBranchFilter: &pushEventsBranchFilter,
+					IssuesEvents:           &issuesEvents,
+					Token:                  &tokenValue,
+				},
+			},
+		},
+		"FailNoSecret": {
+			args: args{
+				parameters: &v1alpha1.HookParameters{
+					PushEvents:             &pushEvents,
+					PushEventsBranchFilter: &pushEventsBranchFilter,
+					IssuesEvents:           &issuesEvents,
+					Token:                  &token,
+				},
+				secret: &corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{Namespace: "other", Name: "other"},
+					Data: map[string][]byte{
+						"token": []byte(tokenValue),
+					},
+				},
+			},
+			want: want{
+				err:                   errors.New(`Cannot get referenced Secret: secrets "test" not found`),
+				addProjectHookOptions: nil,
+			},
+		},
+		"FailWrongKey": {
+			args: args{
+				parameters: &v1alpha1.HookParameters{
+					PushEvents:             &pushEvents,
+					PushEventsBranchFilter: &pushEventsBranchFilter,
+					IssuesEvents:           &issuesEvents,
+					Token:                  &token,
+				},
+				secret: &corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
+					Data: map[string][]byte{
+						"wrongKey": []byte(tokenValue),
+					},
+				},
+			},
+			want: want{
+				err:                   errors.New("Could not find key token in the referenced secret"),
+				addProjectHookOptions: nil,
 			},
 		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateCreateHookOptions(tc.args.parameters)
-			if diff := cmp.Diff(tc.want, got); diff != "" {
+
+			client := fake.NewClientBuilder().WithObjects(tc.args.secret).Build()
+
+			got, err := GenerateCreateHookOptions(tc.args.parameters, client, context.Background())
+			if err != nil && tc.want.err != nil {
+				if diff := cmp.Diff(tc.want.err.Error(), err.Error(), test.EquateErrors()); diff != "" {
+					t.Errorf("r: -want, +got:\n%s", diff)
+				}
+			}
+			if diff := cmp.Diff(tc.want.addProjectHookOptions, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 		})
@@ -234,13 +318,21 @@ func TestGenerateEditHookOptions(t *testing.T) {
 				PipelineEvents:           &pipelineEvents,
 				WikiPageEvents:           &wikiPageEvents,
 				EnableSSLVerification:    &enableSSLVerification,
-				Token:                    &token,
+				Token:                    &tokenValue,
 			},
 		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateEditHookOptions(tc.args.parameters)
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
+				Data: map[string][]byte{
+					"token": []byte(tokenValue),
+				},
+			}
+			client := fake.NewClientBuilder().WithObjects(secret).Build()
+			got, _ := GenerateEditHookOptions(tc.args.parameters, client, context.Background())
+
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
