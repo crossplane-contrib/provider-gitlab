@@ -82,8 +82,11 @@ spec:
                     description: The group’s description.
                     type: string
                   emailsDisabled:
-                    description: Disable email notifications. Deprecated, use emailsEnabled
-                      instead.
+                    description: |-
+                      Disable email notifications.
+
+
+                      Deprecated: Use emailsEnabled instead.
                     type: boolean
                   emailsEnabled:
                     description: Enable email notifications.
