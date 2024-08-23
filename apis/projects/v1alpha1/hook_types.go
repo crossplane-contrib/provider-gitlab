@@ -89,8 +89,11 @@ type HookParameters struct {
 	EnableSSLVerification *bool `json:"enableSslVerification,omitempty"`
 
 	// Token is the secret token to validate received payloads.
-	// +optional
-	Token *string `json:"token,omitempty"`
+	Token *Token `json:"token"`
+}
+
+type Token struct {
+	SecretRef *xpv1.SecretKeySelector `json:"secretRef"`
 }
 
 // HookObservation represents a project hook.

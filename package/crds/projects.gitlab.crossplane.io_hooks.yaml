@@ -192,7 +192,28 @@ spec:
                     type: boolean
                   token:
                     description: Token is the secret token to validate received payloads.
-                    type: string
+                    properties:
+                      secretRef:
+                        description: A SecretKeySelector is a reference to a secret
+                          key in an arbitrary namespace.
+                        properties:
+                          key:
+                            description: The key to select.
+                            type: string
+                          name:
+                            description: Name of the secret.
+                            type: string
+                          namespace:
+                            description: Namespace of the secret.
+                            type: string
+                        required:
+                        - key
+                        - name
+                        - namespace
+                        type: object
+                    required:
+                    - secretRef
+                    type: object
                   url:
                     description: URL is the hook URL.
                     type: string
@@ -200,6 +221,7 @@ spec:
                     description: WikiPageEvents triggers hook on wiki events.
                     type: boolean
                 required:
+                - token
                 - url
                 type: object
               managementPolicies:
