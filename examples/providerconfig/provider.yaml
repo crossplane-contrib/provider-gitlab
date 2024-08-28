@@ -8,6 +8,7 @@ spec:
   baseURL: https://gitlab.com/
   credentials:
     source: Secret
+    method: OAuthToken # method of authentification can be BasicAuth, JobToken, OAuthToken or PrivateToken (default)
     secretRef:
       namespace: crossplane-system
       name: gitlab-credentials

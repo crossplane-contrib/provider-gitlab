@@ -19,6 +19,7 @@ package clients
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -38,16 +39,27 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/v1beta1"
 )
 
+// BasicAuth
+type BasicAuth struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // Config provides gitlab configurations for the Gitlab client
 type Config struct {
+	// Token for BasicAuth is expected to be a json format '{"username":"","password":""}'
 	Token              string
 	BaseURL            string
 	InsecureSkipVerify bool
+	AuthMethod         v1beta1.AuthType
 }
 
 // NewClient creates new Gitlab Client with provided Gitlab Configurations/Credentials.
 func NewClient(c Config) *gitlab.Client {
+	var cl *gitlab.Client
+	var err error
 	options := []gitlab.ClientOptionFunc{}
+
 	if c.BaseURL != "" {
 		options = append(options, gitlab.WithBaseURL(c.BaseURL))
 	}
@@ -64,10 +76,28 @@ func NewClient(c Config) *gitlab.Client {
 		}
 		options = append(options, gitlab.WithHTTPClient(httpclient))
 	}
-	cl, err := gitlab.NewClient(c.Token, options...)
+
+	switch c.AuthMethod {
+	case v1beta1.BasicAuth:
+		basicAuth := &BasicAuth{}
+		err = json.Unmarshal([]byte(c.Token), basicAuth)
+		if err != nil {
+			panic(err)
+		}
+		cl, err = gitlab.NewBasicAuthClient(basicAuth.Username, basicAuth.Password, gitlab.WithBaseURL(c.BaseURL))
+	case v1beta1.JobToken:
+		cl, err = gitlab.NewJobClient(c.Token, options...)
+	case v1beta1.OAuthToken:
+		cl, err = gitlab.NewOAuthClient(c.Token, options...)
+	case v1beta1.PrivateToken:
+		cl, err = gitlab.NewClient(c.Token, options...)
+	default:
+		cl, err = gitlab.NewClient(c.Token, options...)
+	}
 	if err != nil {
 		panic(err)
 	}
+
 	return cl
 }
 
@@ -108,6 +138,7 @@ func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed
 			BaseURL:            pc.Spec.BaseURL,
 			Token:              string(s.Data[csr.Key]),
 			InsecureSkipVerify: ptr.Deref(pc.Spec.InsecureSkipVerify, false),
+			AuthMethod:         pc.Spec.Credentials.Method,
 		}, nil
 	default:
 		return nil, errors.Errorf("credentials source %s is not currently supported", s)
