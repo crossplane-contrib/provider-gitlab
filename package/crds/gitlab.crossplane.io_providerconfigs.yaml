@@ -73,6 +73,10 @@ spec:
                     required:
                     - path
                     type: object
+                  method:
+                    description: AuthType represents an authentication type within
+                      GitLab.
+                    type: string
                   secretRef:
                     description: A SecretRef is a reference to a secret key that contains
                       the credentials that must be used to connect to the provider.

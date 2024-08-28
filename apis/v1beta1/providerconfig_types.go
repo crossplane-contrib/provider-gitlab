@@ -35,11 +35,29 @@ type ProviderConfigSpec struct {
 	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
 }
 
+// AuthType represents an authentication type within GitLab.
+type AuthType string
+
+const (
+	// BasicAuth gitlab BasicAuth method of authentification
+	BasicAuth AuthType = "BasicAuth"
+
+	// JobToken gitlab JobToken method of authentification
+	JobToken AuthType = "JobToken"
+
+	// OAuthToken gitlab OAuthToken method of authentification
+	OAuthToken AuthType = "OAuthToken"
+
+	// PrivateToken gitlab PrivateToken method of authentification.
+	PrivateToken AuthType = "PrivateToken"
+)
+
 // ProviderCredentials required to authenticate.
 type ProviderCredentials struct {
 	// Source of the provider credentials.
 	// +kubebuilder:validation:Enum=None;Secret;InjectedIdentity;Environment;Filesystem
 	Source xpv1.CredentialsSource `json:"source"`
+	Method AuthType               `json:"method"`
 
 	xpv1.CommonCredentialSelectors `json:",inline"`
 }
