@@ -80,6 +80,10 @@ spec:
                     required:
                     - path
                     type: object
+                  method:
+                    description: Method of authentification can be BasicAuth, JobToken,
+                      OAuthToken or PersonalAccessToken (default)
+                    type: string
                   secretRef:
                     description: |-
                       A SecretRef is a reference to a secret key that contains the credentials
