@@ -19,6 +19,7 @@ package clients
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -38,15 +39,24 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/v1beta1"
 )
 
+// BasicAuth is the expected struct that can be passed in the Config.Token field to add support for BasicAuth AuthMethod
+type BasicAuth struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // Config provides gitlab configurations for the Gitlab client
 type Config struct {
 	Token              string
 	BaseURL            string
 	InsecureSkipVerify bool
+	AuthMethod         v1beta1.AuthType
 }
 
 // NewClient creates new Gitlab Client with provided Gitlab Configurations/Credentials.
 func NewClient(c Config) *gitlab.Client {
+	var cl *gitlab.Client
+	var err error
 	options := []gitlab.ClientOptionFunc{}
 	if c.BaseURL != "" {
 		options = append(options, gitlab.WithBaseURL(c.BaseURL))
@@ -64,10 +74,27 @@ func NewClient(c Config) *gitlab.Client {
 		}
 		options = append(options, gitlab.WithHTTPClient(httpclient))
 	}
-	cl, err := gitlab.NewClient(c.Token, options...)
+
+	switch c.AuthMethod {
+	case v1beta1.BasicAuth:
+		ba := &BasicAuth{}
+		if err = json.Unmarshal([]byte(c.Token), ba); err != nil {
+			panic(err)
+		}
+		cl, err = gitlab.NewBasicAuthClient(ba.Username, ba.Password, gitlab.WithBaseURL(c.BaseURL))
+	case v1beta1.JobToken:
+		cl, err = gitlab.NewJobClient(c.Token, options...)
+	case v1beta1.OAuthToken:
+		cl, err = gitlab.NewOAuthClient(c.Token, options...)
+	case v1beta1.PersonalAccessToken:
+		cl, err = gitlab.NewClient(c.Token, options...)
+	default:
+		cl, err = gitlab.NewClient(c.Token, options...)
+	}
 	if err != nil {
 		panic(err)
 	}
+
 	return cl
 }
 
