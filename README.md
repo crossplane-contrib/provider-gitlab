@@ -32,6 +32,7 @@ spec:
   baseURL: https://gitlab.com/
   credentials:
     source: Secret
+    method: PersonalAccessToken
     secretRef:
       namespace: crossplane-system
       name: gitlab-credentials
