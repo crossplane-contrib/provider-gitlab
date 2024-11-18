@@ -294,19 +294,19 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 // Delete implements managed.ExternalClient.
-func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.PipelineSchedule)
 	if !ok {
-		return errors.New(errNotPipelineSchedule)
+		return managed.ExternalDelete{}, errors.New(errNotPipelineSchedule)
 	}
 
 	if cr.Spec.ForProvider.ProjectID == nil {
-		return errors.New(errNoProjectID)
+		return managed.ExternalDelete{}, errors.New(errNoProjectID)
 	}
 
 	id, err := strconv.Atoi(meta.GetExternalName(cr))
 	if err != nil {
-		return errors.New(errIDNotAnInt)
+		return managed.ExternalDelete{}, errors.New(errIDNotAnInt)
 	}
 
 	_, err = e.client.DeletePipelineSchedule(
@@ -314,7 +314,12 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		id,
 	)
 
-	return errors.Wrap(err, errDeletePipelineSchedule)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeletePipelineSchedule)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
 }
 
 func newPipelineScheduleClient(c clients.Config) projects.PipelineScheduleClient {

@@ -196,14 +196,14 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 }
 
-func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Variable)
 	if !ok {
-		return errors.New(errNotVariable)
+		return managed.ExternalDelete{}, errors.New(errNotVariable)
 	}
 
 	if cr.Spec.ForProvider.ProjectID == nil {
-		return errors.New(errProjectIDMissing)
+		return managed.ExternalDelete{}, errors.New(errProjectIDMissing)
 	}
 
 	cr.Status.SetConditions(xpv1.Deleting())
@@ -213,7 +213,12 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		projects.GenerateRemoveVariableOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
-	return errors.Wrap(err, errDeleteFailed)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
 }
 
 func (e *external) updateVariableFromSecret(ctx context.Context, selector *xpv1.SecretKeySelector, params *v1alpha1.VariableParameters) error {
