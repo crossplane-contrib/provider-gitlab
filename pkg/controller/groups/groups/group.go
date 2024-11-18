@@ -132,7 +132,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errIDNotInt)
 	}
 
-	cr.Spec.ForProvider.EmailsEnabled = lateInitializeEmailsEnabled(cr.Spec.ForProvider.EmailsEnabled, cr.Spec.ForProvider.EmailsDisabled) //nolint:staticcheck
+	//nolint:staticcheck // Keeping this for backward compatibility during deprecation
+	cr.Spec.ForProvider.EmailsEnabled = lateInitializeEmailsEnabled(cr.Spec.ForProvider.EmailsEnabled, cr.Spec.ForProvider.EmailsDisabled)
 
 	grp, res, err := e.client.GetGroup(groupID, nil)
 	if err != nil {
@@ -183,7 +184,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalCreation{}, nil
 }
 
-func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) { //nolint:gocyclo
+//nolint:gocyclo
+func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
 	cr, ok := mg.(*v1alpha1.Group)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotGroup)
@@ -205,10 +207,10 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			if notShared(*sh.GroupID, grp) {
 				opt := gitlab.ShareGroupWithGroupOptions{
 					GroupID:     sh.GroupID,
-					GroupAccess: (*gitlab.AccessLevelValue)(&sh.GroupAccessLevel), //nolint:gosec
+					GroupAccess: (*gitlab.AccessLevelValue)(&sh.GroupAccessLevel),
 				}
 				if sh.ExpiresAt != nil {
-					opt.ExpiresAt = (*gitlab.ISOTime)(&sh.ExpiresAt.Time) //nolint:gosec
+					opt.ExpiresAt = (*gitlab.ISOTime)(&sh.ExpiresAt.Time)
 				}
 				_, _, err = e.client.ShareGroupWithGroup(grp.ID, &opt)
 				if err != nil {

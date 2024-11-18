@@ -192,8 +192,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	for _, v := range cr.Spec.ForProvider.Variables {
 		opt := &gitlab.CreatePipelineScheduleVariableOptions{
-			Key:          &v.Key,   //nolint:gosec
-			Value:        &v.Value, //nolint:gosec
+			Key:          &v.Key,
+			Value:        &v.Value,
 			VariableType: (*gitlab.VariableTypeValue)(v.VariableType),
 		}
 		_, _, err := e.client.CreatePipelineScheduleVariable(
@@ -253,8 +253,8 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		for _, v := range cr.Spec.ForProvider.Variables {
 			if notSaved(v, ps.Variables) {
 				opt := &gitlab.CreatePipelineScheduleVariableOptions{
-					Key:          &v.Key,   //nolint:gosec
-					Value:        &v.Value, //nolint:gosec
+					Key:          &v.Key,
+					Value:        &v.Value,
 					VariableType: (*gitlab.VariableTypeValue)(v.VariableType),
 				}
 				_, _, err := e.client.CreatePipelineScheduleVariable(
@@ -268,7 +268,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			}
 			if notUpdated(v, ps.Variables) {
 				opt := &gitlab.EditPipelineScheduleVariableOptions{
-					Value:        &v.Value, //nolint:gosec
+					Value:        &v.Value,
 					VariableType: (*gitlab.VariableTypeValue)(v.VariableType),
 				}
 				_, _, err := e.client.EditPipelineScheduleVariable(
