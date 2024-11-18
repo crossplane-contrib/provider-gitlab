@@ -175,14 +175,19 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 }
 
-func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Project)
 	if !ok {
-		return errors.New(errNotProject)
+		return managed.ExternalDelete{}, errors.New(errNotProject)
 	}
 
 	_, err := e.client.DeleteProject(meta.GetExternalName(cr), gitlab.WithContext(ctx))
-	return errors.Wrap(err, errDeleteFailed)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
 }
 
 // lateInitialize fills the empty fields in the project spec with the

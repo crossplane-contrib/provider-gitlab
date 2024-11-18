@@ -197,19 +197,24 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, nil
 }
 
-func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Hook)
 	if !ok {
-		return errors.New(errNotHook)
+		return managed.ExternalDelete{}, errors.New(errNotHook)
 	}
 
 	cr.Status.SetConditions(xpv1.Deleting())
 
 	if cr.Spec.ForProvider.ProjectID == nil {
-		return errors.New(errProjectIDMissing)
+		return managed.ExternalDelete{}, errors.New(errProjectIDMissing)
 	}
 	_, err := e.client.DeleteProjectHook(*cr.Spec.ForProvider.ProjectID, cr.Status.AtProvider.ID, gitlab.WithContext(ctx))
-	return errors.Wrap(err, errDeleteFailed)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
 }
 
 func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.Hook, projecthook *gitlab.ProjectHook) error {

@@ -195,18 +195,18 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 }
 
-func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Member)
 	if !ok {
-		return errors.New(errNotMember)
+		return managed.ExternalDelete{}, errors.New(errNotMember)
 	}
 
 	if cr.Spec.ForProvider.GroupID == nil {
-		return errors.New(errMissingGroupID)
+		return managed.ExternalDelete{}, errors.New(errMissingGroupID)
 	}
 
 	if cr.Spec.ForProvider.UserID == nil {
-		return errors.New(errMissingUserInfo)
+		return managed.ExternalDelete{}, errors.New(errMissingUserInfo)
 	}
 
 	_, err := e.client.RemoveGroupMember(
@@ -215,7 +215,12 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		nil,
 		gitlab.WithContext(ctx),
 	)
-	return errors.Wrap(err, errDeleteFailed)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
 }
 
 // isMemberUpToDate checks whether there is a change in any of the modifiable fields.

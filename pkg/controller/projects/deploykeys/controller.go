@@ -214,22 +214,22 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, errors.Wrap(er, errUpdateFail)
 }
 
-func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.DeployKey)
 
 	if !ok {
-		return errors.New(errDeleteFail)
+		return managed.ExternalDelete{}, errors.New(errDeleteFail)
 	}
 
 	if cr.Spec.ForProvider.ProjectID == nil {
-		return errors.New(errProjectIDMissing)
+		return managed.ExternalDelete{}, errors.New(errProjectIDMissing)
 	}
 
 	keyIDString := meta.GetExternalName(cr)
 	keyID, err := strconv.Atoi(keyIDString)
 
 	if err != nil {
-		return errors.Wrap(err, errIDNotAnInt)
+		return managed.ExternalDelete{}, errors.Wrap(err, errIDNotAnInt)
 	}
 
 	_, err = e.client.DeleteDeployKey(
@@ -237,7 +237,12 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		keyID,
 	)
 
-	return errors.Wrap(err, errDeleteFail)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFail)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
 }
 
 func lateInitializeProjectDeployKey(local *v1alpha1.DeployKeyParameters, external *gitlab.ProjectDeployKey) {
