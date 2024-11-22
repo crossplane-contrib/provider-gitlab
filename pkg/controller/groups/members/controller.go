@@ -22,6 +22,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
@@ -76,6 +77,11 @@ func SetupMember(mgr ctrl.Manager, o controller.Options) error {
 	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(v1alpha1.MemberKubernetesGroupVersionKind),
 		reconcilerOpts...)
+
+	if err := mgr.Add(statemetrics.NewMRStateRecorder(
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.MemberList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		return err
+	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
@@ -195,18 +201,18 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 }
 
-func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Member)
 	if !ok {
-		return errors.New(errNotMember)
+		return managed.ExternalDelete{}, errors.New(errNotMember)
 	}
 
 	if cr.Spec.ForProvider.GroupID == nil {
-		return errors.New(errMissingGroupID)
+		return managed.ExternalDelete{}, errors.New(errMissingGroupID)
 	}
 
 	if cr.Spec.ForProvider.UserID == nil {
-		return errors.New(errMissingUserInfo)
+		return managed.ExternalDelete{}, errors.New(errMissingUserInfo)
 	}
 
 	_, err := e.client.RemoveGroupMember(
@@ -215,7 +221,12 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		nil,
 		gitlab.WithContext(ctx),
 	)
-	return errors.Wrap(err, errDeleteFailed)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
 }
 
 // isMemberUpToDate checks whether there is a change in any of the modifiable fields.

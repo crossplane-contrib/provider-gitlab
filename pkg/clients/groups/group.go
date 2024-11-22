@@ -123,10 +123,10 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { //nolint
 		arr := make([]v1alpha1.SharedWithGroupsObservation, 0)
 		for _, v := range grp.SharedWithGroups {
 			sg := v1alpha1.SharedWithGroupsObservation{
-				GroupID:          &v.GroupID,          //nolint:gosec
-				GroupName:        &v.GroupName,        //nolint:gosec
-				GroupFullPath:    &v.GroupFullPath,    //nolint:gosec
-				GroupAccessLevel: &v.GroupAccessLevel, //nolint:gosec
+				GroupID:          &v.GroupID,
+				GroupName:        &v.GroupName,
+				GroupFullPath:    &v.GroupFullPath,
+				GroupAccessLevel: &v.GroupAccessLevel,
 			}
 			if v.ExpiresAt != nil {
 				sg.ExpiresAt = &metav1.Time{Time: time.Time(*v.ExpiresAt)}

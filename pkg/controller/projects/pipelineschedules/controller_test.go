@@ -613,7 +613,7 @@ func TestDelete(t *testing.T) {
 	for tn, tc := range tcs {
 		t.Run(tn, func(t *testing.T) {
 			victim := &external{kube: tc.kube, client: tc.client}
-			err := victim.Delete(context.Background(), tc.args.cr)
+			_, err := victim.Delete(context.Background(), tc.args.cr)
 			if diff := cmp.Diff(tc.expected.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf(errorMessage, diff)
 			}
