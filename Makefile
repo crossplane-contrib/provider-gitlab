@@ -7,8 +7,7 @@ PROJECT_REPO := github.com/crossplane-contrib/$(PROJECT_NAME)
 PLATFORMS ?= linux_amd64 linux_arm64
 
 # kind-related versions
-KIND_VERSION ?= v0.14.0
-KIND_NODE_IMAGE_TAG ?= v1.24.0
+KIND_VERSION = v0.24.0
 
 # -include will silently skip missing files, which allows us
 # to load those files with a target in the Makefile. If only
@@ -44,9 +43,9 @@ GOLANGCILINT_VERSION = 1.56.1
 # ====================================================================================
 # Setup Kubernetes tools
 
-UP_VERSION = v0.27.0
+UP_VERSION = v0.34.2
 UP_CHANNEL = stable
-UPTEST_VERSION = v0.12.0
+USE_HELM3 = true
 
 -include build/makelib/k8s_tools.mk
 
@@ -71,6 +70,22 @@ XPKGS = provider-gitlab
 xpkg.build.provider-gitlab: do.build.images
 
 # ====================================================================================
+# End to End Testing
+CROSSPLANE_VERSION = 1.17.1
+CROSSPLANE_NAMESPACE = crossplane-system
+-include build/makelib/local.xpkg.mk
+-include build/makelib/controlplane.mk
+
+local-dev: controlplane.up
+local-deploy: build controlplane.up local.xpkg.deploy.provider.$(PROJECT_NAME)
+	@$(INFO) running locally built provider
+	@$(KUBECTL) wait provider.pkg $(PROJECT_NAME) --for condition=Healthy --timeout 5m
+	@$(KUBECTL) -n $(CROSSPLANE_NAMESPACE) wait --for=condition=Available deployment --all --timeout=5m
+	@$(OK) running locally built provider
+
+e2e: local-deploy
+
+# ====================================================================================
 # Targets
 
 # run `make help` to see the targets and options
@@ -93,15 +108,6 @@ cobertura:
 
 manifests:
 	@$(WARN) Deprecated. Please run make generate instead.
-
-# integration tests
-e2e.run: test-integration
-
-# Run integration tests.
-test-integration: $(KIND) $(KUBECTL) $(UP) $(HELM3)
-	@$(INFO) running integration tests using kind $(KIND_VERSION)
-	@KIND_NODE_IMAGE_TAG=${KIND_NODE_IMAGE_TAG} $(ROOT_DIR)/cluster/local/integration_tests.sh || $(FAIL)
-	@$(OK) integration tests passed
 
 # Update the submodules, such as the common build scripts.
 submodules:
