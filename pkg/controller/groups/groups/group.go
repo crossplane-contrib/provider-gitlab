@@ -22,11 +22,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
-	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/groups"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/features"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
@@ -40,6 +35,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
+	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/features"
 )
 
 const (
