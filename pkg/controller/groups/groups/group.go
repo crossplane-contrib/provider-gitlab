@@ -19,6 +19,7 @@ package groups
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
@@ -245,6 +246,17 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{}, gitlab.WithContext(ctx))
+	// if the group is for some reason already marked for deletion, we ignore the error and continue to delete the group permanently
+	if err != nil && !strings.Contains(err.Error(), "Group has been already marked for deletion") {
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+	}
+
+	if cr.Spec.ForProvider.PermanentlyRemove != nil && *cr.Spec.ForProvider.PermanentlyRemove {
+		_, err = e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{
+			PermanentlyRemove: cr.Spec.ForProvider.PermanentlyRemove,
+			FullPath:          cr.Spec.ForProvider.FullPathToRemove,
+		}, gitlab.WithContext(ctx))
+	}
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 }
 
