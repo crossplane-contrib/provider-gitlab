@@ -19,8 +19,14 @@ package groups
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
+	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/features"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
@@ -34,12 +40,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
-	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/groups"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/features"
 )
 
 const (
@@ -237,6 +237,17 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	}
 
 	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{}, gitlab.WithContext(ctx))
+	// if the group is for some reason already marked for deletion, we ignore the error and continue to delete the group permanently
+	if err != nil && !strings.Contains(err.Error(), "Group has been already marked for deletion") {
+		return errors.Wrap(err, errDeleteFailed)
+	}
+
+	if cr.Spec.ForProvider.PermanentlyRemove != nil && *cr.Spec.ForProvider.PermanentlyRemove {
+		_, err = e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{
+			PermanentlyRemove: cr.Spec.ForProvider.PermanentlyRemove,
+			FullPath:          cr.Spec.ForProvider.FullPathToRemove,
+		}, gitlab.WithContext(ctx))
+	}
 	return errors.Wrap(err, errDeleteFailed)
 }
 
