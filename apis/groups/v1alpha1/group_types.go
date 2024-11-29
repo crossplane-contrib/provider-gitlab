@@ -158,6 +158,16 @@ type GroupParameters struct {
 	// SharedWithGroups create links for sharing a group with another group.
 	// +optional
 	SharedWithGroups []SharedWithGroups `json:"sharedWithGroups,omitempty"`
+
+	// Force the immediate deletion of the group when removed. In GitLab Premium and Ultimate a group is by default
+	// just marked for deletion and removed permanently after seven days. Defaults to false.
+	// +optional
+	PermanentlyRemove *bool `json:"permanentlyRemove,omitempty"`
+
+	// Full path of group to delete permanently. Only required if PermanentlyRemove is set to true.
+	// GitLab Premium and Ultimate only.
+	// +optional
+	FullPathToRemove *string `json:"fullPathToRemove,omitempty"`
 }
 
 // AccessLevelValue represents a permission level within GitLab.
