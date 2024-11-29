@@ -27,6 +27,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
@@ -80,6 +81,11 @@ func SetupPipelineSchedule(mgr ctrl.Manager, o controller.Options) error {
 	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(v1alpha1.PipelineScheduleGroupVersionKind),
 		reconcilerOpts...)
+
+	if err := mgr.Add(statemetrics.NewMRStateRecorder(
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.PipelineScheduleList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		return err
+	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
@@ -186,8 +192,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	for _, v := range cr.Spec.ForProvider.Variables {
 		opt := &gitlab.CreatePipelineScheduleVariableOptions{
-			Key:          &v.Key,   //nolint:gosec
-			Value:        &v.Value, //nolint:gosec
+			Key:          &v.Key,
+			Value:        &v.Value,
 			VariableType: (*gitlab.VariableTypeValue)(v.VariableType),
 		}
 		_, _, err := e.client.CreatePipelineScheduleVariable(
@@ -247,8 +253,8 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		for _, v := range cr.Spec.ForProvider.Variables {
 			if notSaved(v, ps.Variables) {
 				opt := &gitlab.CreatePipelineScheduleVariableOptions{
-					Key:          &v.Key,   //nolint:gosec
-					Value:        &v.Value, //nolint:gosec
+					Key:          &v.Key,
+					Value:        &v.Value,
 					VariableType: (*gitlab.VariableTypeValue)(v.VariableType),
 				}
 				_, _, err := e.client.CreatePipelineScheduleVariable(
@@ -262,7 +268,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			}
 			if notUpdated(v, ps.Variables) {
 				opt := &gitlab.EditPipelineScheduleVariableOptions{
-					Value:        &v.Value, //nolint:gosec
+					Value:        &v.Value,
 					VariableType: (*gitlab.VariableTypeValue)(v.VariableType),
 				}
 				_, _, err := e.client.EditPipelineScheduleVariable(
@@ -294,19 +300,19 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 // Delete implements managed.ExternalClient.
-func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.PipelineSchedule)
 	if !ok {
-		return errors.New(errNotPipelineSchedule)
+		return managed.ExternalDelete{}, errors.New(errNotPipelineSchedule)
 	}
 
 	if cr.Spec.ForProvider.ProjectID == nil {
-		return errors.New(errNoProjectID)
+		return managed.ExternalDelete{}, errors.New(errNoProjectID)
 	}
 
 	id, err := strconv.Atoi(meta.GetExternalName(cr))
 	if err != nil {
-		return errors.New(errIDNotAnInt)
+		return managed.ExternalDelete{}, errors.New(errIDNotAnInt)
 	}
 
 	_, err = e.client.DeletePipelineSchedule(
@@ -314,7 +320,12 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		id,
 	)
 
-	return errors.Wrap(err, errDeletePipelineSchedule)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeletePipelineSchedule)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
 }
 
 func newPipelineScheduleClient(c clients.Config) projects.PipelineScheduleClient {

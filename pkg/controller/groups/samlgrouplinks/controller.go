@@ -26,6 +26,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
@@ -73,6 +74,11 @@ func SetupSamlGroupLink(mgr ctrl.Manager, o controller.Options) error {
 	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(v1alpha1.SamlGroupLinkGroupVersionKind),
 		reconcilerOpts...)
+
+	if err := mgr.Add(statemetrics.NewMRStateRecorder(
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.SamlGroupLinkList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		return err
+	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
@@ -164,19 +170,19 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, nil
 }
 
-func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.SamlGroupLink)
 	if !ok {
-		return errors.New(errNotSamlGroupLink)
+		return managed.ExternalDelete{}, errors.New(errNotSamlGroupLink)
 	}
 	if cr.Spec.ForProvider.GroupID == nil {
-		return errors.New(errMissingGroupID)
+		return managed.ExternalDelete{}, errors.New(errMissingGroupID)
 	}
 
 	samlGroupName := meta.GetExternalName(cr)
 
 	if samlGroupName == "" {
-		return errors.New(errMissingExternalName)
+		return managed.ExternalDelete{}, errors.New(errMissingExternalName)
 	}
 
 	_, err := e.client.DeleteGroupSAMLLink(
@@ -185,7 +191,12 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		nil,
 		gitlab.WithContext(ctx),
 	)
-	return errors.Wrap(err, errDeleteFailed)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
 }
 
 func isSamlGroupLinkUpToDate(p *v1alpha1.SamlGroupLinkParameters, g *gitlab.SAMLGroupLink) bool {

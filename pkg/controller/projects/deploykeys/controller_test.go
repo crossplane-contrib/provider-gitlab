@@ -549,7 +549,7 @@ func TestDelete(t *testing.T) {
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
 			victim := &external{kube: testCase.kube, client: testCase.deployKeyService}
-			err := victim.Delete(context.Background(), testCase.args.cr)
+			_, err := victim.Delete(context.Background(), testCase.args.cr)
 
 			if diff := cmp.Diff(testCase.expected.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf(errorMessage, diff)

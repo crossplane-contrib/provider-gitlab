@@ -28,6 +28,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
@@ -82,6 +83,11 @@ func SetupGroup(mgr ctrl.Manager, o controller.Options) error {
 		resource.ManagedKind(v1alpha1.GroupKubernetesGroupVersionKind),
 		reconcilerOpts...)
 
+	if err := mgr.Add(statemetrics.NewMRStateRecorder(
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.GroupList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		For(&v1alpha1.Group{}).
@@ -126,7 +132,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errIDNotInt)
 	}
 
-	cr.Spec.ForProvider.EmailsEnabled = lateInitializeEmailsEnabled(cr.Spec.ForProvider.EmailsEnabled, cr.Spec.ForProvider.EmailsDisabled) //nolint:staticcheck
+	//nolint:staticcheck // Keeping this for backward compatibility during deprecation
+	cr.Spec.ForProvider.EmailsEnabled = lateInitializeEmailsEnabled(cr.Spec.ForProvider.EmailsEnabled, cr.Spec.ForProvider.EmailsDisabled)
 
 	grp, res, err := e.client.GetGroup(groupID, nil)
 	if err != nil {
@@ -177,7 +184,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalCreation{}, nil
 }
 
-func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) { //nolint:gocyclo
+//nolint:gocyclo
+func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
 	cr, ok := mg.(*v1alpha1.Group)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotGroup)
@@ -199,10 +207,10 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			if notShared(*sh.GroupID, grp) {
 				opt := gitlab.ShareGroupWithGroupOptions{
 					GroupID:     sh.GroupID,
-					GroupAccess: (*gitlab.AccessLevelValue)(&sh.GroupAccessLevel), //nolint:gosec
+					GroupAccess: (*gitlab.AccessLevelValue)(&sh.GroupAccessLevel),
 				}
 				if sh.ExpiresAt != nil {
-					opt.ExpiresAt = (*gitlab.ISOTime)(&sh.ExpiresAt.Time) //nolint:gosec
+					opt.ExpiresAt = (*gitlab.ISOTime)(&sh.ExpiresAt.Time)
 				}
 				_, _, err = e.client.ShareGroupWithGroup(grp.ID, &opt)
 				if err != nil {
@@ -230,14 +238,19 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, nil
 }
 
-func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Group)
 	if !ok {
-		return errors.New(errNotGroup)
+		return managed.ExternalDelete{}, errors.New(errNotGroup)
 	}
 
 	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{}, gitlab.WithContext(ctx))
-	return errors.Wrap(err, errDeleteFailed)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
 }
 
 // isGroupUpToDate checks whether there is a change in any of the modifiable fields.

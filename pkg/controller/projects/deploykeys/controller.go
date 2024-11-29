@@ -11,6 +11,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
@@ -74,6 +75,11 @@ func SetupDeployKey(mgr ctrl.Manager, o crpc.Options) error {
 	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(v1alpha1.DeployKeyGroupVersionKind),
 		reconcilerOpts...)
+
+	if err := mgr.Add(statemetrics.NewMRStateRecorder(
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.DeployKeyList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		return err
+	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
@@ -214,22 +220,22 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, errors.Wrap(er, errUpdateFail)
 }
 
-func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.DeployKey)
 
 	if !ok {
-		return errors.New(errDeleteFail)
+		return managed.ExternalDelete{}, errors.New(errDeleteFail)
 	}
 
 	if cr.Spec.ForProvider.ProjectID == nil {
-		return errors.New(errProjectIDMissing)
+		return managed.ExternalDelete{}, errors.New(errProjectIDMissing)
 	}
 
 	keyIDString := meta.GetExternalName(cr)
 	keyID, err := strconv.Atoi(keyIDString)
 
 	if err != nil {
-		return errors.Wrap(err, errIDNotAnInt)
+		return managed.ExternalDelete{}, errors.Wrap(err, errIDNotAnInt)
 	}
 
 	_, err = e.client.DeleteDeployKey(
@@ -237,7 +243,12 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		keyID,
 	)
 
-	return errors.Wrap(err, errDeleteFail)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFail)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
 }
 
 func lateInitializeProjectDeployKey(local *v1alpha1.DeployKeyParameters, external *gitlab.ProjectDeployKey) {
