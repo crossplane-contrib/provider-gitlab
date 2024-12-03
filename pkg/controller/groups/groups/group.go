@@ -251,7 +251,9 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 	}
 
-	if cr.Spec.ForProvider.PermanentlyRemove != nil && *cr.Spec.ForProvider.PermanentlyRemove {
+	// permanent deletion is only available on subgroups; when executed against top-level groups the backend will return an error
+	isSubGroup := cr.Status.AtProvider.FullPath != nil && *cr.Status.AtProvider.FullPath != cr.Spec.ForProvider.Path
+	if cr.Spec.ForProvider.PermanentlyRemove != nil && *cr.Spec.ForProvider.PermanentlyRemove && isSubGroup {
 		_, err = e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{
 			PermanentlyRemove: cr.Spec.ForProvider.PermanentlyRemove,
 			FullPath:          cr.Spec.ForProvider.FullPathToRemove,

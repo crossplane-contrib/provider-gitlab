@@ -918,16 +918,47 @@ func TestDelete(t *testing.T) {
 				cr: group(
 					withExternalName("0"),
 					withPermanentlyRemove(gitlab.Ptr(true)),
-					withFullPathToRemove(gitlab.Ptr("path/to/remove"))),
+					withPath("group"),
+					withFullPathToRemove(gitlab.Ptr("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
 			},
 			want: want{
 				cr: group(
 					withExternalName("0"),
 					withPermanentlyRemove(gitlab.Ptr(true)),
-					withFullPathToRemove(gitlab.Ptr("path/to/remove"))),
+					withPath("group"),
+					withFullPathToRemove(gitlab.Ptr("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
 				calls: []deleteGroupCalls{
 					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}},
-					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{PermanentlyRemove: gitlab.Ptr(true), FullPath: gitlab.Ptr("path/to/remove")}},
+					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{PermanentlyRemove: gitlab.Ptr(true), FullPath: gitlab.Ptr("path/to/group")}},
+				},
+				err: nil,
+			},
+		},
+		"SuccessfulPermanentlyTopLevelGroupDeletion": {
+			args: args{
+				group: &fake.MockClient{
+					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteGroupCalls{Pid: pid, Opt: opt})
+						return &gitlab.Response{}, nil
+					},
+				},
+				cr: group(
+					withExternalName("0"),
+					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPath("top-level-group"),
+					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("top-level-group")})),
+			},
+			want: want{
+				cr: group(
+					withExternalName("0"),
+					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPath("top-level-group"),
+					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("top-level-group")}),
+				),
+				calls: []deleteGroupCalls{
+					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}},
 				},
 				err: nil,
 			},
