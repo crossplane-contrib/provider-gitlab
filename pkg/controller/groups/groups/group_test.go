@@ -82,6 +82,14 @@ func withPath(s string) groupModifier {
 	return func(r *v1alpha1.Group) { r.Spec.ForProvider.Path = s }
 }
 
+func withPermanentlyRemove(b *bool) groupModifier {
+	return func(r *v1alpha1.Group) { r.Spec.ForProvider.PermanentlyRemove = b }
+}
+
+func withFullPathToRemove(s *string) groupModifier {
+	return func(r *v1alpha1.Group) { r.Spec.ForProvider.FullPathToRemove = s }
+}
+
 func withDescription(s *string) groupModifier {
 	return func(r *v1alpha1.Group) { r.Spec.ForProvider.Description = s }
 }
@@ -844,9 +852,16 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	type deleteGroupCalls struct {
+		Pid interface{}
+		Opt *gitlab.DeleteGroupOptions
+	}
+	var recordedCalls []deleteGroupCalls
+
 	type want struct {
-		cr  resource.Managed
-		err error
+		cr    resource.Managed
+		calls []deleteGroupCalls
+		err   error
 	}
 
 	cases := map[string]struct {
@@ -866,21 +881,23 @@ func TestDelete(t *testing.T) {
 			args: args{
 				group: &fake.MockClient{
 					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteGroupCalls{Pid: pid, Opt: opt})
 						return &gitlab.Response{}, nil
 					},
 				},
 				cr: group(withExternalName("0")),
 			},
 			want: want{
-				cr:  group(withExternalName("0")),
-				err: nil,
+				cr:    group(withExternalName("0")),
+				calls: []deleteGroupCalls{{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}}},
+				err:   nil,
 			},
 		},
 		"FailedDeletion": {
 			args: args{
 				group: &fake.MockClient{
 					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-						return &gitlab.Response{}, errBoom
+						return nil, errBoom
 					},
 				},
 				cr: group(),
@@ -890,9 +907,66 @@ func TestDelete(t *testing.T) {
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},
 		},
+		"SuccessfulPermanentlyDeletion": {
+			args: args{
+				group: &fake.MockClient{
+					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteGroupCalls{Pid: pid, Opt: opt})
+						return &gitlab.Response{}, nil
+					},
+				},
+				cr: group(
+					withExternalName("0"),
+					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPath("group"),
+					withFullPathToRemove(gitlab.Ptr("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
+			},
+			want: want{
+				cr: group(
+					withExternalName("0"),
+					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPath("group"),
+					withFullPathToRemove(gitlab.Ptr("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
+				calls: []deleteGroupCalls{
+					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}},
+					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{PermanentlyRemove: gitlab.Ptr(true), FullPath: gitlab.Ptr("path/to/group")}},
+				},
+				err: nil,
+			},
+		},
+		"SuccessfulPermanentlyTopLevelGroupDeletion": {
+			args: args{
+				group: &fake.MockClient{
+					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteGroupCalls{Pid: pid, Opt: opt})
+						return &gitlab.Response{}, nil
+					},
+				},
+				cr: group(
+					withExternalName("0"),
+					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPath("top-level-group"),
+					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("top-level-group")})),
+			},
+			want: want{
+				cr: group(
+					withExternalName("0"),
+					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPath("top-level-group"),
+					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("top-level-group")}),
+				),
+				calls: []deleteGroupCalls{
+					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}},
+				},
+				err: nil,
+			},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
+			recordedCalls = nil
 			e := &external{kube: tc.kube, client: tc.group}
 			_, err := e.Delete(context.Background(), tc.args.cr)
 
@@ -900,6 +974,9 @@ func TestDelete(t *testing.T) {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.calls, recordedCalls, test.EquateConditions()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 		})
