@@ -95,6 +95,11 @@ spec:
                     description: Extra pipeline minutes quota for this group (purchased
                       in addition to the minutes included in the plan).
                     type: integer
+                  fullPathToRemove:
+                    description: |-
+                      Full path of group to delete permanently. Only required if PermanentlyRemove is set to true.
+                      GitLab Premium and Ultimate only.
+                    type: string
                   lfsEnabled:
                     description: Enable/disable Large File Storage (LFS) for the projects
                       in this group.
@@ -194,6 +199,11 @@ spec:
                   path:
                     description: The path of the group.
                     type: string
+                  permanentlyRemove:
+                    description: |-
+                      Force the immediate deletion of the group when removed. In GitLab Premium and Ultimate a group is by default
+                      just marked for deletion and removed permanently after seven days. Defaults to false.
+                    type: boolean
                   projectCreationLevel:
                     description: |-
                       developers can create projects in the group.
