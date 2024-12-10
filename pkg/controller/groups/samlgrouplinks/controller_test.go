@@ -29,6 +29,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
@@ -50,6 +51,7 @@ type SamlGroupLinkModifier func(*v1alpha1.SamlGroupLink)
 func withConditions(c ...xpv1.Condition) SamlGroupLinkModifier {
 	return func(cr *v1alpha1.SamlGroupLink) { cr.Status.ConditionedStatus.Conditions = c }
 }
+
 func withGroupID() SamlGroupLinkModifier {
 	return func(r *v1alpha1.SamlGroupLink) { r.Spec.ForProvider.GroupID = &groupID }
 }
@@ -68,6 +70,10 @@ func withSpec(s v1alpha1.SamlGroupLinkParameters) SamlGroupLinkModifier {
 
 func withExternalName(n string) SamlGroupLinkModifier {
 	return func(r *v1alpha1.SamlGroupLink) { meta.SetExternalName(r, n) }
+}
+
+func withMemberRoleID(i int) SamlGroupLinkModifier {
+	return func(r *v1alpha1.SamlGroupLink) { r.Spec.ForProvider.MemberRoleID = ptr.To(i) }
 }
 
 func samlGroupLink(m ...SamlGroupLinkModifier) *v1alpha1.SamlGroupLink {
@@ -274,7 +280,6 @@ func TestObserve(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestDelete(t *testing.T) {
@@ -461,6 +466,32 @@ func TestCreate(t *testing.T) {
 					withExternalName(name),
 					withSpec(v1alpha1.SamlGroupLinkParameters{GroupID: &groupID, Name: &name}),
 					withAccessLevel(10),
+				),
+				err:    nil,
+				result: managed.ExternalCreation{},
+			},
+		},
+		"SuccessfulCreationWithMemberRoleID": {
+			args: args{
+				samlGroupLink: &fake.MockClient{
+					MockAddGroupSAMLLink: func(pid interface{}, opt *gitlab.AddGroupSAMLLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error) {
+						return &gitlab.SAMLGroupLink{Name: name}, &gitlab.Response{}, nil
+					},
+				},
+				cr: samlGroupLink(
+					withGroupID(),
+					withSpec(v1alpha1.SamlGroupLinkParameters{GroupID: &groupID, Name: &name}),
+					withAccessLevel(10),
+					withMemberRoleID(10),
+				),
+			},
+			want: want{
+				cr: samlGroupLink(
+					withGroupID(),
+					withExternalName(name),
+					withSpec(v1alpha1.SamlGroupLinkParameters{GroupID: &groupID, Name: &name}),
+					withAccessLevel(10),
+					withMemberRoleID(10),
 				),
 				err:    nil,
 				result: managed.ExternalCreation{},
