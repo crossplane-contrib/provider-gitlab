@@ -20,6 +20,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
+	"github.com/crossplane/crossplane-runtime/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
@@ -62,7 +63,8 @@ func SetupMember(mgr ctrl.Manager, o controller.Options) error {
 		managed.WithExternalConnecter(&connector{
 			kube:              mgr.GetClient(),
 			newGitlabClientFn: groups.NewMemberClient,
-			newUserClientFn:   users.NewUserClient}),
+			newUserClientFn:   users.NewUserClient,
+		}),
 		managed.WithInitializers(),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
@@ -70,7 +72,7 @@ func SetupMember(mgr ctrl.Manager, o controller.Options) error {
 		managed.WithConnectionPublishers(cps...),
 	}
 
-	if o.Features.Enabled(features.EnableAlphaManagementPolicies) {
+	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
 		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
 	}
 
@@ -231,7 +233,6 @@ func (e *external) Disconnect(ctx context.Context) error {
 
 // isMemberUpToDate checks whether there is a change in any of the modifiable fields.
 func isMemberUpToDate(p *v1alpha1.MemberParameters, g *gitlab.GroupMember) bool {
-
 	if !cmp.Equal(int(p.AccessLevel), int(g.AccessLevel)) {
 		return false
 	}

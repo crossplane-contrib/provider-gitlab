@@ -25,6 +25,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
+	"github.com/crossplane/crossplane-runtime/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -72,7 +73,7 @@ func SetupAccessToken(mgr ctrl.Manager, o controller.Options) error {
 		managed.WithConnectionPublishers(cps...),
 	}
 
-	if o.Features.Enabled(features.EnableAlphaManagementPolicies) {
+	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
 		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
 	}
 
@@ -168,7 +169,6 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		groups.GenerateCreateGroupAccessTokenOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
-
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
@@ -193,7 +193,6 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	accessTokenID, err := strconv.Atoi(meta.GetExternalName(cr))
-
 	if err != nil {
 		return managed.ExternalDelete{}, errors.New(errExternalNameNotInt)
 	}
