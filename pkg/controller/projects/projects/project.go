@@ -24,6 +24,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
+	"github.com/crossplane/crossplane-runtime/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -69,7 +70,7 @@ func SetupProject(mgr ctrl.Manager, o controller.Options) error {
 		managed.WithConnectionPublishers(cps...),
 	}
 
-	if o.Features.Enabled(features.EnableAlphaManagementPolicies) {
+	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
 		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
 	}
 
