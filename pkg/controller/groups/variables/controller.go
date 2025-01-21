@@ -123,6 +123,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	variable, res, err := e.client.GetVariable(
 		*cr.Spec.ForProvider.GroupID,
 		cr.Spec.ForProvider.Key,
+		&gitlab.GetGroupVariableOptions{},
 		gitlab.WithContext(ctx))
 
 	if err != nil {

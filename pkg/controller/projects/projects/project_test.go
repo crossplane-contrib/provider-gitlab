@@ -63,6 +63,14 @@ func withPath(p *string) projectModifier {
 	return func(r *v1alpha1.Project) { r.Spec.ForProvider.Path = p }
 }
 
+func withPermanentlyRemove(b *bool) projectModifier {
+	return func(r *v1alpha1.Project) { r.Spec.ForProvider.PermanentlyRemove = b }
+}
+
+func withFullPathToRemove(s *string) projectModifier {
+	return func(r *v1alpha1.Project) { r.Spec.ForProvider.FullPathToRemove = s }
+}
+
 func withExternalName(projectID string) projectModifier {
 	return func(r *v1alpha1.Project) { meta.SetExternalName(r, projectID) }
 }
@@ -667,9 +675,16 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	type deleteProjectCalls struct {
+		Pid interface{}
+		Opt *gitlab.DeleteProjectOptions
+	}
+	var recordedCalls []deleteProjectCalls
+
 	type want struct {
-		cr  resource.Managed
-		err error
+		cr    resource.Managed
+		calls []deleteProjectCalls
+		err   error
 	}
 
 	cases := map[string]struct {
@@ -688,7 +703,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				project: &fake.MockClient{
-					MockDeleteProject: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteProject: func(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -702,8 +717,8 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				project: &fake.MockClient{
-					MockDeleteProject: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-						return &gitlab.Response{}, errBoom
+					MockDeleteProject: func(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return nil, errBoom
 					},
 				},
 				cr: project(),
@@ -713,9 +728,41 @@ func TestDelete(t *testing.T) {
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},
 		},
+		"SuccessfulPermanentlyDeletion": {
+			args: args{
+				project: &fake.MockClient{
+					MockDeleteProject: func(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteProjectCalls{Pid: pid, Opt: opt})
+						return &gitlab.Response{}, nil
+					},
+				},
+				cr: project(
+					withExternalName("0"),
+					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPath(gitlab.Ptr("project")),
+					withFullPathToRemove(gitlab.Ptr("path/to/project")),
+					withStatus(v1alpha1.ProjectObservation{PathWithNamespace: "path/to/project"}),
+				),
+			},
+			want: want{
+				cr: project(
+					withExternalName("0"),
+					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPath(gitlab.Ptr("project")),
+					withFullPathToRemove(gitlab.Ptr("path/to/project")),
+					withStatus(v1alpha1.ProjectObservation{PathWithNamespace: "path/to/project"}),
+				),
+				calls: []deleteProjectCalls{
+					{Pid: "0", Opt: &gitlab.DeleteProjectOptions{}},
+					{Pid: "0", Opt: &gitlab.DeleteProjectOptions{PermanentlyRemove: gitlab.Ptr(true), FullPath: gitlab.Ptr("path/to/project")}},
+				},
+				err: nil,
+			},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
+			recordedCalls = nil
 			e := &external{kube: tc.kube, client: tc.project}
 			_, err := e.Delete(context.Background(), tc.args.cr)
 
@@ -723,6 +770,9 @@ func TestDelete(t *testing.T) {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.calls, recordedCalls, test.EquateConditions()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 		})

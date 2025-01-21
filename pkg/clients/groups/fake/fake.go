@@ -147,7 +147,7 @@ func (c *MockClient) ListVariables(gid interface{}, opt *gitlab.ListGroupVariabl
 }
 
 // GetVariable calls the underlying MockGetGrouptVariable method.
-func (c *MockClient) GetVariable(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+func (c *MockClient) GetVariable(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
 	return c.MockGetGroupVariable(gid, key)
 }
 

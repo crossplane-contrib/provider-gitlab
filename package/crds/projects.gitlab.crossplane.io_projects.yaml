@@ -160,6 +160,11 @@ spec:
                   forkingAccessLevel:
                     description: One of disabled, private, or enabled.
                     type: string
+                  fullPathToRemove:
+                    description: |-
+                      Full path of project to delete permanently (see pathWithNamespace). Only required if PermanentlyRemove is set to true.
+                      GitLab Premium and Ultimate only.
+                    type: string
                   groupWithProjectTemplatesId:
                     description: |-
                       For group-level custom templates, specifies ID of group from which all the custom project templates are sourced.
@@ -317,6 +322,11 @@ spec:
                       Repository name for new project.
                       Generated based on name if not provided (generated as lowercase with dashes).
                     type: string
+                  permanentlyRemove:
+                    description: |-
+                      Force the immediate deletion of the project when removed. In GitLab Premium and Ultimate a project is by default
+                      just marked for deletion and removed permanently after seven days. Defaults to false.
+                    type: boolean
                   printingMergeRequestLinkEnabled:
                     description: Show link to create/view merge request when pushing
                       from the command line.

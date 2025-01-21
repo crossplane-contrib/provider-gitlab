@@ -19,6 +19,7 @@ package projects
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
@@ -187,7 +188,18 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotProject)
 	}
 
-	_, err := e.client.DeleteProject(meta.GetExternalName(cr), gitlab.WithContext(ctx))
+	_, err := e.client.DeleteProject(meta.GetExternalName(cr), &gitlab.DeleteProjectOptions{}, gitlab.WithContext(ctx))
+	// if the project is for some reason already marked for deletion, we ignore the error and continue to delete the project permanently
+	if err != nil && !strings.Contains(err.Error(), "Deletion pending.") {
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+	}
+
+	if cr.Spec.ForProvider.PermanentlyRemove != nil && *cr.Spec.ForProvider.PermanentlyRemove {
+		_, err = e.client.DeleteProject(meta.GetExternalName(cr), &gitlab.DeleteProjectOptions{
+			PermanentlyRemove: cr.Spec.ForProvider.PermanentlyRemove,
+			FullPath:          cr.Spec.ForProvider.FullPathToRemove,
+		}, gitlab.WithContext(ctx))
+	}
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 }
 

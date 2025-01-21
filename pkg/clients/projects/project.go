@@ -36,7 +36,7 @@ type Client interface {
 	GetProject(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	CreateProject(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	EditProject(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
-	DeleteProject(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	DeleteProject(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewProjectClient returns a new Gitlab Project service

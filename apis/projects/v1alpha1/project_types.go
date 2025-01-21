@@ -406,6 +406,16 @@ type ProjectParameters struct {
 	// One of disabled, private, or enabled.
 	// +optional
 	WikiAccessLevel *AccessControlValue `json:"wikiAccessLevel,omitempty"`
+
+	// Force the immediate deletion of the project when removed. In GitLab Premium and Ultimate a project is by default
+	// just marked for deletion and removed permanently after seven days. Defaults to false.
+	// +optional
+	PermanentlyRemove *bool `json:"permanentlyRemove,omitempty"`
+
+	// Full path of project to delete permanently (see pathWithNamespace). Only required if PermanentlyRemove is set to true.
+	// GitLab Premium and Ultimate only.
+	// +optional
+	FullPathToRemove *string `json:"fullPathToRemove,omitempty"`
 }
 
 // ProjectNamespace represents a project namespace.
