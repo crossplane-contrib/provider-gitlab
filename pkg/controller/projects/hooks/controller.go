@@ -24,6 +24,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
+	"github.com/crossplane/crossplane-runtime/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -70,7 +71,7 @@ func SetupHook(mgr ctrl.Manager, o controller.Options) error {
 		managed.WithConnectionPublishers(cps...),
 	}
 
-	if o.Features.Enabled(features.EnableAlphaManagementPolicies) {
+	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
 		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
 	}
 
@@ -160,13 +161,11 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	cr.Status.SetConditions(xpv1.Creating())
 	hookOptions, err := projects.GenerateCreateHookOptions(&cr.Spec.ForProvider, e.kube, ctx)
-
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errSecretRefInvalid)
 	}
 
 	hook, _, err := e.client.AddProjectHook(*cr.Spec.ForProvider.ProjectID, hookOptions, gitlab.WithContext(ctx))
-
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
@@ -190,7 +189,6 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	editHookOptions, err := projects.GenerateEditHookOptions(&cr.Spec.ForProvider, e.kube, ctx)
-
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.New(errSecretRefInvalid)
 	}
