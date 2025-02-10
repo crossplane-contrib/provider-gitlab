@@ -24,6 +24,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
+	"github.com/crossplane/crossplane-runtime/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -74,7 +75,7 @@ func SetupPipelineSchedule(mgr ctrl.Manager, o controller.Options) error {
 		managed.WithConnectionPublishers(cps...),
 	}
 
-	if o.Features.Enabled(features.EnableAlphaManagementPolicies) {
+	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
 		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
 	}
 
@@ -143,7 +144,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	ps, res, err := e.client.GetPipelineSchedule(*cr.Spec.ForProvider.ProjectID, id)
-
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -183,7 +183,6 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	ps, _, err := e.client.CreatePipelineSchedule(*cr.Spec.ForProvider.ProjectID, opt)
-
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreatePipelineSchedule)
 	}
@@ -240,7 +239,6 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		id,
 		opt,
 	)
-
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdatePipelineSchedule)
 	}
@@ -348,7 +346,8 @@ func lateInitialize(cr *v1alpha1.PipelineScheduleParameters, ps *gitlab.Pipeline
 			varr[i] = v1alpha1.PipelineVariable{
 				Key:          vv.Key,
 				Value:        vv.Value,
-				VariableType: (*string)(&vv.VariableType)}
+				VariableType: (*string)(&vv.VariableType),
+			}
 		}
 		cr.Variables = varr
 	}
@@ -379,7 +378,6 @@ func isVariablesUpToDate(crv []v1alpha1.PipelineVariable, inv []*gitlab.Pipeline
 		return false
 	}
 	for _, v := range crv {
-
 		if notSaved(v, inv) {
 			return false
 		}
