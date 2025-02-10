@@ -50,11 +50,12 @@ func NewSamlGroupLinkClient(cfg clients.Config) SamlGroupLinkClient {
 	return git.Groups
 }
 
-// GenerateAddSamlGroupLinkOptions is used to produce Options for SamlGroupSync creation
+// GenerateAddSamlGroupLinkOptions is used to produce Options for SamlGroupLink creation
 func GenerateAddSamlGroupLinkOptions(p *v1alpha1.SamlGroupLinkParameters) *gitlab.AddGroupSAMLLinkOptions {
 	samlGroupName := &gitlab.AddGroupSAMLLinkOptions{
 		SAMLGroupName: p.Name,
 		AccessLevel:   (*gitlab.AccessLevelValue)(&p.AccessLevel),
+		MemberRoleID:  p.MemberRoleID,
 	}
 
 	return samlGroupName
