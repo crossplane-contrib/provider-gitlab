@@ -8,6 +8,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	crpc "github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
+	"github.com/crossplane/crossplane-runtime/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -68,7 +69,7 @@ func SetupDeployKey(mgr ctrl.Manager, o crpc.Options) error {
 		managed.WithConnectionPublishers(cps...),
 	}
 
-	if o.Features.Enabled(features.EnableAlphaManagementPolicies) {
+	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
 		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
 	}
 
@@ -95,7 +96,6 @@ func (c *connector) Connect(ctx context.Context, mgd resource.Managed) (managed.
 	}
 
 	config, err := clients.GetConfig(ctx, c.kube, cr)
-
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	id, err := strconv.Atoi(meta.GetExternalName(cr))
-
 	if err != nil {
 		return managed.ExternalObservation{}, errors.New(errIDNotAnInt)
 	}
@@ -124,7 +123,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		*cr.Spec.ForProvider.ProjectID,
 		id,
 	)
-
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -171,7 +169,6 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	secret := &corev1.Secret{}
 	err := e.kube.Get(ctx, namespacedName, secret)
-
 	if err != nil {
 		return managed.ExternalCreation{},
 			errors.Wrap(err, errKeyMissing)
@@ -182,7 +179,6 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		generateCreateOptions(string(secret.Data[keySecretRef.Key]), &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
-
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFail)
 	}
@@ -206,7 +202,6 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	idString := meta.GetExternalName(cr)
 	id, err := strconv.Atoi(idString)
-
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errIDNotAnInt)
 	}
@@ -233,7 +228,6 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	keyIDString := meta.GetExternalName(cr)
 	keyID, err := strconv.Atoi(keyIDString)
-
 	if err != nil {
 		return managed.ExternalDelete{}, errors.Wrap(err, errIDNotAnInt)
 	}
