@@ -29,7 +29,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 	"github.com/google/go-cmp/cmp"
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -124,6 +124,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	variable, res, err := e.client.GetVariable(
 		*cr.Spec.ForProvider.GroupID,
 		cr.Spec.ForProvider.Key,
+		groups.GenerateGetVariableOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
