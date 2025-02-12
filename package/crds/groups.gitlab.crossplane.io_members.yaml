@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.0
   name: members.groups.gitlab.crossplane.io
 spec:
   group: groups.gitlab.crossplane.io
@@ -351,7 +351,6 @@ spec:
                 description: |-
                   MemberObservation represents a group member.
 
-
                   GitLab API docs:
                   https://docs.gitlab.com/ce/api/groups.html#list-group-members
                 properties:
@@ -360,7 +359,6 @@ spec:
                   groupSamlIdentity:
                     description: |-
                       MemberSAMLIdentity represents the SAML Identity link for the group member.
-
 
                       GitLab API docs: https://docs.gitlab.com/ce/api/members.html#list-all-members-of-a-group-or-project
                       Gitlab MR for API change: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/20357

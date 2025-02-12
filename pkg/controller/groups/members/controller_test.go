@@ -25,7 +25,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/test"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	"github.com/xanzy/go-gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"

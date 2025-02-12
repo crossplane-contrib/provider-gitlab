@@ -30,7 +30,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/test"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	gitlab "github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 

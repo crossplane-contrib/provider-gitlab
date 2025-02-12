@@ -22,7 +22,7 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/xanzy/go-gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
