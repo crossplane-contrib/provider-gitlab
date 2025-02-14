@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.0
   name: projects.projects.gitlab.crossplane.io
 spec:
   group: projects.gitlab.crossplane.io
@@ -317,6 +317,11 @@ spec:
                       Repository name for new project.
                       Generated based on name if not provided (generated as lowercase with dashes).
                     type: string
+                  permanentlyRemove:
+                    description: |-
+                      Force the immediate deletion of the project when removed. In GitLab Premium and Ultimate a project is by default
+                      just marked for deletion and removed permanently after seven days. Defaults to false.
+                    type: boolean
                   printingMergeRequestLinkEnabled:
                     description: Show link to create/view merge request when pushing
                       from the command line.
@@ -598,7 +603,6 @@ spec:
                       description: |-
                         CustomAttribute struct is used to unmarshal response to api calls.
 
-
                         GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html
                       properties:
                         key:
@@ -745,7 +749,6 @@ spec:
                     description: |-
                       User represents a GitLab user.
 
-
                       GitLab API docs: https://docs.gitlab.com/ee/api/users.html
                     properties:
                       ID:
@@ -773,7 +776,6 @@ spec:
                         items:
                           description: |-
                             CustomAttribute struct is used to unmarshal response to api calls.
-
 
                             GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html
                           properties:
@@ -860,7 +862,6 @@ spec:
                             description: |-
                               AccessLevelValue represents a permission level within GitLab.
 
-
                               GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html
                             type: integer
                           notificationLevel:
@@ -877,7 +878,6 @@ spec:
                           accessLevel:
                             description: |-
                               AccessLevelValue represents a permission level within GitLab.
-
 
                               GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html
                             type: integer

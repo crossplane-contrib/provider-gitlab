@@ -15,7 +15,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	"github.com/xanzy/go-gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"

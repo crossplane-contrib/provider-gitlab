@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.0
   name: pipelineschedules.projects.gitlab.crossplane.io
 spec:
   group: projects.gitlab.crossplane.io
@@ -72,7 +72,6 @@ spec:
               forProvider:
                 description: |-
                   PipelineScheduleParameters represents a pipeline schedule.
-
 
                   GitLab API docs:
                   https://docs.gitlab.com/ee/api/pipeline_schedules.html
@@ -183,7 +182,6 @@ spec:
                     items:
                       description: |-
                         PipelineVariable represents a pipeline variable.
-
 
                         GitLab API docs: https://docs.gitlab.com/ee/api/pipelines.html
                       properties:
@@ -413,7 +411,6 @@ spec:
                     description: |-
                       User represents a GitLab user.
 
-
                       GitLab API docs: https://docs.gitlab.com/ee/api/users.html
                     properties:
                       ID:
@@ -441,7 +438,6 @@ spec:
                         items:
                           description: |-
                             CustomAttribute struct is used to unmarshal response to api calls.
-
 
                             GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html
                           properties:

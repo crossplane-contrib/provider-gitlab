@@ -18,7 +18,7 @@ package users
 
 import (
 	"github.com/pkg/errors"
-	"github.com/xanzy/go-gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )

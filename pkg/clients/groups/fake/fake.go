@@ -17,7 +17,7 @@ limitations under the License.
 package fake
 
 import (
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/groups"
 )
@@ -53,7 +53,7 @@ type MockClient struct {
 	MockDeleteGroupSAMLLink func(pid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
 	MockListGroupVariables  func(gid interface{}, opt *gitlab.ListGroupVariablesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.GroupVariable, *gitlab.Response, error)
-	MockGetGroupVariable    func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
+	MockGetGroupVariable    func(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
 	MockCreateGroupVariable func(gid interface{}, opt *gitlab.CreateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
 	MockUpdateGroupVariable func(gid interface{}, key string, opt *gitlab.UpdateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
 	MockRemoveGroupVariable func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
@@ -147,8 +147,8 @@ func (c *MockClient) ListVariables(gid interface{}, opt *gitlab.ListGroupVariabl
 }
 
 // GetVariable calls the underlying MockGetGrouptVariable method.
-func (c *MockClient) GetVariable(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
-	return c.MockGetGroupVariable(gid, key)
+func (c *MockClient) GetVariable(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+	return c.MockGetGroupVariable(gid, key, opt)
 }
 
 // CreateVariable calls the underlying MockCreateGroupVariable method.

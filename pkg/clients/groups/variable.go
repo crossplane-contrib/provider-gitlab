@@ -22,7 +22,7 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
@@ -35,7 +35,7 @@ const (
 // VariableClient defines Gitlab Variable service operations
 type VariableClient interface {
 	ListVariables(gid interface{}, opt *gitlab.ListGroupVariablesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.GroupVariable, *gitlab.Response, error)
-	GetVariable(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
+	GetVariable(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
 	CreateVariable(gid interface{}, opt *gitlab.CreateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
 	UpdateVariable(gid interface{}, key string, opt *gitlab.UpdateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
 	RemoveVariable(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
@@ -133,6 +133,14 @@ func GenerateVariableFilter(p *v1alpha1.VariableParameters) *gitlab.VariableFilt
 	return &gitlab.VariableFilter{
 		EnvironmentScope: *p.EnvironmentScope,
 	}
+}
+
+// GenerateGetVariableOptions generates group get options
+func GenerateGetVariableOptions(p *v1alpha1.VariableParameters) *gitlab.GetGroupVariableOptions {
+	variable := &gitlab.GetGroupVariableOptions{
+		Filter: GenerateVariableFilter(p),
+	}
+	return variable
 }
 
 // IsVariableUpToDate checks whether there is a change in any of the modifiable fields.
