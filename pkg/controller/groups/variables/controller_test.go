@@ -26,7 +26,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/test"
 	"github.com/google/go-cmp/cmp"
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -154,7 +154,7 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetGroupVariable: func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+					MockGetGroupVariable: func(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
 						return &pv, &gitlab.Response{}, nil
 					},
 				},
@@ -174,7 +174,7 @@ func TestObserve(t *testing.T) {
 		"NotUpToDate": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetGroupVariable: func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+					MockGetGroupVariable: func(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
 						rv := pv
 						rv.Value = "not-up-to-date"
 						return &rv, &gitlab.Response{}, nil
@@ -200,7 +200,7 @@ func TestObserve(t *testing.T) {
 		"LateInitSuccess": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetGroupVariable: func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+					MockGetGroupVariable: func(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
 						rv := pv
 						rv.Masked = true
 						rv.VariableType = gitlab.FileVariableType
@@ -238,7 +238,7 @@ func TestObserve(t *testing.T) {
 		"GetError": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetGroupVariable: func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+					MockGetGroupVariable: func(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
 						return &gitlab.GroupVariable{}, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errBoom
 					},
 				},
@@ -259,7 +259,7 @@ func TestObserve(t *testing.T) {
 		"ErrGet404": {
 			args: args{
 				variable: &fake.MockClient{
-					MockGetGroupVariable: func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+					MockGetGroupVariable: func(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
 						return &gitlab.GroupVariable{}, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
@@ -294,7 +294,7 @@ func TestObserve(t *testing.T) {
 					},
 				},
 				variable: &fake.MockClient{
-					MockGetGroupVariable: func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+					MockGetGroupVariable: func(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
 						return &gitlab.GroupVariable{}, &gitlab.Response{}, nil
 					},
 				},
@@ -346,7 +346,7 @@ func TestObserve(t *testing.T) {
 					},
 				},
 				variable: &fake.MockClient{
-					MockGetGroupVariable: func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+					MockGetGroupVariable: func(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
 						return &gitlab.GroupVariable{}, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errors.New(errSecretKeyNotFound)
 					},
 				},

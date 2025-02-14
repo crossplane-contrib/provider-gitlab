@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.0
   name: members.projects.gitlab.crossplane.io
 spec:
   group: projects.gitlab.crossplane.io
@@ -351,7 +351,6 @@ spec:
               atProvider:
                 description: |-
                   MemberObservation represents a project member.
-
 
                   GitLab API docs:
                   https://docs.gitlab.com/ce/api/projects.html#list-project-team-members
