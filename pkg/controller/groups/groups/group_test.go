@@ -313,6 +313,7 @@ func TestObserve(t *testing.T) {
 								GroupFullPath    string          "json:\"group_full_path\""
 								GroupAccessLevel int             "json:\"group_access_level\""
 								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
+								MemberRoleID     int             "json:\"member_role_id\""
 							}{
 								{
 									GroupID:          groupID,
@@ -675,6 +676,7 @@ func TestUpdate(t *testing.T) {
 								GroupFullPath    string          "json:\"group_full_path\""
 								GroupAccessLevel int             "json:\"group_access_level\""
 								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
+								MemberRoleID     int             "json:\"member_role_id\""
 							}{
 								{
 									GroupID: groupID,
@@ -729,6 +731,7 @@ func TestUpdate(t *testing.T) {
 								GroupFullPath    string          "json:\"group_full_path\""
 								GroupAccessLevel int             "json:\"group_access_level\""
 								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
+								MemberRoleID     int             "json:\"member_role_id\""
 							}{
 								{GroupID: groupID},
 								{GroupID: 123456},
@@ -800,6 +803,7 @@ func TestUpdate(t *testing.T) {
 								GroupFullPath    string          "json:\"group_full_path\""
 								GroupAccessLevel int             "json:\"group_access_level\""
 								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
+								MemberRoleID     int             "json:\"member_role_id\""
 							}{
 								{GroupID: groupID},
 								{GroupID: 123456},
