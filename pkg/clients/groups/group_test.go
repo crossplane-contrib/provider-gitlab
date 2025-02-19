@@ -126,6 +126,7 @@ func TestGenerateObservation(t *testing.T) {
 						GroupFullPath    string          `json:"group_full_path"`
 						GroupAccessLevel int             `json:"group_access_level"`
 						ExpiresAt        *gitlab.ISOTime `json:"expires_at"`
+						MemberRoleID     int             `json:"member_role_id"`
 					}{
 						{
 							GroupID:          ID,
@@ -133,6 +134,7 @@ func TestGenerateObservation(t *testing.T) {
 							GroupFullPath:    path,
 							GroupAccessLevel: sharedWithGroups[0].GroupAccessLevel,
 							ExpiresAt:        &gitlabSharedWithGroupsExpireAt,
+							MemberRoleID:     0,
 						},
 					},
 					LDAPAccess: gitlabLDAPAccess,
@@ -191,6 +193,7 @@ func TestGenerateObservation(t *testing.T) {
 						GroupFullPath    string          `json:"group_full_path"`
 						GroupAccessLevel int             `json:"group_access_level"`
 						ExpiresAt        *gitlab.ISOTime `json:"expires_at"`
+						MemberRoleID     int             `json:"member_role_id"`
 					}{
 						{
 							ExpiresAt: nil,

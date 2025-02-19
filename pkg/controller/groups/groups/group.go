@@ -467,6 +467,7 @@ func lateInitializeSharedWithGroups(cr *v1alpha1.GroupParameters, in *gitlab.Gro
 		GroupFullPath    string          `json:"group_full_path"`
 		GroupAccessLevel int             `json:"group_access_level"`
 		ExpiresAt        *gitlab.ISOTime `json:"expires_at"`
+		MemberRoleID     int             `json:"member_role_id"`
 	}{}
 
 	for _, inswg := range in.SharedWithGroups {
