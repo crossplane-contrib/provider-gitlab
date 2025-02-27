@@ -55,7 +55,7 @@ const (
 
 // SetupVariable adds a controller that reconciles Variables.
 func SetupVariable(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.VariableKind)
+	name := managed.ControllerName(v1alpha1.VariableGroupKind)
 
 	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
 	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
