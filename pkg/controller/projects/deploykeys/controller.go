@@ -15,7 +15,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	"gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
@@ -53,7 +53,7 @@ type connector struct {
 
 // SetupDeployKey adds a controller that reconciles ProjectDeployKey.
 func SetupDeployKey(mgr ctrl.Manager, o crpc.Options) error {
-	name := managed.ControllerName(v1alpha1.DeployKeyKind)
+	name := managed.ControllerName(v1alpha1.DeployKeyGroupKind)
 
 	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
 	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {

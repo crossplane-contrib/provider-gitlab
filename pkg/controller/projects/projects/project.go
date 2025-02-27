@@ -55,7 +55,7 @@ const (
 
 // SetupProject adds a controller that reconciles Projects.
 func SetupProject(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.ProjectKind)
+	name := managed.ControllerName(v1alpha1.ProjectGroupKind)
 
 	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
 	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
