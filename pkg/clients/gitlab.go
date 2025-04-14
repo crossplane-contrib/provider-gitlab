@@ -135,6 +135,7 @@ func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed
 			BaseURL:            pc.Spec.BaseURL,
 			Token:              string(s.Data[csr.Key]),
 			InsecureSkipVerify: ptr.Deref(pc.Spec.InsecureSkipVerify, false),
+			AuthMethod:         pc.Spec.Credentials.Method,
 		}, nil
 	default:
 		return nil, errors.Errorf("credentials source %s is not currently supported", s)
