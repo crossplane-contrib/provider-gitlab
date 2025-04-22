@@ -81,7 +81,7 @@ func NewClient(c Config) *gitlab.Client {
 		if err = json.Unmarshal([]byte(c.Token), ba); err != nil {
 			panic(err)
 		}
-		cl, err = gitlab.NewBasicAuthClient(ba.Username, ba.Password, gitlab.WithBaseURL(c.BaseURL))
+		cl, err = gitlab.NewBasicAuthClient(ba.Username, ba.Password, options...)
 	case v1beta1.JobToken:
 		cl, err = gitlab.NewJobClient(c.Token, options...)
 	case v1beta1.OAuthToken:
