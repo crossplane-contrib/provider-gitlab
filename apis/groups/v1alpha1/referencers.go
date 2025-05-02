@@ -22,6 +22,7 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/reference"
 	"github.com/pkg/errors"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -169,7 +170,7 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 	}
 
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-		CurrentValue: reference.FromPtrValue(idstrp),
+		CurrentValue: ptr.Deref(idstrp, ""),
 		Extract:      reference.ExternalName(),
 		Reference:    mg.Spec.ForProvider.ParentIDRef,
 		Selector:     mg.Spec.ForProvider.ParentIDSelector,
@@ -193,7 +194,7 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 	for i3 := 0; i3 < len(mg.Spec.ForProvider.SharedWithGroups); i3++ {
 		idstr := strconv.Itoa(*mg.Spec.ForProvider.SharedWithGroups[i3].GroupID)
 		rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-			CurrentValue: reference.FromPtrValue(&idstr),
+			CurrentValue: ptr.Deref(&idstr, ""),
 			Extract:      reference.ExternalName(),
 			Reference:    mg.Spec.ForProvider.SharedWithGroups[i3].GroupIDRef,
 			Selector:     mg.Spec.ForProvider.SharedWithGroups[i3].GroupIDSelector,
