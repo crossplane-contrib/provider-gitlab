@@ -162,7 +162,7 @@ func (c *MockClient) UpdateVariable(gid interface{}, key string, opt *gitlab.Upd
 }
 
 // RemoveVariable calls the underlying MockRemoveGroupVariable method.
-func (c *MockClient) RemoveVariable(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+func (c *MockClient) RemoveVariable(gid interface{}, key string, opt *gitlab.RemoveGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockRemoveGroupVariable(gid, key)
 }
 
