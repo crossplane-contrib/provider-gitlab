@@ -30,7 +30,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/test"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	"gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -307,14 +307,7 @@ func TestObserve(t *testing.T) {
 						return &gitlab.Group{
 							Path:         "",
 							RunnersToken: "token",
-							SharedWithGroups: []struct {
-								GroupID          int             "json:\"group_id\""
-								GroupName        string          "json:\"group_name\""
-								GroupFullPath    string          "json:\"group_full_path\""
-								GroupAccessLevel int             "json:\"group_access_level\""
-								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
-								MemberRoleID     int             "json:\"member_role_id\""
-							}{
+							SharedWithGroups: []gitlab.SharedWithGroup{
 								{
 									GroupID:          groupID,
 									GroupName:        name,
@@ -670,14 +663,7 @@ func TestUpdate(t *testing.T) {
 					MockUpdateGroup: func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
 						return &gitlab.Group{
 							ID: groupID,
-							SharedWithGroups: []struct {
-								GroupID          int             "json:\"group_id\""
-								GroupName        string          "json:\"group_name\""
-								GroupFullPath    string          "json:\"group_full_path\""
-								GroupAccessLevel int             "json:\"group_access_level\""
-								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
-								MemberRoleID     int             "json:\"member_role_id\""
-							}{
+							SharedWithGroups: []gitlab.SharedWithGroup{
 								{
 									GroupID: groupID,
 								},
@@ -725,14 +711,7 @@ func TestUpdate(t *testing.T) {
 				group: &fake.MockClient{
 					MockUpdateGroup: func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
 						return &gitlab.Group{
-							SharedWithGroups: []struct {
-								GroupID          int             "json:\"group_id\""
-								GroupName        string          "json:\"group_name\""
-								GroupFullPath    string          "json:\"group_full_path\""
-								GroupAccessLevel int             "json:\"group_access_level\""
-								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
-								MemberRoleID     int             "json:\"member_role_id\""
-							}{
+							SharedWithGroups: []gitlab.SharedWithGroup{
 								{GroupID: groupID},
 								{GroupID: 123456},
 							},
@@ -797,14 +776,7 @@ func TestUpdate(t *testing.T) {
 				group: &fake.MockClient{
 					MockUpdateGroup: func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
 						return &gitlab.Group{
-							SharedWithGroups: []struct {
-								GroupID          int             "json:\"group_id\""
-								GroupName        string          "json:\"group_name\""
-								GroupFullPath    string          "json:\"group_full_path\""
-								GroupAccessLevel int             "json:\"group_access_level\""
-								ExpiresAt        *gitlab.ISOTime "json:\"expires_at\""
-								MemberRoleID     int             "json:\"member_role_id\""
-							}{
+							SharedWithGroups: []gitlab.SharedWithGroup{
 								{GroupID: groupID},
 								{GroupID: 123456},
 							},

@@ -211,10 +211,15 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errGroupIDMissing)
 	}
 
+	opts := &gitlab.RemoveGroupVariableOptions{
+		Filter: nil,
+	}
+
 	cr.Status.SetConditions(xpv1.Deleting())
 	_, err := e.client.RemoveVariable(
 		*cr.Spec.ForProvider.GroupID,
 		cr.Spec.ForProvider.Key,
+		opts,
 		gitlab.WithContext(ctx),
 	)
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
