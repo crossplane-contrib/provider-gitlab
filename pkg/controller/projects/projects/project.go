@@ -218,9 +218,6 @@ func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { /
 	if in.AllowMergeOnSkippedPipeline == nil {
 		in.AllowMergeOnSkippedPipeline = &project.AllowMergeOnSkippedPipeline
 	}
-	if in.ApprovalsBeforeMerge == nil {
-		in.ApprovalsBeforeMerge = &project.ApprovalsBeforeMerge
-	}
 	if in.AutocloseReferencedIssues == nil {
 		in.AutocloseReferencedIssues = &project.AutocloseReferencedIssues
 	}
@@ -235,8 +232,8 @@ func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { /
 	if in.CIForwardDeploymentEnabled == nil {
 		in.CIForwardDeploymentEnabled = &project.CIForwardDeploymentEnabled
 	}
-	if in.ContainerRegistryEnabled == nil {
-		in.ContainerRegistryEnabled = &project.ContainerRegistryEnabled
+	if in.ContainerRegistryAccessLevel == nil {
+		in.ContainerRegistryAccessLevel = clients.LateInitializeAccessControlValue(in.ContainerRegistryAccessLevel, project.ContainerRegistryAccessLevel)
 	}
 
 	in.DefaultBranch = clients.LateInitializeStringPtr(in.DefaultBranch, project.DefaultBranch)
@@ -309,8 +306,8 @@ func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { /
 	in.SnippetsAccessLevel = clients.LateInitializeAccessControlValue(in.SnippetsAccessLevel, project.SnippetsAccessLevel)
 	in.SuggestionCommitMessage = clients.LateInitializeStringPtr(in.SuggestionCommitMessage, project.SuggestionCommitMessage)
 
-	if len(in.TagList) == 0 && len(project.TagList) > 0 {
-		in.TagList = project.TagList
+	if len(in.Topics) == 0 && len(project.Topics) > 0 {
+		in.Topics = project.Topics
 	}
 
 	in.Visibility = clients.LateInitializeVisibilityValue(in.Visibility, project.Visibility)
@@ -323,9 +320,6 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.AllowMergeOnSkippedPipeline, g.AllowMergeOnSkippedPipeline) {
-		return false
-	}
-	if !clients.IsIntEqualToIntPtr(p.ApprovalsBeforeMerge, g.ApprovalsBeforeMerge) {
 		return false
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.AutocloseReferencedIssues, g.AutocloseReferencedIssues) {
@@ -346,7 +340,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsBoolEqualToBoolPtr(p.CIForwardDeploymentEnabled, g.CIForwardDeploymentEnabled) {
 		return false
 	}
-	if !clients.IsBoolEqualToBoolPtr(p.ContainerRegistryEnabled, g.ContainerRegistryEnabled) {
+	if p.ContainerRegistryAccessLevel != nil && !cmp.Equal(string(*p.ContainerRegistryAccessLevel), string(g.ContainerRegistryAccessLevel)) {
 		return false
 	}
 	if !cmp.Equal(p.DefaultBranch, clients.StringToPtr(g.DefaultBranch)) {
@@ -436,7 +430,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !cmp.Equal(p.SuggestionCommitMessage, clients.StringToPtr(g.SuggestionCommitMessage)) {
 		return false
 	}
-	if !cmp.Equal(p.TagList, g.TagList, cmpopts.EquateEmpty()) {
+	if !cmp.Equal(p.Topics, g.Topics, cmpopts.EquateEmpty()) {
 		return false
 	}
 	if p.Visibility != nil && !cmp.Equal(string(*p.Visibility), string(g.Visibility)) {

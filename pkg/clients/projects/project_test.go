@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
@@ -29,40 +29,42 @@ import (
 )
 
 var (
-	name                             = "my-project"
-	overrideName                     = "My Project"
-	path                             = "path/to/project"
-	namespaceID                      = 1
-	defaultBranch                    = "main"
-	description                      = "my awesome project"
-	issuesAccessLevel                = "enabled"
-	issuesAccessLevelv1alpha1        = v1alpha1.AccessControlValue(issuesAccessLevel)
-	repositoryAccessLevel            = "enabled"
-	repositoryAccessLevelv1alpha1    = v1alpha1.AccessControlValue(repositoryAccessLevel)
-	mergeRequestsAccessLevel         = "enabled"
-	mergeRequestsAccessLevelv1alpha1 = v1alpha1.AccessControlValue(mergeRequestsAccessLevel)
-	forkingAccessLevel               = "enabled"
-	forkingAccessLevelv1alpha1       = v1alpha1.AccessControlValue(forkingAccessLevel)
-	buildsAccessLevel                = "disabled"
-	buildsAccessLevelv1alpha1        = v1alpha1.AccessControlValue(buildsAccessLevel)
-	wikiAccessLevel                  = "private"
-	wikiAccessLevelv1alpha1          = v1alpha1.AccessControlValue(wikiAccessLevel)
-	snippetsAccessLevel              = "public"
-	snippetsAccessLevelv1alpha1      = v1alpha1.AccessControlValue(snippetsAccessLevel)
-	pagesAccessLevel                 = "enabled"
-	pagesAccessLevelv1alpha1         = v1alpha1.AccessControlValue(pagesAccessLevel)
-	operationsAccessLevel            = "public"
-	operationsAccessLevelv1alpha1    = v1alpha1.AccessControlValue(operationsAccessLevel)
-	emailsDisabled                   = true
-	resolveOutdatedDiffDiscussions   = true
-	cadence                          = "Cadence"
-	keepN                            = 1
-	olderThan                        = "OlderThan"
-	nameRegexDelete                  = "NameRegexDelete"
-	nameRegexKeep                    = "NameRegexKeep"
-	enabled                          = false
-	nextRunAt                        = time.Now()
-	gitlabContainerExpirationPolicy  = gitlab.ContainerExpirationPolicy{
+	name                                 = "my-project"
+	overrideName                         = "My Project"
+	path                                 = "path/to/project"
+	namespaceID                          = 1
+	defaultBranch                        = "main"
+	description                          = "my awesome project"
+	issuesAccessLevel                    = "enabled"
+	issuesAccessLevelv1alpha1            = v1alpha1.AccessControlValue(issuesAccessLevel)
+	repositoryAccessLevel                = "enabled"
+	repositoryAccessLevelv1alpha1        = v1alpha1.AccessControlValue(repositoryAccessLevel)
+	mergeRequestsAccessLevel             = "enabled"
+	mergeRequestsAccessLevelv1alpha1     = v1alpha1.AccessControlValue(mergeRequestsAccessLevel)
+	forkingAccessLevel                   = "enabled"
+	forkingAccessLevelv1alpha1           = v1alpha1.AccessControlValue(forkingAccessLevel)
+	buildsAccessLevel                    = "disabled"
+	buildsAccessLevelv1alpha1            = v1alpha1.AccessControlValue(buildsAccessLevel)
+	wikiAccessLevel                      = "private"
+	wikiAccessLevelv1alpha1              = v1alpha1.AccessControlValue(wikiAccessLevel)
+	snippetsAccessLevel                  = "public"
+	snippetsAccessLevelv1alpha1          = v1alpha1.AccessControlValue(snippetsAccessLevel)
+	pagesAccessLevel                     = "enabled"
+	pagesAccessLevelv1alpha1             = v1alpha1.AccessControlValue(pagesAccessLevel)
+	operationsAccessLevel                = "public"
+	operationsAccessLevelv1alpha1        = v1alpha1.AccessControlValue(operationsAccessLevel)
+	containerRegistryAccessLevel         = "enabled"
+	containerRegistryAccessLevelv1alpha1 = v1alpha1.AccessControlValue(pagesAccessLevel)
+	emailsDisabled                       = true
+	resolveOutdatedDiffDiscussions       = true
+	cadence                              = "Cadence"
+	keepN                                = 1
+	olderThan                            = "OlderThan"
+	nameRegexDelete                      = "NameRegexDelete"
+	nameRegexKeep                        = "NameRegexKeep"
+	enabled                              = false
+	nextRunAt                            = time.Now()
+	gitlabContainerExpirationPolicy      = gitlab.ContainerExpirationPolicy{
 		Cadence:         cadence,
 		KeepN:           keepN,
 		OlderThan:       olderThan,
@@ -96,7 +98,6 @@ var (
 		NameRegexKeep:   &nameRegexKeep,
 		Enabled:         &enabled,
 	}
-	containerRegistryEnabled                  = true
 	sharedRunnersEnabled                      = true
 	visibility                                = "private"
 	visibilityv1alpha1                        = v1alpha1.VisibilityValue(visibility)
@@ -110,7 +111,7 @@ var (
 	removeSourceBranchAfterMerge              = false
 	lfsEnabled                                = true
 	requestAccessEnabled                      = true
-	tagList                                   = []string{"tag1", "tag2"}
+	topics                                    = []string{"tag1", "tag2"}
 	printingMergeRequestLinkEnabled           = true
 	buildGitStategy                           = "strategy"
 	buildTimeout                              = 60
@@ -121,7 +122,6 @@ var (
 	ciDefaultGitDepth                         = 50
 	autoDevopsEnabled                         = true
 	autoDevopsDeployStrategy                  = "continuous"
-	approvalsBeforeMerge                      = 0
 	externalAuthorizationClassificationLabel  = "authz-label"
 	mirror                                    = false
 	mirrorUserID                              = 1
@@ -151,12 +151,8 @@ func TestGenerateObservation(t *testing.T) {
 	owner := "chief"
 	pathWithNamespace := "path/to/cool-project"
 	nameWithNamespace := "name/to/cool-project"
-	issuesEnabled := true
+	issuesAccessLevel := gitlab.EnabledAccessControl
 	openIssuesCount := 3
-	mergeRequestsEnabled := true
-	jobsEnabled := false
-	wikiEnabled := false
-	snippetsEnabled := true
 	now := time.Now()
 	creatorID := 1
 	namespaceID := 3
@@ -166,7 +162,7 @@ func TestGenerateObservation(t *testing.T) {
 	permissionsProjectAccessNotificationLevel := 2
 	permissionsGroupAccessAccessLevel := 3
 	permissionsGroupAccessNotificationLevel := 4
-	markedForDeletionAt := gitlab.ISOTime(now)
+	markedForDeletionOn := gitlab.ISOTime(now)
 	emptyRepo := false
 	archived := false
 	avatarURL := "https://AvatarURL"
@@ -245,12 +241,12 @@ func TestGenerateObservation(t *testing.T) {
 					},
 					PathWithNamespace:         pathWithNamespace,
 					NameWithNamespace:         nameWithNamespace,
-					IssuesEnabled:             issuesEnabled,
+					IssuesAccessLevel:         issuesAccessLevel,
 					OpenIssuesCount:           openIssuesCount,
-					MergeRequestsEnabled:      mergeRequestsEnabled,
-					JobsEnabled:               jobsEnabled,
-					WikiEnabled:               wikiEnabled,
-					SnippetsEnabled:           snippetsEnabled,
+					MergeRequestsAccessLevel:  gitlab.AccessControlValue(mergeRequestsAccessLevel),
+					BuildsAccessLevel:         gitlab.AccessControlValue(buildsAccessLevel),
+					WikiAccessLevel:           gitlab.AccessControlValue(wikiAccessLevel),
+					SnippetsAccessLevel:       gitlab.AccessControlValue(snippetsAccessLevel),
 					ContainerExpirationPolicy: &gitlabContainerExpirationPolicy,
 					CreatedAt:                 &now,
 					LastActivityAt:            &now,
@@ -270,7 +266,7 @@ func TestGenerateObservation(t *testing.T) {
 							NotificationLevel: gitlab.NotificationLevelValue(permissionsGroupAccessNotificationLevel),
 						},
 					},
-					MarkedForDeletionAt: &markedForDeletionAt,
+					MarkedForDeletionOn: &markedForDeletionOn,
 					EmptyRepo:           emptyRepo,
 					Archived:            archived,
 					AvatarURL:           avatarURL,
@@ -316,12 +312,12 @@ func TestGenerateObservation(t *testing.T) {
 				},
 				PathWithNamespace:         pathWithNamespace,
 				NameWithNamespace:         nameWithNamespace,
-				IssuesEnabled:             issuesEnabled,
+				IssuesAccessLevel:         issuesAccessLevelv1alpha1,
 				OpenIssuesCount:           openIssuesCount,
-				MergeRequestsEnabled:      mergeRequestsEnabled,
-				JobsEnabled:               jobsEnabled,
-				WikiEnabled:               wikiEnabled,
-				SnippetsEnabled:           snippetsEnabled,
+				MergeRequestsAccessLevel:  mergeRequestsAccessLevelv1alpha1,
+				BuildsAccessLevel:         buildsAccessLevelv1alpha1,
+				WikiAccessLevel:           wikiAccessLevelv1alpha1,
+				SnippetsAccessLevel:       snippetsAccessLevelv1alpha1,
 				ContainerExpirationPolicy: &v1alpha1ContainerExpirationPolicy,
 				CreatedAt:                 &metav1.Time{Time: now},
 				LastActivityAt:            &metav1.Time{Time: now},
@@ -341,7 +337,7 @@ func TestGenerateObservation(t *testing.T) {
 						NotificationLevel: v1alpha1.NotificationLevelValue(permissionsGroupAccessNotificationLevel),
 					},
 				},
-				MarkedForDeletionAt: &metav1.Time{Time: now},
+				MarkedForDeletionOn: &metav1.Time{Time: now},
 				EmptyRepo:           emptyRepo,
 				Archived:            archived,
 				AvatarURL:           avatarURL,
@@ -457,7 +453,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					EmailsDisabled:                            &emailsDisabled,
 					ResolveOutdatedDiffDiscussions:            &resolveOutdatedDiffDiscussions,
 					ContainerExpirationPolicyAttributes:       &v1alpha1ContainerExpirationPolicyAttributes,
-					ContainerRegistryEnabled:                  &containerRegistryEnabled,
+					ContainerRegistryAccessLevel:              &containerRegistryAccessLevelv1alpha1,
 					SharedRunnersEnabled:                      &sharedRunnersEnabled,
 					Visibility:                                &visibilityv1alpha1,
 					ImportURL:                                 &importURL,
@@ -469,7 +465,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
 					LFSEnabled:                                &lfsEnabled,
 					RequestAccessEnabled:                      &requestAccessEnabled,
-					TagList:                                   tagList,
+					Topics:                                    topics,
 					PrintingMergeRequestLinkEnabled:           &printingMergeRequestLinkEnabled,
 					BuildGitStrategy:                          &buildGitStategy,
 					BuildTimeout:                              &buildTimeout,
@@ -480,7 +476,6 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					CIDefaultGitDepth:                         &ciDefaultGitDepth,
 					AutoDevopsEnabled:                         &autoDevopsEnabled,
 					AutoDevopsDeployStrategy:                  &autoDevopsDeployStrategy,
-					ApprovalsBeforeMerge:                      &approvalsBeforeMerge,
 					ExternalAuthorizationClassificationLabel:  &externalAuthorizationClassificationLabel,
 					Mirror:                                    &mirror,
 					MirrorTriggerBuilds:                       &mirrorTriggerBuilds,
@@ -515,7 +510,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				EmailsDisabled:                      &emailsDisabled,
 				ResolveOutdatedDiffDiscussions:      &resolveOutdatedDiffDiscussions,
 				ContainerExpirationPolicyAttributes: &gitlabContainerExpirationPolicyAttributes,
-				ContainerRegistryEnabled:            &containerRegistryEnabled,
+				ContainerRegistryAccessLevel:        clients.AccessControlValueStringToGitlab(containerRegistryAccessLevel),
 				SharedRunnersEnabled:                &sharedRunnersEnabled,
 				Visibility:                          clients.VisibilityValueStringToGitlab(visibility),
 				ImportURL:                           &importURL,
@@ -527,7 +522,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				RemoveSourceBranchAfterMerge:             &removeSourceBranchAfterMerge,
 				LFSEnabled:                               &lfsEnabled,
 				RequestAccessEnabled:                     &requestAccessEnabled,
-				TagList:                                  &tagList,
+				Topics:                                   &topics,
 				PrintingMergeRequestLinkEnabled:          &printingMergeRequestLinkEnabled,
 				BuildGitStrategy:                         &buildGitStategy,
 				BuildTimeout:                             &buildTimeout,
@@ -537,7 +532,6 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				CIForwardDeploymentEnabled:               &ciForwardDeploymentEnabled,
 				AutoDevopsEnabled:                        &autoDevopsEnabled,
 				AutoDevopsDeployStrategy:                 &autoDevopsDeployStrategy,
-				ApprovalsBeforeMerge:                     &approvalsBeforeMerge,
 				ExternalAuthorizationClassificationLabel: &externalAuthorizationClassificationLabel,
 				Mirror:                                   &mirror,
 				MirrorTriggerBuilds:                      &mirrorTriggerBuilds,
@@ -562,7 +556,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					IssuesAccessLevel:              &issuesAccessLevelv1alpha1,
 					ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
 					MergeMethod:                    &mergeMethodv1alpha1,
-					TagList:                        tagList,
+					Topics:                         topics,
 					BuildTimeout:                   &buildTimeout,
 				},
 			},
@@ -572,7 +566,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				IssuesAccessLevel:              clients.AccessControlValueStringToGitlab(issuesAccessLevel),
 				ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
 				MergeMethod:                    clients.MergeMethodStringToGitlab(mergeMethod),
-				TagList:                        &tagList,
+				Topics:                         &topics,
 				BuildTimeout:                   &buildTimeout,
 			},
 		},
@@ -583,12 +577,12 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					Name: &overrideName,
 					// TODO: TagList specified and wanted because otherwise
 					// test does not pass - (nil vs &nil - fix)
-					TagList: tagList,
+					Topics: topics,
 				},
 			},
 			want: &gitlab.CreateProjectOptions{
-				Name:    &overrideName,
-				TagList: &tagList,
+				Name:   &overrideName,
+				Topics: &topics,
 			},
 		},
 	}
@@ -631,7 +625,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					EmailsDisabled:                            &emailsDisabled,
 					ResolveOutdatedDiffDiscussions:            &resolveOutdatedDiffDiscussions,
 					ContainerExpirationPolicyAttributes:       &v1alpha1ContainerExpirationPolicyAttributes,
-					ContainerRegistryEnabled:                  &containerRegistryEnabled,
+					ContainerRegistryAccessLevel:              &containerRegistryAccessLevelv1alpha1,
 					SharedRunnersEnabled:                      &sharedRunnersEnabled,
 					Visibility:                                &visibilityv1alpha1,
 					ImportURL:                                 &importURL,
@@ -643,7 +637,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
 					LFSEnabled:                                &lfsEnabled,
 					RequestAccessEnabled:                      &requestAccessEnabled,
-					TagList:                                   tagList,
+					Topics:                                    topics,
 					BuildGitStrategy:                          &buildGitStategy,
 					BuildTimeout:                              &buildTimeout,
 					AutoCancelPendingPipelines:                &autoCancelPendingPipelines,
@@ -653,7 +647,6 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					CIDefaultGitDepth:                         &ciDefaultGitDepth,
 					AutoDevopsEnabled:                         &autoDevopsEnabled,
 					AutoDevopsDeployStrategy:                  &autoDevopsDeployStrategy,
-					ApprovalsBeforeMerge:                      &approvalsBeforeMerge,
 					ExternalAuthorizationClassificationLabel:  &externalAuthorizationClassificationLabel,
 					Mirror:                                    &mirror,
 					MirrorUserID:                              &mirrorUserID,
@@ -685,7 +678,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				PagesAccessLevel:                    clients.AccessControlValueStringToGitlab(pagesAccessLevel),
 				ResolveOutdatedDiffDiscussions:      &resolveOutdatedDiffDiscussions,
 				ContainerExpirationPolicyAttributes: &gitlabContainerExpirationPolicyAttributes,
-				ContainerRegistryEnabled:            &containerRegistryEnabled,
+				ContainerRegistryAccessLevel:        clients.AccessControlValueStringToGitlab(containerRegistryAccessLevel),
 				SharedRunnersEnabled:                &sharedRunnersEnabled,
 				Visibility:                          clients.VisibilityValueStringToGitlab(visibility),
 				ImportURL:                           &importURL,
@@ -697,7 +690,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				RemoveSourceBranchAfterMerge:             &removeSourceBranchAfterMerge,
 				LFSEnabled:                               &lfsEnabled,
 				RequestAccessEnabled:                     &requestAccessEnabled,
-				TagList:                                  &tagList,
+				Topics:                                   &topics,
 				BuildGitStrategy:                         &buildGitStategy,
 				BuildTimeout:                             &buildTimeout,
 				AutoCancelPendingPipelines:               &autoCancelPendingPipelines,
@@ -707,7 +700,6 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				CIDefaultGitDepth:                        &ciDefaultGitDepth,
 				AutoDevopsEnabled:                        &autoDevopsEnabled,
 				AutoDevopsDeployStrategy:                 &autoDevopsDeployStrategy,
-				ApprovalsBeforeMerge:                     &approvalsBeforeMerge,
 				ExternalAuthorizationClassificationLabel: &externalAuthorizationClassificationLabel,
 				Mirror:                                   &mirror,
 				MirrorUserID:                             &mirrorUserID,
@@ -730,7 +722,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					IssuesAccessLevel:              &issuesAccessLevelv1alpha1,
 					ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
 					MergeMethod:                    &mergeMethodv1alpha1,
-					TagList:                        tagList,
+					Topics:                         topics,
 					BuildTimeout:                   &buildTimeout,
 				},
 			},
@@ -740,7 +732,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				IssuesAccessLevel:              clients.AccessControlValueStringToGitlab(issuesAccessLevel),
 				ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
 				MergeMethod:                    clients.MergeMethodStringToGitlab(mergeMethod),
-				TagList:                        &tagList,
+				Topics:                         &topics,
 				BuildTimeout:                   &buildTimeout,
 			},
 		},
@@ -751,12 +743,12 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					Name: &name,
 					// TODO: TagList specified and wanted because otherwise
 					// test does not pass - (nil vs &nil - fix)
-					TagList: tagList,
+					Topics: topics,
 				},
 			},
 			want: &gitlab.EditProjectOptions{
-				Name:    &name,
-				TagList: &tagList,
+				Name:   &name,
+				Topics: &topics,
 			},
 		},
 	}
