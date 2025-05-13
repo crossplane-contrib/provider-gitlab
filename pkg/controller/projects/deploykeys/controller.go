@@ -207,7 +207,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	_, _, er := e.client.UpdateDeployKey(
-		cr.Spec.ForProvider.ProjectID,
+		*cr.Spec.ForProvider.ProjectID,
 		id,
 		generateUpdateOptions(cr),
 	)
