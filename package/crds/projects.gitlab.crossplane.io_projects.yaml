@@ -78,11 +78,6 @@ spec:
                     description: Set whether or not merge requests can be merged with
                       skipped jobs.
                     type: boolean
-                  approvalsBeforeMerge:
-                    description: |-
-                      How many approvers should approve merge request by default.
-                      To configure approval rules, see Merge request approvals API.
-                    type: integer
                   autoCancelPendingPipelines:
                     description: Auto-cancel pending pipelines. This isn’t a boolean,
                       but enabled/disabled.
@@ -141,9 +136,9 @@ spec:
                       olderThan:
                         type: string
                     type: object
-                  containerRegistryEnabled:
-                    description: Enable container registry for this project.
-                    type: boolean
+                  containerRegistryAccessLevel:
+                    description: Set visibility of container registry.
+                    type: string
                   defaultBranch:
                     description: The default branch name. Requires initializeWithReadme
                       to be true.
@@ -355,13 +350,6 @@ spec:
                   suggestionCommitMessage:
                     description: The commit message used to apply merge request suggestions.
                     type: string
-                  tagList:
-                    description: |-
-                      The list of tags for a project; put array of tags,
-                      that should be finally assigned to a project. Use topics instead.
-                    items:
-                      type: string
-                    type: array
                   templateName:
                     description: |-
                       When used without useCustomTemplate, name of a built-in project template.
@@ -372,6 +360,11 @@ spec:
                       When used with useCustomTemplate, project ID of a custom project template.
                       This is preferable to using templateName since templateName may be ambiguous.
                     type: integer
+                  topics:
+                    description: The list of topics for the project;
+                    items:
+                      type: string
+                    type: array
                   useCustomTemplate:
                     description: Use either custom instance or group (with groupWithProjectTemplatesId)
                       project template.
@@ -561,6 +554,13 @@ spec:
                     type: boolean
                   avatarUrl:
                     type: string
+                  buildsAccessLevel:
+                    description: |-
+                      AccessControlValue represents an access control value within GitLab,
+                      used for managing access to certain project features.
+
+                      GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
+                    type: string
                   complianceFrameworks:
                     items:
                       type: string
@@ -653,10 +653,13 @@ spec:
                     type: string
                   importStatus:
                     type: string
-                  issuesEnabled:
-                    type: boolean
-                  jobsEnabled:
-                    type: boolean
+                  issuesAccessLevel:
+                    description: |-
+                      AccessControlValue represents an access control value within GitLab,
+                      used for managing access to certain project features.
+
+                      GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
+                    type: string
                   lastActivityAt:
                     format: date-time
                     type: string
@@ -710,11 +713,16 @@ spec:
                     - repoBranches
                     - self
                     type: object
-                  markedForDeletionAt:
+                  markedForDeletionOn:
                     format: date-time
                     type: string
-                  mergeRequestsEnabled:
-                    type: boolean
+                  mergeRequestsAccessLevel:
+                    description: |-
+                      AccessControlValue represents an access control value within GitLab,
+                      used for managing access to certain project features.
+
+                      GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
+                    type: string
                   nameWithNamespace:
                     type: string
                   namespace:
@@ -908,8 +916,13 @@ spec:
                           type: string
                       type: object
                     type: array
-                  snippetsEnabled:
-                    type: boolean
+                  snippetsAccessLevel:
+                    description: |-
+                      AccessControlValue represents an access control value within GitLab,
+                      used for managing access to certain project features.
+
+                      GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
+                    type: string
                   sshUrlToRepo:
                     type: string
                   starCount:
@@ -941,8 +954,13 @@ spec:
                     type: object
                   webUrl:
                     type: string
-                  wikiEnabled:
-                    type: boolean
+                  wikiAccessLevel:
+                    description: |-
+                      AccessControlValue represents an access control value within GitLab,
+                      used for managing access to certain project features.
+
+                      GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
+                    type: string
                 type: object
               conditions:
                 description: Conditions of the resource.
