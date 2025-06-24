@@ -441,6 +441,11 @@ type ProjectParameters struct {
 	// just marked for deletion and removed permanently after seven days. Defaults to false.
 	// +optional
 	PermanentlyRemove *bool `json:"permanentlyRemove,omitempty"`
+
+	// RemoveFinalizerOnPendingDeletion specifies wether the finalizer of this
+	// object should be removed in case the Kubernetes object and
+	// the external Gitlab project are marked for pending deletion.
+	RemoveFinalizerOnPendingDeletion *bool `json:"removeFinalizerOnPendingDeletion,omitempty"`
 }
 
 type PushRules struct {

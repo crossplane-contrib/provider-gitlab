@@ -22,6 +22,7 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+	"time"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -31,6 +32,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -46,6 +48,7 @@ var (
 	projectID         = 1234
 	extName           = strconv.Itoa(projectID)
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: extName}
+	timeNow           = time.Now()
 )
 
 type args struct {
@@ -429,6 +432,76 @@ func TestObserve(t *testing.T) {
 					ResourceUpToDate:        true,
 					ResourceLateInitialized: false,
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": {}},
+				},
+			},
+		},
+		"DeleteOnPendingDeletion": {
+			args: args{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{
+							MarkedForDeletionOn: &gitlab.ISOTime{},
+						}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, nil, nil
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					func(p *v1alpha1.Project) {
+						p.DeletionTimestamp = &v1.Time{Time: timeNow}
+						p.Spec.ForProvider.RemoveFinalizerOnPendingDeletion = ptr.To(true)
+					},
+					withExternalName(extName),
+					withProjectPushRules(&v1alpha1.PushRules{
+						AuthorEmailRegex:           ptr.To(""),
+						BranchNameRegex:            ptr.To(""),
+						CommitCommitterCheck:       ptr.To(false),
+						CommitCommitterNameCheck:   ptr.To(false),
+						CommitMessageNegativeRegex: ptr.To(""),
+						CommitMessageRegex:         ptr.To(""),
+						DenyDeleteTag:              ptr.To(false),
+						FileNameRegex:              ptr.To(""),
+						MaxFileSize:                ptr.To(0),
+						MemberCheck:                ptr.To(false),
+						PreventSecrets:             ptr.To(false),
+						RejectUnsignedCommits:      ptr.To(false),
+						RejectNonDCOCommits:        ptr.To(false),
+					}),
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withProjectPushRules(&v1alpha1.PushRules{
+						AuthorEmailRegex:           ptr.To(""),
+						BranchNameRegex:            ptr.To(""),
+						CommitCommitterCheck:       ptr.To(false),
+						CommitCommitterNameCheck:   ptr.To(false),
+						CommitMessageNegativeRegex: ptr.To(""),
+						CommitMessageRegex:         ptr.To(""),
+						DenyDeleteTag:              ptr.To(false),
+						FileNameRegex:              ptr.To(""),
+						MaxFileSize:                ptr.To(0),
+						MemberCheck:                ptr.To(false),
+						PreventSecrets:             ptr.To(false),
+						RejectUnsignedCommits:      ptr.To(false),
+						RejectNonDCOCommits:        ptr.To(false),
+					}),
+					func(p *v1alpha1.Project) {
+						p.DeletionTimestamp = &v1.Time{Time: timeNow}
+						p.Spec.ForProvider.RemoveFinalizerOnPendingDeletion = ptr.To(true)
+					},
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          false,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
 				},
 			},
 		},

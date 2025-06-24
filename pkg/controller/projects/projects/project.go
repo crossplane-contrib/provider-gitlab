@@ -34,6 +34,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -122,7 +123,7 @@ type external struct {
 	}
 }
 
-func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) { //nolint:gocyclo
 	cr, ok := mg.(*v1alpha1.Project)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotProject)
@@ -146,6 +147,24 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
+	// Check if the project is in a pending deletion state and either remove the
+	// finalizer if specified or keep tracking it.
+	//
+	// Mark the resource as unavailable if the project is in a deletion state but
+	// managed resource is not.
+	if prj.MarkedForDeletionOn != nil {
+		if meta.WasDeleted(cr) {
+			if ptr.Deref(cr.Spec.ForProvider.RemoveFinalizerOnPendingDeletion, false) {
+				return managed.ExternalObservation{}, nil
+			}
+			cr.SetConditions(xpv1.Deleting().WithMessage("Project is in pending deletion state"))
+		} else {
+			cr.SetConditions(xpv1.Unavailable().WithMessage("Project is in pending deletion state but this managed resource is not"))
+		}
+	} else {
+		cr.Status.SetConditions(xpv1.Available())
+	}
+
 	current := cr.Spec.ForProvider.DeepCopy()
 	if err := e.lateInitialize(ctx, cr, prj); err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(err, errLateInitialize)
@@ -157,8 +176,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	cr.Status.AtProvider = projects.GenerateObservation(prj)
-	cr.Status.SetConditions(xpv1.Available())
-
 	return managed.ExternalObservation{
 		ResourceExists:          true,
 		ResourceUpToDate:        isProjectUpToDate(&cr.Spec.ForProvider, prj) && e.cache.isPushRulesUpToDate,
