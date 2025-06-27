@@ -164,6 +164,11 @@ type GroupParameters struct {
 	// +optional
 	PermanentlyRemove *bool `json:"permanentlyRemove,omitempty"`
 
+	// RemoveFinalizerOnPendingDeletion specifies wether the finalizer of this
+	// object should be removed in case the Kubernetes object and
+	// the external Gitlab group are marked for pending deletion.
+	RemoveFinalizerOnPendingDeletion *bool `json:"removeFinalizerOnPendingDeletion,omitempty"`
+
 	// Full path of group to delete permanently. Only required if PermanentlyRemove is set to true.
 	// GitLab Premium and Ultimate only.
 	// +optional

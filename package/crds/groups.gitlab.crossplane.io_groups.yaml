@@ -208,6 +208,12 @@ spec:
                       developers can create projects in the group.
                       Can be noone (No one), maintainer (Maintainers), or developer (Developers + Maintainers).
                     type: string
+                  removeFinalizerOnPendingDeletion:
+                    description: |-
+                      RemoveFinalizerOnPendingDeletion specifies wether the finalizer of this
+                      object should be removed in case the Kubernetes object and
+                      the external Gitlab group are marked for pending deletion.
+                    type: boolean
                   requestAccessEnabled:
                     description: Allow users to request member access.
                     type: boolean
