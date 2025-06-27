@@ -35,6 +35,7 @@ import (
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -118,7 +119,7 @@ type external struct {
 	client groups.Client
 }
 
-func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) { //nolint:gocyclo
 	cr, ok := mg.(*v1alpha1.Group)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotGroup)
@@ -145,6 +146,24 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
+	// Check if the group is in a pending deletion state and either remove the
+	// finalizer if specified or keep tracking it.
+	//
+	// Mark the resource as unavailable if the group is in a deletion state but
+	// managed resource is not.
+	if grp.MarkedForDeletionOn != nil {
+		if meta.WasDeleted(cr) {
+			if ptr.Deref(cr.Spec.ForProvider.RemoveFinalizerOnPendingDeletion, false) {
+				return managed.ExternalObservation{}, nil
+			}
+			cr.SetConditions(xpv1.Deleting().WithMessage("Group is in pending deletion state"))
+		} else {
+			cr.SetConditions(xpv1.Unavailable().WithMessage("Group is in pending deletion state but this managed resource is not"))
+		}
+	} else {
+		cr.Status.SetConditions(xpv1.Available())
+	}
+
 	current := cr.Spec.ForProvider.DeepCopy()
 
 	err = lateInitialize(&cr.Spec.ForProvider, grp)
@@ -154,7 +173,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	isResourceLateInitialized := !cmp.Equal(current, &cr.Spec.ForProvider)
 
 	cr.Status.AtProvider = groups.GenerateObservation(grp)
-	cr.Status.SetConditions(xpv1.Available())
 	isUpToDate, err := isGroupUpToDate(&cr.Spec.ForProvider, grp)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
