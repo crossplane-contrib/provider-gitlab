@@ -78,6 +78,11 @@ spec:
                     description: Set whether or not merge requests can be merged with
                       skipped jobs.
                     type: boolean
+                  approvalsBeforeMerge:
+                    description: |-
+                      How many approvers should approve merge request by default.More actions
+                      To configure approval rules, see Merge request approvals API.
+                    type: integer
                   autoCancelPendingPipelines:
                     description: Auto-cancel pending pipelines. This isn’t a boolean,
                       but enabled/disabled.
@@ -139,6 +144,12 @@ spec:
                   containerRegistryAccessLevel:
                     description: Set visibility of container registry.
                     type: string
+                  containerRegistryEnabled:
+                    description: |-
+                      Enable container registry for this project.
+
+                      Deprecated: Use ContainerRegistryAccessLevel.
+                    type: boolean
                   defaultBranch:
                     description: The default branch name. Requires initializeWithReadme
                       to be true.
@@ -350,6 +361,15 @@ spec:
                   suggestionCommitMessage:
                     description: The commit message used to apply merge request suggestions.
                     type: string
+                  tagList:
+                    description: |-
+                      The list of tags for a project; put array of tags,
+                      that should be finally assigned to a project.
+
+                      Deprecated: Use topics instead.
+                    items:
+                      type: string
+                    type: array
                   templateName:
                     description: |-
                       When used without useCustomTemplate, name of a built-in project template.
@@ -660,6 +680,10 @@ spec:
 
                       GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
                     type: string
+                  issuesEnabled:
+                    type: boolean
+                  jobsEnabled:
+                    type: boolean
                   lastActivityAt:
                     format: date-time
                     type: string
@@ -713,6 +737,9 @@ spec:
                     - repoBranches
                     - self
                     type: object
+                  markedForDeletionAt:
+                    format: date-time
+                    type: string
                   markedForDeletionOn:
                     format: date-time
                     type: string
@@ -723,6 +750,8 @@ spec:
 
                       GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
                     type: string
+                  mergeRequestsEnabled:
+                    type: boolean
                   nameWithNamespace:
                     type: string
                   namespace:
@@ -923,6 +952,8 @@ spec:
 
                       GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
                     type: string
+                  snippetsEnabled:
+                    type: boolean
                   sshUrlToRepo:
                     type: string
                   starCount:
@@ -961,6 +992,8 @@ spec:
 
                       GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
                     type: string
+                  wikiEnabled:
+                    type: boolean
                 type: object
               conditions:
                 description: Conditions of the resource.

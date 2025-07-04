@@ -69,11 +69,16 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 		ReadmeURL:                prj.ReadmeURL,
 		NameWithNamespace:        prj.NameWithNamespace,
 		PathWithNamespace:        prj.PathWithNamespace,
+		IssuesEnabled:            prj.IssuesEnabled, //nolint:staticcheck
 		IssuesAccessLevel:        v1alpha1.AccessControlValue(prj.IssuesAccessLevel),
 		OpenIssuesCount:          prj.OpenIssuesCount,
+		MergeRequestsEnabled:     prj.MergeRequestsEnabled, //nolint:staticcheck
 		MergeRequestsAccessLevel: v1alpha1.AccessControlValue(prj.MergeRequestsAccessLevel),
+		JobsEnabled:              prj.JobsEnabled, //nolint:staticcheck
 		BuildsAccessLevel:        v1alpha1.AccessControlValue(prj.BuildsAccessLevel),
+		WikiEnabled:              prj.WikiEnabled, //nolint:staticcheck
 		WikiAccessLevel:          v1alpha1.AccessControlValue(prj.WikiAccessLevel),
+		SnippetsEnabled:          prj.SnippetsEnabled, //nolint:staticcheck
 		SnippetsAccessLevel:      v1alpha1.AccessControlValue(prj.SnippetsAccessLevel),
 		CreatorID:                prj.CreatorID,
 		ImportStatus:             prj.ImportStatus,
@@ -114,6 +119,9 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 	}
 	if prj.LastActivityAt != nil {
 		o.LastActivityAt = &metav1.Time{Time: *prj.LastActivityAt}
+	}
+	if prj.MarkedForDeletionAt != nil { //nolint:staticcheck
+		o.MarkedForDeletionAt = &metav1.Time{Time: time.Time(*prj.MarkedForDeletionAt)} //nolint:staticcheck
 	}
 	if prj.MarkedForDeletionOn != nil {
 		o.MarkedForDeletionOn = &metav1.Time{Time: time.Time(*prj.MarkedForDeletionOn)}
@@ -292,6 +300,7 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		EmailsDisabled:                      p.EmailsDisabled,
 		ResolveOutdatedDiffDiscussions:      p.ResolveOutdatedDiffDiscussions,
 		ContainerExpirationPolicyAttributes: clients.ContainerExpirationPolicyAttributesV1alpha1ToGitlab(p.ContainerExpirationPolicyAttributes),
+		ContainerRegistryEnabled:            p.ContainerRegistryEnabled, //nolint:staticcheck
 		ContainerRegistryAccessLevel:        clients.AccessControlValueV1alpha1ToGitlab(p.ContainerRegistryAccessLevel),
 		SharedRunnersEnabled:                p.SharedRunnersEnabled,
 		Visibility:                          clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
@@ -304,6 +313,7 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		RemoveSourceBranchAfterMerge:             p.RemoveSourceBranchAfterMerge,
 		LFSEnabled:                               p.LFSEnabled,
 		RequestAccessEnabled:                     p.RequestAccessEnabled,
+		TagList:                                  &p.TagList, //nolint:staticcheck
 		Topics:                                   &p.Topics,
 		PrintingMergeRequestLinkEnabled:          p.PrintingMergeRequestLinkEnabled,
 		BuildGitStrategy:                         p.BuildGitStrategy,
@@ -314,6 +324,7 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		CIForwardDeploymentEnabled:               p.CIForwardDeploymentEnabled,
 		AutoDevopsEnabled:                        p.AutoDevopsEnabled,
 		AutoDevopsDeployStrategy:                 p.AutoDevopsDeployStrategy,
+		ApprovalsBeforeMerge:                     p.ApprovalsBeforeMerge,
 		ExternalAuthorizationClassificationLabel: p.ExternalAuthorizationClassificationLabel,
 		Mirror:                                   p.Mirror,
 		MirrorTriggerBuilds:                      p.MirrorTriggerBuilds,
@@ -355,6 +366,7 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		EmailsDisabled:                      p.EmailsDisabled,
 		ResolveOutdatedDiffDiscussions:      p.ResolveOutdatedDiffDiscussions,
 		ContainerExpirationPolicyAttributes: clients.ContainerExpirationPolicyAttributesV1alpha1ToGitlab(p.ContainerExpirationPolicyAttributes),
+		ContainerRegistryEnabled:            p.ContainerRegistryEnabled, //nolint:staticcheck
 		ContainerRegistryAccessLevel:        clients.AccessControlValueV1alpha1ToGitlab(p.ContainerRegistryAccessLevel),
 		SharedRunnersEnabled:                p.SharedRunnersEnabled,
 		Visibility:                          clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
@@ -367,6 +379,7 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		RemoveSourceBranchAfterMerge:             p.RemoveSourceBranchAfterMerge,
 		LFSEnabled:                               p.LFSEnabled,
 		RequestAccessEnabled:                     p.RequestAccessEnabled,
+		TagList:                                  &p.TagList, //nolint:staticcheck
 		Topics:                                   &p.Topics,
 		BuildGitStrategy:                         p.BuildGitStrategy,
 		BuildTimeout:                             p.BuildTimeout,
@@ -377,6 +390,7 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		CIDefaultGitDepth:                        p.CIDefaultGitDepth,
 		AutoDevopsEnabled:                        p.AutoDevopsEnabled,
 		AutoDevopsDeployStrategy:                 p.AutoDevopsDeployStrategy,
+		ApprovalsBeforeMerge:                     p.ApprovalsBeforeMerge,
 		ExternalAuthorizationClassificationLabel: p.ExternalAuthorizationClassificationLabel,
 		Mirror:                                   p.Mirror,
 		MirrorUserID:                             p.MirrorUserID,

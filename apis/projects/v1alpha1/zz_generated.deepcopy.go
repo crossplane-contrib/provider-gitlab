@@ -1376,6 +1376,10 @@ func (in *ProjectObservation) DeepCopyInto(out *ProjectObservation) {
 		*out = new(Links)
 		**out = **in
 	}
+	if in.MarkedForDeletionAt != nil {
+		in, out := &in.MarkedForDeletionAt, &out.MarkedForDeletionAt
+		*out = (*in).DeepCopy()
+	}
 	if in.MarkedForDeletionOn != nil {
 		in, out := &in.MarkedForDeletionOn, &out.MarkedForDeletionOn
 		*out = (*in).DeepCopy()
@@ -1423,6 +1427,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	if in.AllowMergeOnSkippedPipeline != nil {
 		in, out := &in.AllowMergeOnSkippedPipeline, &out.AllowMergeOnSkippedPipeline
 		*out = new(bool)
+		**out = **in
+	}
+	if in.ApprovalsBeforeMerge != nil {
+		in, out := &in.ApprovalsBeforeMerge, &out.ApprovalsBeforeMerge
+		*out = new(int)
 		**out = **in
 	}
 	if in.AutoCancelPendingPipelines != nil {
@@ -1484,6 +1493,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		in, out := &in.ContainerExpirationPolicyAttributes, &out.ContainerExpirationPolicyAttributes
 		*out = new(ContainerExpirationPolicyAttributes)
 		(*in).DeepCopyInto(*out)
+	}
+	if in.ContainerRegistryEnabled != nil {
+		in, out := &in.ContainerRegistryEnabled, &out.ContainerRegistryEnabled
+		*out = new(bool)
+		**out = **in
 	}
 	if in.ContainerRegistryAccessLevel != nil {
 		in, out := &in.ContainerRegistryAccessLevel, &out.ContainerRegistryAccessLevel
@@ -1684,6 +1698,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		in, out := &in.SuggestionCommitMessage, &out.SuggestionCommitMessage
 		*out = new(string)
 		**out = **in
+	}
+	if in.TagList != nil {
+		in, out := &in.TagList, &out.TagList
+		*out = make([]string, len(*in))
+		copy(*out, *in)
 	}
 	if in.Topics != nil {
 		in, out := &in.Topics, &out.Topics

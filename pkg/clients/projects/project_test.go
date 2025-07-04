@@ -23,6 +23,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
@@ -522,6 +523,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				RemoveSourceBranchAfterMerge:             &removeSourceBranchAfterMerge,
 				LFSEnabled:                               &lfsEnabled,
 				RequestAccessEnabled:                     &requestAccessEnabled,
+				TagList:                                  ptr.To[[]string](nil),
 				Topics:                                   &topics,
 				PrintingMergeRequestLinkEnabled:          &printingMergeRequestLinkEnabled,
 				BuildGitStrategy:                         &buildGitStategy,
@@ -566,6 +568,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				IssuesAccessLevel:              clients.AccessControlValueStringToGitlab(issuesAccessLevel),
 				ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
 				MergeMethod:                    clients.MergeMethodStringToGitlab(mergeMethod),
+				TagList:                        ptr.To[[]string](nil),
 				Topics:                         &topics,
 				BuildTimeout:                   &buildTimeout,
 			},
@@ -581,8 +584,9 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				},
 			},
 			want: &gitlab.CreateProjectOptions{
-				Name:   &overrideName,
-				Topics: &topics,
+				Name:    &overrideName,
+				TagList: ptr.To[[]string](nil),
+				Topics:  &topics,
 			},
 		},
 	}
@@ -690,6 +694,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				RemoveSourceBranchAfterMerge:             &removeSourceBranchAfterMerge,
 				LFSEnabled:                               &lfsEnabled,
 				RequestAccessEnabled:                     &requestAccessEnabled,
+				TagList:                                  ptr.To[[]string](nil),
 				Topics:                                   &topics,
 				BuildGitStrategy:                         &buildGitStategy,
 				BuildTimeout:                             &buildTimeout,
@@ -732,6 +737,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				IssuesAccessLevel:              clients.AccessControlValueStringToGitlab(issuesAccessLevel),
 				ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
 				MergeMethod:                    clients.MergeMethodStringToGitlab(mergeMethod),
+				TagList:                        ptr.To[[]string](nil),
 				Topics:                         &topics,
 				BuildTimeout:                   &buildTimeout,
 			},
@@ -747,8 +753,9 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				},
 			},
 			want: &gitlab.EditProjectOptions{
-				Name:   &name,
-				Topics: &topics,
+				Name:    &name,
+				TagList: ptr.To[[]string](nil),
+				Topics:  &topics,
 			},
 		},
 	}

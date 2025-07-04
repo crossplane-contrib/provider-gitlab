@@ -31,6 +31,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
@@ -85,6 +86,7 @@ func withClientDefaultValues() projectModifier {
 			NamespaceID:                               &i,
 			EmailsDisabled:                            &f,
 			ResolveOutdatedDiffDiscussions:            &f,
+			ContainerRegistryEnabled:                  &f,
 			SharedRunnersEnabled:                      &f,
 			PublicBuilds:                              &f,
 			OnlyAllowMergeIfPipelineSucceeds:          &f,
@@ -96,6 +98,7 @@ func withClientDefaultValues() projectModifier {
 			BuildTimeout:                              &i,
 			CIDefaultGitDepth:                         &i,
 			AutoDevopsEnabled:                         &f,
+			ApprovalsBeforeMerge:                      &i,
 			Mirror:                                    &f,
 			MirrorUserID:                              &i,
 			MirrorTriggerBuilds:                       &f,
@@ -356,6 +359,7 @@ func TestObserve(t *testing.T) {
 		"SnippetsAccessLevel":                       gitlab.PublicAccessControl,
 		"PagesAccessLevel":                          gitlab.PublicAccessControl,
 		"ResolveOutdatedDiffDiscussions":            true,
+		"ContainerRegistryEnabled":                  true,
 		"ContainerRegistryAccessLevel":              gitlab.EnabledAccessControl,
 		"SharedRunnersEnabled":                      true,
 		"Visibility":                                gitlab.PrivateVisibility,
@@ -366,6 +370,7 @@ func TestObserve(t *testing.T) {
 		"RemoveSourceBranchAfterMerge":              true,
 		"LFSEnabled":                                true,
 		"RequestAccessEnabled":                      true,
+		"TagList":                                   []string{"tag-1", "tag-2"},
 		"Topics":                                    []string{"tag-1", "tag-2"},
 		"CIConfigPath":                              "CI configPath",
 		"CIDefaultGitDepth":                         1,
@@ -384,6 +389,7 @@ func TestObserve(t *testing.T) {
 	f := false
 	i := 0
 	al := v1alpha1.PublicAccessControl
+	tags := []string{"tag-1 new", "tag-2 new"}
 	topics := []string{"tag-1 new", "tag-2 new"}
 	mergeMethod := v1alpha1.FastForwardMerge
 	s := "default string"
@@ -397,12 +403,14 @@ func TestObserve(t *testing.T) {
 		IssuesAccessLevel:                &al,
 		RepositoryAccessLevel:            &al,
 		MergeRequestsAccessLevel:         &al,
+		ApprovalsBeforeMerge:             ptr.To(0),
 		ForkingAccessLevel:               &al,
 		BuildsAccessLevel:                &al,
 		WikiAccessLevel:                  &al,
 		SnippetsAccessLevel:              &al,
 		PagesAccessLevel:                 &al,
 		ResolveOutdatedDiffDiscussions:   &f,
+		ContainerRegistryEnabled:         &f,
 		ContainerRegistryAccessLevel:     &al,
 		SharedRunnersEnabled:             &f,
 		Visibility:                       &visibility,
@@ -413,6 +421,7 @@ func TestObserve(t *testing.T) {
 		RemoveSourceBranchAfterMerge:     &f,
 		LFSEnabled:                       &f,
 		RequestAccessEnabled:             &f,
+		TagList:                          tags,
 		Topics:                           topics,
 		CIConfigPath:                     &s,
 		CIDefaultGitDepth:                &i,
@@ -469,9 +478,11 @@ func TestObserve(t *testing.T) {
 			RemoveSourceBranchAfterMerge:     f,
 			LFSEnabled:                       f,
 			RequestAccessEnabled:             f,
+			TagList:                          tags,
 			Topics:                           topics,
 			CIConfigPath:                     s,
 			CIDefaultGitDepth:                i,
+			ApprovalsBeforeMerge:             i,
 			Mirror:                           f,
 			MirrorUserID:                     i,
 			MirrorTriggerBuilds:              f,
