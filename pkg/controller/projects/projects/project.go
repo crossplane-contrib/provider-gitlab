@@ -45,12 +45,17 @@ import (
 )
 
 const (
-	errNotProject       = "managed resource is not a Gitlab project custom resource"
-	errKubeUpdateFailed = "cannot update Gitlab project custom resource"
-	errCreateFailed     = "cannot create Gitlab project"
-	errUpdateFailed     = "cannot update Gitlab project"
-	errDeleteFailed     = "cannot delete Gitlab project"
-	errGetFailed        = "cannot retrieve Gitlab project with"
+	errNotProject              = "managed resource is not a Gitlab project custom resource"
+	errKubeUpdateFailed        = "cannot update Gitlab project custom resource"
+	errCreateFailed            = "cannot create Gitlab project"
+	errUpdateFailed            = "cannot update Gitlab project"
+	errUpdatePushRulesFailed   = "cannot update Gitlab project push rules"
+	errDeleteFailed            = "cannot delete Gitlab project"
+	errGetFailed               = "cannot retrieve Gitlab project with"
+	errGetPushRulesFailed      = "cannot retrieve Gitlab project push rules"
+	errLateInitialize          = "cannot late-initialize Gitlab project"
+	errLateInitializePushRules = "cannot late-initialize Gitlab project push rules"
+	errCheckPushRulesUpToDate  = "cannot compare project push rules"
 )
 
 // SetupProject adds a controller that reconciles Projects.
@@ -110,6 +115,11 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type external struct {
 	kube   client.Client
 	client projects.Client
+
+	cache struct {
+		externalPushRules   *v1alpha1.PushRules
+		isPushRulesUpToDate bool
+	}
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -137,14 +147,21 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
-	lateInitialize(&cr.Spec.ForProvider, prj)
+	if err := e.lateInitialize(ctx, cr, prj); err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errLateInitialize)
+	}
+
+	e.cache.isPushRulesUpToDate, err = e.isPushRulesUpToDate(ctx, cr)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errCheckPushRulesUpToDate)
+	}
 
 	cr.Status.AtProvider = projects.GenerateObservation(prj)
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        isProjectUpToDate(&cr.Spec.ForProvider, prj),
+		ResourceUpToDate:        isProjectUpToDate(&cr.Spec.ForProvider, prj) && e.cache.isPushRulesUpToDate,
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 		ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte(prj.RunnersToken)},
 	}, nil
@@ -179,8 +196,21 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		projects.GenerateEditProjectOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	}
 
-	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	if !e.cache.isPushRulesUpToDate {
+		_, _, err := e.client.EditProjectPushRule(
+			meta.GetExternalName(cr),
+			projects.GenerateEditPushRulesOptions(&cr.Spec.ForProvider),
+			gitlab.WithContext(ctx),
+		)
+		if err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdatePushRulesFailed)
+		}
+	}
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
@@ -211,9 +241,11 @@ func (e *external) Disconnect(ctx context.Context) error {
 
 // lateInitialize fills the empty fields in the project spec with the
 // values seen in gitlab.Project.
-func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { //nolint:gocyclo
+func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, project *gitlab.Project) error { //nolint:gocyclo
+	in := &cr.Spec.ForProvider
+
 	if project == nil {
-		return
+		return nil
 	}
 	if in.AllowMergeOnSkippedPipeline == nil {
 		in.AllowMergeOnSkippedPipeline = &project.AllowMergeOnSkippedPipeline
@@ -312,6 +344,67 @@ func lateInitialize(in *v1alpha1.ProjectParameters, project *gitlab.Project) { /
 
 	in.Visibility = clients.LateInitializeVisibilityValue(in.Visibility, project.Visibility)
 	in.WikiAccessLevel = clients.LateInitializeAccessControlValue(in.WikiAccessLevel, project.WikiAccessLevel)
+
+	if err := e.lateInitializePushRules(ctx, cr); err != nil {
+		return errors.Wrap(err, errLateInitializePushRules)
+	}
+
+	return nil
+}
+
+func (e *external) lateInitializePushRules(ctx context.Context, cr *v1alpha1.Project) error {
+	pr, err := e.getProjectPushRules(ctx, cr)
+	if err != nil || pr == nil {
+		return err
+	}
+	if cr.Spec.ForProvider.PushRules == nil {
+		cr.Spec.ForProvider.PushRules = &v1alpha1.PushRules{}
+	}
+	cr.Spec.ForProvider.PushRules = &v1alpha1.PushRules{
+		AuthorEmailRegex:           clients.LateInitialize(cr.Spec.ForProvider.PushRules.AuthorEmailRegex, pr.AuthorEmailRegex),
+		BranchNameRegex:            clients.LateInitialize(cr.Spec.ForProvider.PushRules.BranchNameRegex, pr.BranchNameRegex),
+		CommitCommitterCheck:       clients.LateInitialize(cr.Spec.ForProvider.PushRules.CommitCommitterCheck, pr.CommitCommitterCheck),
+		CommitCommitterNameCheck:   clients.LateInitialize(cr.Spec.ForProvider.PushRules.CommitCommitterNameCheck, pr.CommitCommitterNameCheck),
+		CommitMessageNegativeRegex: clients.LateInitialize(cr.Spec.ForProvider.PushRules.CommitMessageNegativeRegex, pr.CommitMessageNegativeRegex),
+		CommitMessageRegex:         clients.LateInitialize(cr.Spec.ForProvider.PushRules.CommitMessageRegex, pr.CommitMessageRegex),
+		DenyDeleteTag:              clients.LateInitialize(cr.Spec.ForProvider.PushRules.DenyDeleteTag, pr.DenyDeleteTag),
+		FileNameRegex:              clients.LateInitialize(cr.Spec.ForProvider.PushRules.FileNameRegex, pr.FileNameRegex),
+		MaxFileSize:                clients.LateInitialize(cr.Spec.ForProvider.PushRules.MaxFileSize, pr.MaxFileSize),
+		MemberCheck:                clients.LateInitialize(cr.Spec.ForProvider.PushRules.MemberCheck, pr.MemberCheck),
+		PreventSecrets:             clients.LateInitialize(cr.Spec.ForProvider.PushRules.PreventSecrets, pr.PreventSecrets),
+		RejectUnsignedCommits:      clients.LateInitialize(cr.Spec.ForProvider.PushRules.RejectUnsignedCommits, pr.RejectUnsignedCommits),
+		RejectNonDCOCommits:        clients.LateInitialize(cr.Spec.ForProvider.PushRules.RejectNonDCOCommits, pr.RejectNonDCOCommits),
+	}
+	return nil
+}
+
+func (e *external) getProjectPushRules(ctx context.Context, cr *v1alpha1.Project) (*v1alpha1.PushRules, error) {
+	if e.cache.externalPushRules != nil {
+		return e.cache.externalPushRules, nil
+	}
+	res, _, err := e.client.GetProjectPushRules(
+		meta.GetExternalName(cr),
+		gitlab.WithContext(ctx),
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, errGetPushRulesFailed)
+	}
+	e.cache.externalPushRules = &v1alpha1.PushRules{
+		AuthorEmailRegex:           &res.AuthorEmailRegex,
+		BranchNameRegex:            &res.BranchNameRegex,
+		CommitCommitterCheck:       &res.CommitCommitterCheck,
+		CommitCommitterNameCheck:   &res.CommitCommitterNameCheck,
+		CommitMessageNegativeRegex: &res.CommitMessageNegativeRegex,
+		CommitMessageRegex:         &res.CommitMessageRegex,
+		DenyDeleteTag:              &res.DenyDeleteTag,
+		FileNameRegex:              &res.FileNameRegex,
+		MaxFileSize:                &res.MaxFileSize,
+		MemberCheck:                &res.MemberCheck,
+		PreventSecrets:             &res.PreventSecrets,
+		RejectUnsignedCommits:      &res.RejectUnsignedCommits,
+		RejectNonDCOCommits:        &res.RejectNonDCOCommits,
+	}
+	return e.cache.externalPushRules, nil
 }
 
 // isProjectUpToDate checks whether there is a change in any of the modifiable fields.
@@ -440,4 +533,12 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	return true
+}
+
+func (e *external) isPushRulesUpToDate(ctx context.Context, cr *v1alpha1.Project) (bool, error) {
+	current, err := e.getProjectPushRules(ctx, cr)
+	if err != nil {
+		return false, err
+	}
+	return cmp.Equal(cr.Spec.ForProvider.PushRules, current), nil
 }

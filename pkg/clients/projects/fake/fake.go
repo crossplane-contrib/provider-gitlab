@@ -71,6 +71,9 @@ type MockClient struct {
 	MockDeletePipelineScheduleVariable func(pid interface{}, schedule int, key string, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
 
 	MockListUsers func(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error)
+
+	MockGetProjectPushRules func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
+	MockEditProjectPushRule func(pid interface{}, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 }
 
 // GetPipelineSchedule calls the underlying MockGetPipelineSchedule method.
@@ -251,4 +254,14 @@ func (c *MockClient) RevokeProjectAccessToken(pid interface{}, id int, options .
 // ListUsers calls the underlying MockListUsers method.
 func (c *MockClient) ListUsers(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error) {
 	return c.MockListUsers(opt)
+}
+
+// GetProjectPushRules calls the underlying MockGetProjectPushRules method.
+func (c *MockClient) GetProjectPushRules(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+	return c.MockGetProjectPushRules(pid, options...)
+}
+
+// EditProjectPushRule calls the underlying MockEditProjectPushRule method.
+func (c *MockClient) EditProjectPushRule(pid interface{}, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+	return c.MockEditProjectPushRule(pid, opt, options...)
 }
