@@ -335,6 +335,62 @@ spec:
                   publicBuilds:
                     description: If true, jobs can be viewed by non-project members.
                     type: boolean
+                  pushRules:
+                    description: |-
+                      PushRule specifies are pre-receive Git hooks you can enable in a
+                      user-friendly interface.
+                      Push rules give you more control over what can and can’t be pushed to
+                      your repository.
+                    properties:
+                      authorEmailRegex:
+                        description: All commit author emails must match this regular
+                          expression.
+                        type: string
+                      branchNameRegex:
+                        description: All branch names must match this regular expression.
+                        type: string
+                      commitCommitterCheck:
+                        description: |-
+                          Users can only push commits to this repository if the committer email is
+                          one of their own verified emails.
+                        type: boolean
+                      commitCommitterNameCheck:
+                        description: |-
+                          Users can only push commits to this repository if the commit author name
+                          is consistent with their GitLab account name.
+                        type: boolean
+                      commitMessageNegativeRegex:
+                        description: No commit message is allowed to match this regular
+                          expression.
+                        type: string
+                      commitMessageRegex:
+                        description: All commit messages must match this regular expression.
+                        type: string
+                      denyDeleteTag:
+                        description: Deny deleting a tag.
+                        type: boolean
+                      fileNameRegex:
+                        description: All committed filenames must not match this regular
+                          expression.
+                        type: string
+                      maxFileSize:
+                        description: Maximum file size (MB).
+                        type: integer
+                      memberCheck:
+                        description: Restrict commits by author (email) to existing
+                          GitLab users.
+                        type: boolean
+                      preventSecrets:
+                        description: GitLab rejects any files that are likely to contain
+                          secrets.
+                        type: boolean
+                      rejectNonDcoCommits:
+                        description: Reject commit when it’s not DCO certified.
+                        type: boolean
+                      rejectUnsignedCommits:
+                        description: Reject commit when it’s not signed.
+                        type: boolean
+                    type: object
                   removeSourceBranchAfterMerge:
                     description: Enable Delete source branch option by default for
                       all new merge requests.

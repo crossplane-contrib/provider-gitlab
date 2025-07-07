@@ -76,6 +76,10 @@ func withSpec(s v1alpha1.ProjectParameters) projectModifier {
 	return func(r *v1alpha1.Project) { r.Spec.ForProvider = s }
 }
 
+func withProjectPushRules(pr *v1alpha1.PushRules) projectModifier {
+	return func(r *v1alpha1.Project) { r.Spec.ForProvider.PushRules = pr }
+}
+
 func withClientDefaultValues() projectModifier {
 	return func(p *v1alpha1.Project) {
 		f := false
@@ -261,16 +265,49 @@ func TestObserve(t *testing.T) {
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
 						return &gitlab.Project{Name: "example-project"}, &gitlab.Response{}, nil
 					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, nil, nil
+					},
 				},
 				cr: project(
 					withClientDefaultValues(),
 					withExternalName(extName),
+					withProjectPushRules(&v1alpha1.PushRules{
+						AuthorEmailRegex:           ptr.To(""),
+						BranchNameRegex:            ptr.To(""),
+						CommitCommitterCheck:       ptr.To(false),
+						CommitCommitterNameCheck:   ptr.To(false),
+						CommitMessageNegativeRegex: ptr.To(""),
+						CommitMessageRegex:         ptr.To(""),
+						DenyDeleteTag:              ptr.To(false),
+						FileNameRegex:              ptr.To(""),
+						MaxFileSize:                ptr.To(0),
+						MemberCheck:                ptr.To(false),
+						PreventSecrets:             ptr.To(false),
+						RejectUnsignedCommits:      ptr.To(false),
+						RejectNonDCOCommits:        ptr.To(false),
+					}),
 				),
 			},
 			want: want{
 				cr: project(
 					withClientDefaultValues(),
 					withExternalName(extName),
+					withProjectPushRules(&v1alpha1.PushRules{
+						AuthorEmailRegex:           ptr.To(""),
+						BranchNameRegex:            ptr.To(""),
+						CommitCommitterCheck:       ptr.To(false),
+						CommitCommitterNameCheck:   ptr.To(false),
+						CommitMessageNegativeRegex: ptr.To(""),
+						CommitMessageRegex:         ptr.To(""),
+						DenyDeleteTag:              ptr.To(false),
+						FileNameRegex:              ptr.To(""),
+						MaxFileSize:                ptr.To(0),
+						MemberCheck:                ptr.To(false),
+						PreventSecrets:             ptr.To(false),
+						RejectUnsignedCommits:      ptr.To(false),
+						RejectNonDCOCommits:        ptr.To(false),
+					}),
 					withConditions(xpv1.Available()),
 				),
 				result: managed.ExternalObservation{
@@ -290,6 +327,9 @@ func TestObserve(t *testing.T) {
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
 						return &gitlab.Project{Path: path, RunnersToken: "token"}, &gitlab.Response{}, nil
 					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, nil, nil
+					},
 				},
 				cr: project(
 					withClientDefaultValues(),
@@ -302,6 +342,21 @@ func TestObserve(t *testing.T) {
 					withConditions(xpv1.Available()),
 					withPath(&path),
 					withExternalName(extName),
+					withProjectPushRules(&v1alpha1.PushRules{
+						AuthorEmailRegex:           ptr.To(""),
+						BranchNameRegex:            ptr.To(""),
+						CommitCommitterCheck:       ptr.To(false),
+						CommitCommitterNameCheck:   ptr.To(false),
+						CommitMessageNegativeRegex: ptr.To(""),
+						CommitMessageRegex:         ptr.To(""),
+						DenyDeleteTag:              ptr.To(false),
+						FileNameRegex:              ptr.To(""),
+						MaxFileSize:                ptr.To(0),
+						MemberCheck:                ptr.To(false),
+						PreventSecrets:             ptr.To(false),
+						RejectUnsignedCommits:      ptr.To(false),
+						RejectNonDCOCommits:        ptr.To(false),
+					}),
 					withStatus(v1alpha1.ProjectObservation{}),
 				),
 				result: managed.ExternalObservation{
@@ -321,10 +376,29 @@ func TestObserve(t *testing.T) {
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
 						return &gitlab.Project{MirrorUserID: 0}, &gitlab.Response{}, nil
 					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, nil, nil
+					},
 				},
 				cr: project(
 					withClientDefaultValues(),
 					withMirrorUserIDNil(),
+					withProjectPushRules(&v1alpha1.PushRules{
+						AuthorEmailRegex:           ptr.To(""),
+						BranchNameRegex:            ptr.To(""),
+						CommitCommitterCheck:       ptr.To(false),
+						CommitCommitterNameCheck:   ptr.To(false),
+						CommitMessageNegativeRegex: ptr.To(""),
+						CommitMessageRegex:         ptr.To(""),
+						DenyDeleteTag:              ptr.To(false),
+						FileNameRegex:              ptr.To(""),
+						MaxFileSize:                ptr.To(0),
+						MemberCheck:                ptr.To(false),
+						PreventSecrets:             ptr.To(false),
+						RejectUnsignedCommits:      ptr.To(false),
+						RejectNonDCOCommits:        ptr.To(false),
+					},
+					),
 					withExternalName(extName),
 				),
 			},
@@ -333,6 +407,21 @@ func TestObserve(t *testing.T) {
 					withClientDefaultValues(),
 					withMirrorUserIDNil(),
 					withExternalName(extName),
+					withProjectPushRules(&v1alpha1.PushRules{
+						AuthorEmailRegex:           ptr.To(""),
+						BranchNameRegex:            ptr.To(""),
+						CommitCommitterCheck:       ptr.To(false),
+						CommitCommitterNameCheck:   ptr.To(false),
+						CommitMessageNegativeRegex: ptr.To(""),
+						CommitMessageRegex:         ptr.To(""),
+						DenyDeleteTag:              ptr.To(false),
+						FileNameRegex:              ptr.To(""),
+						MaxFileSize:                ptr.To(0),
+						MemberCheck:                ptr.To(false),
+						PreventSecrets:             ptr.To(false),
+						RejectUnsignedCommits:      ptr.To(false),
+						RejectNonDCOCommits:        ptr.To(false),
+					}),
 					withConditions(xpv1.Available()),
 				),
 				result: managed.ExternalObservation{
@@ -435,6 +524,21 @@ func TestObserve(t *testing.T) {
 		AutocloseReferencedIssues:        &f,
 		AllowMergeOnSkippedPipeline:      &f,
 		CIForwardDeploymentEnabled:       &f,
+		PushRules: &v1alpha1.PushRules{
+			AuthorEmailRegex:           ptr.To(""),
+			BranchNameRegex:            ptr.To(""),
+			CommitCommitterCheck:       ptr.To(false),
+			CommitCommitterNameCheck:   ptr.To(false),
+			CommitMessageNegativeRegex: ptr.To(""),
+			CommitMessageRegex:         ptr.To(""),
+			DenyDeleteTag:              ptr.To(true),
+			FileNameRegex:              ptr.To(""),
+			MaxFileSize:                ptr.To(0),
+			MemberCheck:                ptr.To(false),
+			PreventSecrets:             ptr.To(false),
+			RejectUnsignedCommits:      ptr.To(false),
+			RejectNonDCOCommits:        ptr.To(false),
+		},
 	}
 
 	for name, value := range isProjectUpToDateCases {
@@ -445,6 +549,21 @@ func TestObserve(t *testing.T) {
 		wantProjectModifier := []projectModifier{
 			withSpec(projectParameters),
 			withExternalName("0"),
+			withProjectPushRules(&v1alpha1.PushRules{
+				AuthorEmailRegex:           ptr.To(""),
+				BranchNameRegex:            ptr.To(""),
+				CommitCommitterCheck:       ptr.To(false),
+				CommitCommitterNameCheck:   ptr.To(false),
+				CommitMessageNegativeRegex: ptr.To(""),
+				CommitMessageRegex:         ptr.To(""),
+				DenyDeleteTag:              ptr.To(true),
+				FileNameRegex:              ptr.To(""),
+				MaxFileSize:                ptr.To(0),
+				MemberCheck:                ptr.To(false),
+				PreventSecrets:             ptr.To(false),
+				RejectUnsignedCommits:      ptr.To(false),
+				RejectNonDCOCommits:        ptr.To(false),
+			}),
 			withConditions(xpv1.Available()),
 			withStatus(v1alpha1.ProjectObservation{
 				IssuesAccessLevel:        al,
@@ -508,6 +627,11 @@ func TestObserve(t *testing.T) {
 				project: &fake.MockClient{
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
 						return gitlabProject, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{
+							DenyDeleteTag: true,
+						}, nil, nil
 					},
 				},
 				cr: project(argsProjectModifier...),
@@ -639,6 +763,9 @@ func TestUpdate(t *testing.T) {
 					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
 						return &gitlab.Project{}, &gitlab.Response{}, nil
 					},
+					MockEditProjectPushRule: func(pid interface{}, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, &gitlab.Response{}, nil
+					},
 				},
 				cr: project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
 			},
@@ -651,6 +778,9 @@ func TestUpdate(t *testing.T) {
 				project: &fake.MockClient{
 					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
 						return &gitlab.Project{}, &gitlab.Response{}, errBoom
+					},
+					MockEditProjectPushRule: func(pid interface{}, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, &gitlab.Response{}, nil
 					},
 				},
 				cr: project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
