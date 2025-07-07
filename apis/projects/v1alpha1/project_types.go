@@ -153,6 +153,20 @@ type ProjectParameters struct {
 	// +optional
 	AllowMergeOnSkippedPipeline *bool `json:"allowMergeOnSkippedPipeline,omitempty"`
 
+	// NOTE: ApprovalsBeforeMerge is deprecated and approval rules should be
+	// used instead which has its own API.
+	//
+	// TODO: Implement approval rules API, maybe as separate MR or as part of
+	// this kind.
+	//
+	// TODO: Mark ApprovalsBeforeMerge as deprecated but keep it and replace it
+	// internally with a call to the approval rules API.
+
+	// How many approvers should approve merge request by default.More actions
+	// To configure approval rules, see Merge request approvals API.
+	// +optional
+	ApprovalsBeforeMerge *int `json:"approvalsBeforeMerge,omitempty"`
+
 	// Auto-cancel pending pipelines. This isn’t a boolean, but enabled/disabled.
 	// +optional
 	AutoCancelPendingPipelines *string `json:"autoCancelPendingPipelines,omitempty"`
@@ -201,6 +215,13 @@ type ProjectParameters struct {
 	// nameRegex (string), nameRegexDelete (string), nameRegexKeep (string), enabled (boolean).
 	// +optional
 	ContainerExpirationPolicyAttributes *ContainerExpirationPolicyAttributes `json:"containerExpirationPolicyAttributes,omitempty"`
+
+	// Enable container registry for this project.
+	//
+	// Deprecated: Use ContainerRegistryAccessLevel.
+	//
+	// +optional
+	ContainerRegistryEnabled *bool `json:"containerRegistryEnabled,omitempty"`
 
 	// Set visibility of container registry.
 	// +optional
@@ -372,6 +393,14 @@ type ProjectParameters struct {
 	// +optional
 	SuggestionCommitMessage *string `json:"suggestionCommitMessage,omitempty"`
 
+	// The list of tags for a project; put array of tags,
+	// that should be finally assigned to a project.
+	//
+	// Deprecated: Use topics instead.
+	//
+	// +optional
+	TagList []string `json:"tagList,omitempty"`
+
 	// The list of topics for the project;
 	// +optional
 	Topics []string `json:"topics,omitempty"`
@@ -512,12 +541,16 @@ type ProjectObservation struct {
 	HTTPURLToRepo             string                     `json:"httpUrlToRepo,omitempty"`
 	ImportError               string                     `json:"importError,omitempty"`
 	ImportStatus              string                     `json:"importStatus,omitempty"`
+	IssuesEnabled             bool                       `json:"issuesEnabled,omitempty"`
+	JobsEnabled               bool                       `json:"jobsEnabled,omitempty"`
 	IssuesAccessLevel         AccessControlValue         `json:"issuesAccessLevel,omitempty"`
 	BuildsAccessLevel         AccessControlValue         `json:"buildsAccessLevel,omitempty"`
 	LastActivityAt            *metav1.Time               `json:"lastActivityAt,omitempty"`
 	License                   *ProjectLicense            `json:"license,omitempty"`
 	LicenseURL                string                     `json:"licenseUrl,omitempty"`
 	Links                     *Links                     `json:"links,omitempty"`
+	MarkedForDeletionAt       *metav1.Time               `json:"markedForDeletionAt,omitempty"`
+	MergeRequestsEnabled      bool                       `json:"mergeRequestsEnabled,omitempty"`
 	MarkedForDeletionOn       *metav1.Time               `json:"markedForDeletionOn,omitempty"`
 	MergeRequestsAccessLevel  AccessControlValue         `json:"mergeRequestsAccessLevel,omitempty"`
 	NameWithNamespace         string                     `json:"nameWithNamespace,omitempty"`
@@ -531,10 +564,12 @@ type ProjectObservation struct {
 	SSHURLToRepo              string                     `json:"sshUrlToRepo,omitempty"`
 	ServiceDeskAddress        string                     `json:"serviceDeskAddress,omitempty"`
 	SharedWithGroups          []SharedWithGroups         `json:"sharedWithGroups,omitempty"`
+	SnippetsEnabled           bool                       `json:"snippetsEnabled,omitempty"`
 	SnippetsAccessLevel       AccessControlValue         `json:"snippetsAccessLevel,omitempty"`
 	StarCount                 int                        `json:"starCount,omitempty"`
 	Statistics                *ProjectStatistics         `json:"statistics,omitempty"`
 	WebURL                    string                     `json:"webUrl,omitempty"`
+	WikiEnabled               bool                       `json:"wikiEnabled,omitempty"`
 	WikiAccessLevel           AccessControlValue         `json:"wikiAccessLevel,omitempty"`
 }
 
