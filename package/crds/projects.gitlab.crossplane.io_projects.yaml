@@ -391,6 +391,12 @@ spec:
                         description: Reject commit when it’s not signed.
                         type: boolean
                     type: object
+                  removeFinalizerOnPendingDeletion:
+                    description: |-
+                      RemoveFinalizerOnPendingDeletion specifies wether the finalizer of this
+                      object should be removed in case the Kubernetes object and
+                      the external Gitlab project are marked for pending deletion.
+                    type: boolean
                   removeSourceBranchAfterMerge:
                     description: Enable Delete source branch option by default for
                       all new merge requests.
