@@ -603,6 +603,11 @@ func (in *GroupParameters) DeepCopyInto(out *GroupParameters) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.RemoveFinalizerOnPendingDeletion != nil {
+		in, out := &in.RemoveFinalizerOnPendingDeletion, &out.RemoveFinalizerOnPendingDeletion
+		*out = new(bool)
+		**out = **in
+	}
 	if in.FullPathToRemove != nil {
 		in, out := &in.FullPathToRemove, &out.FullPathToRemove
 		*out = new(string)
