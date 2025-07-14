@@ -32,6 +32,7 @@ import (
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
@@ -54,6 +55,8 @@ var (
 	extNameAnnotation  = map[string]string{meta.AnnotationKeyExternalName: extName}
 	visibility         = "private"
 	v1alpha1Visibility = v1alpha1.VisibilityValue(visibility)
+
+	timeNow = time.Now()
 
 	projectCreationLevel         = "developer"
 	v1alpha1ProjectCreationLevel = v1alpha1.ProjectCreationLevelValue(projectCreationLevel)
@@ -440,6 +443,44 @@ func TestObserve(t *testing.T) {
 					ResourceUpToDate:        true,
 					ResourceLateInitialized: false,
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		"DeleteOnPendingDeletion": {
+			args: args{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				group: &fake.MockClient{
+					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return &gitlab.Group{
+							Name:                name,
+							MarkedForDeletionOn: &gitlab.ISOTime{},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: group(
+					withClientDefaultValues(),
+					func(p *v1alpha1.Group) {
+						p.DeletionTimestamp = &metav1.Time{Time: timeNow}
+						p.Spec.ForProvider.RemoveFinalizerOnPendingDeletion = ptr.To(true)
+					},
+					withExternalName(extName),
+				),
+			},
+			want: want{
+				cr: group(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					func(p *v1alpha1.Group) {
+						p.DeletionTimestamp = &metav1.Time{Time: timeNow}
+						p.Spec.ForProvider.RemoveFinalizerOnPendingDeletion = ptr.To(true)
+					},
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          false,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
 				},
 			},
 		},
