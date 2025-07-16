@@ -61,6 +61,14 @@ var (
 	MemberGroupVersionKind = SchemeGroupVersion.WithKind(MemberKind)
 )
 
+// Approval Rule type metadata
+var (
+	ApprovalRuleKind             = reflect.TypeOf(ApprovalRule{}).Name()
+	ApprovalRuleGroupKind        = schema.GroupKind{Group: Group, Kind: MemberKind}.String()
+	ApprovalRuleKindAPIVersion   = MemberKind + "." + SchemeGroupVersion.String()
+	ApprovalRuleGroupVersionKind = SchemeGroupVersion.WithKind(ApprovalRuleKind)
+)
+
 // Deploy Token type metadata
 var (
 	DeployTokenKind             = reflect.TypeOf(DeployToken{}).Name()
@@ -104,7 +112,7 @@ var (
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
-	SchemeBuilder.Register(&Member{}, &MemberList{})
+	SchemeBuilder.Register(&ApprovalRule{}, &ApprovalRuleList{})
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
 	SchemeBuilder.Register(&DeployKey{}, &DeployKeyList{})
