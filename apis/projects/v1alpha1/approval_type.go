@@ -21,6 +21,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type RuleType string
+
+const (
+	RuleTypeAnyApprover    RuleType = "any_approver"
+	RuleTypeRegular        RuleType = "regular"
+	RuleTypeReportApprover RuleType = "report_approver"
+)
+
 // A ApprovalRuleParameters defines the desired state of a Gitlab Project Member.
 type ApprovalRuleParameters struct {
 
@@ -37,6 +45,37 @@ type ApprovalRuleParameters struct {
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
 	// +optional
 	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
+
+	// The number of required approvals for this rule.
+	ApprovalsRequired *int `json:"approvalsRequired,omitempty"`
+
+	// The name of the approval rule
+	Name *string `json:"name,omitempty"`
+
+	// If true, applies the rule to all protected branches and ignores the protected_branch_ids attribute.
+	// +optional
+	AppliesToAllProtectedBranches *bool `json:"appliesToAllProtectedBranches,omitempty"`
+
+	// The IDs of groups as approvers.
+	// +optional
+	GroupIDs *[]int `json:"groupIds,omitempty"`
+
+	// The IDs of protected branches to scope the rule by.
+	// +optional
+	ProtectedBranchIDs *[]int `json:"protectedBranchIds,omitempty"`
+
+	// The rule type. Supported values include any_approver, regular, and report_approver
+	// +optional
+	// +immutable
+	RuleType *RuleType `json:"ruleType,omitempty"`
+
+	// The IDs of users as approvers. If used with usernames, adds both lists of users.
+	// +optional
+	UserIDs *[]int `json:"userIds,omitempty"`
+
+	// The IDs of users as approvers. If used with usernames, adds both lists of users.
+	// +optional
+	Usernames *[]string `json:"usernames,omitempty"`
 }
 
 // ApprovalRuleObservation represents a project member.
@@ -44,13 +83,13 @@ type ApprovalRuleParameters struct {
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/projects.html#list-project-team-members
 type ApprovalRuleObservation struct {
-	Username  string       `json:"username,omitempty"`
-	Email     string       `json:"email,omitempty"`
-	Name      string       `json:"name,omitempty"`
-	State     string       `json:"state,omitempty"`
-	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
-	WebURL    string       `json:"webURL,omitempty"`
-	AvatarURL string       `json:"avatarURL,omitempty"`
+	// Username  string       `json:"username,omitempty"`
+	// Email     string       `json:"email,omitempty"`
+	// Name      string       `json:"name,omitempty"`
+	// State     string       `json:"state,omitempty"`
+	// CreatedAt *metav1.Time `json:"createdAt,omitempty"`
+	// WebURL    string       `json:"webURL,omitempty"`
+	// AvatarURL string       `json:"avatarURL,omitempty"`
 }
 
 // A ApprovalRuleSpec defines the desired state of a Gitlab Project Member.

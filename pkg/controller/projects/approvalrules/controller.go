@@ -15,12 +15,14 @@ package approvalrules
 
 import (
 	"context"
+	"strconv"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/feature"
+	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
@@ -34,17 +36,17 @@ import (
 	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/users"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/features"
 )
 
 const (
-	errNotMember        = "managed resource is not a Gitlab Project Member custom resource"
+	errNotApprovalRule  = "managed resource is not a Gitlab Project Approval Rule custom resource"
 	errCreateFailed     = "cannot create Gitlab Approval Rule"
 	errUpdateFailed     = "cannot update Gitlab Approval Rule"
 	errDeleteFailed     = "cannot delete Gitlab Approval Rule"
 	errObserveFailed    = "cannot observe Gitlab Approval Rule"
 	errProjectIDMissing = "ProjectID is missing"
+	errIDnotInt         = "ID is not an integer"
 )
 
 // SetupRules adds a controller that reconciles Approval Rules.
@@ -59,8 +61,7 @@ func SetupRules(mgr ctrl.Manager, o controller.Options) error {
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{
 			kube:              mgr.GetClient(),
-			newGitlabClientFn: projects.NewMemberClient,
-			newUserClientFn:   users.NewUserClient,
+			newGitlabClientFn: projects.NewApprovalRulesClient,
 		}),
 		managed.WithInitializers(),
 		managed.WithPollInterval(o.PollInterval),
@@ -74,7 +75,7 @@ func SetupRules(mgr ctrl.Manager, o controller.Options) error {
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.MemberGroupVersionKind),
+		resource.ManagedKind(v1alpha1.ApprovalRuleGroupVersionKind),
 		reconcilerOpts...)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
@@ -96,122 +97,128 @@ type connector struct {
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
 	cr, ok := mg.(*v1alpha1.ApprovalRule)
 	if !ok {
-		return nil, errors.New(errNotMember)
+		return nil, errors.New(errNotApprovalRule)
 	}
 	cfg, err := clients.GetConfig(ctx, c.kube, cr)
 	if err != nil {
 		return nil, err
 	}
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), userClient: c.newUserClientFn(*cfg)}, nil
+	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
 }
 
 type external struct {
-	kube       client.Client
-	client     projects.MemberClient
-	userClient users.UserClient
+	kube   client.Client
+	client projects.ApprovalRulesClient
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
 	cr, ok := mg.(*v1alpha1.ApprovalRule)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotMember)
+		return managed.ExternalObservation{}, errors.New(errNotApprovalRule)
 	}
+
+	externalName := meta.GetExternalName(cr)
+	if externalName == "" {
+		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
+
+	id, err := strconv.Atoi(externalName)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.New(errIDnotInt)
+	}
+
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
 
-	userID, err := cr.Spec.ForProvider.UserID, error(nil)
-	if cr.Spec.ForProvider.UserID == nil {
-		if cr.Spec.ForProvider.UserName == nil {
-			return managed.ExternalObservation{}, errors.New(errUserInfoMissing)
-		}
-		userID, err = users.GetUserID(e.userClient, *cr.Spec.ForProvider.UserName)
-		if err != nil {
-			return managed.ExternalObservation{}, errors.Wrap(err, errFetchFailed)
-		}
-	}
-	cr.Spec.ForProvider.UserID = userID
-
-	projectMember, res, err := e.client.GetProjectMember(
-		*cr.Spec.ForProvider.ProjectID,
-		*cr.Spec.ForProvider.UserID,
-	)
+	_, res, err := e.client.GetProjectApprovalRule(*cr.Spec.ForProvider.ProjectID, id)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
 		}
+
 		return managed.ExternalObservation{}, errors.Wrap(err, errObserveFailed)
 	}
 
-	cr.Status.AtProvider = projects.GenerateMemberObservation(projectMember)
+	current := cr.Spec.ForProvider.DeepCopy()
+	// lateInitializeProjectDeployToken(&cr.Spec.ForProvider, dt)
+
+	cr.Status.AtProvider = v1alpha1.ApprovalRuleObservation{}
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        isMemberUpToDate(&cr.Spec.ForProvider, projectMember),
-		ResourceLateInitialized: false,
+		ResourceUpToDate:        true,
+		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 	}, nil
+
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
 	cr, ok := mg.(*v1alpha1.ApprovalRule)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotMember)
-	}
-	if cr.Spec.ForProvider.ProjectID == nil {
-		return managed.ExternalCreation{}, errors.New(errProjectIDMissing)
+		return managed.ExternalCreation{}, errors.New(errNotApprovalRule)
 	}
 
-	_, _, err := e.client.AddProjectMember(
-		*cr.Spec.ForProvider.ProjectID,
-		projects.GenerateAddMemberOptions(&cr.Spec.ForProvider),
-		gitlab.WithContext(ctx),
-	)
+	cr.Status.SetConditions(xpv1.Creating())
+	approvalRulesOptions := projects.GenerateCreateApprovalRulesOptions(&cr.Spec.ForProvider)
+
+	rule, _, err := e.client.CreateProjectApprovalRule(*cr.Spec.ForProvider.ProjectID, approvalRulesOptions, gitlab.WithContext(ctx))
+
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
+	err = e.updateExternalName(ctx, cr, rule)
 	return managed.ExternalCreation{}, nil
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
 	cr, ok := mg.(*v1alpha1.ApprovalRule)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotMember)
+		return managed.ExternalUpdate{}, errors.New(errNotApprovalRule)
 	}
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalUpdate{}, errors.New(errProjectIDMissing)
 	}
-	if cr.Spec.ForProvider.UserID == nil {
-		return managed.ExternalUpdate{}, errors.New(errUserInfoMissing)
+
+	ruleID, err := strconv.Atoi(meta.GetExternalName(cr))
+
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.New(errIDnotInt)
 	}
 
-	_, _, err := e.client.EditProjectMember(
+	_, _, err = e.client.UpdateProjectApprovalRule(
 		*cr.Spec.ForProvider.ProjectID,
-		*cr.Spec.ForProvider.UserID,
-		projects.GenerateEditMemberOptions(&cr.Spec.ForProvider),
+		ruleID,
+		projects.GenerateUpdateApprovalRulesOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
+
 	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.ApprovalRule)
 	if !ok {
-		return managed.ExternalDelete{}, errors.New(errNotMember)
+		return managed.ExternalDelete{}, errors.New(errNotApprovalRule)
 	}
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalDelete{}, errors.New(errProjectIDMissing)
 	}
-	if cr.Spec.ForProvider.UserID == nil {
-		return managed.ExternalDelete{}, errors.New(errUserInfoMissing)
+
+	ruleID, err := strconv.Atoi(meta.GetExternalName(cr))
+
+	if err != nil {
+		return managed.ExternalDelete{}, errors.New(errIDnotInt)
 	}
 
-	_, err := e.client.DeleteProjectMember(
+	_, err = e.client.DeleteProjectApprovalRule(
 		*cr.Spec.ForProvider.ProjectID,
-		*cr.Spec.ForProvider.UserID,
+		ruleID,
 		gitlab.WithContext(ctx),
 	)
+
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 }
 
@@ -220,31 +227,31 @@ func (e *external) Disconnect(ctx context.Context) error {
 	return nil
 }
 
-// isMemberUpToDate checks whether there is a change in any of the modifiable fields.
-func isMemberUpToDate(p *v1alpha1.ApprovalRuleParameters, g *gitlab.ProjectMember) bool {
-	if !cmp.Equal(int(p.AccessLevel), int(g.AccessLevel)) {
-		return false
-	}
-
-	if !cmp.Equal(derefString(p.ExpiresAt), isoTimeToString(g.ExpiresAt)) {
-		return false
-	}
-
-	return true
+func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.ApprovalRule, approvalRule *gitlab.ProjectApprovalRule) error {
+	meta.SetExternalName(cr, strconv.Itoa(approvalRule.ID))
+	return e.kube.Update(ctx, cr)
 }
 
-func derefString(s *string) string {
-	if s != nil {
-		return *s
-	}
-	return ""
-}
+// lateInitializeApprovalsRules fills the empty fields in the approval rules spec with the
+// values seen in gitlab approval rules.
+// func lateInitializeApprovalsRules(in *v1alpha1.ApprovalRuleParameters, rule *gitlab.ProjectApprovalRule) {
+// 	if rule == nil {
+// 		return
+// 	}
+//
+// 	if in.AppliesToAllProtectedBranches == nil {
+// 		in.AppliesToAllProtectedBranches = &rule.AppliesToAllProtectedBranches
+// 	}
+//
+// 	if in.GroupIDs == nil {
+// 		in.GroupIDs = getIds(*rule.Groups[0])
+// 	}
+// }
 
-// isoTimeToString checks if given return date in format iso8601 otherwise empty string.
-func isoTimeToString(i interface{}) string {
-	v, ok := i.(*gitlab.ISOTime)
-	if ok && v != nil {
-		return v.String()
-	}
-	return ""
-}
+// func getIds(ts Test) *[]int {
+// 	us := make([]int, len(ts))
+// 	for i := range ts {
+// 		us[i] = ts[i].ID
+// 	}
+// 	return &us
+// }

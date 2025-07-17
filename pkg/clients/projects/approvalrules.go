@@ -17,8 +17,6 @@ limitations under the License.
 package projects
 
 import (
-	"strings"
-
 	"gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -28,29 +26,21 @@ import (
 
 // MemberClient defines Gitlab Member service operations
 type ApprovalRulesClient interface {
-	GetApprovalRules(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
-	AddApprovalRules(pid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
-	EditApprovalRules(pid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
-	DeleteApprovalRules(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	GetProjectApprovalRule(pid any, ruleID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
+	CreateProjectApprovalRule(pid any, opt *gitlab.CreateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
+	UpdateProjectApprovalRule(pid any, approvalRule int, opt *gitlab.UpdateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
+	DeleteProjectApprovalRule(pid any, approvalRule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewMemberClient returns a new Gitlab Project Member service
-func NewApprovalRulesClient(cfg clients.Config) MemberClient {
+func NewApprovalRulesClient(cfg clients.Config) ApprovalRulesClient {
 	git := clients.NewClient(cfg)
-	return git.ProjectMembers
-}
-
-// IsErrorMemberNotFound helper function to test for errMemberNotFound error.
-func IsErrorMemberNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errMemberNotFound)
+	return git.Projects
 }
 
 // GenerateMemberObservation is used to produce v1alpha1.MemberObservation from
 // gitlab.Member.
-func GenerateMemberObservation(projectMember *gitlab.ProjectMember) v1alpha1.ApprovalRuleObservation {
+func GenerateApprovalRulesObservation(projectMember *gitlab.ProjectMember) v1alpha1.ApprovalRuleObservation {
 	if projectMember == nil {
 		return v1alpha1.ApprovalRuleObservation{}
 	}
@@ -72,29 +62,32 @@ func GenerateMemberObservation(projectMember *gitlab.ProjectMember) v1alpha1.App
 }
 
 // GenerateAddMemberOptions generates project member add options
-func GenerateAddMemberOptions(p *v1alpha1.ApprovalRuleParameters) *gitlab.AddProjectMemberOptions {
-	projectMember := &gitlab.AddProjectMemberOptions{
-		UserID:      p.UserID,
-		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
+func GenerateCreateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *gitlab.CreateProjectLevelRuleOptions {
+	approvalRulesOptions := &gitlab.CreateProjectLevelRuleOptions{
+		Name:                          p.Name,
+		ApprovalsRequired:             p.ApprovalsRequired,
+		RuleType:                      (*string)(p.RuleType),
+		AppliesToAllProtectedBranches: p.AppliesToAllProtectedBranches,
+		UserIDs:                       p.UserIDs,
+		GroupIDs:                      p.GroupIDs,
+		ProtectedBranchIDs:            p.ProtectedBranchIDs,
+		Usernames:                     p.Usernames,
 	}
-	if p.ExpiresAt != nil {
-		projectMember.ExpiresAt = p.ExpiresAt
-	}
-	return projectMember
+
+	return approvalRulesOptions
 }
 
 // GenerateEditMemberOptions generates project member edit options
-func GenerateEditMemberOptions(p *v1alpha1.ApprovalRuleParameters) *gitlab.EditProjectMemberOptions {
-	projectMember := &gitlab.EditProjectMemberOptions{
-		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
+func GenerateUpdateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *gitlab.UpdateProjectLevelRuleOptions {
+	approvalRulesOptions := &gitlab.UpdateProjectLevelRuleOptions{
+		Name:                          p.Name,
+		ApprovalsRequired:             p.ApprovalsRequired,
+		AppliesToAllProtectedBranches: p.AppliesToAllProtectedBranches,
+		UserIDs:                       p.UserIDs,
+		GroupIDs:                      p.GroupIDs,
+		ProtectedBranchIDs:            p.ProtectedBranchIDs,
+		Usernames:                     p.Usernames,
 	}
-	if p.ExpiresAt != nil {
-		projectMember.ExpiresAt = p.ExpiresAt
-	}
-	return projectMember
-}
 
-// accessLevelValueV1alpha1ToGitlab converts *v1alpha1.AccessLevelValue to *gitlab.AccessLevelValue
-func accessLevelValueV1alpha1ToGitlab(from *v1alpha1.AccessLevelValue) *gitlab.AccessLevelValue {
-	return (*gitlab.AccessLevelValue)(from)
+	return approvalRulesOptions
 }
