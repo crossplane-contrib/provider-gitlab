@@ -134,7 +134,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	approvalRule, res, err := e.client.GetProjectApprovalRule(*cr.Spec.ForProvider.ProjectID, id)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
-			return managed.ExternalObservation{}, nil
+			return managed.ExternalObservation{ResourceExists: false}, nil
 		}
 
 		return managed.ExternalObservation{}, errors.Wrap(err, errObserveFailed)
