@@ -17,11 +17,9 @@ limitations under the License.
 package projects
 
 import (
-	"gitlab.com/gitlab-org/api/client-go"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
+	"gitlab.com/gitlab-org/api/client-go"
 )
 
 // MemberClient defines Gitlab Member service operations
@@ -40,26 +38,26 @@ func NewApprovalRulesClient(cfg clients.Config) ApprovalRulesClient {
 
 // GenerateMemberObservation is used to produce v1alpha1.MemberObservation from
 // gitlab.Member.
-func GenerateApprovalRulesObservation(projectMember *gitlab.ProjectMember) v1alpha1.ApprovalRuleObservation {
-	if projectMember == nil {
-		return v1alpha1.ApprovalRuleObservation{}
-	}
-
-	o := v1alpha1.ApprovalRuleObservation{
-		Username:  projectMember.Username,
-		Email:     projectMember.Email,
-		Name:      projectMember.Name,
-		State:     projectMember.State,
-		AvatarURL: projectMember.AvatarURL,
-		WebURL:    projectMember.WebURL,
-	}
-
-	if o.CreatedAt == nil && projectMember.CreatedAt != nil {
-		o.CreatedAt = &metav1.Time{Time: *projectMember.CreatedAt}
-	}
-
-	return o
-}
+// func GenerateApprovalRulesObservation(projectMember *gitlab.ProjectMember) v1alpha1.ApprovalRuleObservation {
+// 	if projectMember == nil {
+// 		return v1alpha1.ApprovalRuleObservation{}
+// 	}
+//
+// 	o := v1alpha1.ApprovalRuleObservation{
+// 		Username:  projectMember.Username,
+// 		Email:     projectMember.Email,
+// 		Name:      projectMember.Name,
+// 		State:     projectMember.State,
+// 		AvatarURL: projectMember.AvatarURL,
+// 		WebURL:    projectMember.WebURL,
+// 	}
+//
+// 	if o.CreatedAt == nil && projectMember.CreatedAt != nil {
+// 		o.CreatedAt = &metav1.Time{Time: *projectMember.CreatedAt}
+// 	}
+//
+// 	return o
+// }
 
 // GenerateAddMemberOptions generates project member add options
 func GenerateCreateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *gitlab.CreateProjectLevelRuleOptions {
