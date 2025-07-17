@@ -82,6 +82,7 @@ spec:
                     description: |-
                       How many approvers should approve merge request by default.More actions
                       To configure approval rules, see Merge request approvals API.
+                      Deprecated: use Approvals Resource instead
                     type: integer
                   autoCancelPendingPipelines:
                     description: Auto-cancel pending pipelines. This isn’t a boolean,

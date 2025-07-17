@@ -187,7 +187,7 @@ spec:
                       type: integer
                     type: array
                   usernames:
-                    description: The IDs of users as approvers. If used with usernames,
+                    description: The usernames of approvers. If used with user_ids,
                       adds both lists of users.
                     items:
                       type: string
