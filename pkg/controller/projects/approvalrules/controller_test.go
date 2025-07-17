@@ -15,6 +15,7 @@ package approvalrules
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -331,7 +332,9 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: projectApprovalRule(
 					withProjectID(),
+					withExternalName(fmt.Sprintf("%d", projectID)),
 					withSpec(v1alpha1.ApprovalRuleParameters{ProjectID: &projectID}),
+					withConditions(xpv1.Creating()),
 				),
 				result: managed.ExternalCreation{},
 			},
@@ -351,6 +354,7 @@ func TestCreate(t *testing.T) {
 				cr: projectApprovalRule(
 					withProjectID(),
 					withSpec(v1alpha1.ApprovalRuleParameters{ProjectID: &projectID}),
+					withConditions(xpv1.Creating()),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
@@ -413,6 +417,7 @@ func TestUpdate(t *testing.T) {
 				},
 				cr: projectApprovalRule(
 					withProjectID(),
+					withExternalName(fmt.Sprintf("%d", projectID)),
 					withSpec(v1alpha1.ApprovalRuleParameters{
 						ApprovalsRequired: &approvalsRequired,
 						Name:              &name,
@@ -423,6 +428,7 @@ func TestUpdate(t *testing.T) {
 			want: want{
 				cr: projectApprovalRule(
 					withProjectID(),
+					withExternalName(fmt.Sprintf("%d", projectID)),
 					withSpec(v1alpha1.ApprovalRuleParameters{
 						ApprovalsRequired: &approvalsRequired,
 						Name:              &name,
@@ -438,11 +444,15 @@ func TestUpdate(t *testing.T) {
 						return &gitlab.ProjectApprovalRule{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: projectApprovalRule(withProjectID()),
+				cr: projectApprovalRule(withProjectID(),
+					withExternalName(fmt.Sprintf("%d", projectID)),
+				),
 			},
 			want: want{
-				cr:  projectApprovalRule(withProjectID()),
-				err: errors.New(errUpdateFailed),
+				cr: projectApprovalRule(withProjectID(),
+					withExternalName(fmt.Sprintf("%d", projectID)),
+				),
+				err: errors.Wrap(errBoom, errors.New(errUpdateFailed).Error()),
 			},
 		},
 	}
@@ -492,6 +502,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: projectApprovalRule(
 					withProjectID(),
+					withExternalName(fmt.Sprintf("%d", projectID)),
 					withSpec(v1alpha1.ApprovalRuleParameters{
 						ApprovalsRequired: &approvalsRequired,
 						Name:              &name,
@@ -500,7 +511,7 @@ func TestDelete(t *testing.T) {
 			},
 			want: want{
 				cr: projectApprovalRule(
-					withProjectID(),
+					withExternalName(fmt.Sprintf("%d", projectID)),
 					withSpec(v1alpha1.ApprovalRuleParameters{
 						ApprovalsRequired: &approvalsRequired,
 						Name:              &name,
@@ -517,12 +528,14 @@ func TestDelete(t *testing.T) {
 					},
 				},
 				cr: projectApprovalRule(
+					withExternalName(fmt.Sprintf("%d", projectID)),
 					withSpec(v1alpha1.ApprovalRuleParameters{ProjectID: &projectID})),
 			},
 			want: want{
 				cr: projectApprovalRule(
+					withExternalName(fmt.Sprintf("%d", projectID)),
 					withSpec(v1alpha1.ApprovalRuleParameters{ProjectID: &projectID})),
-				err: errors.New(errDeleteFailed),
+				err: errors.Wrap(errBoom, errors.New(errDeleteFailed).Error()),
 			},
 		},
 	}

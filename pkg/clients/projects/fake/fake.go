@@ -284,5 +284,5 @@ func (c *MockClient) UpdateProjectApprovalRule(pid any, approvalRule int, opt *g
 }
 
 func (c *MockClient) DeleteProjectApprovalRule(pid any, approvalRule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-	return c.DeleteProjectApprovalRule(pid, approvalRule, options...)
+	return c.MockDeleteProjectApprovalRule(pid, approvalRule, options...)
 }
