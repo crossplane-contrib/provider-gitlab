@@ -236,27 +236,3 @@ func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.Approval
 	meta.SetExternalName(cr, strconv.Itoa(approvalRule.ID))
 	return e.kube.Update(ctx, cr)
 }
-
-// lateInitializeApprovalsRules fills the empty fields in the approval rules spec with the
-// values seen in gitlab approval rules.
-// func lateInitializeApprovalsRules(in *v1alpha1.ApprovalRuleParameters, rule *gitlab.ProjectApprovalRule) {
-// 	if rule == nil {
-// 		return
-// 	}
-//
-// 	if in.AppliesToAllProtectedBranches == nil {
-// 		in.AppliesToAllProtectedBranches = &rule.AppliesToAllProtectedBranches
-// 	}
-//
-// 	if in.GroupIDs == nil {
-// 		in.GroupIDs = getIds(*rule.Groups[0])
-// 	}
-// }
-
-// func getIds(ts Test) *[]int {
-// 	us := make([]int, len(ts))
-// 	for i := range ts {
-// 		us[i] = ts[i].ID
-// 	}
-// 	return &us
-// }

@@ -26,6 +26,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
@@ -51,6 +52,7 @@ var (
 
 type args struct {
 	projectApprovalRule projects.ApprovalRulesClient
+	kube                client.Client
 	cr                  resource.Managed
 }
 
@@ -320,6 +322,8 @@ func TestCreate(t *testing.T) {
 						}, &gitlab.Response{}, nil
 					},
 				},
+				kube: &test.MockClient{MockUpdate: test.NewMockUpdateFn(nil)},
+
 				cr: projectApprovalRule(
 					withSpec(v1alpha1.ApprovalRuleParameters{ProjectID: &projectID}),
 				),
@@ -354,7 +358,7 @@ func TestCreate(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{client: tc.projectApprovalRule}
+			e := &external{kube: tc.kube, client: tc.projectApprovalRule}
 			o, err := e.Create(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {

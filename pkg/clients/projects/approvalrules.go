@@ -105,7 +105,7 @@ func IsApprovalRuleUpToDate(p *v1alpha1.ApprovalRuleParameters, g *gitlab.Projec
 		return false
 	}
 
-	if clients.IsStringEqualToStringPtr((*string)(p.RuleType), g.RuleType) {
+	if !clients.IsStringEqualToStringPtr((*string)(p.RuleType), g.RuleType) {
 		return false
 	}
 
@@ -129,6 +129,10 @@ func IsApprovalRuleUpToDate(p *v1alpha1.ApprovalRuleParameters, g *gitlab.Projec
 }
 
 func isGroupIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
+	if cr.GroupIDs == nil {
+		return len(in.Groups) == 0
+	}
+
 	if len(*cr.GroupIDs) != len(in.Groups) {
 		return false
 	}
@@ -161,6 +165,10 @@ func isGroupIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectA
 }
 
 func isProtectedBranchesIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
+	if cr.ProtectedBranchIDs == nil {
+		return len(in.ProtectedBranches) == 0
+	}
+
 	if len(*cr.ProtectedBranchIDs) != len(in.ProtectedBranches) {
 		return false
 	}
@@ -193,6 +201,10 @@ func isProtectedBranchesIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *git
 }
 
 func isUserIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
+	if cr.UserIDs == nil {
+		return len(in.Users) == 0
+	}
+
 	if len(*cr.UserIDs) != len(in.Users) {
 		return false
 	}
@@ -225,6 +237,10 @@ func isUserIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectAp
 }
 
 func isUsernamesUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
+	if cr.UserIDs == nil {
+		return len(in.Users) == 0
+	}
+
 	if len(*cr.Usernames) != len(in.Users) {
 		return false
 	}
