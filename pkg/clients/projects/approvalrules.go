@@ -17,10 +17,11 @@ limitations under the License.
 package projects
 
 import (
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 	"github.com/google/go-cmp/cmp"
 	"gitlab.com/gitlab-org/api/client-go"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 
 // MemberClient defines Gitlab Member service operations
@@ -92,7 +93,7 @@ func GenerateUpdateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 }
 
 // IsHookUpToDate checks whether there is a change in any of the modifiable fields.
-func IsApprovalRuleUpToDate(p *v1alpha1.ApprovalRuleParameters, g *gitlab.ProjectApprovalRule) bool { //nolint:gocyclo
+func IsApprovalRuleUpToDate(p *v1alpha1.ApprovalRuleParameters, g *gitlab.ProjectApprovalRule) bool {
 	if !cmp.Equal(p.Name, clients.StringToPtr(g.Name)) {
 		return false
 	}

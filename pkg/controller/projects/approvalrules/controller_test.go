@@ -39,13 +39,9 @@ var (
 	errBoom                       = errors.New("boom")
 	projectID                     = 0
 	approvalsRequired             = 1
-	usernames                     = []string{"testUser"}
-	userIDs                       = []int{123}
-	users                         = []*gitlab.BasicUser{&gitlab.BasicUser{ID: 123, Username: "abc"}, &gitlab.BasicUser{ID: 456, Username: "testUser"}}
-	groupIDs                      = []int{99}
-	groups                        = []*gitlab.Group{&gitlab.Group{ID: 99}}
-	protectedBranches             = []*gitlab.ProtectedBranch{&gitlab.ProtectedBranch{ID: 1}, &gitlab.ProtectedBranch{ID: 2}}
-	protectedBranchIDs            = []int{1, 2}
+	users                         = []*gitlab.BasicUser{{ID: 123, Username: "abc"}, {ID: 456, Username: "testUser"}}
+	groups                        = []*gitlab.Group{{ID: 99}}
+	protectedBranches             = []*gitlab.ProtectedBranch{{ID: 1}, {ID: 2}}
 	name                          = "name"
 	ruleType                      = "any_approver"
 	appliesToAllProtectedBranches = true
@@ -65,10 +61,6 @@ func withConditions(c ...xpv1.Condition) projectModifier {
 
 func withProjectID() projectModifier {
 	return func(r *v1alpha1.ApprovalRule) { r.Spec.ForProvider.ProjectID = &projectID }
-}
-
-func withStatus(s v1alpha1.ApprovalRuleObservation) projectModifier {
-	return func(r *v1alpha1.ApprovalRule) { r.Status.AtProvider = s }
 }
 
 func withSpec(s v1alpha1.ApprovalRuleParameters) projectModifier {

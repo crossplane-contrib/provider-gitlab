@@ -175,7 +175,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	err = e.updateExternalName(ctx, cr, rule)
-	return managed.ExternalCreation{}, nil
+	return managed.ExternalCreation{}, err
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
