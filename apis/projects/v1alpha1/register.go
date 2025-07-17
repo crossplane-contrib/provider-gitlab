@@ -112,6 +112,7 @@ var (
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
+	SchemeBuilder.Register(&Member{}, &MemberList{})
 	SchemeBuilder.Register(&ApprovalRule{}, &ApprovalRuleList{})
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
