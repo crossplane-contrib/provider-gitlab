@@ -73,7 +73,7 @@ type ApprovalRuleParameters struct {
 	// +optional
 	UserIDs *[]int `json:"userIds,omitempty"`
 
-	// The IDs of users as approvers. If used with usernames, adds both lists of users.
+	// The usernames of approvers. If used with user_ids, adds both lists of users.
 	// +optional
 	Usernames *[]string `json:"usernames,omitempty"`
 }
@@ -82,15 +82,7 @@ type ApprovalRuleParameters struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/projects.html#list-project-team-members
-type ApprovalRuleObservation struct {
-	// Username  string       `json:"username,omitempty"`
-	// Email     string       `json:"email,omitempty"`
-	// Name      string       `json:"name,omitempty"`
-	// State     string       `json:"state,omitempty"`
-	// CreatedAt *metav1.Time `json:"createdAt,omitempty"`
-	// WebURL    string       `json:"webURL,omitempty"`
-	// AvatarURL string       `json:"avatarURL,omitempty"`
-}
+type ApprovalRuleObservation struct{}
 
 // A ApprovalRuleSpec defines the desired state of a Gitlab Project Member.
 type ApprovalRuleSpec struct {

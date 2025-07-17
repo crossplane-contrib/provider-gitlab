@@ -21,6 +21,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/accesstokens"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/approvalrules"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/hooks"
@@ -41,6 +42,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		variables.SetupVariable,
 		deploykeys.SetupDeployKey,
 		pipelineschedules.SetupPipelineSchedule,
+		approvalrules.SetupRules,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

@@ -131,7 +131,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
 
-	_, res, err := e.client.GetProjectApprovalRule(*cr.Spec.ForProvider.ProjectID, id)
+	approvalRule, res, err := e.client.GetProjectApprovalRule(*cr.Spec.ForProvider.ProjectID, id)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -148,7 +148,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        true,
+		ResourceUpToDate:        projects.IsApprovalRuleUpToDate(&cr.Spec.ForProvider, approvalRule),
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 	}, nil
 
@@ -156,8 +156,13 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
 	cr, ok := mg.(*v1alpha1.ApprovalRule)
+
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotApprovalRule)
+	}
+
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalCreation{}, errors.New(errProjectIDMissing)
 	}
 
 	cr.Status.SetConditions(xpv1.Creating())

@@ -244,6 +244,13 @@ func StringToPtr(s string) *string {
 	return &s
 }
 
+func SliceToPtr[T any](s []T) *[]T {
+	if s != nil {
+		return nil
+	}
+	return &s
+}
+
 // IsBoolEqualToBoolPtr compares a *bool with bool
 func IsBoolEqualToBoolPtr(bp *bool, b bool) bool {
 	if bp != nil {

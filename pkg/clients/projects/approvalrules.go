@@ -19,6 +19,7 @@ package projects
 import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
+	"github.com/google/go-cmp/cmp"
 	"gitlab.com/gitlab-org/api/client-go"
 )
 
@@ -88,4 +89,169 @@ func GenerateUpdateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 	}
 
 	return approvalRulesOptions
+}
+
+// IsHookUpToDate checks whether there is a change in any of the modifiable fields.
+func IsApprovalRuleUpToDate(p *v1alpha1.ApprovalRuleParameters, g *gitlab.ProjectApprovalRule) bool { //nolint:gocyclo
+	if !cmp.Equal(p.Name, clients.StringToPtr(g.Name)) {
+		return false
+	}
+
+	if !clients.IsBoolEqualToBoolPtr(p.AppliesToAllProtectedBranches, g.AppliesToAllProtectedBranches) {
+		return false
+	}
+
+	if !clients.IsIntEqualToIntPtr(p.ApprovalsRequired, g.ApprovalsRequired) {
+		return false
+	}
+
+	if clients.IsStringEqualToStringPtr((*string)(p.RuleType), g.RuleType) {
+		return false
+	}
+
+	if !isGroupIDsUpToDate(p, g) {
+		return false
+	}
+
+	if !isProtectedBranchesIDsUpToDate(p, g) {
+		return false
+	}
+
+	if !isUserIDsUpToDate(p, g) {
+		return false
+	}
+
+	if !isUsernamesUpToDate(p, g) {
+		return false
+	}
+
+	return true
+}
+
+func isGroupIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
+	if len(*cr.GroupIDs) != len(in.Groups) {
+		return false
+	}
+
+	inIDs := make(map[int]any)
+	for _, v := range in.Groups {
+		inIDs[v.ID] = nil
+	}
+
+	crIDs := make(map[int]any)
+	for _, v := range *cr.GroupIDs {
+		crIDs[v] = nil
+	}
+
+	for ID := range inIDs {
+		_, ok := crIDs[ID]
+		if !ok {
+			return false
+		}
+	}
+
+	for ID := range crIDs {
+		_, ok := inIDs[ID]
+		if !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isProtectedBranchesIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
+	if len(*cr.ProtectedBranchIDs) != len(in.ProtectedBranches) {
+		return false
+	}
+
+	inIDs := make(map[int]any)
+	for _, v := range in.ProtectedBranches {
+		inIDs[v.ID] = nil
+	}
+
+	crIDs := make(map[int]any)
+	for _, v := range *cr.ProtectedBranchIDs {
+		crIDs[v] = nil
+	}
+
+	for ID := range inIDs {
+		_, ok := crIDs[ID]
+		if !ok {
+			return false
+		}
+	}
+
+	for ID := range crIDs {
+		_, ok := inIDs[ID]
+		if !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isUserIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
+	if len(*cr.UserIDs) != len(in.Users) {
+		return false
+	}
+
+	inIDs := make(map[int]any)
+	for _, v := range in.Users {
+		inIDs[v.ID] = nil
+	}
+
+	crIDs := make(map[int]any)
+	for _, v := range *cr.UserIDs {
+		crIDs[v] = nil
+	}
+
+	for ID := range inIDs {
+		_, ok := crIDs[ID]
+		if !ok {
+			return false
+		}
+	}
+
+	for ID := range crIDs {
+		_, ok := inIDs[ID]
+		if !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isUsernamesUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
+	if len(*cr.Usernames) != len(in.Users) {
+		return false
+	}
+
+	inIDs := make(map[string]any)
+	for _, v := range in.Users {
+		inIDs[v.Username] = nil
+	}
+
+	crIDs := make(map[string]any)
+	for _, v := range *cr.Usernames {
+		crIDs[v] = nil
+	}
+
+	for ID := range inIDs {
+		_, ok := crIDs[ID]
+		if !ok {
+			return false
+		}
+	}
+
+	for ID := range crIDs {
+		_, ok := inIDs[ID]
+		if !ok {
+			return false
+		}
+	}
+
+	return true
 }
