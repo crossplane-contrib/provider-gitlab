@@ -215,7 +215,7 @@ func isUserIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectAp
 }
 
 func isUsernamesUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
-	if cr.UserIDs == nil {
+	if cr.Usernames == nil {
 		return len(in.Users) == 0
 	}
 

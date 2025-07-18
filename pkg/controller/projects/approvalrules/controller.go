@@ -141,7 +141,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
-	// lateInitializeProjectDeployToken(&cr.Spec.ForProvider, dt)
 
 	cr.Status.AtProvider = v1alpha1.ApprovalRuleObservation{}
 	cr.Status.SetConditions(xpv1.Available())
