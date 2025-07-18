@@ -24,7 +24,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 
-// MemberClient defines Gitlab Member service operations
+// ApprovalRulesClient Gitlab Member service operations
 type ApprovalRulesClient interface {
 	GetProjectApprovalRule(pid any, ruleID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
 	CreateProjectApprovalRule(pid any, opt *gitlab.CreateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
@@ -32,36 +32,13 @@ type ApprovalRulesClient interface {
 	DeleteProjectApprovalRule(pid any, approvalRule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
-// NewMemberClient returns a new Gitlab Project Member service
+// NewApprovalRulesClient returns a new Gitlab Project Member service
 func NewApprovalRulesClient(cfg clients.Config) ApprovalRulesClient {
 	git := clients.NewClient(cfg)
 	return git.Projects
 }
 
-// GenerateMemberObservation is used to produce v1alpha1.MemberObservation from
-// gitlab.Member.
-// func GenerateApprovalRulesObservation(projectMember *gitlab.ProjectMember) v1alpha1.ApprovalRuleObservation {
-// 	if projectMember == nil {
-// 		return v1alpha1.ApprovalRuleObservation{}
-// 	}
-//
-// 	o := v1alpha1.ApprovalRuleObservation{
-// 		Username:  projectMember.Username,
-// 		Email:     projectMember.Email,
-// 		Name:      projectMember.Name,
-// 		State:     projectMember.State,
-// 		AvatarURL: projectMember.AvatarURL,
-// 		WebURL:    projectMember.WebURL,
-// 	}
-//
-// 	if o.CreatedAt == nil && projectMember.CreatedAt != nil {
-// 		o.CreatedAt = &metav1.Time{Time: *projectMember.CreatedAt}
-// 	}
-//
-// 	return o
-// }
-
-// GenerateAddMemberOptions generates project member add options
+// GenerateCreateApprovalRulesOptions generates project member add options
 func GenerateCreateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *gitlab.CreateProjectLevelRuleOptions {
 	approvalRulesOptions := &gitlab.CreateProjectLevelRuleOptions{
 		Name:                          p.Name,
@@ -77,7 +54,7 @@ func GenerateCreateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 	return approvalRulesOptions
 }
 
-// GenerateEditMemberOptions generates project member edit options
+// GenerateUpdateApprovalRulesOptions generates project member edit options
 func GenerateUpdateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *gitlab.UpdateProjectLevelRuleOptions {
 	approvalRulesOptions := &gitlab.UpdateProjectLevelRuleOptions{
 		Name:                          p.Name,
@@ -92,7 +69,7 @@ func GenerateUpdateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 	return approvalRulesOptions
 }
 
-// IsHookUpToDate checks whether there is a change in any of the modifiable fields.
+// IsApprovalRuleUpToDate checks whether there is a change in any of the modifiable fields.
 func IsApprovalRuleUpToDate(p *v1alpha1.ApprovalRuleParameters, g *gitlab.ProjectApprovalRule) bool {
 	if !cmp.Equal(p.Name, clients.StringToPtr(g.Name)) {
 		return false
