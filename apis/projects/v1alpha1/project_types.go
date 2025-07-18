@@ -153,17 +153,9 @@ type ProjectParameters struct {
 	// +optional
 	AllowMergeOnSkippedPipeline *bool `json:"allowMergeOnSkippedPipeline,omitempty"`
 
-	// NOTE: ApprovalsBeforeMerge is deprecated and approval rules should be
-	// used instead which has its own API.
-	//
-	// TODO: Implement approval rules API, maybe as separate MR or as part of
-	// this kind.
-	//
-	// TODO: Mark ApprovalsBeforeMerge as deprecated but keep it and replace it
-	// internally with a call to the approval rules API.
-
 	// How many approvers should approve merge request by default.More actions
 	// To configure approval rules, see Merge request approvals API.
+	// Deprecated: use Approvals Resource instead
 	// +optional
 	ApprovalsBeforeMerge *int `json:"approvalsBeforeMerge,omitempty"`
 
