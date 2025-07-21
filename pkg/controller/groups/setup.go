@@ -23,6 +23,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/accesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/ldapgrouplinks"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/samlgrouplinks"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/variables"
@@ -36,6 +37,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		accesstokens.SetupAccessToken,
 		deploytokens.SetupDeployToken,
 		variables.SetupVariable,
+		ldapgrouplinks.SetupLdapGroupLink,
 		samlgrouplinks.SetupSamlGroupLink,
 	} {
 		if err := setup(mgr, o); err != nil {
