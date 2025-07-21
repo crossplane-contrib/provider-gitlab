@@ -61,6 +61,14 @@ var (
 	SamlGroupLinkGroupVersionKind = SchemeGroupVersion.WithKind(SamlGroupLinkKind)
 )
 
+// LdapGroupLink type metadata
+var (
+	LdapGroupLinkKind             = reflect.TypeOf(LdapGroupLink{}).Name()
+	LdapGroupLinkGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: LdapGroupLinkKind}.String()
+	LdapGroupLinkKindAPIVersion   = LdapGroupLinkKind + "." + SchemeGroupVersion.String()
+	LdapGroupLinkGroupVersionKind = SchemeGroupVersion.WithKind(LdapGroupLinkKind)
+)
+
 // Deploy Token type metadata
 var (
 	DeployTokenKind             = reflect.TypeOf(DeployToken{}).Name()
@@ -92,5 +100,6 @@ func init() {
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
 	SchemeBuilder.Register(&SamlGroupLink{}, &SamlGroupLinkList{})
+	SchemeBuilder.Register(&LdapGroupLink{}, &LdapGroupLinkList{})
 
 }
