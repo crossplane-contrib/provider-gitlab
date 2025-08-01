@@ -109,6 +109,13 @@ var (
 	PipelineScheduleGroupVersionKind = SchemeGroupVersion.WithKind(PipelineScheduleKind)
 )
 
+var (
+	UserRunnerKind             = reflect.TypeOf(UserRunner{}).Name()
+	UserRunnerGroupKind        = schema.GroupKind{Group: Group, Kind: UserRunnerKind}.String()
+	UserRunnerKindAPIVersion   = UserRunnerKind + "." + SchemeGroupVersion.String()
+	UserRunnerGroupVersionKind = SchemeGroupVersion.WithKind(UserRunnerKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
@@ -119,4 +126,5 @@ func init() {
 	SchemeBuilder.Register(&DeployKey{}, &DeployKeyList{})
 	SchemeBuilder.Register(&AccessToken{}, &AccessTokenList{})
 	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})
+	SchemeBuilder.Register(&UserRunner{}, &UserRunnerList{})
 }

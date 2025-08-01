@@ -28,6 +28,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/pipelineschedules"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/projects"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/userrunners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/variables"
 )
 
@@ -43,6 +44,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		deploykeys.SetupDeployKey,
 		pipelineschedules.SetupPipelineSchedule,
 		approvalrules.SetupRules,
+		userrunners.SetupUserRunner,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
