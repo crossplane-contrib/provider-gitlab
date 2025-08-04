@@ -57,6 +57,7 @@ var (
 			Name:      name,
 			ExpiresAt: (*gitlab.ISOTime)(&expiresAt),
 			Token:     token,
+			Revoked:   false,
 			Scopes:    []string{"scope1", "scope2"},
 		},
 		AccessLevel: 40, // Access level. Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner). Defaults to 40.
@@ -287,6 +288,46 @@ func TestObserve(t *testing.T) {
 					ResourceUpToDate:        true,
 					ResourceLateInitialized: true,
 				},
+			},
+		},
+		"TokenRevoked": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetGroupAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						return &gitlab.GroupAccessToken{
+							PersonalAccessToken: gitlab.PersonalAccessToken{
+								ExpiresAt: accessTokenObj.ExpiresAt,
+								Revoked:   true,
+							},
+							AccessLevel: accessTokenObj.AccessLevel,
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:     &id,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:     &id,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          false,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
+				},
+				err: nil,
 			},
 		},
 		"TokenUpToDate": {
