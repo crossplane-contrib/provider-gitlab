@@ -142,6 +142,10 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errAccessTokentNotFound)
 	}
 
+	if at.Revoked {
+		return managed.ExternalObservation{}, nil
+	}
+
 	current := cr.Spec.ForProvider.DeepCopy()
 	lateInitializeProjectAccessToken(&cr.Spec.ForProvider, at)
 
