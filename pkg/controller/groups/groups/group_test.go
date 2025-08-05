@@ -221,7 +221,7 @@ func TestObserve(t *testing.T) {
 
 	gitlabVisibilityNew := gitlab.VisibilityValue("public")
 	v1alpha1VisibilityNew := v1alpha1.VisibilityValue("public")
-	gitlabProjectCreationLevelNew := gitlab.ProjectCreationLevel("noone")
+	gitlabProjectCreationLevelNew := gitlab.NoOneProjectCreation
 	v1alpha1ProjectCreationLevelNew := v1alpha1.ProjectCreationLevelValue("noone")
 	gitlabSubGroupCreationLevelNew := gitlab.Ptr("owner")
 	v1alpha1SubGroupCreationLevelNew := v1alpha1.SubGroupCreationLevelValue("owner")
@@ -379,7 +379,7 @@ func TestObserve(t *testing.T) {
 							Path:                           path,
 							Description:                    description,
 							Visibility:                     gitlabVisibilityNew,
-							ProjectCreationLevel:           *gitlabProjectCreationLevelNew,
+							ProjectCreationLevel:           gitlabProjectCreationLevelNew,
 							SubGroupCreationLevel:          gitlab.SubGroupCreationLevelValue(*gitlabSubGroupCreationLevelNew),
 							MembershipLock:                 false,
 							ShareWithGroupLock:             false,
@@ -491,7 +491,7 @@ func TestObserve(t *testing.T) {
 		"Path":                           "/new/group/path",
 		"Description":                    "description v2",
 		"MembershipLock":                 true,
-		"ProjectCreationLevel":           *gitlabProjectCreationLevelNew,
+		"ProjectCreationLevel":           gitlabProjectCreationLevelNew,
 		"SubGroupCreationLevel":          gitlab.SubGroupCreationLevelValue(*gitlabSubGroupCreationLevelNew),
 		"Visibility":                     gitlabVisibilityNew,
 		"ShareWithGroupLock":             true,
@@ -542,7 +542,7 @@ func TestObserve(t *testing.T) {
 		gitlabGroup := &gitlab.Group{
 			Name:                  name,
 			Visibility:            gitlab.VisibilityValue(visibility),
-			ProjectCreationLevel:  *gitlab.ProjectCreationLevel(gitlab.ProjectCreationLevelValue(projectCreationLevel)),
+			ProjectCreationLevel:  gitlab.ProjectCreationLevelValue(projectCreationLevel),
 			SubGroupCreationLevel: *gitlab.Ptr(gitlab.SubGroupCreationLevelValue(subGroupCreationLevel)),
 		}
 		structValue := reflect.ValueOf(gitlabGroup).Elem()
