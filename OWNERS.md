@@ -10,7 +10,8 @@ guidelines and responsibilities for the steering committee and maintainers.
 
 ## Maintainers
 
-* Maximilian Blatt ([MisterMX](https://github.com/MisterMX))
-* Jan Willies ([janwillies](https://github.com/janwillies))
-* Dario Zachow ([dariozachow](https://github.com/dariozachow))
-* Markus Siebert ([markussiebert](https://github.com/markussiebert))
+- Maximilian Blatt ([MisterMX](https://github.com/MisterMX))
+- Jan Willies ([janwillies](https://github.com/janwillies))
+- Dario Zachow ([dariozachow](https://github.com/dariozachow))
+- Markus Siebert ([markussiebert](https://github.com/markussiebert))
+- Henry Sachs ([henrysachs](https://github.com/henrysachs))
