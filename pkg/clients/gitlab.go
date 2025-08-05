@@ -29,6 +29,7 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"golang.org/x/oauth2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -81,11 +82,12 @@ func NewClient(c Config) *gitlab.Client {
 		if err = json.Unmarshal([]byte(c.Token), ba); err != nil {
 			panic(err)
 		}
-		cl, err = gitlab.NewBasicAuthClient(ba.Username, ba.Password, options...)
+		cl, err = gitlab.NewBasicAuthClient(ba.Username, ba.Password, options...) //nolint:staticcheck
 	case v1beta1.JobToken:
 		cl, err = gitlab.NewJobClient(c.Token, options...)
 	case v1beta1.OAuthToken:
-		cl, err = gitlab.NewOAuthClient(c.Token, options...)
+		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: c.Token})
+		cl, err = gitlab.NewAuthSourceClient(gitlab.OAuthTokenSource{TokenSource: ts}, options...)
 	case v1beta1.PersonalAccessToken:
 		cl, err = gitlab.NewClient(c.Token, options...)
 	default:
