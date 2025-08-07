@@ -594,6 +594,60 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	return true
 }
 
+func isPushRulesEmpty(rules *v1alpha1.PushRules) bool { //nolint:gocyclo
+	if rules == nil {
+		return true
+	}
+
+	// Check string fields - if any is non-empty, rules are not empty
+	if rules.AuthorEmailRegex != nil && *rules.AuthorEmailRegex != "" {
+		return false
+	}
+	if rules.BranchNameRegex != nil && *rules.BranchNameRegex != "" {
+		return false
+	}
+	if rules.CommitMessageNegativeRegex != nil && *rules.CommitMessageNegativeRegex != "" {
+		return false
+	}
+	if rules.CommitMessageRegex != nil && *rules.CommitMessageRegex != "" {
+		return false
+	}
+	if rules.FileNameRegex != nil && *rules.FileNameRegex != "" {
+		return false
+	}
+
+	// Check boolean fields - if any is true, rules are not empty
+	if rules.CommitCommitterCheck != nil && *rules.CommitCommitterCheck {
+		return false
+	}
+	if rules.CommitCommitterNameCheck != nil && *rules.CommitCommitterNameCheck {
+		return false
+	}
+	if rules.DenyDeleteTag != nil && *rules.DenyDeleteTag {
+		return false
+	}
+	if rules.MemberCheck != nil && *rules.MemberCheck {
+		return false
+	}
+	if rules.PreventSecrets != nil && *rules.PreventSecrets {
+		return false
+	}
+	if rules.RejectNonDCOCommits != nil && *rules.RejectNonDCOCommits {
+		return false
+	}
+	if rules.RejectUnsignedCommits != nil && *rules.RejectUnsignedCommits {
+		return false
+	}
+
+	// Check integer fields - if any is non-zero, rules are not empty
+	if rules.MaxFileSize != nil && *rules.MaxFileSize != 0 {
+		return false
+	}
+
+	// If we reach here, all fields are empty/default
+	return true
+}
+
 func (e *external) isPushRulesUpToDate(ctx context.Context, cr *v1alpha1.Project) (bool, error) {
 	current, err := e.getProjectPushRules(ctx, cr)
 	if err != nil {
@@ -607,19 +661,7 @@ func (e *external) isPushRulesUpToDate(ctx context.Context, cr *v1alpha1.Project
 	}
 
 	// Check if current push rules are effectively empty (all default values)
-	isCurrentEmpty := (current.AuthorEmailRegex == nil || *current.AuthorEmailRegex == "") &&
-		(current.BranchNameRegex == nil || *current.BranchNameRegex == "") &&
-		(current.CommitCommitterCheck == nil || !*current.CommitCommitterCheck) &&
-		(current.CommitCommitterNameCheck == nil || !*current.CommitCommitterNameCheck) &&
-		(current.CommitMessageNegativeRegex == nil || *current.CommitMessageNegativeRegex == "") &&
-		(current.CommitMessageRegex == nil || *current.CommitMessageRegex == "") &&
-		(current.DenyDeleteTag == nil || !*current.DenyDeleteTag) &&
-		(current.FileNameRegex == nil || *current.FileNameRegex == "") &&
-		(current.MaxFileSize == nil || *current.MaxFileSize == 0) &&
-		(current.MemberCheck == nil || !*current.MemberCheck) &&
-		(current.PreventSecrets == nil || !*current.PreventSecrets) &&
-		(current.RejectNonDCOCommits == nil || !*current.RejectNonDCOCommits) &&
-		(current.RejectUnsignedCommits == nil || !*current.RejectUnsignedCommits)
+	isCurrentEmpty := isPushRulesEmpty(current)
 
 	// If current rules are empty and spec has no rules, they're up to date
 	if isCurrentEmpty && cr.Spec.ForProvider.PushRules == nil {
