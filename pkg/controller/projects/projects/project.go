@@ -218,14 +218,20 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	if !e.cache.isPushRulesUpToDate {
-		_, _, err := e.client.EditProjectPushRule(
-			meta.GetExternalName(cr),
-			projects.GenerateEditPushRulesOptions(&cr.Spec.ForProvider),
-			gitlab.WithContext(ctx),
-		)
-		if err != nil {
-			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdatePushRulesFailed)
+		// Only attempt to update push rules if the feature is supported
+		// (either we have cached rules or push rules are specified in spec)
+		if e.cache.externalPushRules != nil || cr.Spec.ForProvider.PushRules != nil {
+			_, _, err := e.client.EditProjectPushRule(
+				meta.GetExternalName(cr),
+				projects.GenerateEditPushRulesOptions(&cr.Spec.ForProvider),
+				gitlab.WithContext(ctx),
+			)
+			if err != nil {
+				return managed.ExternalUpdate{}, errors.Wrap(err, errUpdatePushRulesFailed)
+			}
 		}
+		// If push rules are not supported (e.g., GitLab Community Edition) and
+		// none are specified in spec, we skip updating them
 	}
 	return managed.ExternalUpdate{}, nil
 }
@@ -383,9 +389,16 @@ func (e *external) lateInitializePushRules(ctx context.Context, cr *v1alpha1.Pro
 	if err != nil || pr == nil {
 		return err
 	}
+
+	// Only late-initialize push rules if they are not explicitly set to nil in the spec
+	// and if no push rules configuration exists yet
 	if cr.Spec.ForProvider.PushRules == nil {
-		cr.Spec.ForProvider.PushRules = &v1alpha1.PushRules{}
+		// Don't late-initialize if user explicitly wants no push rules
+		// We can distinguish this by checking if this is a new resource or if push rules were explicitly removed
+		// For now, we'll be conservative and not late-initialize push rules to avoid unwanted behavior
+		return nil
 	}
+
 	cr.Spec.ForProvider.PushRules = &v1alpha1.PushRules{
 		AuthorEmailRegex:           clients.LateInitialize(cr.Spec.ForProvider.PushRules.AuthorEmailRegex, pr.AuthorEmailRegex),
 		BranchNameRegex:            clients.LateInitialize(cr.Spec.ForProvider.PushRules.BranchNameRegex, pr.BranchNameRegex),
@@ -408,11 +421,22 @@ func (e *external) getProjectPushRules(ctx context.Context, cr *v1alpha1.Project
 	if e.cache.externalPushRules != nil {
 		return e.cache.externalPushRules, nil
 	}
-	res, _, err := e.client.GetProjectPushRules(
+	res, resp, err := e.client.GetProjectPushRules(
 		meta.GetExternalName(cr),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
+		// Push rules are not available in GitLab Community Edition (404 Not Found)
+		// However, we need to be careful: 404 could mean either:
+		// 1. Feature not available (Community Edition) - should be ignored
+		// 2. No push rules configured (Premium/Enterprise) - might also return 404 in some GitLab versions
+		//
+		// Based on GitLab API patterns, when a feature is available but not configured,
+		// it typically returns 200 with default/empty values rather than 404.
+		// Therefore, 404 most likely means the feature is not available.
+		if clients.IsResponseNotFound(resp) {
+			return nil, nil
+		}
 		return nil, errors.Wrap(err, errGetPushRulesFailed)
 	}
 	e.cache.externalPushRules = &v1alpha1.PushRules{
@@ -575,5 +599,39 @@ func (e *external) isPushRulesUpToDate(ctx context.Context, cr *v1alpha1.Project
 	if err != nil {
 		return false, err
 	}
+
+	// If push rules are not available (e.g., GitLab Community Edition),
+	// consider them up to date if no push rules are specified in the spec
+	if current == nil {
+		return cr.Spec.ForProvider.PushRules == nil, nil
+	}
+
+	// Check if current push rules are effectively empty (all default values)
+	isCurrentEmpty := (current.AuthorEmailRegex == nil || *current.AuthorEmailRegex == "") &&
+		(current.BranchNameRegex == nil || *current.BranchNameRegex == "") &&
+		(current.CommitCommitterCheck == nil || !*current.CommitCommitterCheck) &&
+		(current.CommitCommitterNameCheck == nil || !*current.CommitCommitterNameCheck) &&
+		(current.CommitMessageNegativeRegex == nil || *current.CommitMessageNegativeRegex == "") &&
+		(current.CommitMessageRegex == nil || *current.CommitMessageRegex == "") &&
+		(current.DenyDeleteTag == nil || !*current.DenyDeleteTag) &&
+		(current.FileNameRegex == nil || *current.FileNameRegex == "") &&
+		(current.MaxFileSize == nil || *current.MaxFileSize == 0) &&
+		(current.MemberCheck == nil || !*current.MemberCheck) &&
+		(current.PreventSecrets == nil || !*current.PreventSecrets) &&
+		(current.RejectNonDCOCommits == nil || !*current.RejectNonDCOCommits) &&
+		(current.RejectUnsignedCommits == nil || !*current.RejectUnsignedCommits)
+
+	// If current rules are empty and spec has no rules, they're up to date
+	if isCurrentEmpty && cr.Spec.ForProvider.PushRules == nil {
+		return true, nil
+	}
+
+	// If push rules are available in GitLab but not specified in spec,
+	// they need to be cleared (not up to date) - unless they're already effectively empty
+	if cr.Spec.ForProvider.PushRules == nil {
+		return isCurrentEmpty, nil
+	}
+
+	// Both exist, compare them
 	return cmp.Equal(cr.Spec.ForProvider.PushRules, current), nil
 }

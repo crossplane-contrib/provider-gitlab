@@ -426,6 +426,25 @@ func GenerateEditPushRulesOptions(p *v1alpha1.ProjectParameters) *gitlab.EditPro
 		o.PreventSecrets = p.PushRules.PreventSecrets
 		o.RejectNonDCOCommits = p.PushRules.RejectNonDCOCommits
 		o.RejectUnsignedCommits = p.PushRules.RejectUnsignedCommits
+	} else {
+		// When push rules are removed from spec, clear all rules by setting them to empty/false values
+		emptyString := ""
+		falseValue := false
+		zeroInt := 0
+
+		o.AuthorEmailRegex = &emptyString
+		o.BranchNameRegex = &emptyString
+		o.CommitCommitterCheck = &falseValue
+		o.CommitCommitterNameCheck = &falseValue
+		o.CommitMessageNegativeRegex = &emptyString
+		o.CommitMessageRegex = &emptyString
+		o.DenyDeleteTag = &falseValue
+		o.FileNameRegex = &emptyString
+		o.MaxFileSize = &zeroInt
+		o.MemberCheck = &falseValue
+		o.PreventSecrets = &falseValue
+		o.RejectNonDCOCommits = &falseValue
+		o.RejectUnsignedCommits = &falseValue
 	}
 	return o
 }

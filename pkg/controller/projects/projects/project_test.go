@@ -262,6 +262,131 @@ func TestObserve(t *testing.T) {
 				err:    nil,
 			},
 		},
+		"PushRulesNotAvailable404": {
+			args: args{
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{Name: "example-project"}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						// Simulate GitLab Community Edition where push rules feature is not available
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.ProjectObservation{}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		"PushRulesAvailableButNotConfigured": {
+			args: args{
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{Name: "example-project"}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						// Simulate GitLab Premium/Enterprise where push rules feature is available but not configured
+						// This should return 200 with empty/default values, not 404
+						return &gitlab.ProjectPushRules{
+							// All default values (empty strings, false booleans, 0 integers)
+							AuthorEmailRegex:           "",
+							BranchNameRegex:            "",
+							CommitCommitterCheck:       false,
+							CommitCommitterNameCheck:   false,
+							CommitMessageNegativeRegex: "",
+							CommitMessageRegex:         "",
+							DenyDeleteTag:              false,
+							FileNameRegex:              "",
+							MaxFileSize:                0,
+							MemberCheck:                false,
+							PreventSecrets:             false,
+							RejectUnsignedCommits:      false,
+							RejectNonDCOCommits:        false,
+						}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withConditions(xpv1.Available()),
+					// No push rules in spec - should NOT be late-initialized
+					withStatus(v1alpha1.ProjectObservation{}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,  // True because both are effectively empty
+					ResourceLateInitialized: false, // No late initialization should happen
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		"PushRulesConfiguredInGitLabButRemovedFromSpec": {
+			args: args{
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{Name: "example-project"}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						// Simulate GitLab where push rules are configured but removed from spec
+						return &gitlab.ProjectPushRules{
+							AuthorEmailRegex:           ".*@company.com",
+							BranchNameRegex:            "^(feature|hotfix)/.*",
+							CommitCommitterCheck:       true,
+							CommitCommitterNameCheck:   true,
+							CommitMessageNegativeRegex: "",
+							CommitMessageRegex:         "^(feat|fix|docs):",
+							DenyDeleteTag:              true,
+							FileNameRegex:              "\\.(tmp|log)$",
+							MaxFileSize:                100,
+							MemberCheck:                true,
+							PreventSecrets:             true,
+							RejectUnsignedCommits:      false,
+							RejectNonDCOCommits:        false,
+						}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					// No push rules specified in spec - should clear the ones in GitLab
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.ProjectObservation{}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        false, // Should be false because GitLab has rules but spec doesn't
+					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
 		"SuccessfulAvailable": {
 			args: args{
 				project: &fake.MockClient{
@@ -345,27 +470,13 @@ func TestObserve(t *testing.T) {
 					withConditions(xpv1.Available()),
 					withPath(&path),
 					withExternalName(extName),
-					withProjectPushRules(&v1alpha1.PushRules{
-						AuthorEmailRegex:           ptr.To(""),
-						BranchNameRegex:            ptr.To(""),
-						CommitCommitterCheck:       ptr.To(false),
-						CommitCommitterNameCheck:   ptr.To(false),
-						CommitMessageNegativeRegex: ptr.To(""),
-						CommitMessageRegex:         ptr.To(""),
-						DenyDeleteTag:              ptr.To(false),
-						FileNameRegex:              ptr.To(""),
-						MaxFileSize:                ptr.To(0),
-						MemberCheck:                ptr.To(false),
-						PreventSecrets:             ptr.To(false),
-						RejectUnsignedCommits:      ptr.To(false),
-						RejectNonDCOCommits:        ptr.To(false),
-					}),
+					// Push rules should NOT be late-initialized when not specified in spec
 					withStatus(v1alpha1.ProjectObservation{}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
-					ResourceUpToDate:        true,
-					ResourceLateInitialized: true,
+					ResourceUpToDate:        true, // Both spec and GitLab have no/empty rules
+					ResourceLateInitialized: true, // Only the path should be late-initialized
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("token")},
 				},
 			},
