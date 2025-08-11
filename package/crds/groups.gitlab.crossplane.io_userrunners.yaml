@@ -1,0 +1,582 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.3
+  name: userrunners.groups.gitlab.crossplane.io
+spec:
+  group: groups.gitlab.crossplane.io
+  names:
+    categories:
+    - crossplane
+    - managed
+    - gitlab
+    kind: UserRunner
+    listKind: UserRunnerList
+    plural: userrunners
+    singular: userrunner
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Synced')].status
+      name: SYNCED
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    - jsonPath: .status.atProvider.id
+      name: EXTERNAL-NAME
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          A UserRunner is a managed resource that represents a GitLab Runner linked to a group.
+          Group runners can execute CI/CD jobs for all projects within the associated group
+          and provide a way to share runner resources across multiple projects.
+
+          IMPORTANT: You MUST specify either writeConnectionSecretToRef or publishConnectionDetailsTo
+          to receive the runner token. Without the token, the runner cannot be registered and is unusable.
+          The token is required to configure the actual GitLab Runner agent.
+
+          Example usage:
+            spec:
+              writeConnectionSecretToRef:
+                name: my-runner-token
+                namespace: default
+
+          When a UserRunner is created, it generates a runner token that must be used
+          to register the actual GitLab Runner agent with the GitLab instance.
+          The runner token is made available through Kubernetes secrets via connection details.
+
+          GitLab API docs:
+          https://docs.gitlab.com/ee/api/users.html#create-a-runner
+          https://docs.gitlab.com/ee/api/runners.html
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              UserRunnerSpec defines the desired state of a group UserRunner.
+              This includes the configuration parameters for creating and managing
+              a GitLab Runner linked to a specific group.
+            properties:
+              deletionPolicy:
+                default: Delete
+                description: |-
+                  DeletionPolicy specifies what will happen to the underlying external
+                  when this managed resource is deleted - either "Delete" or "Orphan" the
+                  external resource.
+                  This field is planned to be deprecated in favor of the ManagementPolicies
+                  field in a future release. Currently, both could be set independently and
+                  non-default values would be honored if the feature flag is enabled.
+                  See the design doc for more information: https://github.com/crossplane/crossplane/blob/499895a25d1a1a0ba1604944ef98ac7a1a71f197/design/design-doc-observe-only-resources.md?plain=1#L223
+                enum:
+                - Orphan
+                - Delete
+                type: string
+              forProvider:
+                description: |-
+                  UserRunnerParameters define the desired state of a group UserRunner.
+                  A group UserRunner is a GitLab Runner that is linked to a specific group
+                  and can execute CI/CD jobs for projects within that group.
+
+                  GitLab API docs:
+                  https://docs.gitlab.com/ee/api/users.html#create-a-runner
+                properties:
+                  accessLevel:
+                    description: |-
+                      AccessLevel specifies the access level of the runner.
+                      Valid values: "not_protected", "ref_protected"
+                      - "not_protected": Runner can execute jobs for all branches/tags
+                      - "ref_protected": Runner can only execute jobs for protected branches/tags
+                    enum:
+                    - not_protected
+                    - ref_protected
+                    type: string
+                  description:
+                    description: Description is a human-readable description of the
+                      runner.
+                    type: string
+                  groupId:
+                    description: |-
+                      GroupID is the ID of the group to register the runner to.
+                      The runner will be available to execute jobs for projects within this group.
+                    type: integer
+                  groupIdRef:
+                    description: |-
+                      GroupIDRef is a reference to a Group resource to retrieve its ID.
+                      This provides a way to reference a group managed by Crossplane.
+                    properties:
+                      name:
+                        description: Name of the referenced object.
+                        type: string
+                      policy:
+                        description: Policies for referencing.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: |-
+                              Resolution specifies whether resolution of this reference is required.
+                              The default is 'Required', which means the reconcile will fail if the
+                              reference cannot be resolved. 'Optional' means this reference will be
+                              a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: |-
+                              Resolve specifies when this reference should be resolved. The default
+                              is 'IfNotPresent', which will attempt to resolve the reference only when
+                              the corresponding field is not present. Use 'Always' to resolve the
+                              reference on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  groupIdSelector:
+                    description: |-
+                      GroupIDSelector selects a reference to a Group resource to retrieve its ID.
+                      This provides a way to dynamically select a group based on labels.
+                    properties:
+                      matchControllerRef:
+                        description: |-
+                          MatchControllerRef ensures an object with the same controller reference
+                          as the selecting object is selected.
+                        type: boolean
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: MatchLabels ensures an object with matching labels
+                          is selected.
+                        type: object
+                      policy:
+                        description: Policies for selection.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: |-
+                              Resolution specifies whether resolution of this reference is required.
+                              The default is 'Required', which means the reconcile will fail if the
+                              reference cannot be resolved. 'Optional' means this reference will be
+                              a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: |-
+                              Resolve specifies when this reference should be resolved. The default
+                              is 'IfNotPresent', which will attempt to resolve the reference only when
+                              the corresponding field is not present. Use 'Always' to resolve the
+                              reference on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    type: object
+                  locked:
+                    description: |-
+                      Locked indicates whether the runner is locked to the current project/group.
+                      When true, the runner cannot be enabled for other projects/groups.
+                    type: boolean
+                  maintenanceNote:
+                    description: |-
+                      MaintenanceNote is a note that can be set when the runner is in maintenance mode.
+                      This is displayed in the GitLab UI when the runner is offline or paused.
+                    type: string
+                  maximumTimeout:
+                    description: |-
+                      MaximumTimeout is the maximum time (in seconds) that a job can run on this runner.
+                      If a job exceeds this time limit, it will be terminated.
+                    type: integer
+                  paused:
+                    description: |-
+                      Paused indicates whether the runner is paused and will not accept new jobs.
+                      When true, the runner will not pick up new jobs but can complete running jobs.
+                    type: boolean
+                  runUntagged:
+                    description: |-
+                      RunUntagged indicates whether the runner should run jobs without tags.
+                      When true, the runner will accept jobs that have no tags specified.
+                    type: boolean
+                  tagList:
+                    description: |-
+                      TagList contains the list of tags associated with the runner.
+                      Jobs with matching tags will be eligible to run on this runner.
+                    items:
+                      type: string
+                    type: array
+                type: object
+              managementPolicies:
+                default:
+                - '*'
+                description: |-
+                  THIS IS A BETA FIELD. It is on by default but can be opted out
+                  through a Crossplane feature flag.
+                  ManagementPolicies specify the array of actions Crossplane is allowed to
+                  take on the managed and external resources.
+                  This field is planned to replace the DeletionPolicy field in a future
+                  release. Currently, both could be set independently and non-default
+                  values would be honored if the feature flag is enabled. If both are
+                  custom, the DeletionPolicy field will be ignored.
+                  See the design doc for more information: https://github.com/crossplane/crossplane/blob/499895a25d1a1a0ba1604944ef98ac7a1a71f197/design/design-doc-observe-only-resources.md?plain=1#L223
+                  and this one: https://github.com/crossplane/crossplane/blob/444267e84783136daa93568b364a5f01228cacbe/design/one-pager-ignore-changes.md
+                items:
+                  description: |-
+                    A ManagementAction represents an action that the Crossplane controllers
+                    can take on an external resource.
+                  enum:
+                  - Observe
+                  - Create
+                  - Update
+                  - Delete
+                  - LateInitialize
+                  - '*'
+                  type: string
+                type: array
+              providerConfigRef:
+                default:
+                  name: default
+                description: |-
+                  ProviderConfigReference specifies how the provider that will be used to
+                  create, observe, update, and delete this managed resource should be
+                  configured.
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                  policy:
+                    description: Policies for referencing.
+                    properties:
+                      resolution:
+                        default: Required
+                        description: |-
+                          Resolution specifies whether resolution of this reference is required.
+                          The default is 'Required', which means the reconcile will fail if the
+                          reference cannot be resolved. 'Optional' means this reference will be
+                          a no-op if it cannot be resolved.
+                        enum:
+                        - Required
+                        - Optional
+                        type: string
+                      resolve:
+                        description: |-
+                          Resolve specifies when this reference should be resolved. The default
+                          is 'IfNotPresent', which will attempt to resolve the reference only when
+                          the corresponding field is not present. Use 'Always' to resolve the
+                          reference on every reconcile.
+                        enum:
+                        - Always
+                        - IfNotPresent
+                        type: string
+                    type: object
+                required:
+                - name
+                type: object
+              publishConnectionDetailsTo:
+                description: |-
+                  PublishConnectionDetailsTo specifies the connection secret config which
+                  contains a name, metadata and a reference to secret store config to
+                  which any connection details for this managed resource should be written.
+                  Connection details frequently include the endpoint, username,
+                  and password required to connect to the managed resource.
+                properties:
+                  configRef:
+                    default:
+                      name: default
+                    description: |-
+                      SecretStoreConfigRef specifies which secret store config should be used
+                      for this ConnectionSecret.
+                    properties:
+                      name:
+                        description: Name of the referenced object.
+                        type: string
+                      policy:
+                        description: Policies for referencing.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: |-
+                              Resolution specifies whether resolution of this reference is required.
+                              The default is 'Required', which means the reconcile will fail if the
+                              reference cannot be resolved. 'Optional' means this reference will be
+                              a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: |-
+                              Resolve specifies when this reference should be resolved. The default
+                              is 'IfNotPresent', which will attempt to resolve the reference only when
+                              the corresponding field is not present. Use 'Always' to resolve the
+                              reference on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  metadata:
+                    description: Metadata is the metadata for connection secret.
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          Annotations are the annotations to be added to connection secret.
+                          - For Kubernetes secrets, this will be used as "metadata.annotations".
+                          - It is up to Secret Store implementation for others store types.
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          Labels are the labels/tags to be added to connection secret.
+                          - For Kubernetes secrets, this will be used as "metadata.labels".
+                          - It is up to Secret Store implementation for others store types.
+                        type: object
+                      type:
+                        description: |-
+                          Type is the SecretType for the connection secret.
+                          - Only valid for Kubernetes Secret Stores.
+                        type: string
+                    type: object
+                  name:
+                    description: Name is the name of the connection secret.
+                    type: string
+                required:
+                - name
+                type: object
+              writeConnectionSecretToRef:
+                description: |-
+                  WriteConnectionSecretToReference specifies the namespace and name of a
+                  Secret to which any connection details for this managed resource should
+                  be written. Connection details frequently include the endpoint, username,
+                  and password required to connect to the managed resource.
+                  This field is planned to be replaced in a future release in favor of
+                  PublishConnectionDetailsTo. Currently, both could be set independently
+                  and connection details would be published to both without affecting
+                  each other.
+                properties:
+                  name:
+                    description: Name of the secret.
+                    type: string
+                  namespace:
+                    description: Namespace of the secret.
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+            required:
+            - forProvider
+            type: object
+          status:
+            description: |-
+              UserRunnerStatus represents the observed state of a group UserRunner.
+              This includes the current status and properties of the runner as
+              reported by the GitLab API.
+            properties:
+              atProvider:
+                description: |-
+                  UserRunnerObservation represents the observed state of a group UserRunner.
+                  This includes the common runner properties as well as group-specific information.
+
+                  GitLab API docs: https://docs.gitlab.com/ee/api/runners.html#get-runners-details
+                properties:
+                  accessLevel:
+                    description: |-
+                      AccessLevel specifies the access level of the runner.
+                      Valid values: "not_protected", "ref_protected"
+                    type: string
+                  contactedAt:
+                    description: |-
+                      ContactedAt is the timestamp when the runner last contacted GitLab.
+                      This is used to determine if a runner is online or offline.
+                    format: date-time
+                    type: string
+                  description:
+                    description: Description is the human-readable description of
+                      the runner.
+                    type: string
+                  groups:
+                    description: |-
+                      Groups contains the list of groups that this runner is associated with.
+                      For group runners, this typically contains the primary group and any parent groups.
+                    items:
+                      description: |-
+                        RunnerGroup represents a GitLab group associated with a runner.
+                        This structure matches the group information returned by the GitLab API
+                        when retrieving runner details.
+                      properties:
+                        id:
+                          description: ID is the unique identifier of the group.
+                          type: integer
+                        name:
+                          description: Name is the name of the group.
+                          type: string
+                        web_url:
+                          description: WebURL is the web URL to access the group in
+                            the GitLab UI.
+                          type: string
+                      type: object
+                    type: array
+                  id:
+                    description: ID is the unique identifier of the runner assigned
+                      by GitLab.
+                    type: integer
+                  isShared:
+                    description: |-
+                      IsShared indicates whether this is a shared runner available to all projects.
+                      User runners are never shared, so this is typically false.
+                    type: boolean
+                  locked:
+                    description: Locked indicates whether the runner is locked to
+                      its current scope.
+                    type: boolean
+                  maintenanceNote:
+                    description: |-
+                      MaintenanceNote contains any maintenance note set for the runner.
+                      This is displayed in the GitLab UI when the runner is offline or paused.
+                    type: string
+                  maximumTimeout:
+                    description: MaximumTimeout is the maximum time (in seconds) that
+                      jobs can run on this runner.
+                    type: integer
+                  name:
+                    description: |-
+                      Name is the name of the runner as reported by the runner agent.
+                      This is typically set automatically by the GitLab Runner software.
+                    type: string
+                  online:
+                    description: |-
+                      Online indicates whether the runner is currently online and available.
+                      This is determined by the last contact time and heartbeat interval.
+                    type: boolean
+                  paused:
+                    description: |-
+                      Paused indicates whether the runner is currently paused.
+                      Paused runners do not accept new jobs but can complete running jobs.
+                    type: boolean
+                  runUntagged:
+                    description: RunUntagged indicates whether the runner accepts
+                      jobs without tags.
+                    type: boolean
+                  runnerType:
+                    description: |-
+                      RunnerType indicates the type of runner.
+                      For user runners, this is typically "project_type" or "group_type".
+                    type: string
+                  status:
+                    description: |-
+                      Status represents the current status of the runner.
+                      Valid values: "online", "offline", "stale", "never_contacted"
+                    type: string
+                  tagList:
+                    description: |-
+                      TagList contains the list of tags associated with the runner.
+                      Jobs with matching tags will be eligible to run on this runner.
+                    items:
+                      type: string
+                    type: array
+                  tokenExpiresAt:
+                    description: |-
+                      TokenExpiresAt is the timestamp when the runner token expires.
+                      Currently GitLab does not provide an expiration for user runner tokens,
+                      so this is typically nil for user runners.
+                      This field is included for consistency and future extensibility.
+                    format: date-time
+                    type: string
+                required:
+                - id
+                type: object
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  description: A Condition that may apply to a resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        LastTransitionTime is the last time this condition transitioned from one
+                        status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        A Message containing details about this condition's last transition from
+                        one status to another, if any.
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        ObservedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      type: integer
+                    reason:
+                      description: A Reason for this condition's last transition from
+                        one status to another.
+                      type: string
+                    status:
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
+                      type: string
+                    type:
+                      description: |-
+                        Type of this condition. At most one of each condition type may apply to
+                        a resource at any point in time.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                description: |-
+                  ObservedGeneration is the latest metadata.generation
+                  which resulted in either a ready state, or stalled due to error
+                  it can not recover from without human intervention.
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
