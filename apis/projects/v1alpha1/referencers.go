@@ -187,8 +187,8 @@ func (mg *Variable) ResolveReferences(ctx context.Context, c client.Reader) erro
 	return nil
 }
 
-// ResolveReferences of this UserRunner
-func (mg *UserRunner) ResolveReferences(ctx context.Context, c client.Reader) error {
+// ResolveReferences of this Runner
+func (mg *Runner) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 
 	// resolve spec.forProvider.projectIdRef

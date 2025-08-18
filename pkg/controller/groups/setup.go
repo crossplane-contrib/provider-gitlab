@@ -24,8 +24,8 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/members"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/samlgrouplinks"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/userrunners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups/variables"
 )
 
@@ -38,7 +38,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		deploytokens.SetupDeployToken,
 		variables.SetupVariable,
 		samlgrouplinks.SetupSamlGroupLink,
-		userrunners.SetupUserRunner,
+		runners.SetupRunner,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

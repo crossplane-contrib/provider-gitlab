@@ -32,19 +32,19 @@ var (
 )
 
 // UserClient defines Gitlab User service operations
-type UserRunnerClient interface {
+type RunnerClient interface {
 	CreateUserRunner(opts *gitlab.CreateUserRunnerOptions, options ...gitlab.RequestOptionFunc) (*gitlab.UserRunner, *gitlab.Response, error)
 }
 
-// NewUserRunnerClient returns a new Gitlab User service
-func NewUserRunnerClient(cfg clients.Config) UserRunnerClient {
+// NewRunnerClient returns a new Gitlab User service
+func NewRunnerClient(cfg clients.Config) RunnerClient {
 	git := clients.NewClient(cfg)
 	return git.Users
 }
 
-// GenerateGroupUserRunnerOptions generates user runner creation options for a runner linked to a group
-func GenerateGroupUserRunnerOptions(p *groupsv1alpha1.UserRunnerParameters) *gitlab.CreateUserRunnerOptions {
-	opts := generateCommonUserRunnerOptions(&p.CommonUserRunnerParameters)
+// GenerateGroupRunnerOptions generates user runner creation options for a runner linked to a group
+func GenerateGroupRunnerOptions(p *groupsv1alpha1.RunnerParameters) *gitlab.CreateUserRunnerOptions {
+	opts := generateCommonRunnerOptions(&p.CommonRunnerParameters)
 
 	if p.GroupID != nil {
 		opts.GroupID = p.GroupID
@@ -55,9 +55,9 @@ func GenerateGroupUserRunnerOptions(p *groupsv1alpha1.UserRunnerParameters) *git
 	return opts
 }
 
-// GenerateProjectUserRunnerOptions generates user runner creation options for a runner linked to a project
-func GenerateProjectUserRunnerOptions(p *projectsv1alpha1.UserRunnerParameters) *gitlab.CreateUserRunnerOptions {
-	opts := generateCommonUserRunnerOptions(&p.CommonUserRunnerParameters)
+// GenerateProjectRunnerOptions generates user runner creation options for a runner linked to a project
+func GenerateProjectRunnerOptions(p *projectsv1alpha1.RunnerParameters) *gitlab.CreateUserRunnerOptions {
+	opts := generateCommonRunnerOptions(&p.CommonRunnerParameters)
 
 	if p.ProjectID != nil {
 		opts.ProjectID = p.ProjectID
@@ -68,7 +68,7 @@ func GenerateProjectUserRunnerOptions(p *projectsv1alpha1.UserRunnerParameters) 
 	return opts
 }
 
-func generateCommonUserRunnerOptions(p *commonv1alpha1.CommonUserRunnerParameters) *gitlab.CreateUserRunnerOptions {
+func generateCommonRunnerOptions(p *commonv1alpha1.CommonRunnerParameters) *gitlab.CreateUserRunnerOptions {
 	return &gitlab.CreateUserRunnerOptions{
 		Description:     p.Description,
 		Paused:          p.Paused,

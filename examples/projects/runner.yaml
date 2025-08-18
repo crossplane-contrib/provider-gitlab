@@ -1,15 +1,15 @@
-# Example UserRunner for a GitLab group
+# Example Runner for a GitLab project
 # IMPORTANT: The writeConnectionSecretToRef is REQUIRED to receive the runner token.
 # Without this, the runner cannot be registered and is unusable.
-apiVersion: groups.gitlab.crossplane.io/v1alpha1
-kind: UserRunner
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: Runner
 metadata:
-  name: example-group-runner
+  name: example-project-runner
 spec:
   forProvider:
-    groupIdRef:
-      name: example-group
-    description: "example group runner description"
+    projectIdRef:
+      name: example-project
+    description: "example project runner description"
     tagList:
       - "example-tag-1"
       - "example-tag-2"
@@ -18,5 +18,5 @@ spec:
   # REQUIRED: This creates a Kubernetes secret containing the runner token
   # The token is needed to register the GitLab Runner agent
   writeConnectionSecretToRef:
-    name: gitlab-example-group-runner-token
+    name: gitlab-example-project-runner-token
     namespace: crossplane-system

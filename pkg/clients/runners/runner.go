@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	errUserRunnerNotFound = "404 UserRunner Not Found"
+	errRunnerNotFound = "404 Runner Not Found"
 )
 
 // RunnerClient defines Gitlab Runner service operations
@@ -47,22 +47,22 @@ func NewRunnerClient(cfg clients.Config) RunnerClient {
 	return git.Runners
 }
 
-// IsErrorUserRunnerNotFound helper function to test for errUserRunnerNotFound error.
-func IsErrorUserRunnerNotFound(err error) bool {
+// IsErrorRunnerNotFound helper function to test for errRunnerNotFound error.
+func IsErrorRunnerNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	return strings.Contains(err.Error(), errUserRunnerNotFound)
+	return strings.Contains(err.Error(), errRunnerNotFound)
 }
 
-// GenerateGroupRunnerObservation is used to produce groupsv1alpha1.UserRunnerObservation from
+// GenerateGroupRunnerObservation is used to produce groupsv1alpha1.RunnerObservation from
 // gitlab.RunnerDetails.
-func GenerateGroupRunnerObservation(runner *gitlab.RunnerDetails) groupsv1alpha1.UserRunnerObservation {
+func GenerateGroupRunnerObservation(runner *gitlab.RunnerDetails) groupsv1alpha1.RunnerObservation {
 	if runner == nil {
-		return groupsv1alpha1.UserRunnerObservation{}
+		return groupsv1alpha1.RunnerObservation{}
 	}
 
-	commonUserRunnerObservation := generateCommonRunnerObservation(runner)
+	commonRunnerObservation := generateCommonRunnerObservation(runner)
 
 	// Convert each group to the RunnerGroup type
 	// This is necessary because the API returns a different structure than the one we use in our
@@ -76,20 +76,20 @@ func GenerateGroupRunnerObservation(runner *gitlab.RunnerDetails) groupsv1alpha1
 		})
 	}
 
-	return groupsv1alpha1.UserRunnerObservation{
-		CommonUserRunnerObservation: commonUserRunnerObservation,
-		Groups:                      groups,
+	return groupsv1alpha1.RunnerObservation{
+		CommonRunnerObservation: commonRunnerObservation,
+		Groups:                  groups,
 	}
 }
 
-// GenerateGroupRunnerObservation is used to produce projectsv1alpha1.UserRunnerObservation from
+// GenerateGroupRunnerObservation is used to produce projectsv1alpha1.RunnerObservation from
 // gitlab.RunnerDetails.
-func GenerateProjectRunnerObservation(runner *gitlab.RunnerDetails) projectsv1alpha1.UserRunnerObservation {
+func GenerateProjectRunnerObservation(runner *gitlab.RunnerDetails) projectsv1alpha1.RunnerObservation {
 	if runner == nil {
-		return projectsv1alpha1.UserRunnerObservation{}
+		return projectsv1alpha1.RunnerObservation{}
 	}
 
-	commonUserRunnerObservation := generateCommonRunnerObservation(runner)
+	commonRunnerObservation := generateCommonRunnerObservation(runner)
 
 	// Convert each project to the RunnerProject type
 	// This is necessary because the API returns a different structure than the one we use in our
@@ -105,21 +105,21 @@ func GenerateProjectRunnerObservation(runner *gitlab.RunnerDetails) projectsv1al
 		})
 	}
 
-	runnerObservation := projectsv1alpha1.UserRunnerObservation{
-		CommonUserRunnerObservation: commonUserRunnerObservation,
-		Projects:                    projects,
+	runnerObservation := projectsv1alpha1.RunnerObservation{
+		CommonRunnerObservation: commonRunnerObservation,
+		Projects:                projects,
 	}
 
 	return runnerObservation
 }
 
-// GenerateObservation is used to produce v1alpha1.UserRunnerObservation from
+// GenerateObservation is used to produce v1alpha1.RunnerObservation from
 // gitlab.Runners.
-func generateCommonRunnerObservation(runner *gitlab.RunnerDetails) commonv1alpha1.CommonUserRunnerObservation { //nolint:gocyclo
+func generateCommonRunnerObservation(runner *gitlab.RunnerDetails) commonv1alpha1.CommonRunnerObservation { //nolint:gocyclo
 	if runner == nil {
-		return commonv1alpha1.CommonUserRunnerObservation{}
+		return commonv1alpha1.CommonRunnerObservation{}
 	}
-	runnerObservation := commonv1alpha1.CommonUserRunnerObservation{
+	runnerObservation := commonv1alpha1.CommonRunnerObservation{
 		ID:              runner.ID,
 		Description:     runner.Description,
 		Paused:          runner.Paused,
@@ -143,8 +143,8 @@ func generateCommonRunnerObservation(runner *gitlab.RunnerDetails) commonv1alpha
 	return runnerObservation
 }
 
-// GenerateEditUserRunnerOptions generates group edit options
-func GenerateEditUserRunnerOptions(p *commonv1alpha1.CommonUserRunnerParameters) *gitlab.UpdateRunnerDetailsOptions {
+// GenerateEditRunnerOptions generates group edit options
+func GenerateEditRunnerOptions(p *commonv1alpha1.CommonRunnerParameters) *gitlab.UpdateRunnerDetailsOptions {
 	opts := &gitlab.UpdateRunnerDetailsOptions{
 		Description:     p.Description,
 		Paused:          p.Paused,

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package userrunners
+package runners
 
 import (
 	"context"
@@ -31,7 +31,7 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	runners "github.com/crossplane-contrib/provider-gitlab/pkg/clients/runners"
 	runnersfake "github.com/crossplane-contrib/provider-gitlab/pkg/clients/runners/fake"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/users"
@@ -42,47 +42,47 @@ var (
 	unexpecedItem resource.Managed
 
 	errBoom           = errors.New("boom")
-	groupID           = 1234
+	projectID         = 1234
 	runnerID          = 1
 	extName           = "1"
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: extName}
 )
 
 type args struct {
-	runner     runners.RunnerClient
-	userrunner users.UserRunnerClient
-	kube       client.Client
-	cr         resource.Managed
+	runnerClient     runners.RunnerClient
+	userRunnerClient users.RunnerClient
+	kube             client.Client
+	cr               resource.Managed
 }
 
-type UserRunnerModifier func(*v1alpha1.UserRunner)
+type RunnerModifier func(*v1alpha1.Runner)
 
-func withConditions(c ...xpv1.Condition) UserRunnerModifier {
-	return func(cr *v1alpha1.UserRunner) { cr.Status.ConditionedStatus.Conditions = c }
+func withConditions(c ...xpv1.Condition) RunnerModifier {
+	return func(cr *v1alpha1.Runner) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
-func withGroupID() UserRunnerModifier {
-	return func(r *v1alpha1.UserRunner) { r.Spec.ForProvider.GroupID = &groupID }
+func withProjectID() RunnerModifier {
+	return func(r *v1alpha1.Runner) { r.Spec.ForProvider.ProjectID = &projectID }
 }
 
-func withStatus(s v1alpha1.UserRunnerObservation) UserRunnerModifier {
-	return func(r *v1alpha1.UserRunner) { r.Status.AtProvider = s }
+func withStatus(s v1alpha1.RunnerObservation) RunnerModifier {
+	return func(r *v1alpha1.Runner) { r.Status.AtProvider = s }
 }
 
-func withAnnotations(a map[string]string) UserRunnerModifier {
-	return func(p *v1alpha1.UserRunner) { meta.AddAnnotations(p, a) }
+func withAnnotations(a map[string]string) RunnerModifier {
+	return func(p *v1alpha1.Runner) { meta.AddAnnotations(p, a) }
 }
 
-func withSpec(s v1alpha1.UserRunnerParameters) UserRunnerModifier {
-	return func(r *v1alpha1.UserRunner) { r.Spec.ForProvider = s }
+func withSpec(s v1alpha1.RunnerParameters) RunnerModifier {
+	return func(r *v1alpha1.Runner) { r.Spec.ForProvider = s }
 }
 
-func withExternalName(n string) UserRunnerModifier {
-	return func(r *v1alpha1.UserRunner) { meta.SetExternalName(r, n) }
+func withExternalName(n string) RunnerModifier {
+	return func(r *v1alpha1.Runner) { meta.SetExternalName(r, n) }
 }
 
-func withConnectionSecretRef() UserRunnerModifier {
-	return func(r *v1alpha1.UserRunner) {
+func withConnectionSecretRef() RunnerModifier {
+	return func(r *v1alpha1.Runner) {
 		r.Spec.WriteConnectionSecretToReference = &xpv1.SecretReference{
 			Name:      "test-secret",
 			Namespace: "default",
@@ -90,8 +90,8 @@ func withConnectionSecretRef() UserRunnerModifier {
 	}
 }
 
-func userRunner(m ...UserRunnerModifier) *v1alpha1.UserRunner {
-	cr := &v1alpha1.UserRunner{}
+func runner(m ...RunnerModifier) *v1alpha1.Runner {
+	cr := &v1alpha1.Runner{}
 	for _, f := range m {
 		f(cr)
 	}
@@ -115,16 +115,16 @@ func TestConnect(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotUserRunner),
+				err: errors.New(errNotRunner),
 			},
 		},
 		"ProviderConfigRefNotGivenError": {
 			args: args{
-				cr:   userRunner(),
+				cr:   runner(),
 				kube: &test.MockClient{MockGet: test.NewMockGetFn(nil)},
 			},
 			want: want{
-				cr:  userRunner(),
+				cr:  runner(),
 				err: errors.New("providerConfigRef is not given"),
 			},
 		},
@@ -162,18 +162,18 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotUserRunner),
+				err: errors.New(errNotRunner),
 			},
 		},
 		"NoExternalName": {
 			args: args{
-				cr: userRunner(
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+				cr: runner(
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 			},
 			want: want{
-				cr: userRunner(
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+				cr: runner(
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 				err:    nil,
 				result: managed.ExternalObservation{ResourceExists: false},
@@ -181,54 +181,54 @@ func TestObserve(t *testing.T) {
 		},
 		"NotIDExternalName": {
 			args: args{
-				runner: &runnersfake.MockClient{
+				runnerClient: &runnersfake.MockClient{
 					MockGetRunnerDetails: func(rid any, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error) {
 						return &gitlab.RunnerDetails{}, &gitlab.Response{}, nil
 					},
 				},
-				cr: userRunner(
+				cr: runner(
 					withExternalName("fr"),
-					withGroupID(),
+					withProjectID(),
 				),
 			},
 			want: want{
-				cr: userRunner(
+				cr: runner(
 					withExternalName("fr"),
-					withGroupID(),
+					withProjectID(),
 				),
 				err: errors.New(errIDNotInt),
 			},
 		},
-		"NoGroupID": {
+		"NoProjectID": {
 			args: args{
-				cr: userRunner(
+				cr: runner(
 					withExternalName(extName),
 				),
 			},
 			want: want{
-				cr: userRunner(
+				cr: runner(
 					withExternalName(extName),
 				),
-				err:    errors.New(errMissingGroupID),
+				err:    errors.New(errMissingProjectID),
 				result: managed.ExternalObservation{},
 			},
 		},
 		"FailedGetRequest": {
 			args: args{
-				runner: &runnersfake.MockClient{
+				runnerClient: &runnersfake.MockClient{
 					MockGetRunnerDetails: func(rid any, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errBoom
 					},
 				},
-				cr: userRunner(
+				cr: runner(
 					withExternalName(extName),
-					withGroupID(),
+					withProjectID(),
 				),
 			},
 			want: want{
-				cr: userRunner(
+				cr: runner(
 					withAnnotations(extNameAnnotation),
-					withGroupID(),
+					withProjectID(),
 				),
 				result: managed.ExternalObservation{ResourceExists: false},
 				err:    errors.Wrap(errBoom, errGetFailed),
@@ -236,22 +236,22 @@ func TestObserve(t *testing.T) {
 		},
 		"ErrGet404": {
 			args: args{
-				runner: &runnersfake.MockClient{
+				runnerClient: &runnersfake.MockClient{
 					MockGetRunnerDetails: func(rid any, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
-				cr: userRunner(
+				cr: runner(
 					withExternalName(extName),
-					withGroupID(),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withProjectID(),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 			},
 			want: want{
-				cr: userRunner(
+				cr: runner(
 					withExternalName(extName),
-					withGroupID(),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withProjectID(),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 				result: managed.ExternalObservation{ResourceExists: false},
 				err:    nil,
@@ -259,24 +259,24 @@ func TestObserve(t *testing.T) {
 		},
 		"SuccessfulAvailable": {
 			args: args{
-				runner: &runnersfake.MockClient{
+				runnerClient: &runnersfake.MockClient{
 					MockGetRunnerDetails: func(rid any, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error) {
 						return nil, &gitlab.Response{}, nil
 					},
 				},
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 					withExternalName(extName),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 			},
 			want: want{
-				cr: userRunner(
+				cr: runner(
 					withConditions(xpv1.Available()),
-					withGroupID(),
+					withProjectID(),
 					withExternalName(extName),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
-					// withStatus(v1alpha1.UserRunnerObservation{Name: name}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
+					// withStatus(v1alpha1.RunnerObservation{Name: name}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -289,7 +289,7 @@ func TestObserve(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{kube: tc.kube, client: tc.runner, userRunnerClient: tc.userrunner}
+			e := &external{kube: tc.kube, client: tc.runnerClient, userRunnerClient: tc.userRunnerClient}
 			o, err := e.Observe(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
@@ -321,75 +321,75 @@ func TestDelete(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotUserRunner),
+				err: errors.New(errNotRunner),
 			},
 		},
 		"NoExternalName": {
 			args: args{
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 				),
 			},
 			want: want{
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 				),
 				err: errors.New(errMissingExternalName),
 			},
 		},
-		"NoGroupID": {
+		"NoProjectID": {
 			args: args{
-				cr: userRunner(
+				cr: runner(
 					withExternalName(extName),
 				),
 			},
 			want: want{
-				cr: userRunner(
+				cr: runner(
 					withExternalName(extName),
 				),
-				err: errors.New(errMissingGroupID),
+				err: errors.New(errMissingProjectID),
 			},
 		},
 		"FailedDeletion": {
 			args: args{
-				runner: &runnersfake.MockClient{
+				runnerClient: &runnersfake.MockClient{
 					MockDeleteRegisteredRunnerByID: func(rid int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 					withExternalName(extName),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 			},
 			want: want{
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 					withExternalName(extName),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},
 		},
 		"SuccessfulDeletion": {
 			args: args{
-				runner: &runnersfake.MockClient{
+				runnerClient: &runnersfake.MockClient{
 					MockDeleteRegisteredRunnerByID: func(rid int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 					withExternalName(extName),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 			},
 			want: want{
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 					withExternalName(extName),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 				err: nil,
 			},
@@ -397,7 +397,7 @@ func TestDelete(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{kube: tc.kube, client: tc.runner, userRunnerClient: tc.userrunner}
+			e := &external{kube: tc.kube, client: tc.runnerClient, userRunnerClient: tc.userRunnerClient}
 			_, err := e.Delete(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
@@ -427,34 +427,34 @@ func TestCreate(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotUserRunner),
+				err: errors.New(errNotRunner),
 			},
 		},
-		"NoGroupID": {
+		"NoProjectID": {
 			args: args{
-				cr: userRunner(
+				cr: runner(
 					withExternalName(extName),
 				),
 			},
 			want: want{
-				cr: userRunner(
+				cr: runner(
 					withExternalName(extName),
 				),
-				err:    errors.New(errMissingGroupID),
+				err:    errors.New(errMissingProjectID),
 				result: managed.ExternalCreation{},
 			},
 		},
 		"MissingConnectionSecret": {
 			args: args{
-				cr: userRunner(
-					withGroupID(),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+				cr: runner(
+					withProjectID(),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 			},
 			want: want{
-				cr: userRunner(
-					withGroupID(),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+				cr: runner(
+					withProjectID(),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 				err:    errors.New(errMissingConnectionSecret),
 				result: managed.ExternalCreation{},
@@ -462,44 +462,44 @@ func TestCreate(t *testing.T) {
 		},
 		"FailedCreation": {
 			args: args{
-				userrunner: &usersfake.MockClient{
+				userRunnerClient: &usersfake.MockClient{
 					MockCreateUserRunner: func(opts *gitlab.CreateUserRunnerOptions, options ...gitlab.RequestOptionFunc) (*gitlab.UserRunner, *gitlab.Response, error) {
 						return &gitlab.UserRunner{}, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: userRunner(
-					withGroupID(),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+				cr: runner(
+					withProjectID(),
 					withConnectionSecretRef(),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 			},
 			want: want{
-				cr: userRunner(
-					withGroupID(),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+				cr: runner(
+					withProjectID(),
 					withConnectionSecretRef(),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
 		},
 		"SuccessfulCreation": {
 			args: args{
-				userrunner: &usersfake.MockClient{
+				userRunnerClient: &usersfake.MockClient{
 					MockCreateUserRunner: func(opts *gitlab.CreateUserRunnerOptions, options ...gitlab.RequestOptionFunc) (*gitlab.UserRunner, *gitlab.Response, error) {
 						return &gitlab.UserRunner{ID: runnerID}, &gitlab.Response{}, nil
 					},
 				},
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 					withConnectionSecretRef(),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 			},
 			want: want{
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 					withConnectionSecretRef(),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 					withExternalName(extName),
 					withConditions(xpv1.Creating()),
 				),
@@ -515,7 +515,7 @@ func TestCreate(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{kube: tc.kube, client: tc.runner, userRunnerClient: tc.userrunner}
+			e := &external{kube: tc.kube, client: tc.runnerClient, userRunnerClient: tc.userRunnerClient}
 			o, err := e.Create(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
@@ -548,32 +548,32 @@ func TestUpdate(t *testing.T) {
 			},
 			want: want{
 				cr:  unexpecedItem,
-				err: errors.New(errNotUserRunner),
+				err: errors.New(errNotRunner),
 			},
 		},
-		"NoGroupID": {
+		"NoProjectID": {
 			args: args{
-				cr: userRunner(
+				cr: runner(
 					withExternalName(extName),
 				),
 			},
 			want: want{
-				cr: userRunner(
+				cr: runner(
 					withExternalName(extName),
 				),
-				err:    errors.New(errMissingGroupID),
+				err:    errors.New(errMissingProjectID),
 				result: managed.ExternalUpdate{},
 			},
 		},
 		"NoExternalName": {
 			args: args{
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 				),
 			},
 			want: want{
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 				),
 				err:    errors.New(errMissingExternalName),
 				result: managed.ExternalUpdate{},
@@ -581,59 +581,59 @@ func TestUpdate(t *testing.T) {
 		},
 		"NotIDExternalName": {
 			args: args{
-				cr: userRunner(
+				cr: runner(
 					withExternalName("fr"),
-					withGroupID(),
+					withProjectID(),
 				),
 			},
 			want: want{
-				cr: userRunner(
+				cr: runner(
 					withExternalName("fr"),
-					withGroupID(),
+					withProjectID(),
 				),
 				err: errors.New(errIDNotInt),
 			},
 		},
 		"FailedUpdate": {
 			args: args{
-				runner: &runnersfake.MockClient{
+				runnerClient: &runnersfake.MockClient{
 					MockUpdateRunnerDetails: func(rid any, opt *gitlab.UpdateRunnerDetailsOptions, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error) {
 						return nil, &gitlab.Response{}, errBoom
 					},
 				},
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 					withExternalName(extName),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 			},
 			want: want{
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 					withExternalName(extName),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 				err: errors.Wrap(errBoom, errUpdateFailed),
 			},
 		},
 		"SuccessfulUpdate": {
 			args: args{
-				runner: &runnersfake.MockClient{
+				runnerClient: &runnersfake.MockClient{
 					MockUpdateRunnerDetails: func(rid any, opt *gitlab.UpdateRunnerDetailsOptions, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error) {
 						return &gitlab.RunnerDetails{}, &gitlab.Response{}, nil
 					},
 				},
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 					withExternalName(extName),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 			},
 			want: want{
-				cr: userRunner(
-					withGroupID(),
+				cr: runner(
+					withProjectID(),
 					withExternalName(extName),
-					withSpec(v1alpha1.UserRunnerParameters{GroupID: &groupID}),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
 				),
 				err:    nil,
 				result: managed.ExternalUpdate{},
@@ -643,7 +643,7 @@ func TestUpdate(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{kube: tc.kube, client: tc.runner, userRunnerClient: tc.userrunner}
+			e := &external{kube: tc.kube, client: tc.runnerClient, userRunnerClient: tc.userRunnerClient}
 			o, err := e.Update(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package userrunners
+package runners
 
 import (
 	"context"
@@ -36,7 +36,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 	runners "github.com/crossplane-contrib/provider-gitlab/pkg/clients/runners"
@@ -45,21 +45,21 @@ import (
 )
 
 const (
-	errNotUserRunner           = "managed resource is not a UserRunner custom resource"
+	errNotRunner               = "managed resource is not a Runner custom resource"
 	errIDNotInt                = "specified ID is not an integer"
-	errGetFailed               = "cannot get Gitlab UserRunner"
-	errCreateFailed            = "cannot create Gitlab UserRunner"
-	errUpdateFailed            = "cannot update Gitlab UserRunner"
-	errDeleteFailed            = "cannot delete Gitlab UserRunner"
-	errUserRunnertNotFound     = "cannot find Gitlab UserRunner"
-	errMissingGroupID          = "missing Spec.ForProvider.GroupID"
+	errGetFailed               = "cannot get Gitlab Runner"
+	errCreateFailed            = "cannot create Gitlab Runner"
+	errUpdateFailed            = "cannot update Gitlab Runner"
+	errDeleteFailed            = "cannot delete Gitlab Runner"
+	errRunnertNotFound         = "cannot find Gitlab Runner"
+	errMissingProjectID        = "missing Spec.ForProvider.ProjectID"
 	errMissingExternalName     = "external name annotation not found"
 	errMissingConnectionSecret = "writeConnectionSecretToRef or publishConnectionDetailsTo must be specified to receive the runner token"
 )
 
-// SetupUserRunner adds a controller that reconciles userrunners.
-func SetupUserRunner(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.UserRunnerGroupKind)
+// SetupRunner adds a controller that reconciles samlgrouplinks.
+func SetupRunner(mgr ctrl.Manager, o controller.Options) error {
+	name := managed.ControllerName(v1alpha1.RunnerGroupKind)
 	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
 
 	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
@@ -68,9 +68,9 @@ func SetupUserRunner(mgr ctrl.Manager, o controller.Options) error {
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{
-			kube:                  mgr.GetClient(),
-			newGitlabClientFn:     runners.NewRunnerClient,
-			newUserRunnerClientFn: users.NewUserRunnerClient,
+			kube:              mgr.GetClient(),
+			newGitlabClientFn: runners.NewRunnerClient,
+			newRunnerClientFn: users.NewRunnerClient,
 		}),
 		managed.WithInitializers(),
 		managed.WithPollInterval(o.PollInterval),
@@ -83,54 +83,53 @@ func SetupUserRunner(mgr ctrl.Manager, o controller.Options) error {
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.UserRunnerGroupVersionKind),
+		resource.ManagedKind(v1alpha1.RunnerGroupVersionKind),
 		reconcilerOpts...)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.UserRunnerList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.RunnerList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
 		return err
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		For(&v1alpha1.UserRunner{}).
+		For(&v1alpha1.Runner{}).
 		Complete(r)
 }
 
 type connector struct {
-	kube                  client.Client
-	newGitlabClientFn     func(cfg clients.Config) runners.RunnerClient
-	newUserRunnerClientFn func(cfg clients.Config) users.UserRunnerClient
+	kube              client.Client
+	newGitlabClientFn func(cfg clients.Config) runners.RunnerClient
+	newRunnerClientFn func(cfg clients.Config) users.RunnerClient
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	cr, ok := mg.(*v1alpha1.UserRunner)
+	cr, ok := mg.(*v1alpha1.Runner)
 	if !ok {
-		return nil, errors.New(errNotUserRunner)
+		return nil, errors.New(errNotRunner)
 	}
 
 	cfg, err := clients.GetConfig(ctx, c.kube, cr)
 	if err != nil {
 		return nil, err
 	}
-
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), userRunnerClient: c.newUserRunnerClientFn(*cfg)}, nil
+	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), userRunnerClient: c.newRunnerClientFn(*cfg)}, nil
 }
 
 type external struct {
 	kube             client.Client
 	client           runners.RunnerClient
-	userRunnerClient users.UserRunnerClient
+	userRunnerClient users.RunnerClient
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*v1alpha1.UserRunner)
+	cr, ok := mg.(*v1alpha1.Runner)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotUserRunner)
+		return managed.ExternalObservation{}, errors.New(errNotRunner)
 	}
 
-	if cr.Spec.ForProvider.GroupID == nil {
-		return managed.ExternalObservation{}, errors.New(errMissingGroupID)
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalObservation{}, errors.New(errMissingProjectID)
 	}
 
 	externalName := meta.GetExternalName(cr)
@@ -152,26 +151,26 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	// we need to make sure the token expiration time is preserved as it is not returned by the API
-	tokenExpiresAt := cr.Status.AtProvider.CommonUserRunnerObservation.TokenExpiresAt
-	cr.Status.AtProvider = runners.GenerateGroupRunnerObservation(runner)
-	cr.Status.AtProvider.CommonUserRunnerObservation.TokenExpiresAt = tokenExpiresAt
+	tokenExpiresAt := cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt
+	cr.Status.AtProvider = runners.GenerateProjectRunnerObservation(runner)
+	cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = tokenExpiresAt
 	cr.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        isUserRunnerUpToDate(&cr.Spec.ForProvider, runner),
+		ResourceUpToDate:        isRunnerUpToDate(&cr.Spec.ForProvider, runner),
 		ResourceLateInitialized: false,
 	}, nil
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.UserRunner)
+	cr, ok := mg.(*v1alpha1.Runner)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotUserRunner)
+		return managed.ExternalCreation{}, errors.New(errNotRunner)
 	}
 
-	if cr.Spec.ForProvider.GroupID == nil {
-		return managed.ExternalCreation{}, errors.New(errMissingGroupID)
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalCreation{}, errors.New(errMissingProjectID)
 	}
 
 	// Validate that connection details will be published
@@ -180,7 +179,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	runner, _, err := e.userRunnerClient.CreateUserRunner(
-		users.GenerateGroupUserRunnerOptions(&cr.Spec.ForProvider),
+		users.GenerateProjectRunnerOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
@@ -191,9 +190,9 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	if runner.TokenExpiresAt != nil {
 		t := metav1.NewTime(*runner.TokenExpiresAt)
-		cr.Status.AtProvider.CommonUserRunnerObservation.TokenExpiresAt = &t
+		cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = &t
 	} else {
-		cr.Status.AtProvider.CommonUserRunnerObservation.TokenExpiresAt = nil
+		cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = nil
 	}
 
 	cr.SetConditions(xpv1.Creating())
@@ -206,12 +205,12 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mg.(*v1alpha1.UserRunner)
+	cr, ok := mg.(*v1alpha1.Runner)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotUserRunner)
+		return managed.ExternalUpdate{}, errors.New(errNotRunner)
 	}
-	if cr.Spec.ForProvider.GroupID == nil {
-		return managed.ExternalUpdate{}, errors.New(errMissingGroupID)
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalUpdate{}, errors.New(errMissingProjectID)
 	}
 
 	externalName := meta.GetExternalName(cr)
@@ -226,7 +225,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, _, err = e.client.UpdateRunnerDetails(
 		runnerID,
-		runners.GenerateEditUserRunnerOptions(&cr.Spec.ForProvider.CommonUserRunnerParameters),
+		runners.GenerateEditRunnerOptions(&cr.Spec.ForProvider.CommonRunnerParameters),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
@@ -237,12 +236,12 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	cr, ok := mg.(*v1alpha1.UserRunner)
+	cr, ok := mg.(*v1alpha1.Runner)
 	if !ok {
-		return managed.ExternalDelete{}, errors.New(errNotUserRunner)
+		return managed.ExternalDelete{}, errors.New(errNotRunner)
 	}
-	if cr.Spec.ForProvider.GroupID == nil {
-		return managed.ExternalDelete{}, errors.New(errMissingGroupID)
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalDelete{}, errors.New(errMissingProjectID)
 	}
 
 	externalName := meta.GetExternalName(cr)
@@ -268,7 +267,7 @@ func (e *external) Disconnect(ctx context.Context) error {
 	return nil
 }
 
-func isUserRunnerUpToDate(p *v1alpha1.UserRunnerParameters, r *gitlab.RunnerDetails) bool {
+func isRunnerUpToDate(p *v1alpha1.RunnerParameters, r *gitlab.RunnerDetails) bool {
 	if p.Description != nil && *p.Description != r.Description {
 		return false
 	}

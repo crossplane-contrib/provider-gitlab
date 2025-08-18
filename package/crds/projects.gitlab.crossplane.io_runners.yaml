@@ -4,18 +4,18 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.3
-  name: userrunners.groups.gitlab.crossplane.io
+  name: runners.projects.gitlab.crossplane.io
 spec:
-  group: groups.gitlab.crossplane.io
+  group: projects.gitlab.crossplane.io
   names:
     categories:
     - crossplane
     - managed
     - gitlab
-    kind: UserRunner
-    listKind: UserRunnerList
-    plural: userrunners
-    singular: userrunner
+    kind: Runner
+    listKind: RunnerList
+    plural: runners
+    singular: runner
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -34,28 +34,18 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: |-
-          A UserRunner is a managed resource that represents a GitLab Runner linked to a group.
-          Group runners can execute CI/CD jobs for all projects within the associated group
-          and provide a way to share runner resources across multiple projects.
-
-          IMPORTANT: You MUST specify either writeConnectionSecretToRef or publishConnectionDetailsTo
-          to receive the runner token. Without the token, the runner cannot be registered and is unusable.
-          The token is required to configure the actual GitLab Runner agent.
-
-          Example usage:
-            spec:
-              writeConnectionSecretToRef:
-                name: my-runner-token
-                namespace: default
-
-          When a UserRunner is created, it generates a runner token that must be used
-          to register the actual GitLab Runner agent with the GitLab instance.
-          The runner token is made available through Kubernetes secrets via connection details.
-
-          GitLab API docs:
-          https://docs.gitlab.com/ee/api/users.html#create-a-runner
-          https://docs.gitlab.com/ee/api/runners.html
+        description: "A Runner is a managed resource that represents a GitLab Runner
+          linked to a project.\nProject runners can execute CI/CD jobs exclusively
+          for the associated project\nand provide dedicated runner resources for a
+          single project.\n\nIMPORTANT: You MUST specify either writeConnectionSecretToRef
+          or publishConnectionDetailsTo\nto receive the runner token. Without the
+          token, the runner cannot be registered and is unusable.\nThe token is required
+          to configure the actual GitLab Runner agent.\n\nExample usage:\n\n\tspec:\n\t
+          \ writeConnectionSecretToRef:\n\t    name: my-runner-token\n\t    namespace:
+          default\n\nWhen a Runner is created, it generates a runner token that must
+          be used\nto register the actual GitLab Runner agent with the GitLab instance.\nThe
+          runner token is made available through Kubernetes secrets via connection
+          details.\n\nGitLab API docs:\nhttps://docs.gitlab.com/ee/api/users.html#create-a-runner\nhttps://docs.gitlab.com/ee/api/runners.html"
         properties:
           apiVersion:
             description: |-
@@ -76,9 +66,9 @@ spec:
             type: object
           spec:
             description: |-
-              UserRunnerSpec defines the desired state of a group UserRunner.
+              RunnerSpec defines the desired state of a project Runner.
               This includes the configuration parameters for creating and managing
-              a GitLab Runner linked to a specific group.
+              a GitLab Runner linked to a specific project.
             properties:
               deletionPolicy:
                 default: Delete
@@ -96,9 +86,9 @@ spec:
                 type: string
               forProvider:
                 description: |-
-                  UserRunnerParameters define the desired state of a group UserRunner.
-                  A group UserRunner is a GitLab Runner that is linked to a specific group
-                  and can execute CI/CD jobs for projects within that group.
+                  RunnerParameters define the desired state of a project Runner.
+                  A project Runner is a GitLab Runner that is linked to a specific project
+                  and can execute CI/CD jobs exclusively for that project.
 
                   GitLab API docs:
                   https://docs.gitlab.com/ee/api/users.html#create-a-runner
@@ -117,15 +107,35 @@ spec:
                     description: Description is a human-readable description of the
                       runner.
                     type: string
-                  groupId:
+                  locked:
                     description: |-
-                      GroupID is the ID of the group to register the runner to.
-                      The runner will be available to execute jobs for projects within this group.
+                      Locked indicates whether the runner is locked to the current project/group.
+                      When true, the runner cannot be enabled for other projects/groups.
+                    type: boolean
+                  maintenanceNote:
+                    description: |-
+                      MaintenanceNote is a note that can be set when the runner is in maintenance mode.
+                      This is displayed in the GitLab UI when the runner is offline or paused.
+                    type: string
+                  maximumTimeout:
+                    description: |-
+                      MaximumTimeout is the maximum time (in seconds) that a job can run on this runner.
+                      If a job exceeds this time limit, it will be terminated.
                     type: integer
-                  groupIdRef:
+                  paused:
                     description: |-
-                      GroupIDRef is a reference to a Group resource to retrieve its ID.
-                      This provides a way to reference a group managed by Crossplane.
+                      Paused indicates whether the runner is paused and will not accept new jobs.
+                      When true, the runner will not pick up new jobs but can complete running jobs.
+                    type: boolean
+                  projectId:
+                    description: |-
+                      ProjectID is the ID of the project to register the runner to.
+                      The runner will be available to execute jobs exclusively for this project.
+                    type: integer
+                  projectIdRef:
+                    description: |-
+                      ProjectIDRef is a reference to a Project resource to retrieve its ID.
+                      This provides a way to reference a project managed by Crossplane.
                     properties:
                       name:
                         description: Name of the referenced object.
@@ -158,10 +168,10 @@ spec:
                     required:
                     - name
                     type: object
-                  groupIdSelector:
+                  projectIdSelector:
                     description: |-
-                      GroupIDSelector selects a reference to a Group resource to retrieve its ID.
-                      This provides a way to dynamically select a group based on labels.
+                      ProjectIDSelector selects a reference to a Project resource to retrieve its ID.
+                      This provides a way to dynamically select a project based on labels.
                     properties:
                       matchControllerRef:
                         description: |-
@@ -200,26 +210,6 @@ spec:
                             type: string
                         type: object
                     type: object
-                  locked:
-                    description: |-
-                      Locked indicates whether the runner is locked to the current project/group.
-                      When true, the runner cannot be enabled for other projects/groups.
-                    type: boolean
-                  maintenanceNote:
-                    description: |-
-                      MaintenanceNote is a note that can be set when the runner is in maintenance mode.
-                      This is displayed in the GitLab UI when the runner is offline or paused.
-                    type: string
-                  maximumTimeout:
-                    description: |-
-                      MaximumTimeout is the maximum time (in seconds) that a job can run on this runner.
-                      If a job exceeds this time limit, it will be terminated.
-                    type: integer
-                  paused:
-                    description: |-
-                      Paused indicates whether the runner is paused and will not accept new jobs.
-                      When true, the runner will not pick up new jobs but can complete running jobs.
-                    type: boolean
                   runUntagged:
                     description: |-
                       RunUntagged indicates whether the runner should run jobs without tags.
@@ -402,14 +392,14 @@ spec:
             type: object
           status:
             description: |-
-              UserRunnerStatus represents the observed state of a group UserRunner.
+              RunnerStatus represents the observed state of a project Runner.
               This includes the current status and properties of the runner as
               reported by the GitLab API.
             properties:
               atProvider:
                 description: |-
-                  UserRunnerObservation represents the observed state of a group UserRunner.
-                  This includes the common runner properties as well as group-specific information.
+                  RunnerObservation represents the observed state of a project Runner.
+                  This includes the common runner properties as well as project-specific information.
 
                   GitLab API docs: https://docs.gitlab.com/ee/api/runners.html#get-runners-details
                 properties:
@@ -428,28 +418,6 @@ spec:
                     description: Description is the human-readable description of
                       the runner.
                     type: string
-                  groups:
-                    description: |-
-                      Groups contains the list of groups that this runner is associated with.
-                      For group runners, this typically contains the primary group and any parent groups.
-                    items:
-                      description: |-
-                        RunnerGroup represents a GitLab group associated with a runner.
-                        This structure matches the group information returned by the GitLab API
-                        when retrieving runner details.
-                      properties:
-                        id:
-                          description: ID is the unique identifier of the group.
-                          type: integer
-                        name:
-                          description: Name is the name of the group.
-                          type: string
-                        web_url:
-                          description: WebURL is the web URL to access the group in
-                            the GitLab UI.
-                          type: string
-                      type: object
-                    type: array
                   id:
                     description: ID is the unique identifier of the runner assigned
                       by GitLab.
@@ -487,6 +455,37 @@ spec:
                       Paused indicates whether the runner is currently paused.
                       Paused runners do not accept new jobs but can complete running jobs.
                     type: boolean
+                  projects:
+                    description: |-
+                      Projects contains the list of projects that this runner is associated with.
+                      For project runners, this typically contains only the primary project.
+                    items:
+                      description: |-
+                        RunnerProject represents a GitLab project associated with a runner.
+                        This structure matches the project information returned by the GitLab API
+                        when retrieving runner details.
+                      properties:
+                        id:
+                          description: ID is the unique identifier of the project.
+                          type: integer
+                        name:
+                          description: Name is the name of the project.
+                          type: string
+                        name_with_namespace:
+                          description: |-
+                            NameWithNamespace is the full name of the project including its namespace.
+                            This follows the format "namespace/project-name".
+                          type: string
+                        path:
+                          description: Path is the URL path segment for the project.
+                          type: string
+                        path_with_namespace:
+                          description: |-
+                            PathWithNamespace is the full path of the project including its namespace.
+                            This follows the format "namespace/project-path" and is used in URLs.
+                          type: string
+                      type: object
+                    type: array
                   runUntagged:
                     description: RunUntagged indicates whether the runner accepts
                       jobs without tags.
@@ -518,6 +517,7 @@ spec:
                     type: string
                 required:
                 - id
+                - projects
                 type: object
               conditions:
                 description: Conditions of the resource.

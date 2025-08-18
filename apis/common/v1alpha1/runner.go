@@ -20,12 +20,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// CommonUserRunnerParameters contains common configuration parameters for user runners
+// CommonRunnerParameters contains common configuration parameters for user runners
 // that are shared between group and project runner types.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/users.html#create-a-runner
-type CommonUserRunnerParameters struct {
+type CommonRunnerParameters struct {
 	// Description is a human-readable description of the runner.
 	// +optional
 	Description *string `json:"description,omitempty"`
@@ -69,12 +69,12 @@ type CommonUserRunnerParameters struct {
 	MaintenanceNote *string `json:"maintenanceNote,omitempty"`
 }
 
-// CommonUserRunnerObservation represents the observed state of a user runner
+// CommonRunnerObservation represents the observed state of a user runner
 // that is common between group and project runners.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/runners.html#get-runners-details
-type CommonUserRunnerObservation struct {
+type CommonRunnerObservation struct {
 	// Paused indicates whether the runner is currently paused.
 	// Paused runners do not accept new jobs but can complete running jobs.
 	// +optional

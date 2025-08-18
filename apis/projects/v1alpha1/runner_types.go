@@ -22,13 +22,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// UserRunnerParameters define the desired state of a project UserRunner.
-// A project UserRunner is a GitLab Runner that is linked to a specific project
+// RunnerParameters define the desired state of a project Runner.
+// A project Runner is a GitLab Runner that is linked to a specific project
 // and can execute CI/CD jobs exclusively for that project.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/users.html#create-a-runner
-type UserRunnerParameters struct {
+type RunnerParameters struct {
 	// ProjectID is the ID of the project to register the runner to.
 	// The runner will be available to execute jobs exclusively for this project.
 	// +optional
@@ -47,19 +47,19 @@ type UserRunnerParameters struct {
 	// +immutable
 	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
 
-	// CommonUserRunnerParameters contains the common runner configuration
+	// CommonRunnerParameters contains the common runner configuration
 	// parameters shared between group and project runners.
-	commonv1alpha1.CommonUserRunnerParameters `json:",inline"`
+	commonv1alpha1.CommonRunnerParameters `json:",inline"`
 }
 
-// UserRunnerObservation represents the observed state of a project UserRunner.
+// RunnerObservation represents the observed state of a project Runner.
 // This includes the common runner properties as well as project-specific information.
 //
 // GitLab API docs: https://docs.gitlab.com/ee/api/runners.html#get-runners-details
-type UserRunnerObservation struct {
-	// CommonUserRunnerObservation contains the common observed fields
+type RunnerObservation struct {
+	// CommonRunnerObservation contains the common observed fields
 	// shared between group and project runners.
-	commonv1alpha1.CommonUserRunnerObservation `json:",inline"`
+	commonv1alpha1.CommonRunnerObservation `json:",inline"`
 
 	// Projects contains the list of projects that this runner is associated with.
 	// For project runners, this typically contains only the primary project.
@@ -93,25 +93,25 @@ type RunnerProject struct {
 	PathWithNamespace string `json:"path_with_namespace"`
 }
 
-// UserRunnerSpec defines the desired state of a project UserRunner.
+// RunnerSpec defines the desired state of a project Runner.
 // This includes the configuration parameters for creating and managing
 // a GitLab Runner linked to a specific project.
-type UserRunnerSpec struct {
+type RunnerSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       UserRunnerParameters `json:"forProvider"`
+	ForProvider       RunnerParameters `json:"forProvider"`
 }
 
-// UserRunnerStatus represents the observed state of a project UserRunner.
+// RunnerStatus represents the observed state of a project Runner.
 // This includes the current status and properties of the runner as
 // reported by the GitLab API.
-type UserRunnerStatus struct {
+type RunnerStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          UserRunnerObservation `json:"atProvider,omitempty"`
+	AtProvider          RunnerObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// A UserRunner is a managed resource that represents a GitLab Runner linked to a project.
+// A Runner is a managed resource that represents a GitLab Runner linked to a project.
 // Project runners can execute CI/CD jobs exclusively for the associated project
 // and provide dedicated runner resources for a single project.
 //
@@ -120,12 +120,13 @@ type UserRunnerStatus struct {
 // The token is required to configure the actual GitLab Runner agent.
 //
 // Example usage:
-//   spec:
-//     writeConnectionSecretToRef:
-//       name: my-runner-token
-//       namespace: default
 //
-// When a UserRunner is created, it generates a runner token that must be used
+//	spec:
+//	  writeConnectionSecretToRef:
+//	    name: my-runner-token
+//	    namespace: default
+//
+// When a Runner is created, it generates a runner token that must be used
 // to register the actual GitLab Runner agent with the GitLab instance.
 // The runner token is made available through Kubernetes secrets via connection details.
 //
@@ -138,19 +139,19 @@ type UserRunnerStatus struct {
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".status.atProvider.id"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab}
-type UserRunner struct {
+type Runner struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   UserRunnerSpec   `json:"spec"`
-	Status UserRunnerStatus `json:"status,omitempty"`
+	Spec   RunnerSpec   `json:"spec"`
+	Status RunnerStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// UserRunnerList contains a list of project UserRunner resources.
-type UserRunnerList struct {
+// RunnerList contains a list of project Runner resources.
+type RunnerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []UserRunner `json:"items"`
+	Items           []Runner `json:"items"`
 }

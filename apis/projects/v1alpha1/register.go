@@ -110,10 +110,10 @@ var (
 )
 
 var (
-	UserRunnerKind             = reflect.TypeOf(UserRunner{}).Name()
-	UserRunnerGroupKind        = schema.GroupKind{Group: Group, Kind: UserRunnerKind}.String()
-	UserRunnerKindAPIVersion   = UserRunnerKind + "." + SchemeGroupVersion.String()
-	UserRunnerGroupVersionKind = SchemeGroupVersion.WithKind(UserRunnerKind)
+	RunnerKind             = reflect.TypeOf(Runner{}).Name()
+	RunnerGroupKind        = schema.GroupKind{Group: Group, Kind: RunnerKind}.String()
+	RunnerKindAPIVersion   = RunnerKind + "." + SchemeGroupVersion.String()
+	RunnerGroupVersionKind = SchemeGroupVersion.WithKind(RunnerKind)
 )
 
 func init() {
@@ -126,5 +126,5 @@ func init() {
 	SchemeBuilder.Register(&DeployKey{}, &DeployKeyList{})
 	SchemeBuilder.Register(&AccessToken{}, &AccessTokenList{})
 	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})
-	SchemeBuilder.Register(&UserRunner{}, &UserRunnerList{})
+	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 }
