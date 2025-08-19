@@ -85,6 +85,13 @@ var (
 	VariableGroupVersionKind = SchemeGroupVersion.WithKind(VariableKind)
 )
 
+var (
+	RunnerKind             = reflect.TypeOf(Runner{}).Name()
+	RunnerGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: RunnerKind}.String()
+	RunnerKindAPIVersion   = RunnerKind + "." + SchemeGroupVersion.String()
+	RunnerGroupVersionKind = SchemeGroupVersion.WithKind(RunnerKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Group{}, &GroupList{})
 	SchemeBuilder.Register(&Member{}, &MemberList{})
@@ -92,5 +99,5 @@ func init() {
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
 	SchemeBuilder.Register(&SamlGroupLink{}, &SamlGroupLinkList{})
-
+	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 }
