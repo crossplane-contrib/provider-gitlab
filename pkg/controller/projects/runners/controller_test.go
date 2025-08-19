@@ -65,10 +65,6 @@ func withProjectID() RunnerModifier {
 	return func(r *v1alpha1.Runner) { r.Spec.ForProvider.ProjectID = &projectID }
 }
 
-func withStatus(s v1alpha1.RunnerObservation) RunnerModifier {
-	return func(r *v1alpha1.Runner) { r.Status.AtProvider = s }
-}
-
 func withAnnotations(a map[string]string) RunnerModifier {
 	return func(p *v1alpha1.Runner) { meta.AddAnnotations(p, a) }
 }

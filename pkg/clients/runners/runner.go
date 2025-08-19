@@ -25,7 +25,6 @@ import (
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
-
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 
@@ -115,7 +114,7 @@ func GenerateProjectRunnerObservation(runner *gitlab.RunnerDetails) projectsv1al
 
 // GenerateObservation is used to produce v1alpha1.RunnerObservation from
 // gitlab.Runners.
-func generateCommonRunnerObservation(runner *gitlab.RunnerDetails) commonv1alpha1.CommonRunnerObservation { //nolint:gocyclo
+func generateCommonRunnerObservation(runner *gitlab.RunnerDetails) commonv1alpha1.CommonRunnerObservation {
 	if runner == nil {
 		return commonv1alpha1.CommonRunnerObservation{}
 	}

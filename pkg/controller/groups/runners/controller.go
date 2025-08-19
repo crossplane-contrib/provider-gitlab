@@ -268,7 +268,7 @@ func (e *external) Disconnect(ctx context.Context) error {
 	return nil
 }
 
-func isRunnerUpToDate(p *v1alpha1.RunnerParameters, r *gitlab.RunnerDetails) bool {
+func isRunnerUpToDate(p *v1alpha1.RunnerParameters, r *gitlab.RunnerDetails) bool { //nolint:gocyclo
 	if p.Description != nil && *p.Description != r.Description {
 		return false
 	}
@@ -281,7 +281,7 @@ func isRunnerUpToDate(p *v1alpha1.RunnerParameters, r *gitlab.RunnerDetails) boo
 	if p.RunUntagged != nil && *p.RunUntagged != r.RunUntagged {
 		return false
 	}
-	if p.TagList != nil && slices.Equal(*p.TagList, r.TagList) == false {
+	if p.TagList != nil && !slices.Equal(*p.TagList, r.TagList) {
 		return false
 	}
 	if p.AccessLevel != nil && *p.AccessLevel != r.AccessLevel {

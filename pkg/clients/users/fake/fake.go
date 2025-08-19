@@ -17,8 +17,9 @@ limitations under the License.
 package fake
 
 import (
-	users "github.com/crossplane-contrib/provider-gitlab/pkg/clients/users"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+
+	users "github.com/crossplane-contrib/provider-gitlab/pkg/clients/users"
 )
 
 var _ users.UserClient = &MockClient{}

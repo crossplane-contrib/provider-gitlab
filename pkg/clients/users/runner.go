@@ -19,11 +19,10 @@ package users
 import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
-
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 
 var (
