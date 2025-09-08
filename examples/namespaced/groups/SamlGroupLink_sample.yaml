@@ -1,0 +1,29 @@
+apiVersion: groups.gitlab.m.crossplane.io/v1alpha1
+kind: SamlGroupLink
+metadata:
+  namespace: example-namespace
+spec:
+  forProvider:
+    accessLevel: 10
+    groupId: 10
+    groupIdRef:
+      name: string
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    groupIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    memberRoleId: 1
+    name: "my-saml-group"
+  managementPolicies: ["*"]
+  providerConfigRef:
+    kind: string
+    name: string
+  writeConnectionSecretToRef:
+    name: string

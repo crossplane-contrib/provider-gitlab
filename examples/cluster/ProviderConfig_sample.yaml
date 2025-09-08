@@ -1,0 +1,18 @@
+apiVersion: gitlab.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: example-providerconfig
+spec:
+  baseURL: https://gitlab.example.com
+  credentials:
+    env:
+      name: GITLAB_TOKEN
+    fs:
+      path: /etc/gitlab/token
+    method: PersonalAccessToken
+    secretRef:
+      key: token
+      name: gitlab-credentials
+      namespace: crossplane-system
+    source: "Secret" # "None", "Secret", "InjectedIdentity", "Environment", "Filesystem"
+  insecureSkipVerify: true

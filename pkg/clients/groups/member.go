@@ -19,9 +19,9 @@ package groups
 import (
 	"strings"
 
-	"gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/shared/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 

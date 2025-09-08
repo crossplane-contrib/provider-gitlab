@@ -1,0 +1,43 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Hook
+metadata:
+  namespace: example-namespace
+spec:
+  forProvider:
+    confidentialIssuesEvents: true
+    confidentialNoteEvents: true
+    enableSslVerification: true
+    issuesEvents: true
+    jobEvents: true
+    mergeRequestsEvents: true
+    noteEvents: true
+    pipelineEvents: true
+    projectId: 1
+    projectIdRef:
+      name: string
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    projectIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    pushEvents: true
+    pushEventsBranch_filter: string
+    tagPushEvents: true
+    token:
+      secretRef:
+        key: string
+        name: string
+    url: "https://example.project.url/hook"
+    wikiPageEvents: true
+  managementPolicies: ["*"]
+  providerConfigRef:
+    kind: string
+    name: string
+  writeConnectionSecretToRef:
+    name: string

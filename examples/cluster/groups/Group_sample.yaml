@@ -1,0 +1,64 @@
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Group
+metadata:
+  name: example-group
+spec:
+  deletionPolicy: "Delete"
+  forProvider:
+    autoDevopsEnabled: true
+    description: "example group description"
+    emailsDisabled: true
+    emailsEnabled: true
+    extraSharedRunnersMinutesLimit: 1
+    fullPathToRemove: string
+    lfsEnabled: true
+    membershipLock: true
+    mentionsDisabled: true
+    name: "Example Group"
+    parentId: 9
+    parentIdRef:
+      name: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    parentIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    path: "example-group-path"
+    permanentlyRemove: true
+    projectCreationLevel: string
+    removeFinalizerOnPendingDeletion: true
+    requestAccessEnabled: true
+    requireTwoFactorAuthentication: true
+    shareWithGroupLock: true
+    sharedRunnersMinutesLimit: 1
+    sharedWithGroups:
+      - expiresAt: 2024-10-11T12:48:44Z
+        groupAccessLevel: 30
+        groupId: 10
+        groupIdRef:
+          name: string
+          policy:
+            resolution: "Required"
+            resolve: "Always" # "Always", "IfNotPresent"
+        groupIdSelector:
+          matchControllerRef: true
+          matchLabels: {}
+          policy:
+            resolution: "Required"
+            resolve: "Always" # "Always", "IfNotPresent"
+    subgroupCreationLevel: string
+    twoFactorGracePeriod: 1
+    visibility: "internal"
+  managementPolicies: ["*"]
+  providerConfigRef:
+    name: string
+    policy:
+      resolution: "Required"
+      resolve: "Always" # "Always", "IfNotPresent"
+  writeConnectionSecretToRef:
+    name: string
+    namespace: string

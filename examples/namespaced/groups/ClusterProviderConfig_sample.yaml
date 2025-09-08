@@ -1,0 +1,17 @@
+apiVersion: gitlab.m.crossplane.io/v1beta1
+kind: ClusterProviderConfig
+metadata:
+  namespace: example-namespace
+spec:
+  baseURL: "https://gitlab.example.com"
+  credentials:
+    env:
+      name: string
+    fs:
+      path: string
+    method: "PersonalAccessToken"
+    secretRef:
+      key: string
+      name: string
+      namespace: string
+    source: "None" # "None", "Secret", "InjectedIdentity", "Environment", "Filesystem"

@@ -9,8 +9,8 @@ PLATFORMS ?= linux_amd64 linux_arm64
 # kind-related versions
 KIND_VERSION = v0.24.0
 
-# upgraded golangci-lint to Go 1.24 compatible version
-GOLANGCILINT_VERSION = 1.64.8
+# upgraded golangci-lint to Go 1.25 compatible version
+GOLANGCILINT_VERSION = 2.5.0
 
 # -include will silently skip missing files, which allows us
 # to load those files with a target in the Makefile. If only
@@ -88,6 +88,44 @@ local-deploy: build controlplane.up local.xpkg.deploy.provider.$(PROJECT_NAME)
 e2e: local-deploy
 
 # ====================================================================================
+# Testing
+
+# Environment variables for tests
+GITLAB_TOKEN ?= 
+GITLAB_BASE_URL ?= https://gitlab.com
+
+# Generate SSH key for tests
+define generate_ssh_key
+$(shell ssh-keygen -t ecdsa -b 256 -f /tmp/temp_key -N "" -C "just a test" >/dev/null 2>&1 && cat /tmp/temp_key.pub && rm /tmp/temp_key /tmp/temp_key.pub)
+endef
+
+# Test namespaced resources
+test-namespaced:
+	@$(INFO) Running chainsaw tests for namespaced resources
+	@chainsaw test --test-dir test/namespaced --namespace chainsaw --values - <<EOF
+	token: $(GITLAB_TOKEN)
+	baseUrl: $(GITLAB_BASE_URL)
+	key: $(call generate_ssh_key)
+	EOF
+
+# Test cluster-scoped resources  
+test-cluster:
+	@$(INFO) Running chainsaw tests for cluster-scoped resources
+	@chainsaw test --test-dir test/cluster --values - <<EOF
+	token: $(GITLAB_TOKEN)
+	baseUrl: $(GITLAB_BASE_URL)
+	key: $(call generate_ssh_key)
+	EOF
+
+# Run all chainsaw tests
+test-chainsaw: test-namespaced test-cluster
+
+# Generate examples from CRDs
+gen-examples:
+	@$(INFO) Generating examples from CRDs
+	@hack/gen-examples.sh
+
+# ====================================================================================
 # Targets
 
 # run `make help` to see the targets and options
@@ -148,6 +186,14 @@ Crossplane Targets:
     cobertura             Generate a coverage report for cobertura applying exclusions on generated files.
     submodules            Update the submodules, such as the common build scripts.
     run                   Run crossplane locally, out-of-cluster. Useful for development.
+
+Testing Targets:
+    test-namespaced       Run chainsaw tests for namespaced resources (requires GITLAB_TOKEN and GITLAB_BASE_URL env vars).
+    test-cluster          Run chainsaw tests for cluster-scoped resources (requires GITLAB_TOKEN and GITLAB_BASE_URL env vars).
+    test-chainsaw         Run all chainsaw tests (requires GITLAB_TOKEN and GITLAB_BASE_URL env vars).
+
+Generation Targets:
+    gen-examples          Generate examples from CRDs using hack/gen-examples.sh script.
 
 endef
 # The reason CROSSPLANE_MAKE_HELP is used instead of CROSSPLANE_HELP is because the crossplane

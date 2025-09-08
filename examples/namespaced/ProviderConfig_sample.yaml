@@ -1,0 +1,14 @@
+apiVersion: gitlab.m.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+  namespace: example-namespace
+spec:
+  baseURL: https://gitlab.example.com
+  credentials:
+    method: PersonalAccessToken
+    secretRef:
+      key: token
+      name: gitlab-credentials
+      namespace: example-namespace
+    source: "Secret"

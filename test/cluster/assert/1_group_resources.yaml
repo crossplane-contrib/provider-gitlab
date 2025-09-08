@@ -1,0 +1,83 @@
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Group
+metadata:
+  name: group-a
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Group
+metadata:
+  name: group-b
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Group
+metadata:
+  name: group-c
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: AccessToken
+metadata:
+  name: test-group-accesstoken-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: DeployToken
+metadata:
+  name: test-group-deploytoken-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Member
+metadata:
+  name: test-group-member-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Variable
+metadata:
+  name: test-group-variable-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available

@@ -1,0 +1,14 @@
+apiVersion: gitlab.crossplane.io/v1beta1
+kind: ProviderConfigUsage
+metadata:
+  name: example-providerconfigusage
+providerConfigRef:
+  name: gitlab-provider-config
+  policy:
+    resolution: "Required"
+    resolve: "Always" # "Always", "IfNotPresent"
+resourceRef:
+  apiVersion: projects.gitlab.crossplane.io/v1alpha1
+  kind: Project
+  name: my-project
+  uid: a1b2c3d4-e5f6-7890-abcd-ef1234567890

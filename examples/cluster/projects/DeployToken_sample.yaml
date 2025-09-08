@@ -1,0 +1,31 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: DeployToken
+metadata:
+  name: example-deploytoken
+spec:
+  deletionPolicy: "Delete"
+  forProvider:
+    expiresAt: 2024-10-11T12:48:44Z
+    projectId: 1
+    projectIdRef:
+      name: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    projectIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    scopes: ["read_repository", "read_registry", "write_registry", "read_package_registry", "write_package_registry"]
+    username: "deploy-token-user"
+  managementPolicies: ["*"]
+  providerConfigRef:
+    name: string
+    policy:
+      resolution: "Required"
+      resolve: "Always" # "Always", "IfNotPresent"
+  writeConnectionSecretToRef:
+    name: string
+    namespace: string

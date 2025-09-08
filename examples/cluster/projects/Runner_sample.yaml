@@ -1,0 +1,36 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: Runner
+metadata:
+  name: example-runner
+spec:
+  deletionPolicy: "Delete"
+  forProvider:
+    accessLevel: "not_protected"
+    description: "Docker runner for CI/CD"
+    locked: true
+    maintenanceNote: "Scheduled maintenance on weekends"
+    maximumTimeout: 3600
+    paused: true
+    projectId: 1
+    projectIdRef:
+      name: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    projectIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    runUntagged: true
+    tagList: ["docker", "linux"]
+  managementPolicies: ["*"]
+  providerConfigRef:
+    name: string
+    policy:
+      resolution: "Required"
+      resolve: "Always" # "Always", "IfNotPresent"
+  writeConnectionSecretToRef:
+    name: string
+    namespace: string

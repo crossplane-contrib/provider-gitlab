@@ -1,0 +1,36 @@
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Runner
+metadata:
+  name: example-runner
+spec:
+  deletionPolicy: "Delete"
+  forProvider:
+    accessLevel: "not_protected"
+    description: "Docker runner for CI/CD"
+    groupId: 1
+    groupIdRef:
+      name: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    groupIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    locked: true
+    maintenanceNote: "Scheduled maintenance on weekends"
+    maximumTimeout: 3600
+    paused: true
+    runUntagged: true
+    tagList: ["docker", "linux"]
+  managementPolicies: ["*"]
+  providerConfigRef:
+    name: string
+    policy:
+      resolution: "Required"
+      resolve: "Always" # "Always", "IfNotPresent"
+  writeConnectionSecretToRef:
+    name: string
+    namespace: string

@@ -17,27 +17,19 @@ limitations under the License.
 package clients
 
 import (
-	"context"
 	"crypto/tls"
 	"encoding/json"
 	"net/http"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"golang.org/x/oauth2"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/ptr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitlab/apis/v1beta1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/shared"
+	sharedProjectsV1Alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/shared/projects/v1alpha1"
 )
 
 // BasicAuth is the expected struct that can be passed in the Config.Token field to add support for BasicAuth AuthMethod
@@ -51,7 +43,7 @@ type Config struct {
 	Token              string
 	BaseURL            string
 	InsecureSkipVerify bool
-	AuthMethod         v1beta1.AuthType
+	AuthMethod         shared.UnifiedAuthType
 }
 
 // NewClient creates new Gitlab Client with provided Gitlab Configurations/Credentials.
@@ -77,18 +69,18 @@ func NewClient(c Config) *gitlab.Client {
 	}
 
 	switch c.AuthMethod {
-	case v1beta1.BasicAuth:
+	case shared.UnifiedBasicAuth:
 		ba := &BasicAuth{}
 		if err = json.Unmarshal([]byte(c.Token), ba); err != nil {
 			panic(err)
 		}
 		cl, err = gitlab.NewBasicAuthClient(ba.Username, ba.Password, options...) //nolint:staticcheck
-	case v1beta1.JobToken:
+	case shared.UnifiedJobToken:
 		cl, err = gitlab.NewJobClient(c.Token, options...)
-	case v1beta1.OAuthToken:
+	case shared.UnifiedOAuthToken:
 		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: c.Token})
 		cl, err = gitlab.NewAuthSourceClient(gitlab.OAuthTokenSource{TokenSource: ts}, options...)
-	case v1beta1.PersonalAccessToken:
+	case shared.UnifiedPersonalAccessToken:
 		cl, err = gitlab.NewClient(c.Token, options...)
 	default:
 		cl, err = gitlab.NewClient(c.Token, options...)
@@ -98,50 +90,6 @@ func NewClient(c Config) *gitlab.Client {
 	}
 
 	return cl
-}
-
-// GetConfig constructs a Config that can be used to authenticate to Gitlab
-// API by the Gitlab Go client
-func GetConfig(ctx context.Context, c client.Client, mg resource.Managed) (*Config, error) {
-	switch {
-	case mg.GetProviderConfigReference() != nil:
-		return UseProviderConfig(ctx, c, mg)
-	default:
-		return nil, errors.New("providerConfigRef is not given")
-	}
-}
-
-// UseProviderConfig to produce a config that can be used to authenticate to Gitlab.
-func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed) (*Config, error) {
-	pc := &v1beta1.ProviderConfig{}
-	if err := c.Get(ctx, types.NamespacedName{Name: mg.GetProviderConfigReference().Name}, pc); err != nil {
-		return nil, errors.Wrap(err, "cannot get referenced Provider")
-	}
-
-	t := resource.NewProviderConfigUsageTracker(c, &v1beta1.ProviderConfigUsage{})
-	if err := t.Track(ctx, mg); err != nil {
-		return nil, errors.Wrap(err, "cannot track ProviderConfig usage")
-	}
-
-	switch s := pc.Spec.Credentials.Source; s { //nolint:exhaustive
-	case xpv1.CredentialsSourceSecret:
-		csr := pc.Spec.Credentials.SecretRef
-		if csr == nil {
-			return nil, errors.New("no credentials secret referenced")
-		}
-		s := &corev1.Secret{}
-		if err := c.Get(ctx, types.NamespacedName{Namespace: csr.Namespace, Name: csr.Name}, s); err != nil {
-			return nil, errors.Wrap(err, "cannot get credentials secret")
-		}
-		return &Config{
-			BaseURL:            pc.Spec.BaseURL,
-			Token:              string(s.Data[csr.Key]),
-			InsecureSkipVerify: ptr.Deref(pc.Spec.InsecureSkipVerify, false),
-			AuthMethod:         pc.Spec.Credentials.Method,
-		}, nil
-	default:
-		return nil, errors.Errorf("credentials source %s is not currently supported", s)
-	}
 }
 
 // LateInitialize return in if not nil or from.
@@ -178,33 +126,33 @@ func LateInitializeStringPtr(in *string, from string) *string {
 
 // LateInitializeAccessControlValue returns in if it's non-nil, otherwise returns from
 // which is the backup for the cases in is nil.
-func LateInitializeAccessControlValue(in *v1alpha1.AccessControlValue, from gitlab.AccessControlValue) *v1alpha1.AccessControlValue {
+func LateInitializeAccessControlValue(in *sharedProjectsV1Alpha1.AccessControlValue, from gitlab.AccessControlValue) *sharedProjectsV1Alpha1.AccessControlValue {
 	if in == nil && from != "" {
-		return (*v1alpha1.AccessControlValue)(&from)
+		return (*sharedProjectsV1Alpha1.AccessControlValue)(&from)
 	}
 	return in
 }
 
 // LateInitializeVisibilityValue returns in if it's non-nil, otherwise returns from
 // which is the backup for the cases in is nil.
-func LateInitializeVisibilityValue(in *v1alpha1.VisibilityValue, from gitlab.VisibilityValue) *v1alpha1.VisibilityValue {
+func LateInitializeVisibilityValue(in *sharedProjectsV1Alpha1.VisibilityValue, from gitlab.VisibilityValue) *sharedProjectsV1Alpha1.VisibilityValue {
 	if in == nil && from != "" {
-		return (*v1alpha1.VisibilityValue)(&from)
+		return (*sharedProjectsV1Alpha1.VisibilityValue)(&from)
 	}
 	return in
 }
 
 // LateInitializeMergeMethodValue returns in if it's non-nil, otherwise returns from
 // which is the backup for the cases in is nil.
-func LateInitializeMergeMethodValue(in *v1alpha1.MergeMethodValue, from gitlab.MergeMethodValue) *v1alpha1.MergeMethodValue {
+func LateInitializeMergeMethodValue(in *sharedProjectsV1Alpha1.MergeMethodValue, from gitlab.MergeMethodValue) *sharedProjectsV1Alpha1.MergeMethodValue {
 	if in == nil && from != "" {
-		return (*v1alpha1.MergeMethodValue)(&from)
+		return (*sharedProjectsV1Alpha1.MergeMethodValue)(&from)
 	}
 	return in
 }
 
 // VisibilityValueV1alpha1ToGitlab converts *v1alpha1.VisibilityValue to *gitlab.VisibilityValue
-func VisibilityValueV1alpha1ToGitlab(from *v1alpha1.VisibilityValue) *gitlab.VisibilityValue {
+func VisibilityValueV1alpha1ToGitlab(from *sharedProjectsV1Alpha1.VisibilityValue) *gitlab.VisibilityValue {
 	return (*gitlab.VisibilityValue)(from)
 }
 
@@ -214,12 +162,12 @@ func VisibilityValueStringToGitlab(from string) *gitlab.VisibilityValue {
 }
 
 // AccessControlValueV1alpha1ToGitlab converts *v1alpha1.AccessControlValue to *gitlab.AccessControlValue
-func AccessControlValueV1alpha1ToGitlab(from *v1alpha1.AccessControlValue) *gitlab.AccessControlValue {
+func AccessControlValueV1alpha1ToGitlab(from *sharedProjectsV1Alpha1.AccessControlValue) *gitlab.AccessControlValue {
 	return (*gitlab.AccessControlValue)(from)
 }
 
 // ContainerExpirationPolicyAttributesV1alpha1ToGitlab converts *v1alpha1.ContainerExpirationPolicyAttributes to *gitlab.ContainerExpirationPolicyAttributes
-func ContainerExpirationPolicyAttributesV1alpha1ToGitlab(from *v1alpha1.ContainerExpirationPolicyAttributes) *gitlab.ContainerExpirationPolicyAttributes {
+func ContainerExpirationPolicyAttributesV1alpha1ToGitlab(from *sharedProjectsV1Alpha1.ContainerExpirationPolicyAttributes) *gitlab.ContainerExpirationPolicyAttributes {
 	return (*gitlab.ContainerExpirationPolicyAttributes)(from)
 }
 
@@ -229,7 +177,7 @@ func AccessControlValueStringToGitlab(from string) *gitlab.AccessControlValue {
 }
 
 // MergeMethodV1alpha1ToGitlab converts *v1alpha1.MergeMethodValue to *gitlab.MergeMethodValue
-func MergeMethodV1alpha1ToGitlab(from *v1alpha1.MergeMethodValue) *gitlab.MergeMethodValue {
+func MergeMethodV1alpha1ToGitlab(from *sharedProjectsV1Alpha1.MergeMethodValue) *gitlab.MergeMethodValue {
 	return (*gitlab.MergeMethodValue)(from)
 }
 

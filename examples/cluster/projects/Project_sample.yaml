@@ -1,0 +1,110 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: Project
+metadata:
+  name: example-project
+spec:
+  deletionPolicy: "Delete"
+  forProvider:
+    allowMergeOnSkippedPipeline: true
+    approvalsBeforeMerge: 1
+    autoCancelPendingPipelines: string
+    autoDevopsDeployStrategy: string
+    autoDevopsEnabled: true
+    autocloseReferencedIssues: true
+    buildCoverageRegex: string
+    buildGitStrategy: string
+    buildTimeout: 1
+    buildsAccessLevel: string
+    ciConfigPath: string
+    ciDefaultGitDepth: 1
+    ciForwardDeploymentEnabled: true
+    containerExpirationPolicyAttributes:
+      cadence: string
+      enabled: true
+      keepN: 1
+      nameRegexDelete: string
+      nameRegexKeep: string
+      name_regex: string
+      olderThan: string
+    containerRegistryAccessLevel: string
+    containerRegistryEnabled: true
+    defaultBranch: string
+    description: "example project description"
+    emailsDisabled: true
+    externalAuthorizationClassificationLabel: string
+    forkingAccessLevel: string
+    groupWithProjectTemplatesId: 1
+    importUrl: string
+    initializeWithReadme: true
+    issuesAccessLevel: string
+    issuesTemplate: string
+    lfsEnabled: true
+    mergeMethod: string
+    mergeRequestsAccessLevel: string
+    mergeRequestsTemplate: string
+    mirror: true
+    mirrorOverwritesDivergedBranches: true
+    mirrorTriggerBuilds: true
+    mirrorUserId: 1
+    name: "Example Project"
+    namespaceId: 1
+    namespaceIdRef:
+      name: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    namespaceIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    onlyAllowMergeIfAllDiscussionsAreResolved: true
+    onlyAllowMergeIfPipelineSucceeds: true
+    onlyMirrorProtectedBranches: true
+    operationsAccessLevel: string
+    packagesEnabled: true
+    pagesAccessLevel: string
+    path: string
+    permanentlyRemove: true
+    printingMergeRequestLinkEnabled: true
+    publicBuilds: true
+    pushRules:
+      authorEmailRegex: string
+      branchNameRegex: string
+      commitCommitterCheck: true
+      commitCommitterNameCheck: true
+      commitMessageNegativeRegex: string
+      commitMessageRegex: string
+      denyDeleteTag: true
+      fileNameRegex: string
+      maxFileSize: 1
+      memberCheck: true
+      preventSecrets: true
+      rejectNonDcoCommits: true
+      rejectUnsignedCommits: true
+    removeFinalizerOnPendingDeletion: true
+    removeSourceBranchAfterMerge: true
+    repositoryAccessLevel: string
+    requestAccessEnabled: true
+    resolveOutdatedDiffDiscussions: true
+    serviceDeskEnabled: true
+    sharedRunnersEnabled: true
+    snippetsAccessLevel: string
+    suggestionCommitMessage: string
+    tagList: [] # minItems 0 of type string
+    templateName: string
+    templateProjectId: 1
+    topics: [] # minItems 0 of type string
+    useCustomTemplate: true
+    visibility: "private"
+    wikiAccessLevel: string
+  managementPolicies: ["*"]
+  providerConfigRef:
+    name: string
+    policy:
+      resolution: "Required"
+      resolve: "Always" # "Always", "IfNotPresent"
+  writeConnectionSecretToRef:
+    name: string
+    namespace: string

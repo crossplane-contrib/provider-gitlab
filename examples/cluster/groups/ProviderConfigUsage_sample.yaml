@@ -1,0 +1,14 @@
+apiVersion: gitlab.crossplane.io/v1beta1
+kind: ProviderConfigUsage
+metadata:
+  name: example-providerconfigusage
+providerConfigRef:
+  name: string
+  policy:
+    resolution: "Required"
+    resolve: "Always" # "Always", "IfNotPresent"
+resourceRef:
+  apiVersion: gitlab.crossplane.io/v1beta1
+  kind: string
+  name: string
+  uid: string

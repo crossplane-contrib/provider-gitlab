@@ -21,16 +21,16 @@ import (
 	"testing"
 	"time"
 
-	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/errors"
-	"github.com/crossplane/crossplane-runtime/pkg/test"
+	v1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	"github.com/google/go-cmp/cmp"
-	"gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/shared/projects/v1alpha1"
 )
 
 var (
@@ -47,13 +47,11 @@ var (
 	pipelineEvents           = true
 	wikiPageEvents           = true
 	enableSSLVerification    = true
-	token                    = v1alpha1.Token{
-		SecretRef: &v1.SecretKeySelector{
-			Key: "token", SecretReference: v1.SecretReference{Name: "test", Namespace: "test"},
-		},
-	}
 
 	tokenValue = "84B9C651-9025-47D2-9124-DD951BD268E8"
+	tokenRef   = &v1.SecretKeySelector{
+		Key: "token", SecretReference: v1.SecretReference{Name: "test", Namespace: "test"},
+	}
 )
 
 func TestGenerateHookObservation(t *testing.T) {
@@ -166,7 +164,7 @@ func TestGenerateCreateHookOptions(t *testing.T) {
 					PipelineEvents:           &pipelineEvents,
 					WikiPageEvents:           &wikiPageEvents,
 					EnableSSLVerification:    &enableSSLVerification,
-					Token:                    &token},
+				},
 				secret: &corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
 					Data: map[string][]byte{
@@ -200,7 +198,6 @@ func TestGenerateCreateHookOptions(t *testing.T) {
 					PushEvents:             &pushEvents,
 					PushEventsBranchFilter: &pushEventsBranchFilter,
 					IssuesEvents:           &issuesEvents,
-					Token:                  &token,
 				},
 				secret: &corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
@@ -225,7 +222,6 @@ func TestGenerateCreateHookOptions(t *testing.T) {
 					PushEvents:             &pushEvents,
 					PushEventsBranchFilter: &pushEventsBranchFilter,
 					IssuesEvents:           &issuesEvents,
-					Token:                  &token,
 				},
 				secret: &corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{Namespace: "other", Name: "other"},
@@ -245,7 +241,6 @@ func TestGenerateCreateHookOptions(t *testing.T) {
 					PushEvents:             &pushEvents,
 					PushEventsBranchFilter: &pushEventsBranchFilter,
 					IssuesEvents:           &issuesEvents,
-					Token:                  &token,
 				},
 				secret: &corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
@@ -265,7 +260,7 @@ func TestGenerateCreateHookOptions(t *testing.T) {
 
 			client := fake.NewClientBuilder().WithObjects(tc.args.secret).Build()
 
-			got, err := GenerateCreateHookOptions(tc.args.parameters, client, context.Background())
+			got, err := GenerateCreateHookOptions(tc.args.parameters, tokenRef, client, context.Background())
 			if err != nil && tc.want.err != nil {
 				if diff := cmp.Diff(tc.want.err.Error(), err.Error(), test.EquateErrors()); diff != "" {
 					t.Errorf("r: -want, +got:\n%s", diff)
@@ -301,7 +296,6 @@ func TestGenerateEditHookOptions(t *testing.T) {
 					PipelineEvents:           &pipelineEvents,
 					WikiPageEvents:           &wikiPageEvents,
 					EnableSSLVerification:    &enableSSLVerification,
-					Token:                    &token,
 				},
 			},
 			want: &gitlab.EditProjectHookOptions{
@@ -331,7 +325,7 @@ func TestGenerateEditHookOptions(t *testing.T) {
 				},
 			}
 			client := fake.NewClientBuilder().WithObjects(secret).Build()
-			got, _ := GenerateEditHookOptions(tc.args.parameters, client, context.Background())
+			got, _ := GenerateEditHookOptions(tc.args.parameters, tokenRef, client, context.Background())
 
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
@@ -365,7 +359,6 @@ func TestIsHookUpToDate(t *testing.T) {
 					PipelineEvents:           &pipelineEvents,
 					WikiPageEvents:           &wikiPageEvents,
 					EnableSSLVerification:    &enableSSLVerification,
-					Token:                    &token,
 				},
 				projecthook: &gitlab.ProjectHook{
 					URL:                      url,
@@ -401,7 +394,6 @@ func TestIsHookUpToDate(t *testing.T) {
 					PipelineEvents:           &pipelineEvents,
 					WikiPageEvents:           &wikiPageEvents,
 					EnableSSLVerification:    &enableSSLVerification,
-					Token:                    &token,
 				},
 				projecthook: &gitlab.ProjectHook{
 					URL:                      "http://some.other.url",

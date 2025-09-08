@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: cluster-resources
+spec:
+  description: Test all cluster-scoped GitLab resources with cascading dependencies
+  timeouts:
+    apply: 2m
+    assert: 1m
+    cleanup: 2m
+  steps:
+    - name: prerequisites
+      try:
+        - apply:
+            file: ../../package/crds/*
+        - apply:
+            file: setup/0_prerequisites.yaml
+    - name: providerconfigs
+      try:
+        - apply:
+            file: apply/0_providerconfig.yaml
+    - name: test-group-resources
+      try:
+        - apply:
+            file: apply/1_group_resources.yaml
+        - assert:
+            file: assert/1_group_resources.yaml
+    - name: test-project-resources
+      try:
+        - apply:
+            file: apply/2_project_resources.yaml
+        - assert:
+            file: assert/2_project_resources.yaml

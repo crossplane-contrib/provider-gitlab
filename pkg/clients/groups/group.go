@@ -23,7 +23,7 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/shared/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 

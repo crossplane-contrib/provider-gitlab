@@ -1,0 +1,36 @@
+apiVersion: groups.gitlab.m.crossplane.io/v1alpha1
+kind: Variable
+metadata:
+  namespace: example-namespace
+spec:
+  forProvider:
+    environmentScope: string
+    groupId: 10
+    groupIdRef:
+      name: string
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    groupIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    key: "AWS_ROLE_ARN"
+    masked: true
+    protected: true
+    raw: true
+    value: "arn:aws:iam::999999999:role/my-deploy-role"
+    valueSecretRef:
+      key: string
+      name: string
+    variableType: "file"
+  managementPolicies: ["*"]
+  providerConfigRef:
+    kind: string
+    name: string
+  writeConnectionSecretToRef:
+    name: string

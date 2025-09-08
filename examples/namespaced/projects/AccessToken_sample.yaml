@@ -1,0 +1,30 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: AccessToken
+metadata:
+  namespace: example-namespace
+spec:
+  forProvider:
+    accessLevel: 30
+    expiresAt: 2024-10-11T12:48:44Z
+    name: "ci-cd-token"
+    projectId: 1
+    projectIdRef:
+      name: string
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    projectIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    scopes: ["read_repository", "read_registry", "write_registry", "read_package_registry", "write_package_registry"]
+  managementPolicies: ["*"]
+  providerConfigRef:
+    kind: string
+    name: string
+  writeConnectionSecretToRef:
+    name: string

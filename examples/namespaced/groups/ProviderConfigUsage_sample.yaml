@@ -1,0 +1,12 @@
+apiVersion: gitlab.m.crossplane.io/v1beta1
+kind: ProviderConfigUsage
+metadata:
+  namespace: example-namespace
+providerConfigRef:
+  kind: string
+  name: string
+resourceRef:
+  apiVersion: gitlab.m.crossplane.io/v1beta1
+  kind: string
+  name: string
+  uid: string

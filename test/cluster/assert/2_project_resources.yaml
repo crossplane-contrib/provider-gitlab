@@ -1,0 +1,95 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: Project
+metadata:
+  name: test-project-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: AccessToken
+metadata:
+  name: test-project-accesstoken-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: Variable
+metadata:
+  name: test-project-variable-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: DeployToken
+metadata:
+  name: test-project-deploytoken-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: Runner
+metadata:
+  name: test-project-runner-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: Member
+metadata:
+  name: test-project-member-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: Hook
+metadata:
+  name: test-project-hook-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available
+---
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: DeployKey
+metadata:
+  name: test-project-deploykey-1
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'
+    reason: ReconcileSuccess
+  (conditions[?type == 'Ready']):
+  - status: 'True'
+    reason: Available

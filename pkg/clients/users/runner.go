@@ -19,9 +19,9 @@ package users
 import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
-	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
-	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/groups/v1alpha1"
-	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/shared/common/v1alpha1"
+	sharedGroupsV1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/shared/groups/v1alpha1"
+	sharedProjectsV1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/shared/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 
@@ -42,7 +42,7 @@ func NewRunnerClient(cfg clients.Config) RunnerClient {
 }
 
 // GenerateGroupRunnerOptions generates user runner creation options for a runner linked to a group
-func GenerateGroupRunnerOptions(p *groupsv1alpha1.RunnerParameters) *gitlab.CreateUserRunnerOptions {
+func GenerateGroupRunnerOptions(p *sharedGroupsV1alpha1.RunnerParameters) *gitlab.CreateUserRunnerOptions {
 	opts := generateCommonRunnerOptions(&p.CommonRunnerParameters)
 
 	if p.GroupID != nil {
@@ -55,7 +55,7 @@ func GenerateGroupRunnerOptions(p *groupsv1alpha1.RunnerParameters) *gitlab.Crea
 }
 
 // GenerateProjectRunnerOptions generates user runner creation options for a runner linked to a project
-func GenerateProjectRunnerOptions(p *projectsv1alpha1.RunnerParameters) *gitlab.CreateUserRunnerOptions {
+func GenerateProjectRunnerOptions(p *sharedProjectsV1alpha1.RunnerParameters) *gitlab.CreateUserRunnerOptions {
 	opts := generateCommonRunnerOptions(&p.CommonRunnerParameters)
 
 	if p.ProjectID != nil {

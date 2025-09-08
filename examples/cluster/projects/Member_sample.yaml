@@ -1,0 +1,32 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: Member
+metadata:
+  name: example-member
+spec:
+  deletionPolicy: "Delete"
+  forProvider:
+    accessLevel: 30
+    expiresAt: "2024-12-31"
+    projectId: 1
+    projectIdRef:
+      name: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    projectIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    userID: 123
+    userName: "john.doe"
+  managementPolicies: ["*"]
+  providerConfigRef:
+    name: string
+    policy:
+      resolution: "Required"
+      resolve: "Always" # "Always", "IfNotPresent"
+  writeConnectionSecretToRef:
+    name: string
+    namespace: string

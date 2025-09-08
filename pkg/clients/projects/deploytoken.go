@@ -19,9 +19,9 @@ package projects
 import (
 	"strings"
 
-	"gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/shared/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 

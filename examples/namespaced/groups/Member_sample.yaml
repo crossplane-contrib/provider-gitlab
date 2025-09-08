@@ -1,0 +1,30 @@
+apiVersion: groups.gitlab.m.crossplane.io/v1alpha1
+kind: Member
+metadata:
+  namespace: example-namespace
+spec:
+  forProvider:
+    accessLevel: 10
+    expiresAt: string
+    groupId: 10
+    groupIdRef:
+      name: string
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    groupIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    userID: 90
+    userName: "maxmustermann"
+  managementPolicies: ["*"]
+  providerConfigRef:
+    kind: string
+    name: string
+  writeConnectionSecretToRef:
+    name: string

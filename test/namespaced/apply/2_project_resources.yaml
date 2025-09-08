@@ -1,0 +1,128 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Project
+metadata:
+  name: test-project-1
+spec:
+  forProvider:
+    name: "Test Project 1"
+    path: "test-project-1"
+    visibility: "private"
+    namespaceIdRef:
+      name: group-a
+    removeFinalizerOnPendingDeletion: true
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: AccessToken
+metadata:
+  name: test-project-accesstoken-1
+spec:
+  forProvider:
+    name: "test-project-access-token-1"
+    scopes: ["read_api"]
+    expiresAt: "2026-01-01T00:00:00Z"
+    projectIdRef:
+      name: test-project-1
+  writeConnectionSecretToRef:
+    name: test-project-access-token-1-secret
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: DeployToken
+metadata:
+  name: test-project-deploytoken-1
+spec:
+  forProvider:
+    scopes: ["read_repository"]
+    projectIdRef:
+      name: test-project-1
+  writeConnectionSecretToRef:
+    name: test-project-deploytoken-1-secret
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Variable
+metadata:
+  name: test-project-variable-1
+spec:
+  forProvider:
+    key: "TEST_PROJECT_VAR_1"
+    value: "test-value-1"
+    projectIdRef:
+      name: test-project-1
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Runner
+metadata:
+  name: test-project-runner-1
+spec:
+  forProvider:
+    projectIdRef:
+      name: test-project-1
+    description: "Test project runner"
+    runUntagged: true
+    tagList:
+      - "test"
+  writeConnectionSecretToRef:
+    name: test-project-runner-1-secret
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Member
+metadata:
+  name: test-project-member-1
+spec:
+  forProvider:
+    projectIdRef:
+      name: test-project-1
+    userID: 1
+    accessLevel: 30
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Hook
+metadata:
+  name: test-project-hook-1
+spec:
+  forProvider:
+    projectIdRef:
+      name: test-project-1
+    url: "https://localhost/hook"
+    pushEvents: true
+    token:
+      secretRef:
+        key: token
+        name: referenced-secret
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: DeployKey
+metadata:
+  name: test-project-deploykey-1
+spec:
+  forProvider:
+    projectIdRef:
+      name: test-project-1
+    title: "Test Deploy Key"
+    canPush: false
+    keySecretRef:
+      key: key
+      name: referenced-secret
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default

@@ -1,0 +1,36 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: ApprovalRule
+metadata:
+  name: example-approvalrule
+spec:
+  deletionPolicy: "Delete"
+  forProvider:
+    appliesToAllProtectedBranches: true
+    approvalsRequired: 2
+    groupIds: [] # minItems 0 of type integer
+    name: "Security Team Review"
+    projectId: 1
+    projectIdRef:
+      name: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    projectIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    protectedBranchIds: [] # minItems 0 of type integer
+    ruleType: "any_approver"
+    userIds: [] # minItems 0 of type integer
+    usernames: ["john.doe", "jane.smith"]
+  managementPolicies: ["*"]
+  providerConfigRef:
+    name: string
+    policy:
+      resolution: "Required"
+      resolve: "Always" # "Always", "IfNotPresent"
+  writeConnectionSecretToRef:
+    name: string
+    namespace: string

@@ -1,149 +1,137 @@
-run:
-  timeout: 30m
-
-output:
-  formats: colored-line-number
-
-linters-settings:
-  errcheck:
-    check-type-assertions: false
-    check-blank: false
-    exclude-functions:
-      - fmt:.*
-      - io/ioutil:^Read.*
-
-  govet:
-    check-shadowing: false
-
-  gofmt:
-    simplify: true
-
-  gci:
-    custom-order: true
-    sections:
-      - standard
-      - default
-      - prefix(github.com/crossplane-contrib/provider-gitlab)
-
-  gocyclo:
-    min-complexity: 10
-
-  maligned:
-    suggest-new: true
-
-  dupl:
-    threshold: 100
-
-  goconst:
-    min-len: 3
-    min-occurrences: 5
-
-  lll:
-    tab-width: 1
-
-  unused:
-    check-exported: false
-
-  unparam:
-    check-exported: false
-
-  nakedret:
-    max-func-lines: 30
-
-  prealloc:
-    simple: true
-    range-loops: true
-    for-loops: false
-
-  gocritic:
-    enabled-tags:
-      - performance
-    settings:
-      captLocal:
-        paramsOnly: true
-      rangeValCopy:
-        sizeThreshold: 32
-
-  nolintlint:
-    require-explanation: false
-    require-specific: true
-
-  revive:
-    rules:
-      - name: package-comments
-        disabled: true
-
+version: "2"
 linters:
   enable:
-    - gosimple
-    - staticcheck
-    - unused
-    - govet
-    - gocyclo
-    - gocritic
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - contextcheck
+    - durationcheck
+    - errchkjson
+    - errorlint
+    - exhaustive
+    - gocheckcompilerdirectives
+    - gochecksumtype
     - goconst
+    - gocritic
+    - gocyclo
+    - gosec
+    - gosmopolitan
+    - loggercheck
+    - makezero
+    - misspell
+    - musttag
+    - nakedret
+    - nilerr
+    - nilnesserr
+    - noctx
+    - nolintlint
+    - prealloc
+    - protogetter
+    - reassign
+    - recvcheck
+    - revive
+    - rowserrcheck
+    - spancheck
+    - sqlclosecheck
+    - testifylint
+    - unconvert
+    - unparam
+    - zerologlint
+  settings:
+    dupl:
+      threshold: 100
+    errcheck:
+      check-type-assertions: false
+      check-blank: false
+      exclude-functions:
+        - fmt:.*
+        - io/ioutil:^Read.*
+    goconst:
+      min-len: 3
+      min-occurrences: 5
+    gocritic:
+      enabled-tags:
+        - performance
+      settings:
+        captLocal:
+          paramsOnly: true
+        rangeValCopy:
+          sizeThreshold: 32
+    gocyclo:
+      min-complexity: 10
+    lll:
+      tab-width: 1
+    nakedret:
+      max-func-lines: 30
+    nolintlint:
+      require-explanation: false
+      require-specific: true
+    prealloc:
+      simple: true
+      range-loops: true
+      for-loops: false
+    revive:
+      rules:
+        - name: package-comments
+          disabled: true
+    unparam:
+      check-exported: false
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - dupl
+          - errcheck
+          - gocyclo
+          - gosec
+          - scopelint
+          - unparam
+        path: _test(ing)?\.go
+      - linters:
+          - gocritic
+        path: _test\.go
+        text: (unnamedResult|exitAfterDefer)
+      - linters:
+          - gocritic
+        text: '(hugeParam|rangeValCopy):'
+      - linters:
+          - staticcheck
+        text: 'SA3000:'
+      - linters:
+          - gosec
+        text: 'G101:'
+      - linters:
+          - gosec
+        text: 'G104:'
+      - linters:
+          - musttag
+        path: k8s.io/
+    paths:
+      - zz_generated\..+\.go$
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-same-issues: 0
+  new: false
+formatters:
+  enable:
     - gci
     - gofmt
-    - prealloc
-    - revive
-    - unconvert
-    - misspell
-    - nakedret
-    - nolintlint
-
-  # Removed all deprecated linters from disable section
-  
-  presets:
-    - bugs
-    - unused
-  fast: false
-
-issues:
-  exclude-files:
-    - "zz_generated\\..+\\.go$"
-
-  exclude-rules:
-    - path: _test(ing)?\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
-        - scopelint
-        - unparam
-    
-    - path: _test\.go
-      text: "(unnamedResult|exitAfterDefer)"
-      linters:
-        - gocritic
-
-    - text: "(hugeParam|rangeValCopy):"
-      linters:
-      - gocritic
-
-    - text: "SA3000:"
-      linters:
-      - staticcheck
-
-    - text: "k8s.io/api/core/v1"
-      linters:
-      - goimports
-
-    - text: "G101:"
-      linters:
-      - gosec
-      - gas
-
-    - text: "G104:"
-      linters:
-      - gosec
-      - gas
-
-    - path: k8s.io/
-      linters:
-      - musttag
-
-  exclude-use-default: false
-  new: false
-  max-per-linter: 0
-  max-same-issues: 0
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/crossplane-contrib/provider-gitlab)
+      custom-order: true
+    gofmt:
+      simplify: true
+  exclusions:
+    generated: lax
+    paths:
+      - zz_generated\..+\.go$
+      - third_party$
+      - builtin$
+      - examples$

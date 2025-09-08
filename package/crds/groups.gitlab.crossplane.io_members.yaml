@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.17.3
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: members.groups.gitlab.crossplane.io
 spec:
   group: groups.gitlab.crossplane.io
@@ -84,12 +84,14 @@ spec:
                 properties:
                   accessLevel:
                     description: A valid access level.
+                    example: 10
                     type: integer
                   expiresAt:
                     description: A date string in the format YEAR-MONTH-DAY.
                     type: string
                   groupId:
                     description: The ID of the group owned by the authenticated user.
+                    example: 10
                     type: integer
                   groupIdRef:
                     description: GroupIDRef is a reference to a group to retrieve
@@ -169,9 +171,11 @@ spec:
                     type: object
                   userID:
                     description: The user ID of the member.
+                    example: 90
                     type: integer
                   userName:
                     description: The userName of the member.
+                    example: maxmustermann
                     type: string
                 required:
                 - accessLevel
@@ -242,93 +246,12 @@ spec:
                 required:
                 - name
                 type: object
-              publishConnectionDetailsTo:
-                description: |-
-                  PublishConnectionDetailsTo specifies the connection secret config which
-                  contains a name, metadata and a reference to secret store config to
-                  which any connection details for this managed resource should be written.
-                  Connection details frequently include the endpoint, username,
-                  and password required to connect to the managed resource.
-                properties:
-                  configRef:
-                    default:
-                      name: default
-                    description: |-
-                      SecretStoreConfigRef specifies which secret store config should be used
-                      for this ConnectionSecret.
-                    properties:
-                      name:
-                        description: Name of the referenced object.
-                        type: string
-                      policy:
-                        description: Policies for referencing.
-                        properties:
-                          resolution:
-                            default: Required
-                            description: |-
-                              Resolution specifies whether resolution of this reference is required.
-                              The default is 'Required', which means the reconcile will fail if the
-                              reference cannot be resolved. 'Optional' means this reference will be
-                              a no-op if it cannot be resolved.
-                            enum:
-                            - Required
-                            - Optional
-                            type: string
-                          resolve:
-                            description: |-
-                              Resolve specifies when this reference should be resolved. The default
-                              is 'IfNotPresent', which will attempt to resolve the reference only when
-                              the corresponding field is not present. Use 'Always' to resolve the
-                              reference on every reconcile.
-                            enum:
-                            - Always
-                            - IfNotPresent
-                            type: string
-                        type: object
-                    required:
-                    - name
-                    type: object
-                  metadata:
-                    description: Metadata is the metadata for connection secret.
-                    properties:
-                      annotations:
-                        additionalProperties:
-                          type: string
-                        description: |-
-                          Annotations are the annotations to be added to connection secret.
-                          - For Kubernetes secrets, this will be used as "metadata.annotations".
-                          - It is up to Secret Store implementation for others store types.
-                        type: object
-                      labels:
-                        additionalProperties:
-                          type: string
-                        description: |-
-                          Labels are the labels/tags to be added to connection secret.
-                          - For Kubernetes secrets, this will be used as "metadata.labels".
-                          - It is up to Secret Store implementation for others store types.
-                        type: object
-                      type:
-                        description: |-
-                          Type is the SecretType for the connection secret.
-                          - Only valid for Kubernetes Secret Stores.
-                        type: string
-                    type: object
-                  name:
-                    description: Name is the name of the connection secret.
-                    type: string
-                required:
-                - name
-                type: object
               writeConnectionSecretToRef:
                 description: |-
                   WriteConnectionSecretToReference specifies the namespace and name of a
                   Secret to which any connection details for this managed resource should
                   be written. Connection details frequently include the endpoint, username,
                   and password required to connect to the managed resource.
-                  This field is planned to be replaced in a future release in favor of
-                  PublishConnectionDetailsTo. Currently, both could be set independently
-                  and connection details would be published to both without affecting
-                  each other.
                 properties:
                   name:
                     description: Name of the secret.
@@ -359,7 +282,6 @@ spec:
                   groupSamlIdentity:
                     description: |-
                       MemberSAMLIdentity represents the SAML Identity link for the group member.
-
                       GitLab API docs: https://docs.gitlab.com/ce/api/members.html#list-all-members-of-a-group-or-project
                       Gitlab MR for API change: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/20357
                       Gitlab MR for API Doc change: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/25652

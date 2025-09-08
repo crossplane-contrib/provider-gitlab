@@ -1,0 +1,6 @@
+apiVersion: gitlab.crossplane.io/v1alpha1
+kind: StoreConfig
+metadata:
+  name: example-storeconfig
+spec:
+  defaultScope: string

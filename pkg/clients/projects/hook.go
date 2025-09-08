@@ -19,16 +19,17 @@ package projects
 import (
 	"strings"
 
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	"gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"golang.org/x/net/context"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/shared/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 
@@ -119,11 +120,15 @@ func GenerateHookObservation(hook *gitlab.ProjectHook) v1alpha1.HookObservation 
 }
 
 // GenerateCreateHookOptions generates project creation options
-func GenerateCreateHookOptions(p *v1alpha1.HookParameters, client client.Client, ctx context.Context) (*gitlab.AddProjectHookOptions, error) {
-	token, err := getTokenValueFromSecret(p, client, ctx)
+func GenerateCreateHookOptions(p *v1alpha1.HookParameters, tokenSecretRef *xpv1.SecretKeySelector, client client.Client, ctx context.Context) (*gitlab.AddProjectHookOptions, error) {
+	var token *string
+	var err error
 
-	if err != nil {
-		return nil, err
+	if tokenSecretRef != nil {
+		token, err = getTokenValueFromSecret(tokenSecretRef, client, ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	hook := &gitlab.AddProjectHookOptions{
@@ -146,18 +151,18 @@ func GenerateCreateHookOptions(p *v1alpha1.HookParameters, client client.Client,
 	return hook, nil
 }
 
-func getTokenValueFromSecret(p *v1alpha1.HookParameters, client client.Client, ctx context.Context) (*string, error) {
+func getTokenValueFromSecret(tokenSecretRef *xpv1.SecretKeySelector, client client.Client, ctx context.Context) (*string, error) {
 	secret := &v1.Secret{}
 
-	if err := client.Get(ctx, types.NamespacedName{Name: p.Token.SecretRef.Name, Namespace: p.Token.SecretRef.Namespace}, secret); err != nil {
+	if err := client.Get(ctx, types.NamespacedName{Name: tokenSecretRef.Name, Namespace: tokenSecretRef.Namespace}, secret); err != nil {
 		return nil, errors.Wrap(err, "Cannot get referenced Secret")
 
 	}
 
-	value := secret.Data[p.Token.SecretRef.Key]
+	value := secret.Data[tokenSecretRef.Key]
 
 	if value == nil {
-		return nil, errors.Errorf("Could not find key %v in the referenced secret", p.Token.SecretRef.Key)
+		return nil, errors.Errorf("Could not find key %v in the referenced secret", tokenSecretRef.Key)
 	}
 
 	data := string(value)
@@ -166,11 +171,15 @@ func getTokenValueFromSecret(p *v1alpha1.HookParameters, client client.Client, c
 }
 
 // GenerateEditHookOptions generates project edit options
-func GenerateEditHookOptions(p *v1alpha1.HookParameters, client client.Client, ctx context.Context) (*gitlab.EditProjectHookOptions, error) {
-	token, err := getTokenValueFromSecret(p, client, ctx)
+func GenerateEditHookOptions(p *v1alpha1.HookParameters, tokenSecretRef *xpv1.SecretKeySelector, client client.Client, ctx context.Context) (*gitlab.EditProjectHookOptions, error) {
+	var token *string
+	var err error
 
-	if err != nil {
-		return nil, err
+	if tokenSecretRef != nil {
+		token, err = getTokenValueFromSecret(tokenSecretRef, client, ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	o := &gitlab.EditProjectHookOptions{

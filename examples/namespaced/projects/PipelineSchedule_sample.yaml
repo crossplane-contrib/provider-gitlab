@@ -1,0 +1,35 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: PipelineSchedule
+metadata:
+  namespace: example-namespace
+spec:
+  forProvider:
+    active: true
+    cron: "0 2 * * *"
+    cronTimezone: "UTC"
+    description: "Nightly build and test"
+    projectId: 1
+    projectIdRef:
+      name: string
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    projectIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    ref: "main"
+    variables:
+      - key: "DEPLOY_ENV"
+        value: "production"
+        variableType: "env_var"
+  managementPolicies: ["*"]
+  providerConfigRef:
+    kind: string
+    name: string
+  writeConnectionSecretToRef:
+    name: string

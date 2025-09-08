@@ -1,0 +1,18 @@
+apiVersion: gitlab.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: example-providerconfig
+spec:
+  baseURL: "https://gitlab.example.com"
+  credentials:
+    env:
+      name: string
+    fs:
+      path: string
+    method: "PersonalAccessToken"
+    secretRef:
+      key: string
+      name: string
+      namespace: string
+    source: "None" # "None", "Secret", "InjectedIdentity", "Environment", "Filesystem"
+  insecureSkipVerify: true

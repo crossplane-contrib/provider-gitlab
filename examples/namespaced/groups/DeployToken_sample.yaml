@@ -1,0 +1,29 @@
+apiVersion: groups.gitlab.m.crossplane.io/v1alpha1
+kind: DeployToken
+metadata:
+  namespace: example-namespace
+spec:
+  forProvider:
+    expiresAt: 2024-10-11T12:48:44Z
+    groupId: 10
+    groupIdRef:
+      name: string
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    groupIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    scopes: ["read_repository", "read_registry", "write_registry", "read_package_registry", "write_package_registry"]
+    username: "my-deploytoken-username"
+  managementPolicies: ["*"]
+  providerConfigRef:
+    kind: string
+    name: string
+  writeConnectionSecretToRef:
+    name: string

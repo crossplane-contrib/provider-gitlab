@@ -17,21 +17,33 @@ limitations under the License.
 package controller
 
 import (
-	"github.com/crossplane/crossplane-runtime/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/config"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/groups"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/cluster"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/namespaced"
 )
 
 // Setup creates all Gitlab API controllers with the supplied logger and adds
 // them to the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
-		config.Setup,
-		groups.Setup,
-		projects.Setup,
+		cluster.Setup,
+		namespaced.Setup,
+	} {
+		if err := setup(mgr, o); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SetupGated creates all Gitlab API controllers with the supplied logger and adds
+// them to the supplied manager with CRD gate support for SafeStart.
+func SetupGated(mgr ctrl.Manager, o controller.Options) error {
+	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+		cluster.SetupGated,
+		namespaced.SetupGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

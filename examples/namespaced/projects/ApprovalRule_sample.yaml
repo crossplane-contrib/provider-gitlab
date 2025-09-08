@@ -1,0 +1,34 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: ApprovalRule
+metadata:
+  namespace: example-namespace
+spec:
+  forProvider:
+    appliesToAllProtectedBranches: true
+    approvalsRequired: 2
+    groupIds: [] # minItems 0 of type integer
+    name: "Security Team Review"
+    projectId: 1
+    projectIdRef:
+      name: string
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    projectIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    protectedBranchIds: [] # minItems 0 of type integer
+    ruleType: "any_approver"
+    userIds: [] # minItems 0 of type integer
+    usernames: ["john.doe", "jane.smith"]
+  managementPolicies: ["*"]
+  providerConfigRef:
+    kind: string
+    name: string
+  writeConnectionSecretToRef:
+    name: string

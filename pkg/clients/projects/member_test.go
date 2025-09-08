@@ -18,10 +18,10 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/shared/projects/v1alpha1"
 )
 
 var (

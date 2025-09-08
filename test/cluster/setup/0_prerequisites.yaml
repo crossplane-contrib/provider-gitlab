@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitlab-credentials
+type: Opaque
+stringData:
+  token: ($values.token)
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: referenced-secret
+type: Opaque
+stringData:
+  token: "test-token"
+  key: ($values.key)

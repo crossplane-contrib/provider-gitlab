@@ -1,0 +1,32 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: DeployKey
+metadata:
+  namespace: example-namespace
+spec:
+  forProvider:
+    canPush: true
+    expiresAt: 2024-10-11T12:48:44Z
+    keySecretRef:
+      key: string
+      name: string
+    projectId: 1
+    projectIdRef:
+      name: string
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    projectIdSelector:
+      matchControllerRef: true
+      matchLabels: {}
+      namespace: string
+      policy:
+        resolution: "Required"
+        resolve: "Always" # "Always", "IfNotPresent"
+    title: "CI/CD Deploy Key"
+  managementPolicies: ["*"]
+  providerConfigRef:
+    kind: string
+    name: string
+  writeConnectionSecretToRef:
+    name: string
