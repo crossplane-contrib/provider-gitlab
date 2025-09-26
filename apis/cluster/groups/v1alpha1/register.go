@@ -47,10 +47,10 @@ var (
 
 // MemberGitLab type metadata
 var (
-	MemberKind                       = reflect.TypeOf(Member{}).Name()
-	MemberKubernetesGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: MemberKind}.String()
-	MemberKindAPIVersion             = MemberKind + "." + SchemeGroupVersion.String()
-	MemberKubernetesGroupVersionKind = SchemeGroupVersion.WithKind(MemberKind)
+	MemberKind             = reflect.TypeOf(Member{}).Name()
+	MemberGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: MemberKind}.String()
+	MemberKindAPIVersion   = MemberKind + "." + SchemeGroupVersion.String()
+	MemberGroupVersionKind = SchemeGroupVersion.WithKind(MemberKind)
 )
 
 // SamlGroupLink type metadata

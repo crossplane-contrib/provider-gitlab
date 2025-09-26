@@ -36,7 +36,7 @@ import (
 )
 
 func SetupVariable(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.VariableGroupKind)
+	name := managed.ControllerName(v1alpha1.VariableGroupVersionKind.String())
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewVariableClient}),

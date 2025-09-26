@@ -36,7 +36,7 @@ import (
 )
 
 func SetupSamlGroupLink(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.SamlGroupLinkGroupKind)
+	name := managed.ControllerName(v1alpha1.SamlGroupLinkGroupVersionKind.String())
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewSamlGroupLinkClient}),

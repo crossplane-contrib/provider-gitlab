@@ -36,7 +36,7 @@ import (
 )
 
 func SetupRules(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.ApprovalRuleGroupKind)
+	name := managed.ControllerName(v1alpha1.ApprovalRuleGroupVersionKind.String())
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{

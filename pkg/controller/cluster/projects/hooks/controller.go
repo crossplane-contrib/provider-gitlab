@@ -37,7 +37,7 @@ import (
 
 // SetupHook adds a controller that reconciles Hooks.
 func SetupHook(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.HookGroupKind)
+	name := managed.ControllerName(v1alpha1.HookGroupVersionKind.String())
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewHookClient}),

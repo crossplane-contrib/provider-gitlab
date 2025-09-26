@@ -35,7 +35,7 @@ import (
 
 // SetupMember adds a controller that reconciles Project Members.
 func SetupMember(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.MemberGroupKind)
+	name := managed.ControllerName(v1alpha1.MemberGroupVersionKind.String())
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{

@@ -47,7 +47,7 @@ const (
 
 // Setup adds a controller that reconciles AccessToken managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.AccessTokenGroupKind)
+	name := managed.ControllerName(v1alpha1.AccessTokenGroupVersionKind.String())
 
 	reconcilerOptions := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{

@@ -36,7 +36,7 @@ import (
 )
 
 func SetupAccessToken(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.AccessTokenGroupKind)
+	name := managed.ControllerName(v1alpha1.AccessTokenGroupVersionKind.String())
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewAccessTokenClient}),

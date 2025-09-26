@@ -35,7 +35,7 @@ import (
 
 // SetupMember adds a controller that reconciles Group Members.
 func SetupMember(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.MemberKubernetesGroupKind)
+	name := managed.ControllerName(v1alpha1.MemberGroupVersionKind.String())
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{
@@ -54,7 +54,7 @@ func SetupMember(mgr ctrl.Manager, o controller.Options) error {
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.MemberKubernetesGroupVersionKind),
+		resource.ManagedKind(v1alpha1.MemberGroupVersionKind),
 		reconcilerOpts...)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
@@ -90,8 +90,8 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 func SetupMemberGated(mgr ctrl.Manager, o controller.Options) error {
 	o.Gate.Register(func() {
 		if err := SetupMember(mgr, o); err != nil {
-			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.MemberKubernetesGroupVersionKind.String())
+			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.MemberGroupVersionKind.String())
 		}
-	}, v1alpha1.MemberKubernetesGroupVersionKind)
+	}, v1alpha1.MemberGroupVersionKind)
 	return nil
 }

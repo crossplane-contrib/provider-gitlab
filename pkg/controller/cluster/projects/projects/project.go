@@ -37,7 +37,7 @@ import (
 
 // SetupProject adds a controller that reconciles Projects.
 func SetupProject(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.ProjectGroupKind)
+	name := managed.ControllerName(v1alpha1.ProjectGroupVersionKind.String())
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProjectClient}),

@@ -37,7 +37,7 @@ import (
 )
 
 func SetupRunner(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.RunnerGroupKind)
+	name := managed.ControllerName(v1alpha1.RunnerGroupVersionKind.String())
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{

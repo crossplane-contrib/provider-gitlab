@@ -36,7 +36,7 @@ import (
 )
 
 func SetupDeployKey(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.DeployKeyGroupKind)
+	name := managed.ControllerName(v1alpha1.DeployKeyGroupVersionKind.String())
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: newDeployKeyClient}),

@@ -36,7 +36,7 @@ import (
 )
 
 func SetupDeployToken(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.DeployTokenGroupKind)
+	name := managed.ControllerName(v1alpha1.DeployTokenGroupVersionKind.String())
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewDeployTokenClient}),
