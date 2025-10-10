@@ -79,6 +79,10 @@ type MockClient struct {
 	MockCreateProjectApprovalRule func(pid any, opt *gitlab.CreateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
 	MockUpdateProjectApprovalRule func(pid any, approvalRule int, opt *gitlab.UpdateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
 	MockDeleteProjectApprovalRule func(pid any, approvalRule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockGetProtectedBranch          func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error)
+	MockProtectRepositoryBranches   func(pid any, opt *gitlab.ProtectRepositoryBranchesOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error)
+	MockUnprotectRepositoryBranches func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetPipelineSchedule calls the underlying MockGetPipelineSchedule method.
@@ -285,4 +289,19 @@ func (c *MockClient) UpdateProjectApprovalRule(pid any, approvalRule int, opt *g
 
 func (c *MockClient) DeleteProjectApprovalRule(pid any, approvalRule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteProjectApprovalRule(pid, approvalRule, options...)
+}
+
+// GetProtectedBranch calls the underlying MockGetProtectedBranch method.
+func (c *MockClient) GetProtectedBranch(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error) {
+	return c.MockGetProtectedBranch(pid, branch, options...)
+}
+
+// ProtectRepositoryBranches calls the underlying MockProtectRepositoryBranches method.
+func (c *MockClient) ProtectRepositoryBranches(pid any, opt *gitlab.ProtectRepositoryBranchesOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error) {
+	return c.MockProtectRepositoryBranches(pid, opt, options...)
+}
+
+// UnprotectRepositoryBranches calls the underlying MockUnprotectRepositoryBranches method.
+func (c *MockClient) UnprotectRepositoryBranches(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockUnprotectRepositoryBranches(pid, branch, options...)
 }
