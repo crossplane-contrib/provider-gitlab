@@ -192,9 +192,8 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 	mg.Spec.ForProvider.ParentIDRef = rsp.ResolvedReference
 
 	for i3 := 0; i3 < len(mg.Spec.ForProvider.SharedWithGroups); i3++ {
-		idstr := strconv.Itoa(*mg.Spec.ForProvider.SharedWithGroups[i3].GroupID)
 		rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-			CurrentValue: ptr.Deref(&idstr, ""),
+			CurrentValue: fromPtrValue(mg.Spec.ForProvider.SharedWithGroups[i3].GroupID),
 			Extract:      reference.ExternalName(),
 			Reference:    mg.Spec.ForProvider.SharedWithGroups[i3].GroupIDRef,
 			Selector:     mg.Spec.ForProvider.SharedWithGroups[i3].GroupIDSelector,
