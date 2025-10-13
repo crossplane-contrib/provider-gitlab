@@ -550,7 +550,7 @@ func TestObserve(t *testing.T) {
 		val := reflect.ValueOf(value)
 
 		structFieldValue.Set(val)
-		
+
 		// Special handling for runner minute limit fields - they get late-initialized when > 0
 		expectedUpToDate := false
 		expectedLateInitialized := false
@@ -570,7 +570,7 @@ func TestObserve(t *testing.T) {
 				})
 			}
 		}
-		
+
 		cases["IsGroupUpToDate"+name] = struct {
 			args
 			want
