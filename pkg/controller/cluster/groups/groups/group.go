@@ -424,10 +424,12 @@ func lateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) error { /
 	if in.ParentID == nil {
 		in.ParentID = &group.ParentID
 	}
-	if in.SharedRunnersMinutesLimit == nil {
+	// Never late-initialize runner limits when API returns 0 (treat as null)
+	// to avoid sending updates with 0 value, fields that can cause 400 errors (because feature might not be available)
+	if in.SharedRunnersMinutesLimit == nil && group.SharedRunnersMinutesLimit > 0 {
 		in.SharedRunnersMinutesLimit = &group.SharedRunnersMinutesLimit
 	}
-	if in.ExtraSharedRunnersMinutesLimit == nil {
+	if in.ExtraSharedRunnersMinutesLimit == nil && group.ExtraSharedRunnersMinutesLimit > 0 {
 		in.ExtraSharedRunnersMinutesLimit = &group.ExtraSharedRunnersMinutesLimit
 	}
 	return nil
