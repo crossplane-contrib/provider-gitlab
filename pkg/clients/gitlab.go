@@ -23,8 +23,8 @@ import (
 	"net/http"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/pkg/errors"
@@ -36,8 +36,8 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitlab/apis/v1beta1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/v1beta1"
 )
 
 // BasicAuth is the expected struct that can be passed in the Config.Token field to add support for BasicAuth AuthMethod
@@ -103,27 +103,34 @@ func NewClient(c Config) *gitlab.Client {
 // GetConfig constructs a Config that can be used to authenticate to Gitlab
 // API by the Gitlab Go client
 func GetConfig(ctx context.Context, c client.Client, mg resource.Managed) (*Config, error) {
-	switch {
-	case mg.GetProviderConfigReference() != nil:
-		return UseProviderConfig(ctx, c, mg)
+	switch mgC := mg.(type) {
+	case resource.LegacyManaged:
+		switch {
+		case mgC.GetProviderConfigReference() != nil:
+			return UseProviderConfig(ctx, c, mgC)
+		default:
+			return nil, errors.New("providerConfigRef is not given")
+		}
+	case resource.ModernManaged:
+		return nil, errors.New("modern managed resource is not implemented")
 	default:
-		return nil, errors.New("providerConfigRef is not given")
+		return nil, errors.New("unknown managed resource type")
 	}
 }
 
 // UseProviderConfig to produce a config that can be used to authenticate to Gitlab.
-func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed) (*Config, error) {
+func UseProviderConfig(ctx context.Context, c client.Client, mg resource.LegacyManaged) (*Config, error) {
 	pc := &v1beta1.ProviderConfig{}
 	if err := c.Get(ctx, types.NamespacedName{Name: mg.GetProviderConfigReference().Name}, pc); err != nil {
 		return nil, errors.Wrap(err, "cannot get referenced Provider")
 	}
 
-	t := resource.NewProviderConfigUsageTracker(c, &v1beta1.ProviderConfigUsage{})
+	t := resource.NewLegacyProviderConfigUsageTracker(c, &v1beta1.ProviderConfigUsage{})
 	if err := t.Track(ctx, mg); err != nil {
 		return nil, errors.Wrap(err, "cannot track ProviderConfig usage")
 	}
 
-	switch s := pc.Spec.Credentials.Source; s { //nolint:exhaustive
+	switch s := pc.Spec.Credentials.Source; s {
 	case xpv1.CredentialsSourceSecret:
 		csr := pc.Spec.Credentials.SecretRef
 		if csr == nil {
