@@ -1,0 +1,735 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the func withStatus(s v1alpha1.ProtectedBranchObservation) protectedBranchModifier {
+	return func(r *v1alpha1.ProtectedBranch) { r.Status.AtProvider = s }
+}
+
+func withProjectID(id *string) protectedBranchModifier {cense, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package protectedbranches
+
+import (
+	"context"
+	"net/http"
+	"testing"
+
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/clients/projects/fake"
+)
+
+var (
+	branchName        = "main"
+	unexpectedItem    resource.Managed
+	errBoom           = errors.New("boom")
+	projectID         = "1234"
+	protectedBranchID = 5678
+	accessLevel30     = v1alpha1.AccessLevelValue(30) // Developer
+	accessLevel40     = v1alpha1.AccessLevelValue(40) // Maintainer
+)
+
+type args struct {
+	protectedBranch projects.ProtectedBranchClient
+	kube            client.Client
+	cr              resource.Managed
+}
+
+type protectedBranchModifier func(*v1alpha1.ProtectedBranch)
+
+func withConditions(c ...xpv1.Condition) protectedBranchModifier {
+	return func(r *v1alpha1.ProtectedBranch) { r.Status.ConditionedStatus.Conditions = c }
+}
+
+func withStatus(s v1alpha1.ProtectedBranchObservation) protectedBranchModifier {
+	return func(r *v1alpha1.ProtectedBranch) { r.Status.AtProvider = s }
+}
+
+func withProjectID(id *string) protectedBranchModifier {
+	return func(r *v1alpha1.ProtectedBranch) { r.Spec.ForProvider.ProjectID = id }
+}
+
+func withBranchName(name string) protectedBranchModifier {
+	return func(r *v1alpha1.ProtectedBranch) { r.Spec.ForProvider.BranchName = name }
+}
+
+func withAllowForcePush(allow *bool) protectedBranchModifier {
+	return func(r *v1alpha1.ProtectedBranch) { r.Spec.ForProvider.AllowForcePush = allow }
+}
+
+func withCodeOwnerApproval(require *bool) protectedBranchModifier {
+	return func(r *v1alpha1.ProtectedBranch) { r.Spec.ForProvider.CodeOwnerApprovalRequired = require }
+}
+
+func withPushAccessLevels(levels []*v1alpha1.BranchAccessDescription) protectedBranchModifier {
+	return func(r *v1alpha1.ProtectedBranch) { r.Spec.ForProvider.PushAccessLevels = levels }
+}
+
+func withMergeAccessLevels(levels []*v1alpha1.BranchAccessDescription) protectedBranchModifier {
+	return func(r *v1alpha1.ProtectedBranch) { r.Spec.ForProvider.MergeAccessLevels = levels }
+}
+
+func protectedBranch(m ...protectedBranchModifier) *v1alpha1.ProtectedBranch {
+	cr := &v1alpha1.ProtectedBranch{}
+	for _, f := range m {
+		f(cr)
+	}
+	return cr
+}
+
+func TestConnect(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalClient
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"InValidInput": {
+			args: args{
+				cr: unexpectedItem,
+			},
+			want: want{
+				cr:  unexpectedItem,
+				err: errors.New(errNotProtectedBranch),
+			},
+		},
+		"ProviderConfigRefNotGivenError": {
+			args: args{
+				cr:   protectedBranch(),
+				kube: &test.MockClient{MockGet: test.NewMockGetFn(nil)},
+			},
+			want: want{
+				cr:  protectedBranch(),
+				err: errors.New("providerConfigRef is not given"),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			c := &connector{kube: tc.kube, newGitlabClientFn: func(cfg clients.Config) projects.ProtectedBranchClient {
+				return tc.protectedBranch
+			}}
+			o, err := c.Connect(context.Background(), tc.args.cr)
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestObserve(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalObservation
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"InValidInput": {
+			args: args{
+				cr: unexpectedItem,
+			},
+			want: want{
+				cr:  unexpectedItem,
+				err: errors.New(errNotProtectedBranch),
+			},
+		},
+		"NoExternalName": {
+			args: args{
+				cr: protectedBranch(),
+			},
+			want: want{
+				cr: protectedBranch(),
+				result: managed.ExternalObservation{
+					ResourceExists: false,
+				},
+			},
+		},
+		"ProjectIDMissing": {
+			args: args{
+				cr: protectedBranch(withBranchName(branchName)),
+			},
+			want: want{
+				cr:  protectedBranch(withBranchName(branchName)),
+				err: errors.New(errProjectIDMissing),
+			},
+		},
+		"FailedGetRequest": {
+			args: args{
+				protectedBranch: &fake.MockClient{
+					MockGetProtectedBranch: func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errBoom
+					},
+				},
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+			},
+			want: want{
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+				result: managed.ExternalObservation{ResourceExists: false},
+				err:    errors.Wrap(errBoom, errGetFailed),
+			},
+		},
+		"ErrGet404": {
+			args: args{
+				protectedBranch: &fake.MockClient{
+					MockGetProtectedBranch: func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+			},
+			want: want{
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+				result: managed.ExternalObservation{ResourceExists: false},
+				err:    nil,
+			},
+		},
+		"SuccessfulAvailable": {
+			args: args{
+				protectedBranch: &fake.MockClient{
+					MockGetProtectedBranch: func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error) {
+						return &gitlab.ProtectedBranch{
+							ID:                        protectedBranchID,
+							Name:                      branchName,
+							AllowForcePush:            false,
+							CodeOwnerApprovalRequired: true,
+							PushAccessLevels: []*gitlab.BranchAccessDescription{
+								{
+									ID:                     1,
+									AccessLevel:            gitlab.AccessLevelValue(40),
+									AccessLevelDescription: "Maintainers",
+									UserID:                 0,
+									GroupID:                0,
+								},
+							},
+							MergeAccessLevels: []*gitlab.BranchAccessDescription{
+								{
+									ID:                     2,
+									AccessLevel:            gitlab.AccessLevelValue(30),
+									AccessLevelDescription: "Developers + Maintainers",
+									UserID:                 0,
+									GroupID:                0,
+								},
+							},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+					withAllowForcePush(ptr.To(false)),
+					withCodeOwnerApproval(ptr.To(true)),
+					withPushAccessLevels([]*v1alpha1.BranchAccessDescription{
+						{
+							AccessLevel: &accessLevel40,
+						},
+					}),
+					withMergeAccessLevels([]*v1alpha1.BranchAccessDescription{
+						{
+							AccessLevel: &accessLevel30,
+						},
+					}),
+				),
+			},
+			want: want{
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+					withAllowForcePush(ptr.To(false)),
+					withCodeOwnerApproval(ptr.To(true)),
+					withPushAccessLevels([]*v1alpha1.BranchAccessDescription{
+						{
+							AccessLevel: &accessLevel40,
+						},
+					}),
+					withMergeAccessLevels([]*v1alpha1.BranchAccessDescription{
+						{
+							AccessLevel: &accessLevel30,
+						},
+					}),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.ProtectedBranchObservation{
+						ID:                        protectedBranchID,
+						AllowForcePush:            false,
+						CodeOwnerApprovalRequired: true,
+						PushAccessLevels: []*v1alpha1.BranchAccessDescription{
+							{
+								AccessLevel:            &accessLevel40,
+								AccessLevelDescription: ptr.To("Maintainers"),
+								UserID:                 ptr.To(0),
+								GroupID:                ptr.To(0),
+							},
+						},
+						MergeAccessLevels: []*v1alpha1.BranchAccessDescription{
+							{
+								AccessLevel:            &accessLevel30,
+								AccessLevelDescription: ptr.To("Developers + Maintainers"),
+								UserID:                 ptr.To(0),
+								GroupID:                ptr.To(0),
+							},
+						},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
+		"LateInitSuccess": {
+			args: args{
+				protectedBranch: &fake.MockClient{
+					MockGetProtectedBranch: func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error) {
+						return &gitlab.ProtectedBranch{
+							ID:                        protectedBranchID,
+							Name:                      branchName,
+							AllowForcePush:            true,
+							CodeOwnerApprovalRequired: false,
+							PushAccessLevels: []*gitlab.BranchAccessDescription{
+								{
+									ID:                     1,
+									AccessLevel:            gitlab.AccessLevelValue(40),
+									AccessLevelDescription: "Maintainers",
+									UserID:                 0,
+									GroupID:                0,
+								},
+							},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+			},
+			want: want{
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+					withAllowForcePush(ptr.To(true)),
+					withCodeOwnerApproval(ptr.To(false)),
+					withPushAccessLevels([]*v1alpha1.BranchAccessDescription{
+						{
+							AccessLevel:            &accessLevel40,
+							AccessLevelDescription: ptr.To("Maintainers"),
+							UserID:                 ptr.To(0),
+							GroupID:                ptr.To(0),
+						},
+					}),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.ProtectedBranchObservation{
+						ID:                        protectedBranchID,
+						AllowForcePush:            true,
+						CodeOwnerApprovalRequired: false,
+						PushAccessLevels: []*v1alpha1.BranchAccessDescription{
+							{
+								AccessLevel:            &accessLevel40,
+								AccessLevelDescription: ptr.To("Maintainers"),
+								UserID:                 ptr.To(0),
+								GroupID:                ptr.To(0),
+							},
+						},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: true,
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: tc.protectedBranch}
+			o, err := e.Observe(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestCreate(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalCreation
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"InValidInput": {
+			args: args{
+				cr: unexpectedItem,
+			},
+			want: want{
+				cr:  unexpectedItem,
+				err: errors.New(errNotProtectedBranch),
+			},
+		},
+		"NoExternalName": {
+			args: args{
+				cr: protectedBranch(),
+			},
+			want: want{
+				cr:  protectedBranch(),
+				err: errors.New(errBranchNameMissing),
+			},
+		},
+		"ProjectIDMissing": {
+			args: args{
+				cr: protectedBranch(withBranchName(branchName)),
+			},
+			want: want{
+				cr:  protectedBranch(withBranchName(branchName)),
+				err: errors.New(errProjectIDMissing),
+			},
+		},
+		"SuccessfulCreation": {
+			args: args{
+				protectedBranch: &fake.MockClient{
+					MockProtectRepositoryBranches: func(pid any, opt *gitlab.ProtectRepositoryBranchesOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error) {
+						return &gitlab.ProtectedBranch{
+							ID:   protectedBranchID,
+							Name: branchName,
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+			},
+			want: want{
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+					withConditions(xpv1.Creating()),
+				),
+				result: managed.ExternalCreation{},
+			},
+		},
+		"FailedCreation": {
+			args: args{
+				protectedBranch: &fake.MockClient{
+					MockProtectRepositoryBranches: func(pid any, opt *gitlab.ProtectRepositoryBranchesOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error) {
+						return nil, &gitlab.Response{}, errBoom
+					},
+				},
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+			},
+			want: want{
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+					withConditions(xpv1.Creating()),
+				),
+				err: errors.Wrap(errBoom, errCreateFailed),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: tc.protectedBranch}
+			o, err := e.Create(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalUpdate
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"InValidInput": {
+			args: args{
+				cr: unexpectedItem,
+			},
+			want: want{
+				cr:  unexpectedItem,
+				err: errors.New(errNotProtectedBranch),
+			},
+		},
+		"NoExternalName": {
+			args: args{
+				cr: protectedBranch(),
+			},
+			want: want{
+				cr:  protectedBranch(),
+				err: errors.New(errBranchNameMissing),
+			},
+		},
+		"ProjectIDMissing": {
+			args: args{
+				cr: protectedBranch(withBranchName(branchName)),
+			},
+			want: want{
+				cr:  protectedBranch(withBranchName(branchName)),
+				err: errors.New(errProjectIDMissing),
+			},
+		},
+		"SuccessfulUpdate": {
+			args: args{
+				protectedBranch: &fake.MockClient{
+					MockUnprotectRepositoryBranches: func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, nil
+					},
+					MockProtectRepositoryBranches: func(pid any, opt *gitlab.ProtectRepositoryBranchesOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error) {
+						return &gitlab.ProtectedBranch{
+							ID:   protectedBranchID,
+							Name: branchName,
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+			},
+			want: want{
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+				result: managed.ExternalUpdate{},
+			},
+		},
+		"FailedUnprotect": {
+			args: args{
+				protectedBranch: &fake.MockClient{
+					MockUnprotectRepositoryBranches: func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, errBoom
+					},
+				},
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+			},
+			want: want{
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+				err: errors.Wrap(errBoom, "cannot unprotect branch for update"),
+			},
+		},
+		"FailedReprotect": {
+			args: args{
+				protectedBranch: &fake.MockClient{
+					MockUnprotectRepositoryBranches: func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, nil
+					},
+					MockProtectRepositoryBranches: func(pid any, opt *gitlab.ProtectRepositoryBranchesOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error) {
+						return nil, &gitlab.Response{}, errBoom
+					},
+				},
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+			},
+			want: want{
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+				err: errors.Wrap(errBoom, "cannot re-protect branch after update"),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: tc.protectedBranch}
+			o, err := e.Update(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestDelete(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalDelete
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"InValidInput": {
+			args: args{
+				cr: unexpectedItem,
+			},
+			want: want{
+				cr:  unexpectedItem,
+				err: errors.New(errNotProtectedBranch),
+			},
+		},
+		"NoExternalName": {
+			args: args{
+				cr: protectedBranch(),
+			},
+			want: want{
+				cr:  protectedBranch(),
+				err: errors.New(errBranchNameMissing),
+			},
+		},
+		"ProjectIDMissing": {
+			args: args{
+				cr: protectedBranch(withBranchName(branchName)),
+			},
+			want: want{
+				cr:  protectedBranch(withBranchName(branchName)),
+				err: errors.New(errProjectIDMissing),
+			},
+		},
+		"SuccessfulDeletion": {
+			args: args{
+				protectedBranch: &fake.MockClient{
+					MockUnprotectRepositoryBranches: func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, nil
+					},
+				},
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+			},
+			want: want{
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+					withConditions(xpv1.Deleting()),
+				),
+				result: managed.ExternalDelete{},
+			},
+		},
+		"FailedDeletion": {
+			args: args{
+				protectedBranch: &fake.MockClient{
+					MockUnprotectRepositoryBranches: func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, errBoom
+					},
+				},
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+				),
+			},
+			want: want{
+				cr: protectedBranch(
+					withBranchName(branchName),
+					withProjectID(&projectID),
+					withConditions(xpv1.Deleting()),
+				),
+				err: errors.Wrap(errBoom, errDeleteFailed),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: tc.protectedBranch}
+			o, err := e.Delete(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}

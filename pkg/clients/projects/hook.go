@@ -21,14 +21,14 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	"gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"golang.org/x/net/context"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/clients"
 )
 
