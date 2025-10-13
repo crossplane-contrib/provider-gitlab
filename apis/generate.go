@@ -23,10 +23,22 @@ limitations under the License.
 // Remove existing CRDs
 //go:generate rm -rf ../package/crds
 
+// Restore any leftover .bak files from previous broken runs
+//go:generate go run ../hack/generate-cluster-scope.go restore-referencers
+
+// Generate cluster APIs from namespaced APIs (run first)
+//go:generate go run ../hack/generate-cluster-scope.go groups projects
+
+// Temporarily rename referencers files to exclude them from generation
+//go:generate go run ../hack/generate-cluster-scope.go backup-referencers
+
 // Generate deepcopy methodsets and CRD manifests
 //go:generate go run -modfile ../tools/go.mod -tags generate sigs.k8s.io/controller-tools/cmd/controller-gen object:headerFile=../hack/boilerplate.go.txt paths=./... crd:allowDangerousTypes=true,crdVersions=v1 output:artifacts:config=../package/crds
 
 // Generate crossplane-runtime methodsets (resource.Managed, etc)
 //go:generate go run -modfile ../tools/go.mod -tags generate github.com/crossplane/crossplane-tools/cmd/angryjet generate-methodsets --header-file=../hack/boilerplate.go.txt ./...
+
+// Restore referencers files
+//go:generate go run ../hack/generate-cluster-scope.go restore-referencers
 
 package apis
