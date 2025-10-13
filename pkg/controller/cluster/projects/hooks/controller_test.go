@@ -23,7 +23,6 @@ import (
 	"testing"
 	"time"
 
-	v1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
@@ -85,8 +84,8 @@ func withDefaultValues() projectHookModifier {
 			WikiPageEvents:           &f,
 			EnableSSLVerification:    &f,
 			Token: &v1alpha1.Token{
-				SecretRef: &v1.SecretKeySelector{
-					Key: "token", SecretReference: v1.SecretReference{Name: "test", Namespace: "test"},
+				SecretRef: &xpv1.SecretKeySelector{
+					Key: "token", SecretReference: xpv1.SecretReference{Name: "test", Namespace: "test"},
 				},
 			},
 		}
@@ -102,8 +101,8 @@ func withProjectID(pid int) projectHookModifier {
 func withTokenRef() projectHookModifier {
 	return func(r *v1alpha1.Hook) {
 		r.Spec.ForProvider.Token = &v1alpha1.Token{
-			SecretRef: &v1.SecretKeySelector{
-				Key: "token", SecretReference: v1.SecretReference{Name: "test", Namespace: "test"},
+			SecretRef: &xpv1.SecretKeySelector{
+				Key: "token", SecretReference: xpv1.SecretReference{Name: "test", Namespace: "test"},
 			},
 		}
 	}
