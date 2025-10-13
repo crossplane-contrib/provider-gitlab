@@ -130,8 +130,8 @@ func withClientDefaultValues() groupModifier {
 			LFSEnabled:                     &f,
 			RequestAccessEnabled:           &f,
 			ParentID:                       &i,
-			SharedRunnersMinutesLimit:      &i,
-			ExtraSharedRunnersMinutesLimit: &i,
+			SharedRunnersMinutesLimit:      nil,
+			ExtraSharedRunnersMinutesLimit: nil,
 		}
 		p.Status.AtProvider = v1alpha1.GroupObservation{
 			ID:        &i,
@@ -550,6 +550,27 @@ func TestObserve(t *testing.T) {
 		val := reflect.ValueOf(value)
 
 		structFieldValue.Set(val)
+		
+		// Special handling for runner minute limit fields - they get late-initialized when > 0
+		expectedUpToDate := false
+		expectedLateInitialized := false
+		if (name == "SharedRunnersMinutesLimit" || name == "ExtraSharedRunnersMinutesLimit") && value.(int) > 0 {
+			expectedUpToDate = true
+			expectedLateInitialized = true
+			// Add the expected value to wantGroupModifier
+			if name == "SharedRunnersMinutesLimit" {
+				wantGroupModifier = append(wantGroupModifier, func(p *v1alpha1.Group) {
+					v := value.(int)
+					p.Spec.ForProvider.SharedRunnersMinutesLimit = &v
+				})
+			} else {
+				wantGroupModifier = append(wantGroupModifier, func(p *v1alpha1.Group) {
+					v := value.(int)
+					p.Spec.ForProvider.ExtraSharedRunnersMinutesLimit = &v
+				})
+			}
+		}
+		
 		cases["IsGroupUpToDate"+name] = struct {
 			args
 			want
@@ -566,8 +587,8 @@ func TestObserve(t *testing.T) {
 				cr: group(wantGroupModifier...),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
+					ResourceUpToDate:        expectedUpToDate,
+					ResourceLateInitialized: expectedLateInitialized,
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
 				},
 			},
