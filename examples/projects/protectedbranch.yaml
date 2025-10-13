@@ -1,0 +1,24 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: ProtectedBranch
+metadata:
+  name: example-protected-branch
+spec:
+  forProvider:
+    branchName: "main"
+    projectIdRef:
+      name: example-project
+    # Configure push access - only maintainers can push
+    pushAccessLevels:
+      - accessLevel: 40  # Maintainer level
+    # Configure merge access - developers and above can merge
+    mergeAccessLevels:
+      - accessLevel: 30  # Developer level
+    # Configure unprotect access - only maintainers can unprotect
+    unprotectAccessLevels:
+      - accessLevel: 40  # Maintainer level
+    # Allow force push
+    allowForcePush: false
+    # Require code owner approval
+    codeOwnerApprovalRequired: true
+  providerConfigRef:
+    name: gitlab-provider
