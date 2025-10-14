@@ -151,8 +151,8 @@ func TestObserve(t *testing.T) {
 			},
 			expected: expected{
 				dk:     buildDeployKey(),
-				err:    errors.New(errIDNotAnInt),
-				result: managed.ExternalObservation{},
+				err:    nil,
+				result: managed.ExternalObservation{ResourceExists: false},
 			},
 		},
 		"ExternalNameNotAnInt": {
