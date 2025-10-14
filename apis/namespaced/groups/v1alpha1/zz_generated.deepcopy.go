@@ -1327,7 +1327,7 @@ func (in *VariableParameters) DeepCopyInto(out *VariableParameters) {
 	}
 	if in.ValueSecretRef != nil {
 		in, out := &in.ValueSecretRef, &out.ValueSecretRef
-		*out = new(v1.SecretKeySelector)
+		*out = new(v1.LocalSecretKeySelector)
 		**out = **in
 	}
 	if in.Masked != nil {

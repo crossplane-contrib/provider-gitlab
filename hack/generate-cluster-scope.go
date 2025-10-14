@@ -1,3 +1,22 @@
+//go:build ignore
+// +build ignore
+
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package main
 
 import (
@@ -6,65 +25,89 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "restore-referencers" {
-		if err := restoreReferencers(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error restoring referencers: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Println("Successfully restored referencers files")
-		return
+	if len(os.Args) < 2 {
+		printUsage()
+		os.Exit(1)
 	}
 
-	if len(os.Args) > 1 && os.Args[1] == "backup-referencers" {
-		if err := backupReferencers(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error backing up referencers: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Println("Successfully backed up referencers files")
-		return
+	switch os.Args[1] {
+	case "generate":
+		handleGenerate(os.Args[2:])
+	case "backup-referencers":
+		handleCommand(backupReferencers, "backed up")
+	case "restore-referencers":
+		handleCommand(restoreReferencers, "restored")
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
+		printUsage()
+		os.Exit(1)
+	}
+}
+
+func printUsage() {
+	fmt.Println("Usage:")
+	fmt.Println("  generate <folder1> [folder2] ...  - Generate cluster scope files")
+	fmt.Println("  backup-referencers               - Backup referencers files")
+	fmt.Println("  restore-referencers              - Restore referencers files")
+	fmt.Println()
+	fmt.Println("Examples:")
+	fmt.Println("  generate groups projects")
+	fmt.Println("  generate clients")
+}
+
+func handleGenerate(args []string) {
+	if len(args) < 1 {
+		fmt.Fprintf(os.Stderr, "generate command requires at least one folder\n")
+		printUsage()
+		os.Exit(1)
 	}
 
-	var folders []string
-	if len(os.Args) > 1 {
-		folders = os.Args[1:]
-	} else {
-		// Default folders if none specified (excluding common since it's shared)
-		folders = []string{"groups", "projects"}
-	}
-
-	if err := generateClusterAPIs(folders); err != nil {
+	if err := generateClusterScope(args); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Successfully generated cluster APIs from namespaced APIs for folders: %v\n", folders)
+	fmt.Printf("Successfully generated cluster scope for folders: %v\n", args)
 }
 
-func generateClusterAPIs(folders []string) error {
-	// Determine the correct paths based on current working directory
-	namespacedPath := "apis/namespaced"
-	clusterPath := "apis/cluster"
+func handleCommand(fn func() error, action string) {
+	if err := fn(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Successfully %s referencers files\n", action)
+}
 
-	// If we're already in the apis directory, adjust paths
-	if _, err := os.Stat("namespaced"); err == nil {
-		namespacedPath = "namespaced"
-		clusterPath = "cluster"
+func generateClusterScope(folders []string) error {
+	namespacedPath := "namespaced"
+	clusterPath := "cluster"
+
+	if err := validateAndSetup(namespacedPath, clusterPath, folders); err != nil {
+		return err
 	}
 
-	// Check if namespaced directory exists
+	for _, folder := range folders {
+		if err := processFolder(namespacedPath, clusterPath, folder); err != nil {
+			return fmt.Errorf("failed to process folder %s: %w", folder, err)
+		}
+	}
+
+	return nil
+}
+
+func validateAndSetup(namespacedPath, clusterPath string, folders []string) error {
 	if _, err := os.Stat(namespacedPath); os.IsNotExist(err) {
 		return fmt.Errorf("namespaced directory does not exist at %s", namespacedPath)
 	}
 
-	// Create cluster directory if it doesn't exist
 	if err := os.MkdirAll(clusterPath, 0755); err != nil {
 		return fmt.Errorf("failed to create cluster directory: %w", err)
 	}
 
-	// Remove existing folders that will be regenerated
 	for _, folder := range folders {
 		targetFolder := filepath.Join(clusterPath, folder)
 		if err := os.RemoveAll(targetFolder); err != nil && !os.IsNotExist(err) {
@@ -72,59 +115,48 @@ func generateClusterAPIs(folders []string) error {
 		}
 	}
 
-	// Process each specified folder
-	for _, folder := range folders {
-		folderPath := filepath.Join(namespacedPath, folder)
-		if _, err := os.Stat(folderPath); os.IsNotExist(err) {
-			fmt.Printf("Warning: folder %s does not exist, skipping\n", folderPath)
-			continue
+	return nil
+}
+
+func processFolder(namespacedPath, clusterPath, folder string) error {
+	folderPath := filepath.Join(namespacedPath, folder)
+	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
+		fmt.Printf("Warning: folder %s does not exist, skipping\n", folderPath)
+		return nil
+	}
+
+	return filepath.WalkDir(folderPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
 
-		// Walk through the specific folder
-		err := filepath.WalkDir(folderPath, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
+		if strings.HasPrefix(d.Name(), "zz_") {
+			return nil
+		}
 
-			// Skip v1beta1 folder as requested
-			if strings.Contains(path, "v1beta1") {
-				if d.IsDir() {
-					return filepath.SkipDir
-				}
-				return nil
-			}
+		targetPath := strings.Replace(path, namespacedPath, clusterPath, 1)
 
-			// Skip generated files
-			if strings.HasPrefix(d.Name(), "zz_") {
-				return nil
-			}
+		if d.IsDir() {
+			return os.MkdirAll(targetPath, 0755)
+		}
 
-			// Calculate target path
-			targetPath := strings.Replace(path, namespacedPath, clusterPath, 1)
-
-			if d.IsDir() {
-				return os.MkdirAll(targetPath, 0755)
-			}
-
-			// Only process .go files
-			if !strings.HasSuffix(path, ".go") {
-				return nil
-			}
-
-			// Add zz_ prefix to filename
+		if strings.HasSuffix(path, ".go") && !shouldSkipFile(path) {
 			dir := filepath.Dir(targetPath)
 			filename := filepath.Base(targetPath)
 			targetPath = filepath.Join(dir, "zz_"+filename)
-
 			return transformFile(path, targetPath)
-		})
-
-		if err != nil {
-			return fmt.Errorf("failed to process folder %s: %w", folder, err)
 		}
-	}
 
-	return nil
+		return nil
+	})
+}
+
+func shouldSkipFile(filePath string) bool {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(content), "+cluster-scope:skip-file")
 }
 
 func transformFile(srcPath, dstPath string) error {
@@ -135,97 +167,82 @@ func transformFile(srcPath, dstPath string) error {
 
 	transformed := transformContent(string(content))
 
-	// Format the Go code
-	formatted, err := format.Source([]byte(transformed))
-	if err != nil {
-		// If formatting fails, use the unformatted version
-		formatted = []byte(transformed)
+	if formatted, err := format.Source([]byte(transformed)); err == nil {
+		transformed = string(formatted)
 	}
 
-	if err := os.WriteFile(dstPath, formatted, 0644); err != nil {
-		return fmt.Errorf("failed to write %s: %w", dstPath, err)
+	return os.WriteFile(dstPath, []byte(transformed), 0644)
+}
+
+func processDeleteAnnotations(content string) string {
+	lines := strings.Split(content, "\n")
+	var result []string
+
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+
+		if idx := strings.Index(line, "+cluster-scope:delete="); idx != -1 {
+			numStr := strings.TrimSpace(line[idx+len("+cluster-scope:delete="):])
+			if num, err := strconv.Atoi(numStr); err == nil && num > 0 {
+				i += num
+				continue
+			}
+		}
+
+		result = append(result, line)
 	}
 
-	return nil
+	return strings.Join(result, "\n")
 }
 
 func transformContent(content string) string {
-	// Add code generation comment before package statement
+	content = processDeleteAnnotations(content)
+	content = addGenerationComment(content)
+
+	for old, new := range getReplacements() {
+		content = strings.ReplaceAll(content, old, new)
+	}
+
+	return content
+}
+
+func addGenerationComment(content string) string {
 	lines := strings.Split(content, "\n")
-	var result []string
-	packageFound := false
-
-	for _, line := range lines {
-		if !packageFound && strings.HasPrefix(strings.TrimSpace(line), "package ") {
-			result = append(result, "// Code generated by hack/generate-cluster-scope.go - DO NOT EDIT.")
-			result = append(result, "")
-			packageFound = true
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "package ") {
+			result := make([]string, 0, len(lines)+2)
+			result = append(result, lines[:i]...)
+			result = append(result, "// Code generated by hack/generate-cluster-scope.go - DO NOT EDIT.", "")
+			result = append(result, lines[i:]...)
+			return strings.Join(result, "\n")
 		}
-		result = append(result, line)
 	}
-	content = strings.Join(result, "\n")
+	return content
+}
 
-	// API group transformations
-	content = strings.ReplaceAll(content, "gitlab.m.crossplane.io", "gitlab.crossplane.io")
-	content = strings.ReplaceAll(content, "common.gitlab.m.crossplane.io", "common.gitlab.crossplane.io")
-	content = strings.ReplaceAll(content, "groups.gitlab.m.crossplane.io", "groups.gitlab.crossplane.io")
-	content = strings.ReplaceAll(content, "projects.gitlab.m.crossplane.io", "projects.gitlab.crossplane.io")
-
-	// Import path transformations
-	content = strings.ReplaceAll(content, "apis/namespaced/", "apis/cluster/")
-
-	// Resource spec transformations
-	content = strings.ReplaceAll(content, "xpv2.ManagedResourceSpec", "xpv1.ResourceSpec")
-
-	// Reference type transformations
-	content = strings.ReplaceAll(content, "xpv1.NamespacedReference", "xpv1.Reference")
-	content = strings.ReplaceAll(content, "xpv1.NamespacedSelector", "xpv1.Selector")
-
-	// Resolver transformations
-	content = strings.ReplaceAll(content, "reference.NewAPINamespacedResolver", "reference.NewAPIResolver")
-	content = strings.ReplaceAll(content, "reference.NamespacedResolutionRequest", "reference.ResolutionRequest")
-	content = strings.ReplaceAll(content, "reference.NamespacedResolutionResponse", "reference.ResolutionResponse")
-
-	// Kubebuilder scope transformations
-	content = strings.ReplaceAll(content, "kubebuilder:resource:scope=Namespaced", "kubebuilder:resource:scope=Cluster")
-
-	// Filter out unwanted lines
-	lines = strings.Split(content, "\n")
-	var filteredLines []string
-	inImportBlock := false
-
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-
-		// Track import blocks
-		if strings.HasPrefix(trimmed, "import (") {
-			inImportBlock = true
-		} else if inImportBlock && trimmed == ")" {
-			inImportBlock = false
-		}
-
-		// Skip v1beta1 imports and references
-		if strings.Contains(line, "apis/cluster/v1beta1") ||
-			strings.Contains(line, "gitlabv1beta1") ||
-			(inImportBlock && strings.Contains(line, "v1beta1")) {
-			continue
-		}
-
-		// Skip xpv2 import since we replaced all usages
-		if inImportBlock && strings.Contains(line, `xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"`) {
-			continue
-		}
-
-		filteredLines = append(filteredLines, line)
+func getReplacements() map[string]string {
+	return map[string]string{
+		"m.crossplane.io":                        "crossplane.io",
+		"xpv2.ManagedResourceSpec":               "xpv1.ResourceSpec",
+		"xpv1.NamespacedReference":               "xpv1.Reference",
+		"xpv1.NamespacedSelector":                "xpv1.Selector",
+		"xpv1.LocalSecretKeySelector":            "xpv1.SecretKeySelector",
+		"xpv1.LocalSecretReference":              "xpv1.SecretReference",
+		"reference.NewAPINamespacedResolver":     "reference.NewAPIResolver",
+		"reference.NamespacedResolutionRequest":  "reference.ResolutionRequest",
+		"reference.NamespacedResolutionResponse": "reference.ResolutionResponse",
+		"kubebuilder:resource:scope=Namespaced":  "kubebuilder:resource:scope=Cluster",
+		"/namespaced/":                           "/cluster/",
+		"GetTokenValueFromLocalSecret":           "GetTokenValueFromSecret",
+		"TestCreateLocalSecretKeySelector":       "TestCreateSecretKeySelector",
+		"TestCreateLocalSecretReference":         "TestCreateSecretReference",
 	}
-
-	return strings.Join(filteredLines, "\n")
 }
 
 func backupReferencers() error {
 	return filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return nil // ignore errors
+			return nil
 		}
 		if strings.HasSuffix(path, "referencers.go") && !strings.HasSuffix(path, ".bak") {
 			return os.Rename(path, path+".bak")
@@ -237,11 +254,10 @@ func backupReferencers() error {
 func restoreReferencers() error {
 	return filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return nil // ignore errors
+			return nil
 		}
 		if strings.HasSuffix(path, "referencers.go.bak") {
-			newPath := strings.TrimSuffix(path, ".bak")
-			return os.Rename(path, newPath)
+			return os.Rename(path, strings.TrimSuffix(path, ".bak"))
 		}
 		return nil
 	})

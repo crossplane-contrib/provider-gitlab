@@ -19,24 +19,9 @@ package v1beta1
 import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	auth "github.com/crossplane-contrib/provider-gitlab/pkg/common/auth"
 )
-
-const (
-	// BasicAuth is gitlab's BasicAuth method of authentification that needs a username and a password
-	BasicAuth AuthType = "BasicAuth"
-
-	// JobToken is gitlab's JobToken method of authentification
-	JobToken AuthType = "JobToken"
-
-	// OAuthToken is gitlab's OAuthToken method of authentification
-	OAuthToken AuthType = "OAuthToken"
-
-	// PersonalAccessToken is gitlab's PersonalAccessToken method of authentification.
-	PersonalAccessToken AuthType = "PersonalAccessToken"
-)
-
-// AuthType represents an authentication type within GitLab.
-type AuthType string
 
 // A ProviderConfigSpec defines the desired state of a ProviderConfig.
 type ProviderConfigSpec struct {
@@ -59,7 +44,7 @@ type ProviderCredentials struct {
 
 	// Method of authentification can be BasicAuth, JobToken, OAuthToken or PersonalAccessToken (default)
 	// +optional
-	Method AuthType `json:"method"`
+	Method auth.AuthType `json:"method"`
 
 	xpv1.CommonCredentialSelectors `json:",inline"`
 }

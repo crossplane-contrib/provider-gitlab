@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	// +cluster-scope:delete=1
 	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -94,7 +95,7 @@ type HookParameters struct {
 }
 
 type Token struct {
-	SecretRef *xpv1.SecretKeySelector `json:"secretRef"`
+	SecretRef *xpv1.LocalSecretKeySelector `json:"secretRef"`
 }
 
 // HookObservation represents a project hook.

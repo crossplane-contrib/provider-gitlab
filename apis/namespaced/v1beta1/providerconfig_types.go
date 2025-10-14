@@ -18,25 +18,12 @@ package v1beta1
 
 import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	// +cluster-scope:delete=1
+	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	auth "github.com/crossplane-contrib/provider-gitlab/pkg/common/auth"
 )
-
-const (
-	// BasicAuth is gitlab's BasicAuth method of authentification that needs a username and a password
-	BasicAuth AuthType = "BasicAuth"
-
-	// JobToken is gitlab's JobToken method of authentification
-	JobToken AuthType = "JobToken"
-
-	// OAuthToken is gitlab's OAuthToken method of authentification
-	OAuthToken AuthType = "OAuthToken"
-
-	// PersonalAccessToken is gitlab's PersonalAccessToken method of authentification.
-	PersonalAccessToken AuthType = "PersonalAccessToken"
-)
-
-// AuthType represents an authentication type within GitLab.
-type AuthType string
 
 // A ProviderConfigSpec defines the desired state of a ProviderConfig.
 type ProviderConfigSpec struct {
@@ -59,7 +46,7 @@ type ProviderCredentials struct {
 
 	// Method of authentification can be BasicAuth, JobToken, OAuthToken or PersonalAccessToken (default)
 	// +optional
-	Method AuthType `json:"method"`
+	Method auth.AuthType `json:"method"`
 
 	xpv1.CommonCredentialSelectors `json:",inline"`
 }
@@ -105,7 +92,7 @@ type ProviderConfigUsage struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	xpv1.ProviderConfigUsage `json:",inline"`
+	xpv2.TypedProviderConfigUsage `json:",inline"`
 }
 
 // +kubebuilder:object:root=true
@@ -115,4 +102,29 @@ type ProviderConfigUsageList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ProviderConfigUsage `json:"items"`
+}
+
+// +kubebuilder:object:root=true
+
+// A ClusterProviderConfig configures the GitLab provider.
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="SECRET-NAME",type="string",JSONPath=".spec.credentials.secretRef.name",priority=1
+// +kubebuilder:resource:scope=Cluster,categories={crossplane,provider,gitlab}
+// +kubebuilder:storageversion
+type ClusterProviderConfig struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   ProviderConfigSpec   `json:"spec"`
+	Status ProviderConfigStatus `json:"status,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// ClusterProviderConfigList contains a list of ClusterProviderConfig.
+type ClusterProviderConfigList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []ClusterProviderConfig `json:"items"`
 }

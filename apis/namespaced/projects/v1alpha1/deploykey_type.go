@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	// +cluster-scope:delete=1
 	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -59,7 +60,7 @@ type DeployKeyParameters struct {
 
 	// KeySecretRef field representing reference to the key.
 	// This property is required.
-	KeySecretRef xpv1.SecretKeySelector `json:"keySecretRef"`
+	KeySecretRef xpv1.LocalSecretKeySelector `json:"keySecretRef"`
 }
 
 // DeployKeyObservation represents observed stated of Deploy Key.

@@ -27,7 +27,7 @@ limitations under the License.
 //go:generate go run ../hack/generate-cluster-scope.go restore-referencers
 
 // Generate cluster APIs from namespaced APIs (run first)
-//go:generate go run ../hack/generate-cluster-scope.go groups projects
+//go:generate go run ../hack/generate-cluster-scope.go generate groups projects
 
 // Temporarily rename referencers files to exclude them from generation
 //go:generate go run ../hack/generate-cluster-scope.go backup-referencers

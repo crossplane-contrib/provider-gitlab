@@ -186,22 +186,18 @@ spec:
                     description: Token is the secret token to validate received payloads.
                     properties:
                       secretRef:
-                        description: A SecretKeySelector is a reference to a secret
-                          key in an arbitrary namespace.
+                        description: |-
+                          A LocalSecretKeySelector is a reference to a secret key
+                          in the same namespace with the referencing object.
                         properties:
                           key:
-                            description: The key to select.
                             type: string
                           name:
                             description: Name of the secret.
                             type: string
-                          namespace:
-                            description: Namespace of the secret.
-                            type: string
                         required:
                         - key
                         - name
-                        - namespace
                         type: object
                     required:
                     - secretRef

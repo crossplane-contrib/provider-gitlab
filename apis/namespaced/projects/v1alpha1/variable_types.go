@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	// +cluster-scope:delete=1
 	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -64,7 +65,7 @@ type VariableParameters struct {
 	// have not been set implicitly. Mutually exclusive with Value.
 	// +optional
 	// +nullable
-	ValueSecretRef *xpv1.SecretKeySelector `json:"valueSecretRef,omitempty"`
+	ValueSecretRef *xpv1.LocalSecretKeySelector `json:"valueSecretRef,omitempty"`
 
 	// Masked enables or disables variable masking.
 	// +optional
