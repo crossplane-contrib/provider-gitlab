@@ -37,7 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	apis "github.com/crossplane-contrib/provider-gitlab/apis/cluster"
-	controller "github.com/crossplane-contrib/provider-gitlab/pkg/controller/cluster"
+	controller "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller"
 )
 
 func main() {
