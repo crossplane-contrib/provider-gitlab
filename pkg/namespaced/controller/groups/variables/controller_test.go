@@ -28,6 +28,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
@@ -130,6 +131,14 @@ func withVariableType(variableType v1alpha1.VariableType) variableModifier {
 func withEnvironmentScope(scope string) variableModifier {
 	return func(r *v1alpha1.Variable) {
 		r.Spec.ForProvider.EnvironmentScope = &scope
+	}
+}
+
+var deletionTime = metav1.Now()
+
+func withDeletionTimestamp() variableModifier {
+	return func(r *v1alpha1.Variable) {
+		r.ObjectMeta.DeletionTimestamp = &deletionTime
 	}
 }
 
@@ -358,6 +367,36 @@ func TestObserve(t *testing.T) {
 					withValueSecretRef(common.TestCreateLocalSecretKeySelector("something", "bad")),
 				),
 				err: errors.Wrap(errors.New(common.ErrSecretKeyNotFound), errGetFailed),
+			},
+		},
+
+		"DeletingEarlyReturnSkipsSecret": {
+			args: args{
+				kube: &test.MockClient{
+					MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error { return errBoom },
+				},
+				variable: &fake.MockClient{
+					MockGetGroupVariable: func(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
+						return &pv, &gitlab.Response{}, nil
+					},
+				},
+				cr: variable(
+					withGroupID(groupID),
+					withKey(variableKey),
+					withValueSecretRef(common.TestCreateLocalSecretKeySelector("something", "blah")),
+					withDeletionTimestamp(),
+					withConditions(xpv1.Deleting()),
+				),
+			},
+			want: want{
+				cr: variable(
+					withGroupID(groupID),
+					withKey(variableKey),
+					withValueSecretRef(common.TestCreateLocalSecretKeySelector("something", "blah")),
+					withDeletionTimestamp(),
+					withConditions(xpv1.Deleting()),
+				),
+				result: managed.ExternalObservation{ResourceExists: true},
 			},
 		},
 	}
