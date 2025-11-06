@@ -45,7 +45,7 @@ GO111MODULE = on
 # ====================================================================================
 # Setup Kubernetes tools
 
-UP_VERSION = v0.34.2
+UP_VERSION = v0.41.0
 UP_CHANNEL = stable
 USE_HELM3 = true
 

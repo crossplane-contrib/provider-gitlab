@@ -1,0 +1,1004 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: projects.projects.gitlab.m.crossplane.io
+spec:
+  group: projects.gitlab.m.crossplane.io
+  names:
+    categories:
+    - crossplane
+    - managed
+    - gitlab
+    kind: Project
+    listKind: ProjectList
+    plural: projects
+    singular: project
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Synced')].status
+      name: SYNCED
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    - jsonPath: .status.atProvider.pathWithNamespace
+      name: PATH WITH NAMESPACE
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: A Project is a managed resource that represents a Gitlab Project
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: A ProjectSpec defines the desired state of a Gitlab Project.
+            properties:
+              forProvider:
+                description: ProjectParameters define the desired state of a Gitlab
+                  Project
+                properties:
+                  allowMergeOnSkippedPipeline:
+                    description: Set whether or not merge requests can be merged with
+                      skipped jobs.
+                    type: boolean
+                  approvalsBeforeMerge:
+                    description: |-
+                      How many approvers should approve merge request by default.More actions
+                      To configure approval rules, see Merge request approvals API.
+                      Deprecated: use Approvals Resource instead
+                    type: integer
+                  autoCancelPendingPipelines:
+                    description: Auto-cancel pending pipelines. This isn’t a boolean,
+                      but enabled/disabled.
+                    type: string
+                  autoDevopsDeployStrategy:
+                    description: Auto Deploy strategy (continuous, manual or timedIncremental).
+                    type: string
+                  autoDevopsEnabled:
+                    description: Enable Auto DevOps for this project.
+                    type: boolean
+                  autocloseReferencedIssues:
+                    description: Set whether auto-closing referenced issues on default
+                      branch.
+                    type: boolean
+                  buildCoverageRegex:
+                    description: Test coverage parsing.
+                    type: string
+                  buildGitStrategy:
+                    description: The Git strategy. Defaults to fetch.
+                    type: string
+                  buildTimeout:
+                    description: The maximum amount of time, in seconds, that a job
+                      can run.
+                    type: integer
+                  buildsAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
+                  ciConfigPath:
+                    description: The path to CI configuration file.
+                    type: string
+                  ciDefaultGitDepth:
+                    description: Default number of revisions for shallow cloning.
+                    type: integer
+                  ciForwardDeploymentEnabled:
+                    description: When a new deployment job starts, skip older deployment
+                      jobs that are still pending
+                    type: boolean
+                  containerExpirationPolicyAttributes:
+                    description: |-
+                      Update the image cleanup policy for this project. Accepts: cadence (string), keepN (integer), olderThan (string),
+                      nameRegex (string), nameRegexDelete (string), nameRegexKeep (string), enabled (boolean).
+                    properties:
+                      cadence:
+                        type: string
+                      enabled:
+                        type: boolean
+                      keepN:
+                        type: integer
+                      name_regex:
+                        description: Deprecated members
+                        type: string
+                      nameRegexDelete:
+                        type: string
+                      nameRegexKeep:
+                        type: string
+                      olderThan:
+                        type: string
+                    type: object
+                  containerRegistryAccessLevel:
+                    description: Set visibility of container registry.
+                    type: string
+                  containerRegistryEnabled:
+                    description: |-
+                      Enable container registry for this project.
+
+                      Deprecated: Use ContainerRegistryAccessLevel.
+                    type: boolean
+                  defaultBranch:
+                    description: The default branch name. Requires initializeWithReadme
+                      to be true.
+                    type: string
+                  description:
+                    description: Short project description.
+                    type: string
+                  emailsDisabled:
+                    description: Disable email notifications.
+                    type: boolean
+                  externalAuthorizationClassificationLabel:
+                    description: The classification label for the project.
+                    type: string
+                  forkingAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
+                  groupWithProjectTemplatesId:
+                    description: |-
+                      For group-level custom templates, specifies ID of group from which all the custom project templates are sourced.
+                      Leave empty for instance-level templates. Requires useCustomTemplate to be true.
+                    type: integer
+                  importUrl:
+                    description: URL to import repository from.
+                    type: string
+                  initializeWithReadme:
+                    description: false by default.
+                    type: boolean
+                  issuesAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
+                  issuesTemplate:
+                    description: |-
+                      Default description for Issues. Description is parsed with GitLab Flavored Markdown.
+                      See Templates for issues and merge requests.
+                    type: string
+                  lfsEnabled:
+                    description: Enable LFS.
+                    type: boolean
+                  mergeMethod:
+                    description: Set the merge method used.
+                    type: string
+                  mergeRequestsAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
+                  mergeRequestsTemplate:
+                    description: |-
+                      Default description for Merge Requests. Description is parsed with GitLab Flavored Markdown.
+                      See Templates for issues and merge requests.
+                    type: string
+                  mirror:
+                    description: Enables pull mirroring in a project.
+                    type: boolean
+                  mirrorOverwritesDivergedBranches:
+                    description: Pull mirror overwrites diverged branches.
+                    type: boolean
+                  mirrorTriggerBuilds:
+                    description: Pull mirroring triggers builds.
+                    type: boolean
+                  mirrorUserId:
+                    description: User responsible for all the activity surrounding
+                      a pull mirror event. (admins only)
+                    type: integer
+                  name:
+                    description: |-
+                      Name is the human-readable name of the project.
+                      If set, it overrides metadata.name.
+                    maxLength: 255
+                    type: string
+                  namespaceId:
+                    description: Namespace for the new project (defaults to the current
+                      user’s namespace).
+                    type: integer
+                  namespaceIdRef:
+                    description: NamespaceIDRef is a reference to a project to retrieve
+                      its namespaceId
+                    properties:
+                      name:
+                        description: Name of the referenced object.
+                        type: string
+                      namespace:
+                        description: Namespace of the referenced object
+                        type: string
+                      policy:
+                        description: Policies for referencing.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: |-
+                              Resolution specifies whether resolution of this reference is required.
+                              The default is 'Required', which means the reconcile will fail if the
+                              reference cannot be resolved. 'Optional' means this reference will be
+                              a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: |-
+                              Resolve specifies when this reference should be resolved. The default
+                              is 'IfNotPresent', which will attempt to resolve the reference only when
+                              the corresponding field is not present. Use 'Always' to resolve the
+                              reference on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  namespaceIdSelector:
+                    description: NamespaceIDSelector selects reference to a project
+                      to retrieve its namespaceId.
+                    properties:
+                      matchControllerRef:
+                        description: |-
+                          MatchControllerRef ensures an object with the same controller reference
+                          as the selecting object is selected.
+                        type: boolean
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: MatchLabels ensures an object with matching labels
+                          is selected.
+                        type: object
+                      namespace:
+                        description: Namespace for the selector
+                        type: string
+                      policy:
+                        description: Policies for selection.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: |-
+                              Resolution specifies whether resolution of this reference is required.
+                              The default is 'Required', which means the reconcile will fail if the
+                              reference cannot be resolved. 'Optional' means this reference will be
+                              a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: |-
+                              Resolve specifies when this reference should be resolved. The default
+                              is 'IfNotPresent', which will attempt to resolve the reference only when
+                              the corresponding field is not present. Use 'Always' to resolve the
+                              reference on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    type: object
+                  onlyAllowMergeIfAllDiscussionsAreResolved:
+                    description: Set whether merge requests can only be merged when
+                      all the discussions are resolved.
+                    type: boolean
+                  onlyAllowMergeIfPipelineSucceeds:
+                    description: Set whether merge requests can only be merged with
+                      successful jobs.
+                    type: boolean
+                  onlyMirrorProtectedBranches:
+                    description: Only mirror protected branches.
+                    type: boolean
+                  operationsAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
+                  packagesEnabled:
+                    description: Enable or disable packages repository feature.
+                    type: boolean
+                  pagesAccessLevel:
+                    description: One of disabled, private, enabled, or public.
+                    type: string
+                  path:
+                    description: |-
+                      Repository name for new project.
+                      Generated based on name if not provided (generated as lowercase with dashes).
+                    type: string
+                  permanentlyRemove:
+                    description: |-
+                      Force the immediate deletion of the project when removed. In GitLab Premium and Ultimate a project is by default
+                      just marked for deletion and removed permanently after seven days. Defaults to false.
+                    type: boolean
+                  printingMergeRequestLinkEnabled:
+                    description: Show link to create/view merge request when pushing
+                      from the command line.
+                    type: boolean
+                  publicBuilds:
+                    description: If true, jobs can be viewed by non-project members.
+                    type: boolean
+                  pushRules:
+                    description: |-
+                      PushRule specifies are pre-receive Git hooks you can enable in a
+                      user-friendly interface.
+                      Push rules give you more control over what can and can’t be pushed to
+                      your repository.
+                    properties:
+                      authorEmailRegex:
+                        description: All commit author emails must match this regular
+                          expression.
+                        type: string
+                      branchNameRegex:
+                        description: All branch names must match this regular expression.
+                        type: string
+                      commitCommitterCheck:
+                        description: |-
+                          Users can only push commits to this repository if the committer email is
+                          one of their own verified emails.
+                        type: boolean
+                      commitCommitterNameCheck:
+                        description: |-
+                          Users can only push commits to this repository if the commit author name
+                          is consistent with their GitLab account name.
+                        type: boolean
+                      commitMessageNegativeRegex:
+                        description: No commit message is allowed to match this regular
+                          expression.
+                        type: string
+                      commitMessageRegex:
+                        description: All commit messages must match this regular expression.
+                        type: string
+                      denyDeleteTag:
+                        description: Deny deleting a tag.
+                        type: boolean
+                      fileNameRegex:
+                        description: All committed filenames must not match this regular
+                          expression.
+                        type: string
+                      maxFileSize:
+                        description: Maximum file size (MB).
+                        type: integer
+                      memberCheck:
+                        description: Restrict commits by author (email) to existing
+                          GitLab users.
+                        type: boolean
+                      preventSecrets:
+                        description: GitLab rejects any files that are likely to contain
+                          secrets.
+                        type: boolean
+                      rejectNonDcoCommits:
+                        description: Reject commit when it’s not DCO certified.
+                        type: boolean
+                      rejectUnsignedCommits:
+                        description: Reject commit when it’s not signed.
+                        type: boolean
+                    type: object
+                  removeFinalizerOnPendingDeletion:
+                    description: |-
+                      RemoveFinalizerOnPendingDeletion specifies wether the finalizer of this
+                      object should be removed in case the Kubernetes object and
+                      the external Gitlab project are marked for pending deletion.
+                    type: boolean
+                  removeSourceBranchAfterMerge:
+                    description: Enable Delete source branch option by default for
+                      all new merge requests.
+                    type: boolean
+                  repositoryAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
+                  requestAccessEnabled:
+                    description: Allow users to request member access.
+                    type: boolean
+                  resolveOutdatedDiffDiscussions:
+                    description: Automatically resolve merge request diffs discussions
+                      on lines changed with a push.
+                    type: boolean
+                  serviceDeskEnabled:
+                    description: Enable or disable Service Desk feature.
+                    type: boolean
+                  sharedRunnersEnabled:
+                    description: Enable shared runners for this project.
+                    type: boolean
+                  snippetsAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
+                  suggestionCommitMessage:
+                    description: The commit message used to apply merge request suggestions.
+                    type: string
+                  tagList:
+                    description: |-
+                      The list of tags for a project; put array of tags,
+                      that should be finally assigned to a project.
+
+                      Deprecated: Use topics instead.
+                    items:
+                      type: string
+                    type: array
+                  templateName:
+                    description: |-
+                      When used without useCustomTemplate, name of a built-in project template.
+                      When used with useCustomTemplate, name of a custom project template.
+                    type: string
+                  templateProjectId:
+                    description: |-
+                      When used with useCustomTemplate, project ID of a custom project template.
+                      This is preferable to using templateName since templateName may be ambiguous.
+                    type: integer
+                  topics:
+                    description: The list of topics for the project;
+                    items:
+                      type: string
+                    type: array
+                  useCustomTemplate:
+                    description: Use either custom instance or group (with groupWithProjectTemplatesId)
+                      project template.
+                    type: boolean
+                  visibility:
+                    description: See project visibility level.
+                    type: string
+                  wikiAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
+                type: object
+              managementPolicies:
+                default:
+                - '*'
+                description: |-
+                  THIS IS A BETA FIELD. It is on by default but can be opted out
+                  through a Crossplane feature flag.
+                  ManagementPolicies specify the array of actions Crossplane is allowed to
+                  take on the managed and external resources.
+                  See the design doc for more information: https://github.com/crossplane/crossplane/blob/499895a25d1a1a0ba1604944ef98ac7a1a71f197/design/design-doc-observe-only-resources.md?plain=1#L223
+                  and this one: https://github.com/crossplane/crossplane/blob/444267e84783136daa93568b364a5f01228cacbe/design/one-pager-ignore-changes.md
+                items:
+                  description: |-
+                    A ManagementAction represents an action that the Crossplane controllers
+                    can take on an external resource.
+                  enum:
+                  - Observe
+                  - Create
+                  - Update
+                  - Delete
+                  - LateInitialize
+                  - '*'
+                  type: string
+                type: array
+              providerConfigRef:
+                default:
+                  kind: ClusterProviderConfig
+                  name: default
+                description: |-
+                  ProviderConfigReference specifies how the provider that will be used to
+                  create, observe, update, and delete this managed resource should be
+                  configured.
+                properties:
+                  kind:
+                    description: Kind of the referenced object.
+                    type: string
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+              writeConnectionSecretToRef:
+                description: |-
+                  WriteConnectionSecretToReference specifies the namespace and name of a
+                  Secret to which any connection details for this managed resource should
+                  be written. Connection details frequently include the endpoint, username,
+                  and password required to connect to the managed resource.
+                properties:
+                  name:
+                    description: Name of the secret.
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - forProvider
+            type: object
+          status:
+            description: A ProjectStatus represents the observed state of a Gitlab
+              Project.
+            properties:
+              atProvider:
+                description: ProjectObservation is the observed state of a Project.
+                properties:
+                  archived:
+                    type: boolean
+                  avatarUrl:
+                    type: string
+                  buildsAccessLevel:
+                    description: |-
+                      AccessControlValue represents an access control value within GitLab,
+                      used for managing access to certain project features.
+
+                      GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
+                    type: string
+                  complianceFrameworks:
+                    items:
+                      type: string
+                    type: array
+                  containerExpirationPolicy:
+                    description: ContainerExpirationPolicy represents the container
+                      expiration policy.
+                    properties:
+                      cadence:
+                        type: string
+                      enabled:
+                        type: boolean
+                      keepN:
+                        type: integer
+                      nameRegexDelete:
+                        type: string
+                      nameRegexKeep:
+                        type: string
+                      nextRunAt:
+                        format: date-time
+                        type: string
+                      olderThan:
+                        type: string
+                    required:
+                    - cadence
+                    - enabled
+                    - keepN
+                    - nameRegexDelete
+                    - nameRegexKeep
+                    - nextRunAt
+                    - olderThan
+                    type: object
+                  createdAt:
+                    format: date-time
+                    type: string
+                  creatorId:
+                    type: integer
+                  customAttributes:
+                    items:
+                      description: |-
+                        CustomAttribute struct is used to unmarshal response to api calls.
+
+                        GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html
+                      properties:
+                        key:
+                          type: string
+                        value:
+                          type: string
+                      required:
+                      - key
+                      - value
+                      type: object
+                    type: array
+                  emptyRepo:
+                    type: boolean
+                  forkedFromProject:
+                    description: ForkParent represents the parent project when this
+                      is a fork.
+                    properties:
+                      HTTPURLToRepo:
+                        type: string
+                      ID:
+                        type: integer
+                      name:
+                        type: string
+                      nameWithNamespace:
+                        type: string
+                      path:
+                        type: string
+                      pathWithNamespace:
+                        type: string
+                      webURL:
+                        type: string
+                    required:
+                    - HTTPURLToRepo
+                    - ID
+                    - name
+                    - nameWithNamespace
+                    - path
+                    - pathWithNamespace
+                    - webURL
+                    type: object
+                  forksCount:
+                    type: integer
+                  httpUrlToRepo:
+                    type: string
+                  id:
+                    type: integer
+                  importError:
+                    type: string
+                  importStatus:
+                    type: string
+                  issuesAccessLevel:
+                    description: |-
+                      AccessControlValue represents an access control value within GitLab,
+                      used for managing access to certain project features.
+
+                      GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
+                    type: string
+                  issuesEnabled:
+                    type: boolean
+                  jobsEnabled:
+                    type: boolean
+                  lastActivityAt:
+                    format: date-time
+                    type: string
+                  license:
+                    description: ProjectLicense represent the license for a project.
+                    properties:
+                      HTMLURL:
+                        type: string
+                      key:
+                        type: string
+                      name:
+                        type: string
+                      nickname:
+                        type: string
+                      sourceURL:
+                        type: string
+                    required:
+                    - HTMLURL
+                    - key
+                    - name
+                    - nickname
+                    - sourceURL
+                    type: object
+                  licenseUrl:
+                    type: string
+                  links:
+                    description: |-
+                      Links represents a project web links for self, issues, mergeRequests,
+                      repoBranches, labels, events, members.
+                    properties:
+                      events:
+                        type: string
+                      issues:
+                        type: string
+                      labels:
+                        type: string
+                      members:
+                        type: string
+                      mergeRequests:
+                        type: string
+                      repoBranches:
+                        type: string
+                      self:
+                        type: string
+                    required:
+                    - events
+                    - issues
+                    - labels
+                    - members
+                    - mergeRequests
+                    - repoBranches
+                    - self
+                    type: object
+                  markedForDeletionAt:
+                    format: date-time
+                    type: string
+                  markedForDeletionOn:
+                    format: date-time
+                    type: string
+                  mergeRequestsAccessLevel:
+                    description: |-
+                      AccessControlValue represents an access control value within GitLab,
+                      used for managing access to certain project features.
+
+                      GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
+                    type: string
+                  mergeRequestsEnabled:
+                    type: boolean
+                  nameWithNamespace:
+                    type: string
+                  namespace:
+                    description: ProjectNamespace represents a project namespace.
+                    properties:
+                      ID:
+                        type: integer
+                      avatarURL:
+                        type: string
+                      fullPath:
+                        type: string
+                      kind:
+                        type: string
+                      name:
+                        type: string
+                      path:
+                        type: string
+                      webURL:
+                        type: string
+                    required:
+                    - ID
+                    - avatarURL
+                    - fullPath
+                    - kind
+                    - name
+                    - path
+                    - webURL
+                    type: object
+                  openIssuesCount:
+                    type: integer
+                  owner:
+                    description: |-
+                      User represents a GitLab user.
+
+                      GitLab API docs: https://docs.gitlab.com/ee/api/users.html
+                    properties:
+                      ID:
+                        type: integer
+                      avatarURL:
+                        type: string
+                      bio:
+                        type: string
+                      canCreateGroup:
+                        type: boolean
+                      canCreateProject:
+                        type: boolean
+                      colorSchemeID:
+                        type: integer
+                      confirmedAt:
+                        format: date-time
+                        type: string
+                      createdAt:
+                        format: date-time
+                        type: string
+                      currentSignInAt:
+                        format: date-time
+                        type: string
+                      customAttributes:
+                        items:
+                          description: |-
+                            CustomAttribute struct is used to unmarshal response to api calls.
+
+                            GitLab API docs: https://docs.gitlab.com/ce/api/custom_attributes.html
+                          properties:
+                            key:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - key
+                          - value
+                          type: object
+                        type: array
+                      email:
+                        type: string
+                      externUID:
+                        type: string
+                      external:
+                        type: boolean
+                      identities:
+                        items:
+                          description: UserIdentity represents a user identity.
+                          properties:
+                            externUID:
+                              type: string
+                            provider:
+                              type: string
+                          required:
+                          - externUID
+                          - provider
+                          type: object
+                        type: array
+                      isAdmin:
+                        type: boolean
+                      lastActivityOn:
+                        format: date-time
+                        type: string
+                      lastSignInAt:
+                        format: date-time
+                        type: string
+                      linkedin:
+                        type: string
+                      location:
+                        type: string
+                      name:
+                        type: string
+                      organization:
+                        type: string
+                      privateProfile:
+                        type: boolean
+                      projectsLimit:
+                        type: integer
+                      provider:
+                        type: string
+                      publicEmail:
+                        type: string
+                      sharedRunnersMinutesLimit:
+                        type: integer
+                      skype:
+                        type: string
+                      state:
+                        type: string
+                      themeID:
+                        type: integer
+                      twitter:
+                        type: string
+                      twoFactorEnabled:
+                        type: boolean
+                      username:
+                        type: string
+                      webURL:
+                        type: string
+                      websiteURL:
+                        type: string
+                    type: object
+                  pathWithNamespace:
+                    type: string
+                  permissions:
+                    description: Permissions represents permissions.
+                    properties:
+                      groupAccess:
+                        description: GroupAccess represents group access.
+                        properties:
+                          accessLevel:
+                            description: |-
+                              AccessLevelValue represents a permission level within GitLab.
+
+                              GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html
+                            type: integer
+                          notificationLevel:
+                            description: NotificationLevelValue represents a notification
+                              level.
+                            type: integer
+                        required:
+                        - accessLevel
+                        - notificationLevel
+                        type: object
+                      projectAccess:
+                        description: ProjectAccess represents project access.
+                        properties:
+                          accessLevel:
+                            description: |-
+                              AccessLevelValue represents a permission level within GitLab.
+
+                              GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html
+                            type: integer
+                          notificationLevel:
+                            description: NotificationLevelValue represents a notification
+                              level.
+                            type: integer
+                        required:
+                        - accessLevel
+                        - notificationLevel
+                        type: object
+                    type: object
+                  public:
+                    type: boolean
+                  readmeUrl:
+                    type: string
+                  serviceDeskAddress:
+                    type: string
+                  sharedWithGroups:
+                    items:
+                      description: SharedWithGroups struct used in gitlab project
+                      properties:
+                        groupAccessLevel:
+                          type: integer
+                        groupID:
+                          type: integer
+                        groupName:
+                          type: string
+                      type: object
+                    type: array
+                  snippetsAccessLevel:
+                    description: |-
+                      AccessControlValue represents an access control value within GitLab,
+                      used for managing access to certain project features.
+
+                      GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
+                    type: string
+                  snippetsEnabled:
+                    type: boolean
+                  sshUrlToRepo:
+                    type: string
+                  starCount:
+                    type: integer
+                  statistics:
+                    description: ProjectStatistics represents a statistics record
+                      for a project.
+                    properties:
+                      commitCount:
+                        type: integer
+                      jobArtifactsSize:
+                        format: int64
+                        type: integer
+                      lfsObjectsSize:
+                        format: int64
+                        type: integer
+                      repositorySize:
+                        format: int64
+                        type: integer
+                      storageSize:
+                        format: int64
+                        type: integer
+                    required:
+                    - commitCount
+                    - jobArtifactsSize
+                    - lfsObjectsSize
+                    - repositorySize
+                    - storageSize
+                    type: object
+                  webUrl:
+                    type: string
+                  wikiAccessLevel:
+                    description: |-
+                      AccessControlValue represents an access control value within GitLab,
+                      used for managing access to certain project features.
+
+                      GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
+                    type: string
+                  wikiEnabled:
+                    type: boolean
+                type: object
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  description: A Condition that may apply to a resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        LastTransitionTime is the last time this condition transitioned from one
+                        status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        A Message containing details about this condition's last transition from
+                        one status to another, if any.
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        ObservedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      type: integer
+                    reason:
+                      description: A Reason for this condition's last transition from
+                        one status to another.
+                      type: string
+                    status:
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
+                      type: string
+                    type:
+                      description: |-
+                        Type of this condition. At most one of each condition type may apply to
+                        a resource at any point in time.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                description: |-
+                  ObservedGeneration is the latest metadata.generation
+                  which resulted in either a ready state, or stalled due to error
+                  it can not recover from without human intervention.
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
