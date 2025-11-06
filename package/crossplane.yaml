@@ -21,3 +21,6 @@ metadata:
       [slack.crossplane.io](https://slack.crossplane.io) and create an issue in
       the [crossplane-contrib/provider-gitlab](https://github.com/crossplane-contrib/provider-gitlab)
       repo.
+spec: 
+  capabilities:
+    - SafeStart
