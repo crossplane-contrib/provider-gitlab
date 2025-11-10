@@ -133,6 +133,11 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
+	// Deleting: only need to determine external resource still exists.
+	if !cr.ObjectMeta.DeletionTimestamp.IsZero() {
+		return managed.ExternalObservation{ResourceExists: true}, nil
+	}
+
 	if cr.Spec.ForProvider.ValueSecretRef != nil {
 		if err = e.updateVariableFromSecret(mg, ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider); err != nil {
 			return managed.ExternalObservation{}, errors.Wrap(err, errUpdateFailed)
