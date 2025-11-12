@@ -476,6 +476,7 @@ func TestCreate(t *testing.T) {
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID: &id,
+						Name:    "Access Token Name",
 					}),
 					withAnnotations(extNameAnnotation),
 				),
@@ -484,6 +485,7 @@ func TestCreate(t *testing.T) {
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID: &id,
+						Name:    "Access Token Name",
 					}),
 					withExternalName(sAccessTokenID),
 				),

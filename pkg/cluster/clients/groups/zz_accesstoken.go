@@ -51,7 +51,7 @@ func NewAccessTokenClient(cfg common.Config) AccessTokenClient {
 // GenerateCreateGroupAccessTokenOptions generates project creation options
 func GenerateCreateGroupAccessTokenOptions(name string, p *v1alpha1.AccessTokenParameters) *gitlab.CreateGroupAccessTokenOptions {
 	accesstoken := &gitlab.CreateGroupAccessTokenOptions{
-		Name:   &name,
+		Name:   &p.Name,
 		Scopes: &p.Scopes,
 	}
 
