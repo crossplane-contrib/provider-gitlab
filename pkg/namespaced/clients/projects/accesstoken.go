@@ -49,7 +49,7 @@ func NewAccessTokenClient(cfg common.Config) AccessTokenClient {
 // GenerateCreateProjectAccessTokenOptions generates project creation options
 func GenerateCreateProjectAccessTokenOptions(name string, p *v1alpha1.AccessTokenParameters) *gitlab.CreateProjectAccessTokenOptions {
 	accesstoken := &gitlab.CreateProjectAccessTokenOptions{
-		Name:   &name,
+		Name:   &p.Name,
 		Scopes: &p.Scopes,
 	}
 
