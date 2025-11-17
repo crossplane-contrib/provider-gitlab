@@ -32,7 +32,6 @@ import (
 func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 	name := "Name"
 	var expiresAt time.Time
-	defaultExpiresAt := time.Now().AddDate(0, 0, 30)
 	scopes := []string{"scope1", "scope2"}
 	accessLevel := 40
 	type args struct {
@@ -73,7 +72,7 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 			want: &gitlab.CreateGroupAccessTokenOptions{
 				Name:        &name,
 				AccessLevel: (*gitlab.AccessLevelValue)(&accessLevel),
-				ExpiresAt:   (*gitlab.ISOTime)(&defaultExpiresAt),
+				ExpiresAt:   nil,
 				Scopes:      &scopes,
 			},
 		},

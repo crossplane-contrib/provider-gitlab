@@ -18,7 +18,6 @@ package groups
 
 import (
 	"strings"
-	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
@@ -56,9 +55,6 @@ func GenerateCreateGroupAccessTokenOptions(name string, p *v1alpha1.AccessTokenP
 
 	if p.ExpiresAt != nil {
 		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
-	} else {
-		defaultExpiresAtDummy := gitlab.ISOTime(time.Now().AddDate(0, 0, 30))
-		accesstoken.ExpiresAt = &defaultExpiresAtDummy
 	}
 
 	if p.AccessLevel != nil {
