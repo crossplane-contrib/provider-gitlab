@@ -41,10 +41,10 @@ type AccessTokenParameters struct {
 	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
 
 	// Expiration date of the access token. The date cannot be set later than the maximum allowable lifetime of an access token.
-	// If not set, the maximum allowable lifetime of a personal access token is 365 days.
+	// If not set, the maximum allowable lifetime of a group access token is configured to the maximum allowable lifetime limit.
 	// Expected in ISO 8601 format (2019-03-15T08:00:00Z)
 	// +immutable
-	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
+	ExpiresAt *metav1.Time `json:"expiresAt"`
 
 	// Access level for the group. Default is 40.
 	// Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
