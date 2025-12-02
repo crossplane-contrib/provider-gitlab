@@ -97,6 +97,27 @@ func VisibilityValueStringToGitlab(from string) *gitlab.VisibilityValue {
 	return (*gitlab.VisibilityValue)(&from)
 }
 
+// VisibilityValueSliceToStringSlice converts []gitlab.VisibilityValue to []string
+func VisibilityValueSliceToStringSlice(from []gitlab.VisibilityValue) []string {
+	result := make([]string, len(from))
+	for i, v := range from {
+		result[i] = string(v)
+	}
+	return result
+}
+
+// StringPtrSliceToVisibilityValuePtrSlice converts *[]string to *[]gitlab.VisibilityValue
+func StringPtrSliceToVisibilityValuePtrSlice(s *[]string) *[]gitlab.VisibilityValue {
+	if s == nil {
+		return nil
+	}
+	res := make([]gitlab.VisibilityValue, len(*s))
+	for i, v := range *s {
+		res[i] = gitlab.VisibilityValue(v)
+	}
+	return &res
+}
+
 // AccessControlValueV1alpha1ToGitlab converts *v1alpha1.AccessControlValue to *gitlab.AccessControlValue
 func AccessControlValueV1alpha1ToGitlab(from *v1alpha1.AccessControlValue) *gitlab.AccessControlValue {
 	return (*gitlab.AccessControlValue)(from)
@@ -130,6 +151,32 @@ func StringToPtr(s string) *string {
 	return &s
 }
 
+// IsComparableEqualToComparablePtr compares a *T with T where T is comparable
+func IsComparableEqualToComparablePtr[T comparable](cp *T, c T) bool {
+	return cp == nil || cmp.Equal(*cp, c)
+}
+
+// IsComparablePtrEqualToComparablePtr compares a *T with *T where T is comparable
+func IsComparablePtrEqualToComparablePtr[T comparable](p *T, g *T) bool {
+	if p == nil {
+		return true
+	}
+	if g == nil {
+		return false
+	}
+	return *p == *g
+}
+
+// IsComparableSliceEqualToComparableSlicePtr compares a *[]T with []T where T is comparable
+func IsComparableSliceEqualToComparableSlicePtr[T comparable](csp *[]T, cs []T) bool {
+	return csp == nil || cmp.Equal(*csp, cs)
+}
+
+// IsMapStringToComparableEqualToMapStringToComparablePtr compares a *map[string]T with map[string]T where T is comparable
+func IsMapStringToComparableEqualToMapStringToComparablePtr[T comparable](mp *map[string]T, m map[string]T) bool {
+	return mp == nil || cmp.Equal(*mp, m)
+}
+
 // IsBoolEqualToBoolPtr compares a *bool with bool
 func IsBoolEqualToBoolPtr(bp *bool, b bool) bool {
 	if bp != nil {
@@ -158,6 +205,16 @@ func IsStringEqualToStringPtr(sp *string, s string) bool {
 		}
 	}
 	return true
+}
+
+// IsTimePtrEqualToTimePtr compares a *time.Time with *time.Time
+func IsTimePtrEqualToTimePtr(tp1, tp2 *time.Time) bool {
+	if tp1 != nil && tp2 != nil {
+		if !tp1.Equal(*tp2) {
+			return false
+		}
+	}
+	return tp1 != nil || tp2 != nil
 }
 
 // IsResponseNotFound returns true of Gitlab Response indicates CR was not found

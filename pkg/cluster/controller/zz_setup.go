@@ -24,6 +24,7 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/config"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects"
 )
 
@@ -34,6 +35,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		config.Setup,
 		groups.Setup,
 		projects.Setup,
+		instance.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -49,6 +51,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		config.SetupGated,
 		groups.SetupGated,
 		projects.SetupGated,
+		instance.SetupGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
