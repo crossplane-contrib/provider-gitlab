@@ -1,5 +1,3 @@
-//go:generate go run generate.go
-
 // +kubebuilder:object:generate=true
 package v1alpha1
 
