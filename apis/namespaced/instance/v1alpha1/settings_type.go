@@ -8,31 +8,38 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// DefaultBranchProtectionDefaultsOptions defines the desired state of default branch protection levels
+// DefaultBranchProtectionDefaultsOptions defines the rules for default branch protection
 type DefaultBranchProtectionDefaultsOptions struct {
-	AllowedToPush           *[]int `json:"allowedToPush,omitempty"`
-	AllowForcePush          *bool  `json:"allowForcePush,omitempty"`
-	AllowedToMerge          *[]int `json:"allowedToMerge,omitempty"`
-	DeveloperCanInitialPush *bool  `json:"developerCanInitialPush,omitempty"`
+	// List of user or group IDs allowed to push to the default branch
+	AllowedToPush *[]int `json:"allowedToPush,omitempty"`
+	// Whether to allow force pushes to the default branch
+	AllowForcePush *bool `json:"allowForcePush,omitempty"`
+	// List of user or group IDs allowed to merge to the default branch
+	AllowedToMerge *[]int `json:"allowedToMerge,omitempty"`
+	// Whether developers can push the first commit to the default branch
+	DeveloperCanInitialPush *bool `json:"developerCanInitialPush,omitempty"`
 }
 
-// BranchProtectionDefaults defines the desired state of default branch protection levels
+// BranchProtectionDefaults defines rules for branch branch protection
 type BranchProtectionDefaults struct {
-	AllowedToPush           []*int `json:"allowed_to_push,omitempty"`
-	AllowForcePush          bool   `json:"allow_force_push,omitempty"`
-	AllowedToMerge          []*int `json:"allowed_to_merge,omitempty"`
-	DeveloperCanInitialPush bool   `json:"developer_can_initial_push,omitempty"`
+	// List of user or group IDs allowed to push to the default branch
+	AllowedToPush []*int `json:"allowed_to_push,omitempty"`
+	// Whether to allow force pushes to the default branch
+	AllowForcePush bool `json:"allow_force_push,omitempty"`
+	// List of user or group IDs allowed to merge to the default branch
+	AllowedToMerge []*int `json:"allowed_to_merge,omitempty"`
+	// Whether developers can push the first commit to the default branch
+	DeveloperCanInitialPush bool `json:"developer_can_initial_push,omitempty"`
 }
 
-// A ApplicationSettingSpec defines the desired state of a Gitlab Project CI
-// ApplicationSettings.
+// A ApplicationSettingSpec defines the desired state of a Gitlab Instance Settings.
 type ApplicationSettingSpec struct {
 	xpv2.ManagedResourceSpec `json:",inline"`
-	ForProvider              ApplicationSettingsParameters `json:"forProvider"`
+	// Defines the desired state of the ApplicationSettings.
+	ForProvider ApplicationSettingsParameters `json:"forProvider"`
 }
 
-// A ApplicationSettingsStatus represents the observed state of a Gitlab Project CI
-// ApplicationSettings.
+// A ApplicationSettingsStatus represents the observed state of the GitLab Instance Settings.
 type ApplicationSettingsStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
 }

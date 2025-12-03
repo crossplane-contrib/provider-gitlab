@@ -52,9 +52,8 @@ spec:
           metadata:
             type: object
           spec:
-            description: |-
-              A ApplicationSettingSpec defines the desired state of a Gitlab Project CI
-              ApplicationSettings.
+            description: A ApplicationSettingSpec defines the desired state of a Gitlab
+              Instance Settings.
             properties:
               deletionPolicy:
                 default: Delete
@@ -71,9 +70,7 @@ spec:
                 - Delete
                 type: string
               forProvider:
-                description: |-
-                  ApplicationSettingsParameters defines the desired state for ApplicationSettings
-                  This struct was generated from gitlab.UpdateSettingsOptions struct, with just a rework of the json tags.
+                description: Defines the desired state of the ApplicationSettings.
                 properties:
                   abuseNotificationEmail:
                     type: string
@@ -208,19 +205,27 @@ spec:
                     type: integer
                   defaultBranchProtectionDefaults:
                     description: DefaultBranchProtectionDefaultsOptions defines the
-                      desired state of default branch protection levels
+                      rules for default branch protection
                     properties:
                       allowForcePush:
+                        description: Whether to allow force pushes to the default
+                          branch
                         type: boolean
                       allowedToMerge:
+                        description: List of user or group IDs allowed to merge to
+                          the default branch
                         items:
                           type: integer
                         type: array
                       allowedToPush:
+                        description: List of user or group IDs allowed to push to
+                          the default branch
                         items:
                           type: integer
                         type: array
                       developerCanInitialPush:
+                        description: Whether developers can push the first commit
+                          to the default branch
                         type: boolean
                     type: object
                   defaultCiConfigPath:
@@ -1043,9 +1048,8 @@ spec:
             - forProvider
             type: object
           status:
-            description: |-
-              A ApplicationSettingsStatus represents the observed state of a Gitlab Project CI
-              ApplicationSettings.
+            description: A ApplicationSettingsStatus represents the observed state
+              of the GitLab Instance Settings.
             properties:
               conditions:
                 description: Conditions of the resource.
