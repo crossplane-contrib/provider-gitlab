@@ -280,6 +280,14 @@ func GenerateOwnerObservation(usr *gitlab.User) *v1alpha1.User {
 	return o
 }
 
+// resolvePublicJobsValue returns the effective value for publicJobs,
+// prioritizing PublicJobs over the deprecated PublicBuilds field.
+func resolvePublicJobsValue(p *v1alpha1.ProjectParameters) *bool {
+	//nolint:staticcheck // We intentionally use the deprecated field for backward compatibility
+	value, _ := common.ResolvePublicJobsSetting(p.PublicBuilds, p.PublicJobs)
+	return value
+}
+
 // GenerateCreateProjectOptions generates project creation options
 func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.CreateProjectOptions {
 	// Name field overrides resource name
@@ -309,40 +317,42 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		SharedRunnersEnabled:                p.SharedRunnersEnabled,
 		Visibility:                          clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
 		ImportURL:                           p.ImportURL,
-		PublicBuilds:                        p.PublicBuilds,
-		AllowMergeOnSkippedPipeline:         p.AllowMergeOnSkippedPipeline,
-		OnlyAllowMergeIfPipelineSucceeds:    p.OnlyAllowMergeIfPipelineSucceeds,
+		// Note: CreateProjectOptions still uses PublicBuilds (deprecated) in GitLab API client v1.5.0
+		// We map our PublicJobs field to PublicBuilds here until the library adds PublicJobs support
+		PublicBuilds:                              resolvePublicJobsValue(p),
+		AllowMergeOnSkippedPipeline:               p.AllowMergeOnSkippedPipeline,
+		OnlyAllowMergeIfPipelineSucceeds:          p.OnlyAllowMergeIfPipelineSucceeds,
 		OnlyAllowMergeIfAllDiscussionsAreResolved: p.OnlyAllowMergeIfAllDiscussionsAreResolved,
-		MergeMethod:                              clients.MergeMethodV1alpha1ToGitlab(p.MergeMethod),
-		RemoveSourceBranchAfterMerge:             p.RemoveSourceBranchAfterMerge,
-		LFSEnabled:                               p.LFSEnabled,
-		RequestAccessEnabled:                     p.RequestAccessEnabled,
-		TagList:                                  &p.TagList, //nolint:staticcheck
-		Topics:                                   &p.Topics,
-		PrintingMergeRequestLinkEnabled:          p.PrintingMergeRequestLinkEnabled,
-		BuildGitStrategy:                         p.BuildGitStrategy,
-		BuildTimeout:                             p.BuildTimeout,
-		AutoCancelPendingPipelines:               p.AutoCancelPendingPipelines,
-		BuildCoverageRegex:                       p.BuildCoverageRegex,
-		CIConfigPath:                             p.CIConfigPath,
-		CIForwardDeploymentEnabled:               p.CIForwardDeploymentEnabled,
-		AutoDevopsEnabled:                        p.AutoDevopsEnabled,
-		AutoDevopsDeployStrategy:                 p.AutoDevopsDeployStrategy,
-		ApprovalsBeforeMerge:                     p.ApprovalsBeforeMerge,
-		ExternalAuthorizationClassificationLabel: p.ExternalAuthorizationClassificationLabel,
-		Mirror:                                   p.Mirror,
-		MirrorTriggerBuilds:                      p.MirrorTriggerBuilds,
-		InitializeWithReadme:                     p.InitializeWithReadme,
-		TemplateName:                             p.TemplateName,
-		TemplateProjectID:                        p.TemplateProjectID,
-		UseCustomTemplate:                        p.UseCustomTemplate,
-		GroupWithProjectTemplatesID:              p.GroupWithProjectTemplatesID,
-		PackagesEnabled:                          p.PackagesEnabled,
-		ServiceDeskEnabled:                       p.ServiceDeskEnabled,
-		AutocloseReferencedIssues:                p.AutocloseReferencedIssues,
-		SuggestionCommitMessage:                  p.SuggestionCommitMessage,
-		IssuesTemplate:                           p.IssuesTemplate,
-		MergeRequestsTemplate:                    p.MergeRequestsTemplate,
+		MergeMethod:                               clients.MergeMethodV1alpha1ToGitlab(p.MergeMethod),
+		RemoveSourceBranchAfterMerge:              p.RemoveSourceBranchAfterMerge,
+		LFSEnabled:                                p.LFSEnabled,
+		RequestAccessEnabled:                      p.RequestAccessEnabled,
+		TagList:                                   &p.TagList, //nolint:staticcheck
+		Topics:                                    &p.Topics,
+		PrintingMergeRequestLinkEnabled:           p.PrintingMergeRequestLinkEnabled,
+		BuildGitStrategy:                          p.BuildGitStrategy,
+		BuildTimeout:                              p.BuildTimeout,
+		AutoCancelPendingPipelines:                p.AutoCancelPendingPipelines,
+		BuildCoverageRegex:                        p.BuildCoverageRegex,
+		CIConfigPath:                              p.CIConfigPath,
+		CIForwardDeploymentEnabled:                p.CIForwardDeploymentEnabled,
+		AutoDevopsEnabled:                         p.AutoDevopsEnabled,
+		AutoDevopsDeployStrategy:                  p.AutoDevopsDeployStrategy,
+		ApprovalsBeforeMerge:                      p.ApprovalsBeforeMerge,
+		ExternalAuthorizationClassificationLabel:  p.ExternalAuthorizationClassificationLabel,
+		Mirror:                                    p.Mirror,
+		MirrorTriggerBuilds:                       p.MirrorTriggerBuilds,
+		InitializeWithReadme:                      p.InitializeWithReadme,
+		TemplateName:                              p.TemplateName,
+		TemplateProjectID:                         p.TemplateProjectID,
+		UseCustomTemplate:                         p.UseCustomTemplate,
+		GroupWithProjectTemplatesID:               p.GroupWithProjectTemplatesID,
+		PackagesEnabled:                           p.PackagesEnabled,
+		ServiceDeskEnabled:                        p.ServiceDeskEnabled,
+		AutocloseReferencedIssues:                 p.AutocloseReferencedIssues,
+		SuggestionCommitMessage:                   p.SuggestionCommitMessage,
+		IssuesTemplate:                            p.IssuesTemplate,
+		MergeRequestsTemplate:                     p.MergeRequestsTemplate,
 	}
 	return project
 }
@@ -375,7 +385,7 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		SharedRunnersEnabled:                p.SharedRunnersEnabled,
 		Visibility:                          clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
 		ImportURL:                           p.ImportURL,
-		PublicBuilds:                        p.PublicBuilds,
+		PublicJobs:                          resolvePublicJobsValue(p),
 		AllowMergeOnSkippedPipeline:         p.AllowMergeOnSkippedPipeline,
 		OnlyAllowMergeIfPipelineSucceeds:    p.OnlyAllowMergeIfPipelineSucceeds,
 		OnlyAllowMergeIfAllDiscussionsAreResolved: p.OnlyAllowMergeIfAllDiscussionsAreResolved,

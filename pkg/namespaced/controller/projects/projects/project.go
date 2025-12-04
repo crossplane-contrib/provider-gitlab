@@ -344,9 +344,14 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	in.PagesAccessLevel = clients.LateInitializeAccessControlValue(in.PagesAccessLevel, project.PagesAccessLevel)
 	in.Path = clients.LateInitializeStringPtr(in.Path, project.Path)
 
-	if in.PublicBuilds == nil {
+	// Late-initialize publicJobs and publicBuilds for backward compatibility
+	// Only initialize if both fields are unset
+	//nolint:staticcheck // We intentionally use the deprecated field for backward compatibility
+	if in.PublicBuilds == nil && in.PublicJobs == nil {
+		in.PublicJobs = &project.PublicJobs
 		in.PublicBuilds = &project.PublicJobs
 	}
+
 	if in.RemoveSourceBranchAfterMerge == nil {
 		in.RemoveSourceBranchAfterMerge = &project.RemoveSourceBranchAfterMerge
 	}
@@ -554,7 +559,10 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !cmp.Equal(p.Path, clients.StringToPtr(g.Path)) {
 		return false
 	}
-	if !clients.IsBoolEqualToBoolPtr(p.PublicBuilds, g.PublicJobs) {
+	// Use the resolved publicJobs value for comparison
+	//nolint:staticcheck // We intentionally use the deprecated field for backward compatibility
+	effectiveValue, _ := common.ResolvePublicJobsSetting(p.PublicBuilds, p.PublicJobs)
+	if !clients.IsBoolEqualToBoolPtr(effectiveValue, g.PublicJobs) {
 		return false
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.RemoveSourceBranchAfterMerge, g.RemoveSourceBranchAfterMerge) {
