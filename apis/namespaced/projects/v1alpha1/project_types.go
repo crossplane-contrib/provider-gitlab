@@ -351,7 +351,7 @@ type ProjectParameters struct {
 	// +immutable
 	PrintingMergeRequestLinkEnabled *bool `json:"printingMergeRequestLinkEnabled,omitempty"`
 
-	// DEPRECATED: Use PublicJobs instead. This field will be removed in a future version.
+	// Deprecated: Use PublicJobs instead. This field will be removed in a future version.
 	// If true, jobs can be viewed by non-project members.
 	// +optional
 	PublicBuilds *bool `json:"publicBuilds,omitempty"`

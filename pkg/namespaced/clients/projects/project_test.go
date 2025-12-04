@@ -686,7 +686,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				SharedRunnersEnabled:                &sharedRunnersEnabled,
 				Visibility:                          clients.VisibilityValueStringToGitlab(visibility),
 				ImportURL:                           &importURL,
-				PublicBuilds:                        &publicBuilds,
+				PublicJobs:                          &publicBuilds,
 				AllowMergeOnSkippedPipeline:         &allowMergeOnSkippedPipeline,
 				OnlyAllowMergeIfPipelineSucceeds:    &onlyAllowMergeIfPipelineSucceeds,
 				OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
