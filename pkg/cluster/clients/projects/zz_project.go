@@ -285,6 +285,7 @@ func GenerateOwnerObservation(usr *gitlab.User) *v1alpha1.User {
 // resolvePublicJobsValue returns the effective value for publicJobs,
 // prioritizing PublicJobs over the deprecated PublicBuilds field.
 func resolvePublicJobsValue(p *v1alpha1.ProjectParameters) *bool {
+	//nolint:staticcheck // We intentionally use the deprecated field for backward compatibility
 	value, _ := common.ResolvePublicJobsSetting(p.PublicBuilds, p.PublicJobs)
 	return value
 }

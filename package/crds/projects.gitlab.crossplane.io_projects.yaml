@@ -335,7 +335,7 @@ spec:
                     type: boolean
                   publicBuilds:
                     description: |-
-                      DEPRECATED: Use PublicJobs instead. This field will be removed in a future version.
+                      Deprecated: Use PublicJobs instead. This field will be removed in a future version.
                       If true, jobs can be viewed by non-project members.
                     type: boolean
                   publicJobs:

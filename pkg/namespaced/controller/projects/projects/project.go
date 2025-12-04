@@ -345,16 +345,11 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	in.Path = clients.LateInitializeStringPtr(in.Path, project.Path)
 
 	// Late-initialize publicJobs and publicBuilds for backward compatibility
-	// If neither field is set, initialize both from GitLab's PublicJobs value
+	// Only initialize if both fields are unset
+	//nolint:staticcheck // We intentionally use the deprecated field for backward compatibility
 	if in.PublicBuilds == nil && in.PublicJobs == nil {
 		in.PublicJobs = &project.PublicJobs
 		in.PublicBuilds = &project.PublicJobs
-	} else if in.PublicJobs == nil && in.PublicBuilds != nil {
-		// Only old field set, sync to new field
-		in.PublicJobs = in.PublicBuilds
-	} else if in.PublicBuilds == nil && in.PublicJobs != nil {
-		// Only new field set, sync to old field for backward compatibility
-		in.PublicBuilds = in.PublicJobs
 	}
 
 	if in.RemoveSourceBranchAfterMerge == nil {
@@ -565,6 +560,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	// Use the resolved publicJobs value for comparison
+	//nolint:staticcheck // We intentionally use the deprecated field for backward compatibility
 	effectiveValue, _ := common.ResolvePublicJobsSetting(p.PublicBuilds, p.PublicJobs)
 	if !clients.IsBoolEqualToBoolPtr(effectiveValue, g.PublicJobs) {
 		return false
