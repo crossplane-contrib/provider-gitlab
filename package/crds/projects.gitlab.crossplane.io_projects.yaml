@@ -334,7 +334,15 @@ spec:
                       from the command line.
                     type: boolean
                   publicBuilds:
-                    description: If true, jobs can be viewed by non-project members.
+                    description: |-
+                      DEPRECATED: Use PublicJobs instead. This field will be removed in a future version.
+                      If true, jobs can be viewed by non-project members.
+                    type: boolean
+                  publicJobs:
+                    description: |-
+                      If true, jobs can be viewed by non-project members.
+                      This replaces the deprecated PublicBuilds field.
+                      If both PublicBuilds and PublicJobs are set, PublicJobs takes precedence.
                     type: boolean
                   pushRules:
                     description: |-

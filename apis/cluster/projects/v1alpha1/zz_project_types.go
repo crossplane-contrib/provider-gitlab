@@ -351,9 +351,16 @@ type ProjectParameters struct {
 	// +immutable
 	PrintingMergeRequestLinkEnabled *bool `json:"printingMergeRequestLinkEnabled,omitempty"`
 
+	// DEPRECATED: Use PublicJobs instead. This field will be removed in a future version.
 	// If true, jobs can be viewed by non-project members.
 	// +optional
 	PublicBuilds *bool `json:"publicBuilds,omitempty"`
+
+	// If true, jobs can be viewed by non-project members.
+	// This replaces the deprecated PublicBuilds field.
+	// If both PublicBuilds and PublicJobs are set, PublicJobs takes precedence.
+	// +optional
+	PublicJobs *bool `json:"publicJobs,omitempty"`
 
 	// PushRule specifies are pre-receive Git hooks you can enable in a
 	// user-friendly interface.
