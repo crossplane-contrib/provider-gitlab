@@ -180,14 +180,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	cr.Status.AtProvider = projects.GenerateObservation(prj)
-
-	// Check if deprecated publicBuilds field is used and add warning
-	if cr.Spec.ForProvider.PublicBuilds != nil && cr.Spec.ForProvider.PublicJobs == nil {
-		cr.SetConditions(xpv1.Available().WithMessage(
-			"Warning: publicBuilds is deprecated and will be removed in a future version. Please use publicJobs instead.",
-		))
-	}
-
 	return managed.ExternalObservation{
 		ResourceExists:          true,
 		ResourceUpToDate:        isProjectUpToDate(&cr.Spec.ForProvider, prj) && e.cache.isPushRulesUpToDate,
