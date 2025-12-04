@@ -65,3 +65,18 @@ func GetTokenValueFromLocalSecret(ctx context.Context, client client.Client, m r
 		},
 	})
 }
+
+// ResolvePublicJobsSetting determines the effective publicJobs value
+// prioritizing publicJobs over the deprecated publicBuilds field.
+// Returns the resolved value and whether the deprecated publicBuilds field was used.
+func ResolvePublicJobsSetting(publicBuilds, publicJobs *bool) (*bool, bool) {
+	if publicJobs != nil {
+		// New field takes precedence
+		return publicJobs, false
+	}
+	if publicBuilds != nil {
+		// Deprecated field is used
+		return publicBuilds, true
+	}
+	return nil, false
+}

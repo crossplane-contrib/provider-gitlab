@@ -269,3 +269,117 @@ func TestGetTokenValueFromLocalSecret(t *testing.T) {
 		})
 	}
 }
+
+func TestResolvePublicJobsSetting(t *testing.T) {
+	trueVal := true
+	falseVal := false
+
+	type args struct {
+		publicBuilds *bool
+		publicJobs   *bool
+	}
+	type want struct {
+		value           *bool
+		usingDeprecated bool
+	}
+
+	cases := map[string]struct {
+		args args
+		want want
+	}{
+		"BothSet_PublicJobsWins": {
+			args: args{
+				publicBuilds: &trueVal,
+				publicJobs:   &falseVal,
+			},
+			want: want{
+				value:           &falseVal,
+				usingDeprecated: false,
+			},
+		},
+		"OnlyPublicBuilds_True": {
+			args: args{
+				publicBuilds: &trueVal,
+				publicJobs:   nil,
+			},
+			want: want{
+				value:           &trueVal,
+				usingDeprecated: true,
+			},
+		},
+		"OnlyPublicBuilds_False": {
+			args: args{
+				publicBuilds: &falseVal,
+				publicJobs:   nil,
+			},
+			want: want{
+				value:           &falseVal,
+				usingDeprecated: true,
+			},
+		},
+		"OnlyPublicJobs_True": {
+			args: args{
+				publicBuilds: nil,
+				publicJobs:   &trueVal,
+			},
+			want: want{
+				value:           &trueVal,
+				usingDeprecated: false,
+			},
+		},
+		"OnlyPublicJobs_False": {
+			args: args{
+				publicBuilds: nil,
+				publicJobs:   &falseVal,
+			},
+			want: want{
+				value:           &falseVal,
+				usingDeprecated: false,
+			},
+		},
+		"NeitherSet": {
+			args: args{
+				publicBuilds: nil,
+				publicJobs:   nil,
+			},
+			want: want{
+				value:           nil,
+				usingDeprecated: false,
+			},
+		},
+		"BothTrue_PublicJobsWins": {
+			args: args{
+				publicBuilds: &trueVal,
+				publicJobs:   &trueVal,
+			},
+			want: want{
+				value:           &trueVal,
+				usingDeprecated: false,
+			},
+		},
+		"BothFalse_PublicJobsWins": {
+			args: args{
+				publicBuilds: &falseVal,
+				publicJobs:   &falseVal,
+			},
+			want: want{
+				value:           &falseVal,
+				usingDeprecated: false,
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			gotValue, gotDeprecated := ResolvePublicJobsSetting(tc.args.publicBuilds, tc.args.publicJobs)
+
+			if diff := cmp.Diff(tc.want.value, gotValue); diff != "" {
+				t.Errorf("ResolvePublicJobsSetting() value diff (-want +got):\n%s", diff)
+			}
+
+			if gotDeprecated != tc.want.usingDeprecated {
+				t.Errorf("ResolvePublicJobsSetting() usingDeprecated = %v, want %v", gotDeprecated, tc.want.usingDeprecated)
+			}
+		})
+	}
+}

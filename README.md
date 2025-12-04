@@ -23,6 +23,7 @@ kubectl create secret generic gitlab-credentials -n crossplane-system --from-lit
 ```
 
 Configure a `ProviderConfig` with a baseURL pointing to your GitLab instance:
+
 ```yaml
 apiVersion: gitlab.crossplane.io/v1beta1
 kind: ProviderConfig
@@ -38,6 +39,7 @@ spec:
       name: gitlab-credentials
       key: token
 ```
+
 ```bash
 kubectl apply -f examples/providerconfig/provider.yaml
 ```

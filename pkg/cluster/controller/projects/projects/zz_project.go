@@ -180,6 +180,14 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	cr.Status.AtProvider = projects.GenerateObservation(prj)
+
+	// Check if deprecated publicBuilds field is used and add warning
+	if cr.Spec.ForProvider.PublicBuilds != nil && cr.Spec.ForProvider.PublicJobs == nil {
+		cr.SetConditions(xpv1.Available().WithMessage(
+			"Warning: publicBuilds is deprecated and will be removed in a future version. Please use publicJobs instead.",
+		))
+	}
+
 	return managed.ExternalObservation{
 		ResourceExists:          true,
 		ResourceUpToDate:        isProjectUpToDate(&cr.Spec.ForProvider, prj) && e.cache.isPushRulesUpToDate,
@@ -346,9 +354,19 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	in.PagesAccessLevel = clients.LateInitializeAccessControlValue(in.PagesAccessLevel, project.PagesAccessLevel)
 	in.Path = clients.LateInitializeStringPtr(in.Path, project.Path)
 
-	if in.PublicBuilds == nil {
+	// Late-initialize publicJobs and publicBuilds for backward compatibility
+	// If neither field is set, initialize both from GitLab's PublicJobs value
+	if in.PublicBuilds == nil && in.PublicJobs == nil {
+		in.PublicJobs = &project.PublicJobs
 		in.PublicBuilds = &project.PublicJobs
+	} else if in.PublicJobs == nil && in.PublicBuilds != nil {
+		// Only old field set, sync to new field
+		in.PublicJobs = in.PublicBuilds
+	} else if in.PublicBuilds == nil && in.PublicJobs != nil {
+		// Only new field set, sync to old field for backward compatibility
+		in.PublicBuilds = in.PublicJobs
 	}
+
 	if in.RemoveSourceBranchAfterMerge == nil {
 		in.RemoveSourceBranchAfterMerge = &project.RemoveSourceBranchAfterMerge
 	}
@@ -556,7 +574,9 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !cmp.Equal(p.Path, clients.StringToPtr(g.Path)) {
 		return false
 	}
-	if !clients.IsBoolEqualToBoolPtr(p.PublicBuilds, g.PublicJobs) {
+	// Use the resolved publicJobs value for comparison
+	effectiveValue, _ := common.ResolvePublicJobsSetting(p.PublicBuilds, p.PublicJobs)
+	if !clients.IsBoolEqualToBoolPtr(effectiveValue, g.PublicJobs) {
 		return false
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.RemoveSourceBranchAfterMerge, g.RemoveSourceBranchAfterMerge) {
