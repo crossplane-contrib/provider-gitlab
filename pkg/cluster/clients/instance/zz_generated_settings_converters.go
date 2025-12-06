@@ -434,6 +434,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.UserDefaultExternal = p.UserDefaultExternal
 	o.UserDefaultInternalRegex = p.UserDefaultInternalRegex
 	o.UserDefaultsToPrivateProfile = p.UserDefaultsToPrivateProfile
+	o.UserEmailLookupLimit = p.UserEmailLookupLimit
 	o.UserOauthApplications = p.UserOauthApplications
 	o.UserShowAddSSHKeyMessage = p.UserShowAddSSHKeyMessage
 	o.UsersGetByIDLimit = p.UsersGetByIDLimit
@@ -443,6 +444,19 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.WebIDEClientsidePreviewEnabled = p.WebIDEClientsidePreviewEnabled
 	o.WhatsNewVariant = p.WhatsNewVariant
 	o.WikiPageMaxContentBytes = p.WikiPageMaxContentBytes
+	o.AdminNotificationEmail = p.AdminNotificationEmail
+	o.AllowLocalRequestsFromHooksAndServices = p.AllowLocalRequestsFromHooksAndServices
+	o.AssetProxyWhitelist = p.AssetProxyWhitelist
+	o.DefaultBranchProtection = p.DefaultBranchProtection
+	o.HousekeepingBitmapsEnabled = p.HousekeepingBitmapsEnabled
+	o.HousekeepingFullRepackPeriod = p.HousekeepingFullRepackPeriod
+	o.HousekeepingGcPeriod = p.HousekeepingGcPeriod
+	o.HousekeepingIncrementalRepackPeriod = p.HousekeepingIncrementalRepackPeriod
+	o.PerformanceBarAllowedGroupID = p.PerformanceBarAllowedGroupID
+	o.PerformanceBarEnabled = p.PerformanceBarEnabled
+	o.ThrottleUnauthenticatedEnabled = p.ThrottleUnauthenticatedEnabled
+	o.ThrottleUnauthenticatedPeriodInSeconds = p.ThrottleUnauthenticatedPeriodInSeconds
+	o.ThrottleUnauthenticatedRequestsPerPeriod = p.ThrottleUnauthenticatedRequestsPerPeriod
 	return o
 }
 
@@ -859,6 +873,20 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.WebIDEClientsidePreviewEnabled = g.WebIDEClientsidePreviewEnabled
 	o.WhatsNewVariant = g.WhatsNewVariant
 	o.WikiPageMaxContentBytes = g.WikiPageMaxContentBytes
+	o.DefaultBranchProtection = g.DefaultBranchProtection
+	o.HousekeepingBitmapsEnabled = g.HousekeepingBitmapsEnabled
+	o.HousekeepingFullRepackPeriod = g.HousekeepingFullRepackPeriod
+	o.HousekeepingGcPeriod = g.HousekeepingGcPeriod
+	o.HousekeepingIncrementalRepackPeriod = g.HousekeepingIncrementalRepackPeriod
+	o.PerformanceBarAllowedGroupID = g.PerformanceBarAllowedGroupID
+	o.PerformanceBarEnabled = g.PerformanceBarEnabled
+	o.AdminNotificationEmail = g.AdminNotificationEmail
+	o.AllowLocalRequestsFromHooksAndServices = g.AllowLocalRequestsFromHooksAndServices
+	o.AssetProxyWhitelist = g.AssetProxyWhitelist
+	o.ThrottleUnauthenticatedEnabled = g.ThrottleUnauthenticatedEnabled
+	o.ThrottleUnauthenticatedPeriodInSeconds = g.ThrottleUnauthenticatedPeriodInSeconds
+	o.ThrottleUnauthenticatedRequestsPerPeriod = g.ThrottleUnauthenticatedRequestsPerPeriod
+	o.UserEmailLookupLimit = g.UserEmailLookupLimit
 	return o
 }
 
@@ -2042,6 +2070,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.UserDefaultsToPrivateProfile, g.UserDefaultsToPrivateProfile) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.UserEmailLookupLimit, g.UserEmailLookupLimit) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.UserOauthApplications, g.UserOauthApplications) {
 		return false
 	}
@@ -2067,6 +2098,45 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.WikiPageMaxContentBytes, g.WikiPageMaxContentBytes) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.AdminNotificationEmail, g.AdminNotificationEmail) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.AllowLocalRequestsFromHooksAndServices, g.AllowLocalRequestsFromHooksAndServices) {
+		return false
+	}
+	if !clients.IsComparableSliceEqualToComparableSlicePtr(p.AssetProxyWhitelist, g.AssetProxyWhitelist) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.DefaultBranchProtection, g.DefaultBranchProtection) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.HousekeepingBitmapsEnabled, g.HousekeepingBitmapsEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.HousekeepingFullRepackPeriod, g.HousekeepingFullRepackPeriod) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.HousekeepingGcPeriod, g.HousekeepingGcPeriod) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.HousekeepingIncrementalRepackPeriod, g.HousekeepingIncrementalRepackPeriod) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.PerformanceBarAllowedGroupID, g.PerformanceBarAllowedGroupID) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.PerformanceBarEnabled, g.PerformanceBarEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleUnauthenticatedEnabled, g.ThrottleUnauthenticatedEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleUnauthenticatedPeriodInSeconds, g.ThrottleUnauthenticatedPeriodInSeconds) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleUnauthenticatedRequestsPerPeriod, g.ThrottleUnauthenticatedRequestsPerPeriod) {
 		return false
 	}
 	return true
@@ -2485,6 +2555,7 @@ func LateInitializeApplicationSettings(in *v1alpha1.ApplicationSettingsParameter
 	in.UserDefaultExternal = clients.LateInitializeFromValue(in.UserDefaultExternal, settings.UserDefaultExternal)
 	in.UserDefaultInternalRegex = clients.LateInitializeFromValue(in.UserDefaultInternalRegex, settings.UserDefaultInternalRegex)
 	in.UserDefaultsToPrivateProfile = clients.LateInitializeFromValue(in.UserDefaultsToPrivateProfile, settings.UserDefaultsToPrivateProfile)
+	in.UserEmailLookupLimit = clients.LateInitializeFromValue(in.UserEmailLookupLimit, settings.UserEmailLookupLimit)
 	in.UserOauthApplications = clients.LateInitializeFromValue(in.UserOauthApplications, settings.UserOauthApplications)
 	in.UserShowAddSSHKeyMessage = clients.LateInitializeFromValue(in.UserShowAddSSHKeyMessage, settings.UserShowAddSSHKeyMessage)
 	in.UsersGetByIDLimit = clients.LateInitializeFromValue(in.UsersGetByIDLimit, settings.UsersGetByIDLimit)
@@ -2494,4 +2565,17 @@ func LateInitializeApplicationSettings(in *v1alpha1.ApplicationSettingsParameter
 	in.WebIDEClientsidePreviewEnabled = clients.LateInitializeFromValue(in.WebIDEClientsidePreviewEnabled, settings.WebIDEClientsidePreviewEnabled)
 	in.WhatsNewVariant = clients.LateInitializeFromValue(in.WhatsNewVariant, settings.WhatsNewVariant)
 	in.WikiPageMaxContentBytes = clients.LateInitializeFromValue(in.WikiPageMaxContentBytes, settings.WikiPageMaxContentBytes)
+	in.AdminNotificationEmail = clients.LateInitializeFromValue(in.AdminNotificationEmail, settings.AdminNotificationEmail)
+	in.AllowLocalRequestsFromHooksAndServices = clients.LateInitializeFromValue(in.AllowLocalRequestsFromHooksAndServices, settings.AllowLocalRequestsFromHooksAndServices)
+	in.AssetProxyWhitelist = clients.LateInitializeFromValue(in.AssetProxyWhitelist, settings.AssetProxyWhitelist)
+	in.DefaultBranchProtection = clients.LateInitializeFromValue(in.DefaultBranchProtection, settings.DefaultBranchProtection)
+	in.HousekeepingBitmapsEnabled = clients.LateInitializeFromValue(in.HousekeepingBitmapsEnabled, settings.HousekeepingBitmapsEnabled)
+	in.HousekeepingFullRepackPeriod = clients.LateInitializeFromValue(in.HousekeepingFullRepackPeriod, settings.HousekeepingFullRepackPeriod)
+	in.HousekeepingGcPeriod = clients.LateInitializeFromValue(in.HousekeepingGcPeriod, settings.HousekeepingGcPeriod)
+	in.HousekeepingIncrementalRepackPeriod = clients.LateInitializeFromValue(in.HousekeepingIncrementalRepackPeriod, settings.HousekeepingIncrementalRepackPeriod)
+	in.PerformanceBarAllowedGroupID = clients.LateInitializeFromValue(in.PerformanceBarAllowedGroupID, settings.PerformanceBarAllowedGroupID)
+	in.PerformanceBarEnabled = clients.LateInitializeFromValue(in.PerformanceBarEnabled, settings.PerformanceBarEnabled)
+	in.ThrottleUnauthenticatedEnabled = clients.LateInitializeFromValue(in.ThrottleUnauthenticatedEnabled, settings.ThrottleUnauthenticatedEnabled)
+	in.ThrottleUnauthenticatedPeriodInSeconds = clients.LateInitializeFromValue(in.ThrottleUnauthenticatedPeriodInSeconds, settings.ThrottleUnauthenticatedPeriodInSeconds)
+	in.ThrottleUnauthenticatedRequestsPerPeriod = clients.LateInitializeFromValue(in.ThrottleUnauthenticatedRequestsPerPeriod, settings.ThrottleUnauthenticatedRequestsPerPeriod)
 }

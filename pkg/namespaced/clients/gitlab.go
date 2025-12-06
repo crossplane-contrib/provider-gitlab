@@ -230,4 +230,3 @@ func TimeToMetaTime(t *time.Time) *metav1.Time {
 	}
 	return &metav1.Time{Time: *t}
 }
-

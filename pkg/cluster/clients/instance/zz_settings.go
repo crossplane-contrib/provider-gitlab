@@ -3,10 +3,11 @@
 package instance
 
 import (
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 // ApplicationSettingsClient defines Gitlab Application Settings service operations

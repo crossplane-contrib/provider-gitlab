@@ -3,9 +3,10 @@
 package instance
 
 import (
-	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/settings"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/settings"
 )
 
 func Setup(mgr ctrl.Manager, o controller.Options) error {
