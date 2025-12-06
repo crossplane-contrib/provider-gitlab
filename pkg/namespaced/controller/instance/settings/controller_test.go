@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
@@ -12,6 +13,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
@@ -168,6 +170,26 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
+		"DeletingShouldAllowCRDeletion": func() struct {
+			args args
+			want want
+		} {
+			deleted := applicationSettings()
+			now := metav1.NewTime(time.Now())
+			deleted.ObjectMeta.DeletionTimestamp = &now
+			return struct {
+				args args
+				want want
+			}{
+				args: args{
+					client: &MockClient{MockGetSettings: func(options ...gitlab.RequestOptionFunc) (*gitlab.Settings, *gitlab.Response, error) {
+						return &gitlab.Settings{}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+					}},
+					cr: deleted,
+				},
+				want: want{cr: deleted, result: managed.ExternalObservation{ResourceExists: false}},
+			}
+		}(),
 	}
 
 	for name, tc := range cases {

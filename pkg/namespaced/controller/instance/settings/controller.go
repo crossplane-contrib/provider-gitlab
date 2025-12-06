@@ -128,9 +128,11 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
-	// Deleting: only need to determine external resource still exists.
+	// Deleting: GitLab instance settings cannot be deleted; mark the
+	// external resource as non-existent so the managed reconciler can
+	// remove the finalizer and allow the CR to be deleted.
 	if !cr.ObjectMeta.DeletionTimestamp.IsZero() {
-		return managed.ExternalObservation{ResourceExists: true}, nil
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
 	cr.Status.SetConditions(xpv1.Available())
