@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
+	instancev1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	gitlabv1beta1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/v1beta1"
 )
@@ -31,6 +32,7 @@ func init() {
 		gitlabv1beta1.SchemeBuilder.AddToScheme,
 		groupsv1alpha1.SchemeBuilder.AddToScheme,
 		projectsv1alpha1.SchemeBuilder.AddToScheme,
+		instancev1alpha1.SchemeBuilder.AddToScheme,
 	)
 }
 

@@ -26,8 +26,14 @@ limitations under the License.
 // Restore any leftover .bak files from previous broken runs
 //go:generate go run ../hack/generate-cluster-scope.go restore-referencers
 
+// Ensure per-package generators for namespaced APIs run before we generate
+// cluster APIs from namespaced APIs. This guarantees that types produced by
+// namespaced generators (e.g. generated_settings_types.go) are available
+// when the cluster generator copies files.
+//go:generate go generate ./namespaced/...
+
 // Generate cluster APIs from namespaced APIs (run first)
-//go:generate go run ../hack/generate-cluster-scope.go generate groups projects
+//go:generate go run ../hack/generate-cluster-scope.go generate groups projects instance
 
 // Temporarily rename referencers files to exclude them from generation
 //go:generate go run ../hack/generate-cluster-scope.go backup-referencers

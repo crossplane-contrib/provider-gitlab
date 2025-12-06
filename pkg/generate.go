@@ -20,6 +20,12 @@ limitations under the License.
 // NOTE(negz): See the below link for details on what is happening here.
 // https://github.com/golang/go/wiki/Modules#how-can-i-track-tool-dependencies-for-a-module
 
+// Ensure per-package generators for namespaced controller run before we generate
+// cluster controller from namespaced controller. This guarantees that types produced by
+// namespaced generators (e.g. generated_settings_converters.go) are available
+// when the cluster generator copies files.
+//go:generate go generate ./namespaced/...
+
 // Generate cluster pkg from namespaced pkg
 //go:generate go run ../hack/generate-cluster-scope.go generate clients controller
 
