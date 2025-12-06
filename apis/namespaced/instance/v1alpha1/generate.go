@@ -1,6 +1,8 @@
 //go:build ignore
 // +build ignore
 
+// +cluster-scope:skip-file
+
 /*
 Copyright 2021 The Crossplane Authors.
 
@@ -103,7 +105,7 @@ func generateStruct(out *strings.Builder, name string, t reflect.Type) {
 		// Add omitempty
 		tag := fmt.Sprintf("`json:\"%s,omitempty\"`", jsonTag)
 
-		out.WriteString(fmt.Sprintf("\t%s %s %s\n", fieldName, goType, tag))
+		out.WriteString(fmt.Sprintf("// +optional\n\t%s %s %s\n", fieldName, goType, tag))
 	}
 	out.WriteString("}\n\n")
 }

@@ -1,5 +1,8 @@
 package instance
 
+// +cluster-scope:delete=1
+//go:generate go run generate.go
+
 import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"

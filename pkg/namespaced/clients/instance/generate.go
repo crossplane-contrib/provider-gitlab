@@ -1,6 +1,8 @@
 //go:build ignore
 // +build ignore
 
+// +cluster-scope:skip-file
+
 /*
 Copyright 2021 The Crossplane Authors.
 
