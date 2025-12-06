@@ -1,8 +1,6 @@
 //go:build ignore
 // +build ignore
 
-// +cluster-scope:skip-file
-
 /*
 Copyright 2021 The Crossplane Authors.
 
@@ -18,6 +16,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+// +cluster-scope:skip-file
 
 package main
 
