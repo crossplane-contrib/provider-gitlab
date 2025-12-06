@@ -19,9 +19,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Generate GenerateUpdateApplicationSettingsOptions and GenerateApplicationSettingsObservation type converters
-//go:generate go run generate.go
-
 package main
 
 import (

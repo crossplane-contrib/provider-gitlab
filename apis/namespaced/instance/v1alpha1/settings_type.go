@@ -1,4 +1,8 @@
 // +kubebuilder:object:generate=true
+
+// +cluster-scope:delete=1
+//go:generate go run generate.go
+
 package v1alpha1
 
 import (

@@ -1,7 +1,7 @@
-package instance
-
 // +cluster-scope:delete=1
 //go:generate go run generate.go
+
+package instance
 
 import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
