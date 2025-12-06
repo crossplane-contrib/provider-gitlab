@@ -29,840 +29,1671 @@ import (
 // ApplicationSettingsParameters defines the desired state for ApplicationSettings
 // This struct was generated from gitlab.UpdateSettingsOptions struct, with just a rework of the json tags.
 type ApplicationSettingsParameters struct {
-	AbuseNotificationEmail                                *string                                 `json:"abuseNotificationEmail,omitempty"`
-	AdminMode                                             *bool                                   `json:"adminMode,omitempty"`
-	AfterSignOutPath                                      *string                                 `json:"afterSignOutPath,omitempty"`
-	AfterSignUpText                                       *string                                 `json:"afterSignUpText,omitempty"`
-	AkismetAPIKey                                         *string                                 `json:"akismetApiKey,omitempty"`
-	AkismetEnabled                                        *bool                                   `json:"akismetEnabled,omitempty"`
-	AllowAccountDeletion                                  *bool                                   `json:"allowAccountDeletion,omitempty"`
-	AllowAllIntegrations                                  *bool                                   `json:"allowAllIntegrations,omitempty"`
-	AllowedIntegrations                                   *[]string                               `json:"allowedIntegrations,omitempty"`
-	AllowGroupOwnersToManageLDAP                          *bool                                   `json:"allowGroupOwnersToManageLdap,omitempty"`
-	AllowLocalRequestsFromSystemHooks                     *bool                                   `json:"allowLocalRequestsFromSystemHooks,omitempty"`
-	AllowLocalRequestsFromWebHooksAndServices             *bool                                   `json:"allowLocalRequestsFromWebHooksAndServices,omitempty"`
-	AllowProjectCreationForGuestAndBelow                  *bool                                   `json:"allowProjectCreationForGuestAndBelow,omitempty"`
-	AllowRunnerRegistrationToken                          *bool                                   `json:"allowRunnerRegistrationToken,omitempty"`
-	ArchiveBuildsInHumanReadable                          *string                                 `json:"archiveBuildsInHumanReadable,omitempty"`
-	ASCIIDocMaxIncludes                                   *int                                    `json:"asciiDocMaxIncludes,omitempty"`
-	AssetProxyAllowlist                                   *[]string                               `json:"assetProxyAllowlist,omitempty"`
-	AssetProxyEnabled                                     *bool                                   `json:"assetProxyEnabled,omitempty"`
-	AssetProxySecretKey                                   *string                                 `json:"assetProxySecretKey,omitempty"`
-	AssetProxyURL                                         *string                                 `json:"assetProxyUrl,omitempty"`
-	AuthorizedKeysEnabled                                 *bool                                   `json:"authorizedKeysEnabled,omitempty"`
-	AutoBanUserOnExcessiveProjectsDownload                *bool                                   `json:"autoBanUserOnExcessiveProjectsDownload,omitempty"`
-	AutocompleteUsers                                     *int                                    `json:"autocompleteUsers,omitempty"`
-	AutocompleteUsersUnauthenticated                      *int                                    `json:"autocompleteUsersUnauthenticated,omitempty"`
-	AutoDevOpsDomain                                      *string                                 `json:"autoDevOpsDomain,omitempty"`
-	AutoDevOpsEnabled                                     *bool                                   `json:"autoDevOpsEnabled,omitempty"`
-	AutomaticPurchasedStorageAllocation                   *bool                                   `json:"automaticPurchasedStorageAllocation,omitempty"`
-	BulkImportConcurrentPipelineBatchLimit                *int                                    `json:"bulkImportConcurrentPipelineBatchLimit,omitempty"`
-	BulkImportEnabled                                     *bool                                   `json:"bulkImportEnabled,omitempty"`
-	BulkImportMaxDownloadFileSize                         *int                                    `json:"bulkImportMaxDownloadFileSize,omitempty"`
-	CanCreateGroup                                        *bool                                   `json:"canCreateGroup,omitempty"`
-	CheckNamespacePlan                                    *bool                                   `json:"checkNamespacePlan,omitempty"`
-	CIJobLiveTraceEnabled                                 *bool                                   `json:"ciJobLiveTraceEnabled,omitempty"`
-	CIMaxIncludes                                         *int                                    `json:"ciMaxIncludes,omitempty"`
-	CIMaxTotalYAMLSizeBytes                               *int                                    `json:"ciMaxTotalYamlSizeBytes,omitempty"`
-	CIPartitionsSizeLimit                                 *int                                    `json:"ciPartitionsSizeLimit,omitempty"`
-	CommitEmailHostname                                   *string                                 `json:"commitEmailHostname,omitempty"`
-	ConcurrentBitbucketImportJobsLimit                    *int                                    `json:"concurrentBitbucketImportJobsLimit,omitempty"`
-	ConcurrentBitbucketServerImportJobsLimit              *int                                    `json:"concurrentBitbucketServerImportJobsLimit,omitempty"`
-	ConcurrentGitHubImportJobsLimit                       *int                                    `json:"concurrentGitHubImportJobsLimit,omitempty"`
-	ContainerExpirationPoliciesEnableHistoricEntries      *bool                                   `json:"containerExpirationPoliciesEnableHistoricEntries,omitempty"`
-	ContainerRegistryCleanupTagsServiceMaxListSize        *int                                    `json:"containerRegistryCleanupTagsServiceMaxListSize,omitempty"`
-	ContainerRegistryDeleteTagsServiceTimeout             *int                                    `json:"containerRegistryDeleteTagsServiceTimeout,omitempty"`
-	ContainerRegistryExpirationPoliciesCaching            *bool                                   `json:"containerRegistryExpirationPoliciesCaching,omitempty"`
-	ContainerRegistryExpirationPoliciesWorkerCapacity     *int                                    `json:"containerRegistryExpirationPoliciesWorkerCapacity,omitempty"`
-	ContainerRegistryImportCreatedBefore                  *metav1.Time                            `json:"containerRegistryImportCreatedBefore,omitempty"`
-	ContainerRegistryImportMaxRetries                     *int                                    `json:"containerRegistryImportMaxRetries,omitempty"`
-	ContainerRegistryImportMaxStepDuration                *int                                    `json:"containerRegistryImportMaxStepDuration,omitempty"`
-	ContainerRegistryImportMaxTagsCount                   *int                                    `json:"containerRegistryImportMaxTagsCount,omitempty"`
-	ContainerRegistryImportStartMaxRetries                *int                                    `json:"containerRegistryImportStartMaxRetries,omitempty"`
-	ContainerRegistryImportTargetPlan                     *string                                 `json:"containerRegistryImportTargetPlan,omitempty"`
-	ContainerRegistryTokenExpireDelay                     *int                                    `json:"containerRegistryTokenExpireDelay,omitempty"`
-	CustomHTTPCloneURLRoot                                *string                                 `json:"customHTTPCloneUrlRoot,omitempty"`
-	DNSRebindingProtectionEnabled                         *bool                                   `json:"dnsRebindingProtectionEnabled,omitempty"`
-	DSAKeyRestriction                                     *int                                    `json:"dsaKeyRestriction,omitempty"`
-	DeactivateDormantUsers                                *bool                                   `json:"deactivateDormantUsers,omitempty"`
-	DeactivateDormantUsersPeriod                          *int                                    `json:"deactivateDormantUsersPeriod,omitempty"`
-	DecompressArchiveFileTimeout                          *int                                    `json:"decompressArchiveFileTimeout,omitempty"`
-	DefaultArtifactsExpireIn                              *string                                 `json:"defaultArtifactsExpireIn,omitempty"`
-	DefaultBranchName                                     *string                                 `json:"defaultBranchName,omitempty"`
-	DefaultBranchProtectionDefaults                       *DefaultBranchProtectionDefaultsOptions `json:"defaultBranchProtectionDefaults,omitempty"`
-	DefaultCiConfigPath                                   *string                                 `json:"defaultCiConfigPath,omitempty"`
-	DefaultGroupVisibility                                *string                                 `json:"defaultGroupVisibility,omitempty"`
-	DefaultPreferredLanguage                              *string                                 `json:"defaultPreferredLanguage,omitempty"`
-	DefaultProjectCreation                                *int                                    `json:"defaultProjectCreation,omitempty"`
-	DefaultProjectDeletionProtection                      *bool                                   `json:"defaultProjectDeletionProtection,omitempty"`
-	DefaultProjectVisibility                              *string                                 `json:"defaultProjectVisibility,omitempty"`
-	DefaultProjectsLimit                                  *int                                    `json:"defaultProjectsLimit,omitempty"`
-	DefaultSnippetVisibility                              *string                                 `json:"defaultSnippetVisibility,omitempty"`
-	DefaultSyntaxHighlightingTheme                        *int                                    `json:"defaultSyntaxHighlightingTheme,omitempty"`
-	DelayedGroupDeletion                                  *bool                                   `json:"delayedGroupDeletion,omitempty"`
-	DelayedProjectDeletion                                *bool                                   `json:"delayedProjectDeletion,omitempty"`
-	DeleteInactiveProjects                                *bool                                   `json:"deleteInactiveProjects,omitempty"`
-	DeleteUnconfirmedUsers                                *bool                                   `json:"deleteUnconfirmedUsers,omitempty"`
-	DeletionAdjournedPeriod                               *int                                    `json:"deletionAdjournedPeriod,omitempty"`
-	DiagramsnetEnabled                                    *bool                                   `json:"diagramsnetEnabled,omitempty"`
-	DiagramsnetURL                                        *string                                 `json:"diagramsnetUrl,omitempty"`
-	DiffMaxFiles                                          *int                                    `json:"diffMaxFiles,omitempty"`
-	DiffMaxLines                                          *int                                    `json:"diffMaxLines,omitempty"`
-	DiffMaxPatchBytes                                     *int                                    `json:"diffMaxPatchBytes,omitempty"`
-	DisableFeedToken                                      *bool                                   `json:"disableFeedToken,omitempty"`
-	DisableAdminOAuthScopes                               *bool                                   `json:"disableAdminOAuthScopes,omitempty"`
-	DisableOverridingApproversPerMergeRequest             *bool                                   `json:"disableOverridingApproversPerMergeRequest,omitempty"`
-	DisablePersonalAccessTokens                           *bool                                   `json:"disablePersonalAccessTokens,omitempty"`
-	DisabledOauthSignInSources                            *[]string                               `json:"disabledOauthSignInSources,omitempty"`
-	DomainAllowlist                                       *[]string                               `json:"domainAllowlist,omitempty"`
-	DomainDenylist                                        *[]string                               `json:"domainDenylist,omitempty"`
-	DomainDenylistEnabled                                 *bool                                   `json:"domainDenylistEnabled,omitempty"`
-	DownstreamPipelineTriggerLimitPerProjectUserSHA       *int                                    `json:"downstreamPipelineTriggerLimitPerProjectUserSHA,omitempty"`
-	DuoFeaturesEnabled                                    *bool                                   `json:"duoFeaturesEnabled,omitempty"`
-	ECDSAKeyRestriction                                   *int                                    `json:"ecdsaKeyRestriction,omitempty"`
-	ECDSASKKeyRestriction                                 *int                                    `json:"ecdsaskKeyRestriction,omitempty"`
-	EKSAccessKeyID                                        *string                                 `json:"eksAccessKeyId,omitempty"`
-	EKSAccountID                                          *string                                 `json:"eksAccountId,omitempty"`
-	EKSIntegrationEnabled                                 *bool                                   `json:"eksIntegrationEnabled,omitempty"`
-	EKSSecretAccessKey                                    *string                                 `json:"eksSecretAccessKey,omitempty"`
-	Ed25519KeyRestriction                                 *int                                    `json:"ed25519KeyRestriction,omitempty"`
-	Ed25519SKKeyRestriction                               *int                                    `json:"ed25519SKKeyRestriction,omitempty"`
-	ElasticsearchAWS                                      *bool                                   `json:"elasticsearchAws,omitempty"`
-	ElasticsearchAWSAccessKey                             *string                                 `json:"elasticsearchAwsAccessKey,omitempty"`
-	ElasticsearchAWSRegion                                *string                                 `json:"elasticsearchAwsRegion,omitempty"`
-	ElasticsearchAWSSecretAccessKey                       *string                                 `json:"elasticsearchAwsSecretAccessKey,omitempty"`
-	ElasticsearchAnalyzersKuromojiEnabled                 *bool                                   `json:"elasticsearchAnalyzersKuromojiEnabled,omitempty"`
-	ElasticsearchAnalyzersKuromojiSearch                  *int                                    `json:"elasticsearchAnalyzersKuromojiSearch,omitempty"`
-	ElasticsearchAnalyzersSmartCNEnabled                  *bool                                   `json:"elasticsearchAnalyzersSmartCnEnabled,omitempty"`
-	ElasticsearchAnalyzersSmartCNSearch                   *int                                    `json:"elasticsearchAnalyzersSmartCnSearch,omitempty"`
-	ElasticsearchClientRequestTimeout                     *int                                    `json:"elasticsearchClientRequestTimeout,omitempty"`
-	ElasticsearchIndexedFieldLengthLimit                  *int                                    `json:"elasticsearchIndexedFieldLengthLimit,omitempty"`
-	ElasticsearchIndexedFileSizeLimitKB                   *int                                    `json:"elasticsearchIndexedFileSizeLimitKB,omitempty"`
-	ElasticsearchIndexing                                 *bool                                   `json:"elasticsearchIndexing,omitempty"`
-	ElasticsearchLimitIndexing                            *bool                                   `json:"elasticsearchLimitIndexing,omitempty"`
-	ElasticsearchMaxBulkConcurrency                       *int                                    `json:"elasticsearchMaxBulkConcurrency,omitempty"`
-	ElasticsearchMaxBulkSizeMB                            *int                                    `json:"elasticsearchMaxBulkSizeMB,omitempty"`
-	ElasticsearchMaxCodeIndexingConcurrency               *int                                    `json:"elasticsearchMaxCodeIndexingConcurrency,omitempty"`
-	ElasticsearchNamespaceIDs                             *[]int                                  `json:"elasticsearchNamespaceIds,omitempty"`
-	ElasticsearchPassword                                 *string                                 `json:"elasticsearchPassword,omitempty"`
-	ElasticsearchPauseIndexing                            *bool                                   `json:"elasticsearchPauseIndexing,omitempty"`
-	ElasticsearchProjectIDs                               *[]int                                  `json:"elasticsearchProjectIds,omitempty"`
-	ElasticsearchReplicas                                 *int                                    `json:"elasticsearchReplicas,omitempty"`
-	ElasticsearchRequeueWorkers                           *bool                                   `json:"elasticsearchRequeueWorkers,omitempty"`
-	ElasticsearchRetryOnFailure                           *int                                    `json:"elasticsearchRetryOnFailure,omitempty"`
-	ElasticsearchSearch                                   *bool                                   `json:"elasticsearchSearch,omitempty"`
-	ElasticsearchShards                                   *int                                    `json:"elasticsearchShards,omitempty"`
-	ElasticsearchURL                                      *string                                 `json:"elasticsearchUrl,omitempty"`
-	ElasticsearchUsername                                 *string                                 `json:"elasticsearchUsername,omitempty"`
-	ElasticsearchWorkerNumberOfShards                     *int                                    `json:"elasticsearchWorkerNumberOfShards,omitempty"`
-	EmailAdditionalText                                   *string                                 `json:"emailAdditionalText,omitempty"`
-	EmailAuthorInBody                                     *bool                                   `json:"emailAuthorInBody,omitempty"`
-	EmailConfirmationSetting                              *string                                 `json:"emailConfirmationSetting,omitempty"`
-	EmailRestrictions                                     *string                                 `json:"emailRestrictions,omitempty"`
-	EmailRestrictionsEnabled                              *bool                                   `json:"emailRestrictionsEnabled,omitempty"`
-	EnableArtifactExternalRedirectWarningPage             *bool                                   `json:"enableArtifactExternalRedirectWarningPage,omitempty"`
-	EnabledGitAccessProtocol                              *string                                 `json:"enabledGitAccessProtocol,omitempty"`
-	EnforceCIInboundJobTokenScopeEnabled                  *bool                                   `json:"enforceCIInboundJobTokenScopeEnabled,omitempty"`
-	EnforceNamespaceStorageLimit                          *bool                                   `json:"enforceNamespaceStorageLimit,omitempty"`
-	EnforcePATExpiration                                  *bool                                   `json:"enforcePATExpiration,omitempty"`
-	EnforceSSHKeyExpiration                               *bool                                   `json:"enforceSshKeyExpiration,omitempty"`
-	EnforceTerms                                          *bool                                   `json:"enforceTerms,omitempty"`
-	ExternalAuthClientCert                                *string                                 `json:"externalAuthClientCert,omitempty"`
-	ExternalAuthClientKey                                 *string                                 `json:"externalAuthClientKey,omitempty"`
-	ExternalAuthClientKeyPass                             *string                                 `json:"externalAuthClientKeyPass,omitempty"`
-	ExternalAuthorizationServiceDefaultLabel              *string                                 `json:"externalAuthorizationServiceDefaultLabel,omitempty"`
-	ExternalAuthorizationServiceEnabled                   *bool                                   `json:"externalAuthorizationServiceEnabled,omitempty"`
-	ExternalAuthorizationServiceTimeout                   *float64                                `json:"externalAuthorizationServiceTimeout,omitempty"`
-	ExternalAuthorizationServiceURL                       *string                                 `json:"externalAuthorizationServiceUrl,omitempty"`
-	ExternalPipelineValidationServiceTimeout              *int                                    `json:"externalPipelineValidationServiceTimeout,omitempty"`
-	ExternalPipelineValidationServiceToken                *string                                 `json:"externalPipelineValidationServiceToken,omitempty"`
-	ExternalPipelineValidationServiceURL                  *string                                 `json:"externalPipelineValidationServiceUrl,omitempty"`
-	FailedLoginAttemptsUnlockPeriodInMinutes              *int                                    `json:"failedLoginAttemptsUnlockPeriodInMinutes,omitempty"`
-	FileTemplateProjectID                                 *int                                    `json:"fileTemplateProjectId,omitempty"`
-	FirstDayOfWeek                                        *int                                    `json:"firstDayOfWeek,omitempty"`
-	FlocEnabled                                           *bool                                   `json:"flocEnabled,omitempty"`
-	GeoNodeAllowedIPs                                     *string                                 `json:"geoNodeAllowedIps,omitempty"`
-	GeoStatusTimeout                                      *int                                    `json:"geoStatusTimeout,omitempty"`
-	GitRateLimitUsersAlertlist                            *[]int                                  `json:"gitRateLimitUsersAlertlist,omitempty"`
-	GitTwoFactorSessionExpiry                             *int                                    `json:"gitTwoFactorSessionExpiry,omitempty"`
-	GitalyTimeoutDefault                                  *int                                    `json:"gitalyTimeoutDefault,omitempty"`
-	GitalyTimeoutFast                                     *int                                    `json:"gitalyTimeoutFast,omitempty"`
-	GitalyTimeoutMedium                                   *int                                    `json:"gitalyTimeoutMedium,omitempty"`
-	GitlabDedicatedInstance                               *bool                                   `json:"gitlabDedicatedInstance,omitempty"`
-	GitlabEnvironmentToolkitInstance                      *bool                                   `json:"gitlabEnvironmentToolkitInstance,omitempty"`
-	GitlabShellOperationLimit                             *int                                    `json:"gitlabShellOperationLimit,omitempty"`
-	GitpodEnabled                                         *bool                                   `json:"gitpodEnabled,omitempty"`
-	GitpodURL                                             *string                                 `json:"gitpodUrl,omitempty"`
-	GitRateLimitUsersAllowlist                            *[]string                               `json:"gitRateLimitUsersAllowlist,omitempty"`
-	GloballyAllowedIPs                                    *string                                 `json:"globallyAllowedIps,omitempty"`
-	GrafanaEnabled                                        *bool                                   `json:"grafanaEnabled,omitempty"`
-	GrafanaURL                                            *string                                 `json:"grafanaUrl,omitempty"`
-	GravatarEnabled                                       *bool                                   `json:"gravatarEnabled,omitempty"`
-	GroupDownloadExportLimit                              *int                                    `json:"groupDownloadExportLimit,omitempty"`
-	GroupExportLimit                                      *int                                    `json:"groupExportLimit,omitempty"`
-	GroupImportLimit                                      *int                                    `json:"groupImportLimit,omitempty"`
-	GroupOwnersCanManageDefaultBranchProtection           *bool                                   `json:"groupOwnersCanManageDefaultBranchProtection,omitempty"`
-	GroupRunnerTokenExpirationInterval                    *int                                    `json:"groupRunnerTokenExpirationInterval,omitempty"`
-	HTMLEmailsEnabled                                     *bool                                   `json:"htmlEmailsEnabled,omitempty"`
-	HashedStorageEnabled                                  *bool                                   `json:"hashedStorageEnabled,omitempty"`
-	HelpPageDocumentationBaseURL                          *string                                 `json:"helpPageDocumentationBaseUrl,omitempty"`
-	HelpPageHideCommercialContent                         *bool                                   `json:"helpPageHideCommercialContent,omitempty"`
-	HelpPageSupportURL                                    *string                                 `json:"helpPageSupportUrl,omitempty"`
-	HelpPageText                                          *string                                 `json:"helpPageText,omitempty"`
-	HelpText                                              *string                                 `json:"helpText,omitempty"`
-	HideThirdPartyOffers                                  *bool                                   `json:"hideThirdPartyOffers,omitempty"`
-	HomePageURL                                           *string                                 `json:"homePageUrl,omitempty"`
-	HousekeepingEnabled                                   *bool                                   `json:"housekeepingEnabled,omitempty"`
-	HousekeepingOptimizeRepositoryPeriod                  *int                                    `json:"housekeepingOptimizeRepositoryPeriod,omitempty"`
-	ImportSources                                         *[]string                               `json:"importSources,omitempty"`
-	InactiveProjectsDeleteAfterMonths                     *int                                    `json:"inactiveProjectsDeleteAfterMonths,omitempty"`
-	InactiveProjectsMinSizeMB                             *int                                    `json:"inactiveProjectsMinSizeMB,omitempty"`
-	InactiveProjectsSendWarningEmailAfterMonths           *int                                    `json:"inactiveProjectsSendWarningEmailAfterMonths,omitempty"`
-	IncludeOptionalMetricsInServicePing                   *bool                                   `json:"includeOptionalMetricsInServicePing,omitempty"`
-	InProductMarketingEmailsEnabled                       *bool                                   `json:"inProductMarketingEmailsEnabled,omitempty"`
-	InvisibleCaptchaEnabled                               *bool                                   `json:"invisibleCaptchaEnabled,omitempty"`
-	IssuesCreateLimit                                     *int                                    `json:"issuesCreateLimit,omitempty"`
-	JiraConnectApplicationKey                             *string                                 `json:"jiraConnectApplicationKey,omitempty"`
-	JiraConnectPublicKeyStorageEnabled                    *bool                                   `json:"jiraConnectPublicKeyStorageEnabled,omitempty"`
-	JiraConnectProxyURL                                   *string                                 `json:"jiraConnectProxyUrl,omitempty"`
-	KeepLatestArtifact                                    *bool                                   `json:"keepLatestArtifact,omitempty"`
-	KrokiEnabled                                          *bool                                   `json:"krokiEnabled,omitempty"`
-	KrokiFormats                                          *map[string]bool                        `json:"krokiFormats,omitempty"`
-	KrokiURL                                              *string                                 `json:"krokiUrl,omitempty"`
-	LocalMarkdownVersion                                  *int                                    `json:"localMarkdownVersion,omitempty"`
-	LockDuoFeaturesEnabled                                *bool                                   `json:"lockDuoFeaturesEnabled,omitempty"`
-	LockMembershipsToLDAP                                 *bool                                   `json:"lockMembershipsToLdap,omitempty"`
-	LoginRecaptchaProtectionEnabled                       *bool                                   `json:"loginRecaptchaProtectionEnabled,omitempty"`
-	MailgunEventsEnabled                                  *bool                                   `json:"mailgunEventsEnabled,omitempty"`
-	MailgunSigningKey                                     *string                                 `json:"mailgunSigningKey,omitempty"`
-	MaintenanceMode                                       *bool                                   `json:"maintenanceMode,omitempty"`
-	MaintenanceModeMessage                                *string                                 `json:"maintenanceModeMessage,omitempty"`
-	MavenPackageRequestsForwarding                        *bool                                   `json:"mavenPackageRequestsForwarding,omitempty"`
-	MaxArtifactsSize                                      *int                                    `json:"maxArtifactsSize,omitempty"`
-	MaxAttachmentSize                                     *int                                    `json:"maxAttachmentSize,omitempty"`
-	MaxDecompressedArchiveSize                            *int                                    `json:"maxDecompressedArchiveSize,omitempty"`
-	MaxExportSize                                         *int                                    `json:"maxExportSize,omitempty"`
-	MaxImportRemoteFileSize                               *int                                    `json:"maxImportRemoteFileSize,omitempty"`
-	MaxImportSize                                         *int                                    `json:"maxImportSize,omitempty"`
-	MaxLoginAttempts                                      *int                                    `json:"maxLoginAttempts,omitempty"`
-	MaxNumberOfRepositoryDownloads                        *int                                    `json:"maxNumberOfRepositoryDownloads,omitempty"`
-	MaxNumberOfRepositoryDownloadsWithinTimePeriod        *int                                    `json:"maxNumberOfRepositoryDownloadsWithinTimePeriod,omitempty"`
-	MaxPagesSize                                          *int                                    `json:"maxPagesSize,omitempty"`
-	MaxPersonalAccessTokenLifetime                        *int                                    `json:"maxPersonalAccessTokenLifetime,omitempty"`
-	MaxSSHKeyLifetime                                     *int                                    `json:"maxSshKeyLifetime,omitempty"`
-	MaxTerraformStateSizeBytes                            *int                                    `json:"maxTerraformStateSizeBytes,omitempty"`
-	MaxYAMLDepth                                          *int                                    `json:"maxYamlDepth,omitempty"`
-	MaxYAMLSizeBytes                                      *int                                    `json:"maxYamlSizeBytes,omitempty"`
-	MetricsMethodCallThreshold                            *int                                    `json:"metricsMethodCallThreshold,omitempty"`
-	MinimumPasswordLength                                 *int                                    `json:"minimumPasswordLength,omitempty"`
-	MirrorAvailable                                       *bool                                   `json:"mirrorAvailable,omitempty"`
-	MirrorCapacityThreshold                               *int                                    `json:"mirrorCapacityThreshold,omitempty"`
-	MirrorMaxCapacity                                     *int                                    `json:"mirrorMaxCapacity,omitempty"`
-	MirrorMaxDelay                                        *int                                    `json:"mirrorMaxDelay,omitempty"`
-	NPMPackageRequestsForwarding                          *bool                                   `json:"npmPackageRequestsForwarding,omitempty"`
-	NotesCreateLimit                                      *int                                    `json:"notesCreateLimit,omitempty"`
-	NotifyOnUnknownSignIn                                 *bool                                   `json:"notifyOnUnknownSignIn,omitempty"`
-	NugetSkipMetadataURLValidation                        *bool                                   `json:"nugetSkipMetadataUrlValidation,omitempty"`
-	OutboundLocalRequestsAllowlistRaw                     *string                                 `json:"outboundLocalRequestsAllowlistRaw,omitempty"`
-	OutboundLocalRequestsWhitelist                        *[]string                               `json:"outboundLocalRequestsWhitelist,omitempty"`
-	PackageMetadataPURLTypes                              *[]int                                  `json:"packageMetadataPUrlTypes,omitempty"`
-	PackageRegistryAllowAnyoneToPullOption                *bool                                   `json:"packageRegistryAllowAnyoneToPullOption,omitempty"`
-	PackageRegistryCleanupPoliciesWorkerCapacity          *int                                    `json:"packageRegistryCleanupPoliciesWorkerCapacity,omitempty"`
-	PagesDomainVerificationEnabled                        *bool                                   `json:"pagesDomainVerificationEnabled,omitempty"`
-	PasswordAuthenticationEnabledForGit                   *bool                                   `json:"passwordAuthenticationEnabledForGit,omitempty"`
-	PasswordAuthenticationEnabledForWeb                   *bool                                   `json:"passwordAuthenticationEnabledForWeb,omitempty"`
-	PasswordNumberRequired                                *bool                                   `json:"passwordNumberRequired,omitempty"`
-	PasswordSymbolRequired                                *bool                                   `json:"passwordSymbolRequired,omitempty"`
-	PasswordUppercaseRequired                             *bool                                   `json:"passwordUppercaseRequired,omitempty"`
-	PasswordLowercaseRequired                             *bool                                   `json:"passwordLowercaseRequired,omitempty"`
-	PerformanceBarAllowedGroupPath                        *string                                 `json:"performanceBarAllowedGroupPath,omitempty"`
-	PersonalAccessTokenPrefix                             *string                                 `json:"personalAccessTokenPrefix,omitempty"`
-	PlantumlEnabled                                       *bool                                   `json:"plantumlEnabled,omitempty"`
-	PlantumlURL                                           *string                                 `json:"plantumlUrl,omitempty"`
-	PipelineLimitPerProjectUserSha                        *int                                    `json:"pipelineLimitPerProjectUserSha,omitempty"`
-	PollingIntervalMultiplier                             *float64                                `json:"pollingIntervalMultiplier,omitempty"`
-	PreventMergeRequestsAuthorApproval                    *bool                                   `json:"preventMergeRequestsAuthorApproval,omitempty"`
-	PreventMergeRequestsCommittersApproval                *bool                                   `json:"preventMergeRequestsCommittersApproval,omitempty"`
-	ProjectDownloadExportLimit                            *int                                    `json:"projectDownloadExportLimit,omitempty"`
-	ProjectExportEnabled                                  *bool                                   `json:"projectExportEnabled,omitempty"`
-	ProjectExportLimit                                    *int                                    `json:"projectExportLimit,omitempty"`
-	ProjectImportLimit                                    *int                                    `json:"projectImportLimit,omitempty"`
-	ProjectJobsAPIRateLimit                               *int                                    `json:"projectJobsApiRateLimit,omitempty"`
-	ProjectRunnerTokenExpirationInterval                  *int                                    `json:"projectRunnerTokenExpirationInterval,omitempty"`
-	ProjectsAPIRateLimitUnauthenticated                   *int                                    `json:"projectsApiRateLimitUnauthenticated,omitempty"`
-	PrometheusMetricsEnabled                              *bool                                   `json:"prometheusMetricsEnabled,omitempty"`
-	ProtectedCIVariables                                  *bool                                   `json:"protectedCIVariables,omitempty"`
-	PseudonymizerEnabled                                  *bool                                   `json:"pseudonymizerEnabled,omitempty"`
-	PushEventActivitiesLimit                              *int                                    `json:"pushEventActivitiesLimit,omitempty"`
-	PushEventHooksLimit                                   *int                                    `json:"pushEventHooksLimit,omitempty"`
-	PyPIPackageRequestsForwarding                         *bool                                   `json:"pyPIpackageRequestsForwarding,omitempty"`
-	RSAKeyRestriction                                     *int                                    `json:"rsaKeyRestriction,omitempty"`
-	RateLimitingResponseText                              *string                                 `json:"rateLimitingResponseText,omitempty"`
-	RawBlobRequestLimit                                   *int                                    `json:"rawBlobRequestLimit,omitempty"`
-	RecaptchaEnabled                                      *bool                                   `json:"recaptchaEnabled,omitempty"`
-	RecaptchaPrivateKey                                   *string                                 `json:"recaptchaPrivateKey,omitempty"`
-	RecaptchaSiteKey                                      *string                                 `json:"recaptchaSiteKey,omitempty"`
-	ReceiveMaxInputSize                                   *int                                    `json:"receiveMaxInputSize,omitempty"`
-	ReceptiveClusterAgentsEnabled                         *bool                                   `json:"receptiveClusterAgentsEnabled,omitempty"`
-	RememberMeEnabled                                     *bool                                   `json:"rememberMeEnabled,omitempty"`
-	RepositoryChecksEnabled                               *bool                                   `json:"repositoryChecksEnabled,omitempty"`
-	RepositorySizeLimit                                   *int                                    `json:"repositorySizeLimit,omitempty"`
-	RepositoryStorages                                    *[]string                               `json:"repositoryStorages,omitempty"`
-	RepositoryStoragesWeighted                            *map[string]int                         `json:"repositoryStoragesWeighted,omitempty"`
-	RequireAdminApprovalAfterUserSignup                   *bool                                   `json:"requireAdminApprovalAfterUserSignup,omitempty"`
-	RequireAdminTwoFactorAuthentication                   *bool                                   `json:"requireAdminTwoFactorAuthentication,omitempty"`
-	RequirePersonalAccessTokenExpiry                      *bool                                   `json:"requirePersonalAccessTokenExpiry,omitempty"`
-	RequireTwoFactorAuthentication                        *bool                                   `json:"requireTwoFactorAuthentication,omitempty"`
-	RestrictedVisibilityLevels                            *[]string                               `json:"restrictedVisibilityLevels,omitempty"`
-	RunnerTokenExpirationInterval                         *int                                    `json:"runnerTokenExpirationInterval,omitempty"`
-	SearchRateLimit                                       *int                                    `json:"searchRateLimit,omitempty"`
-	SearchRateLimitUnauthenticated                        *int                                    `json:"searchRateLimitUnauthenticated,omitempty"`
-	SecretDetectionRevocationTokenTypesURL                *string                                 `json:"secretDetectionRevocationTokenTypesUrl,omitempty"`
-	SecretDetectionTokenRevocationEnabled                 *bool                                   `json:"secretDetectionTokenRevocationEnabled,omitempty"`
-	SecretDetectionTokenRevocationToken                   *string                                 `json:"secretDetectionTokenRevocationToken,omitempty"`
-	SecretDetectionTokenRevocationURL                     *string                                 `json:"secretDetectionTokenRevocationUrl,omitempty"`
-	SecurityApprovalPoliciesLimit                         *int                                    `json:"securityApprovalPoliciesLimit,omitempty"`
-	SecurityPolicyGlobalGroupApproversEnabled             *bool                                   `json:"securityPolicyGlobalGroupApproversEnabled,omitempty"`
-	SecurityTXTContent                                    *string                                 `json:"securityTXTContent,omitempty"`
-	SendUserConfirmationEmail                             *bool                                   `json:"sendUserConfirmationEmail,omitempty"`
-	SentryClientsideDSN                                   *string                                 `json:"sentryClientsideDSN,omitempty"`
-	SentryDSN                                             *string                                 `json:"sentryDSN,omitempty"`
-	SentryEnabled                                         *string                                 `json:"sentryEnabled,omitempty"`
-	SentryEnvironment                                     *string                                 `json:"sentryEnvironment,omitempty"`
-	ServiceAccessTokensExpirationEnforced                 *bool                                   `json:"serviceAccessTokensExpirationEnforced,omitempty"`
-	SessionExpireDelay                                    *int                                    `json:"sessionExpireDelay,omitempty"`
-	SharedRunnersEnabled                                  *bool                                   `json:"sharedRunnersEnabled,omitempty"`
-	SharedRunnersMinutes                                  *int                                    `json:"sharedRunnersMinutes,omitempty"`
-	SharedRunnersText                                     *string                                 `json:"sharedRunnersText,omitempty"`
-	SidekiqJobLimiterCompressionThresholdBytes            *int                                    `json:"sidekiqJobLimiterCompressionThresholdBytes,omitempty"`
-	SidekiqJobLimiterLimitBytes                           *int                                    `json:"sidekiqJobLimiterLimitBytes,omitempty"`
-	SidekiqJobLimiterMode                                 *string                                 `json:"sidekiqJobLimiterMode,omitempty"`
-	SignInText                                            *string                                 `json:"signInText,omitempty"`
-	SignupEnabled                                         *bool                                   `json:"signupEnabled,omitempty"`
-	SilentAdminExportsEnabled                             *bool                                   `json:"silentAdminExportsEnabled,omitempty"`
-	SilentModeEnabled                                     *bool                                   `json:"silentModeEnabled,omitempty"`
-	SlackAppEnabled                                       *bool                                   `json:"slackAppEnabled,omitempty"`
-	SlackAppID                                            *string                                 `json:"slackAppId,omitempty"`
-	SlackAppSecret                                        *string                                 `json:"slackAppSecret,omitempty"`
-	SlackAppSigningSecret                                 *string                                 `json:"slackAppSigningSecret,omitempty"`
-	SlackAppVerificationToken                             *string                                 `json:"slackAppVerificationToken,omitempty"`
-	SnippetSizeLimit                                      *int                                    `json:"snippetSizeLimit,omitempty"`
-	SnowplowAppID                                         *string                                 `json:"snowplowAppId,omitempty"`
-	SnowplowCollectorHostname                             *string                                 `json:"snowplowCollectorHostname,omitempty"`
-	SnowplowCookieDomain                                  *string                                 `json:"snowplowCookieDomain,omitempty"`
-	SnowplowDatabaseCollectorHostname                     *string                                 `json:"snowplowDatabaseCollectorHostname,omitempty"`
-	SnowplowEnabled                                       *bool                                   `json:"snowplowEnabled,omitempty"`
-	SourcegraphEnabled                                    *bool                                   `json:"sourcegraphEnabled,omitempty"`
-	SourcegraphPublicOnly                                 *bool                                   `json:"sourcegraphPublicOnly,omitempty"`
-	SourcegraphURL                                        *string                                 `json:"sourcegraphUrl,omitempty"`
-	SpamCheckAPIKey                                       *string                                 `json:"spamCheckApiKey,omitempty"`
-	SpamCheckEndpointEnabled                              *bool                                   `json:"spamCheckEndpointEnabled,omitempty"`
-	SpamCheckEndpointURL                                  *string                                 `json:"spamCheckEndpointUrl,omitempty"`
-	StaticObjectsExternalStorageAuthToken                 *string                                 `json:"staticObjectsExternalStorageAuthToken,omitempty"`
-	StaticObjectsExternalStorageURL                       *string                                 `json:"staticObjectsExternalStorageUrl,omitempty"`
-	SuggestPipelineEnabled                                *bool                                   `json:"suggestPipelineEnabled,omitempty"`
-	TerminalMaxSessionTime                                *int                                    `json:"terminalMaxSessionTime,omitempty"`
-	Terms                                                 *string                                 `json:"terms,omitempty"`
-	ThrottleAuthenticatedAPIEnabled                       *bool                                   `json:"throttleAuthenticatedApiEnabled,omitempty"`
-	ThrottleAuthenticatedAPIPeriodInSeconds               *int                                    `json:"throttleAuthenticatedApiPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedAPIRequestsPerPeriod             *int                                    `json:"throttleAuthenticatedApiRequestsPerPeriod,omitempty"`
-	ThrottleAuthenticatedDeprecatedAPIEnabled             *bool                                   `json:"throttleAuthenticatedDeprecatedApiEnabled,omitempty"`
-	ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds     *int                                    `json:"throttleAuthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod   *int                                    `json:"throttleAuthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
-	ThrottleAuthenticatedFilesAPIEnabled                  *bool                                   `json:"throttleAuthenticatedFilesApiEnabled,omitempty"`
-	ThrottleAuthenticatedFilesAPIPeriodInSeconds          *int                                    `json:"throttleAuthenticatedFilesApiPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedFilesAPIRequestsPerPeriod        *int                                    `json:"throttleAuthenticatedFilesApiRequestsPerPeriod,omitempty"`
-	ThrottleAuthenticatedGitLFSEnabled                    *bool                                   `json:"throttleAuthenticatedGitLFSEnabled,omitempty"`
-	ThrottleAuthenticatedGitLFSPeriodInSeconds            *int                                    `json:"throttleAuthenticatedGitLFSPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedGitLFSRequestsPerPeriod          *int                                    `json:"throttleAuthenticatedGitLFSRequestsPerPeriod,omitempty"`
-	ThrottleAuthenticatedPackagesAPIEnabled               *bool                                   `json:"throttleAuthenticatedPackagesApiEnabled,omitempty"`
-	ThrottleAuthenticatedPackagesAPIPeriodInSeconds       *int                                    `json:"throttleAuthenticatedPackagesApiPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedPackagesAPIRequestsPerPeriod     *int                                    `json:"throttleAuthenticatedPackagesApiRequestsPerPeriod,omitempty"`
-	ThrottleAuthenticatedWebEnabled                       *bool                                   `json:"throttleAuthenticatedWebEnabled,omitempty"`
-	ThrottleAuthenticatedWebPeriodInSeconds               *int                                    `json:"throttleAuthenticatedWebPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedWebRequestsPerPeriod             *int                                    `json:"throttleAuthenticatedWebRequestsPerPeriod,omitempty"`
-	ThrottleIncidentManagementNotificationEnabled         *bool                                   `json:"throttleIncidentManagementNotificationEnabled,omitempty"`
-	ThrottleIncidentManagementNotificationPerPeriod       *int                                    `json:"throttleIncidentManagementNotificationPerPeriod,omitempty"`
-	ThrottleIncidentManagementNotificationPeriodInSeconds *int                                    `json:"throttleIncidentManagementNotificationPeriodInSeconds,omitempty"`
-	ThrottleProtectedPathsEnabled                         *bool                                   `json:"throttleProtectedPathsEnabled,omitempty"`
-	ThrottleProtectedPathsPeriodInSeconds                 *int                                    `json:"throttleProtectedPathsPeriodInSeconds,omitempty"`
-	ThrottleProtectedPathsRequestsPerPeriod               *int                                    `json:"throttleProtectedPathsRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedAPIEnabled                     *bool                                   `json:"throttleUnauthenticatedApiEnabled,omitempty"`
-	ThrottleUnauthenticatedAPIPeriodInSeconds             *int                                    `json:"throttleUnauthenticatedApiPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedAPIRequestsPerPeriod           *int                                    `json:"throttleUnauthenticatedApiRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedDeprecatedAPIEnabled           *bool                                   `json:"throttleUnauthenticatedDeprecatedApiEnabled,omitempty"`
-	ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds   *int                                    `json:"throttleUnauthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod *int                                    `json:"throttleUnauthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedFilesAPIEnabled                *bool                                   `json:"throttleUnauthenticatedFilesApiEnabled,omitempty"`
-	ThrottleUnauthenticatedFilesAPIPeriodInSeconds        *int                                    `json:"throttleUnauthenticatedFilesApiPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedFilesAPIRequestsPerPeriod      *int                                    `json:"throttleUnauthenticatedFilesApiRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedGitLFSEnabled                  *bool                                   `json:"throttleUnauthenticatedGitLFSEnabled,omitempty"`
-	ThrottleUnauthenticatedGitLFSPeriodInSeconds          *int                                    `json:"throttleUnauthenticatedGitLFSPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedGitLFSRequestsPerPeriod        *int                                    `json:"throttleUnauthenticatedGitLFSRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedPackagesAPIEnabled             *bool                                   `json:"throttleUnauthenticatedPackagesApiEnabled,omitempty"`
-	ThrottleUnauthenticatedPackagesAPIPeriodInSeconds     *int                                    `json:"throttleUnauthenticatedPackagesApiPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod   *int                                    `json:"throttleUnauthenticatedPackagesApiRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedWebEnabled                     *bool                                   `json:"throttleUnauthenticatedWebEnabled,omitempty"`
-	ThrottleUnauthenticatedWebPeriodInSeconds             *int                                    `json:"throttleUnauthenticatedWebPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedWebRequestsPerPeriod           *int                                    `json:"throttleUnauthenticatedWebRequestsPerPeriod,omitempty"`
-	TimeTrackingLimitToHours                              *bool                                   `json:"timeTrackingLimitToHours,omitempty"`
-	TwoFactorGracePeriod                                  *int                                    `json:"twoFactorGracePeriod,omitempty"`
-	UnconfirmedUsersDeleteAfterDays                       *int                                    `json:"unconfirmedUsersDeleteAfterDays,omitempty"`
-	UniqueIPsLimitEnabled                                 *bool                                   `json:"uniqueIpsLimitEnabled,omitempty"`
-	UniqueIPsLimitPerUser                                 *int                                    `json:"uniqueIpsLimitPerUser,omitempty"`
-	UniqueIPsLimitTimeWindow                              *int                                    `json:"uniqueIpsLimitTimeWindow,omitempty"`
-	UpdateRunnerVersionsEnabled                           *bool                                   `json:"updateRunnerVersionsEnabled,omitempty"`
-	UpdatingNameDisabledForUsers                          *bool                                   `json:"updatingNameDisabledForUsers,omitempty"`
-	UsagePingEnabled                                      *bool                                   `json:"usagePingEnabled,omitempty"`
-	UsagePingFeaturesEnabled                              *bool                                   `json:"usagePingFeaturesEnabled,omitempty"`
-	UseClickhouseForAnalytics                             *bool                                   `json:"useClickhouseForAnalytics,omitempty"`
-	UserDeactivationEmailsEnabled                         *bool                                   `json:"userDeactivationEmailsEnabled,omitempty"`
-	UserDefaultExternal                                   *bool                                   `json:"userDefaultExternal,omitempty"`
-	UserDefaultInternalRegex                              *string                                 `json:"userDefaultInternalRegex,omitempty"`
-	UserDefaultsToPrivateProfile                          *bool                                   `json:"userDefaultsToPrivateProfile,omitempty"`
-	UserEmailLookupLimit                                  *int                                    `json:"userEmailLookupLimit,omitempty"`
-	UserOauthApplications                                 *bool                                   `json:"userOauthApplications,omitempty"`
-	UserShowAddSSHKeyMessage                              *bool                                   `json:"userShowAddSshKeyMessage,omitempty"`
-	UsersGetByIDLimit                                     *int                                    `json:"usersGetByIdLimit,omitempty"`
-	UsersGetByIDLimitAllowlistRaw                         *string                                 `json:"usersGetByIdLimitAllowlistRaw,omitempty"`
-	ValidRunnerRegistrars                                 *[]string                               `json:"validRunnerRegistrars,omitempty"`
-	VersionCheckEnabled                                   *bool                                   `json:"versionCheckEnabled,omitempty"`
-	WebIDEClientsidePreviewEnabled                        *bool                                   `json:"webIdEClientsidePreviewEnabled,omitempty"`
-	WhatsNewVariant                                       *string                                 `json:"whatsNewVariant,omitempty"`
-	WikiPageMaxContentBytes                               *int                                    `json:"wikiPageMaxContentBytes,omitempty"`
-	AdminNotificationEmail                                *string                                 `json:"adminNotificationEmail,omitempty"`
-	AllowLocalRequestsFromHooksAndServices                *bool                                   `json:"allowLocalRequestsFromHooksAndServices,omitempty"`
-	AssetProxyWhitelist                                   *[]string                               `json:"assetProxyWhitelist,omitempty"`
-	DefaultBranchProtection                               *int                                    `json:"defaultBranchProtection,omitempty"`
-	HousekeepingBitmapsEnabled                            *bool                                   `json:"housekeepingBitmapsEnabled,omitempty"`
-	HousekeepingFullRepackPeriod                          *int                                    `json:"housekeepingFullRepackPeriod,omitempty"`
-	HousekeepingGcPeriod                                  *int                                    `json:"housekeepingGcPeriod,omitempty"`
-	HousekeepingIncrementalRepackPeriod                   *int                                    `json:"housekeepingIncrementalRepackPeriod,omitempty"`
-	PerformanceBarAllowedGroupID                          *int                                    `json:"performanceBarAllowedGroupId,omitempty"`
-	PerformanceBarEnabled                                 *bool                                   `json:"performanceBarEnabled,omitempty"`
-	ThrottleUnauthenticatedEnabled                        *bool                                   `json:"throttleUnauthenticatedEnabled,omitempty"`
-	ThrottleUnauthenticatedPeriodInSeconds                *int                                    `json:"throttleUnauthenticatedPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedRequestsPerPeriod              *int                                    `json:"throttleUnauthenticatedRequestsPerPeriod,omitempty"`
+	// +optional
+	AbuseNotificationEmail *string `json:"abuseNotificationEmail,omitempty"`
+	// +optional
+	AdminMode *bool `json:"adminMode,omitempty"`
+	// +optional
+	AfterSignOutPath *string `json:"afterSignOutPath,omitempty"`
+	// +optional
+	AfterSignUpText *string `json:"afterSignUpText,omitempty"`
+	// +optional
+	AkismetAPIKey *string `json:"akismetApiKey,omitempty"`
+	// +optional
+	AkismetEnabled *bool `json:"akismetEnabled,omitempty"`
+	// +optional
+	AllowAccountDeletion *bool `json:"allowAccountDeletion,omitempty"`
+	// +optional
+	AllowAllIntegrations *bool `json:"allowAllIntegrations,omitempty"`
+	// +optional
+	AllowedIntegrations *[]string `json:"allowedIntegrations,omitempty"`
+	// +optional
+	AllowGroupOwnersToManageLDAP *bool `json:"allowGroupOwnersToManageLdap,omitempty"`
+	// +optional
+	AllowLocalRequestsFromSystemHooks *bool `json:"allowLocalRequestsFromSystemHooks,omitempty"`
+	// +optional
+	AllowLocalRequestsFromWebHooksAndServices *bool `json:"allowLocalRequestsFromWebHooksAndServices,omitempty"`
+	// +optional
+	AllowProjectCreationForGuestAndBelow *bool `json:"allowProjectCreationForGuestAndBelow,omitempty"`
+	// +optional
+	AllowRunnerRegistrationToken *bool `json:"allowRunnerRegistrationToken,omitempty"`
+	// +optional
+	ArchiveBuildsInHumanReadable *string `json:"archiveBuildsInHumanReadable,omitempty"`
+	// +optional
+	ASCIIDocMaxIncludes *int `json:"asciiDocMaxIncludes,omitempty"`
+	// +optional
+	AssetProxyAllowlist *[]string `json:"assetProxyAllowlist,omitempty"`
+	// +optional
+	AssetProxyEnabled *bool `json:"assetProxyEnabled,omitempty"`
+	// +optional
+	AssetProxySecretKey *string `json:"assetProxySecretKey,omitempty"`
+	// +optional
+	AssetProxyURL *string `json:"assetProxyUrl,omitempty"`
+	// +optional
+	AuthorizedKeysEnabled *bool `json:"authorizedKeysEnabled,omitempty"`
+	// +optional
+	AutoBanUserOnExcessiveProjectsDownload *bool `json:"autoBanUserOnExcessiveProjectsDownload,omitempty"`
+	// +optional
+	AutocompleteUsers *int `json:"autocompleteUsers,omitempty"`
+	// +optional
+	AutocompleteUsersUnauthenticated *int `json:"autocompleteUsersUnauthenticated,omitempty"`
+	// +optional
+	AutoDevOpsDomain *string `json:"autoDevOpsDomain,omitempty"`
+	// +optional
+	AutoDevOpsEnabled *bool `json:"autoDevOpsEnabled,omitempty"`
+	// +optional
+	AutomaticPurchasedStorageAllocation *bool `json:"automaticPurchasedStorageAllocation,omitempty"`
+	// +optional
+	BulkImportConcurrentPipelineBatchLimit *int `json:"bulkImportConcurrentPipelineBatchLimit,omitempty"`
+	// +optional
+	BulkImportEnabled *bool `json:"bulkImportEnabled,omitempty"`
+	// +optional
+	BulkImportMaxDownloadFileSize *int `json:"bulkImportMaxDownloadFileSize,omitempty"`
+	// +optional
+	CanCreateGroup *bool `json:"canCreateGroup,omitempty"`
+	// +optional
+	CheckNamespacePlan *bool `json:"checkNamespacePlan,omitempty"`
+	// +optional
+	CIJobLiveTraceEnabled *bool `json:"ciJobLiveTraceEnabled,omitempty"`
+	// +optional
+	CIMaxIncludes *int `json:"ciMaxIncludes,omitempty"`
+	// +optional
+	CIMaxTotalYAMLSizeBytes *int `json:"ciMaxTotalYamlSizeBytes,omitempty"`
+	// +optional
+	CIPartitionsSizeLimit *int `json:"ciPartitionsSizeLimit,omitempty"`
+	// +optional
+	CommitEmailHostname *string `json:"commitEmailHostname,omitempty"`
+	// +optional
+	ConcurrentBitbucketImportJobsLimit *int `json:"concurrentBitbucketImportJobsLimit,omitempty"`
+	// +optional
+	ConcurrentBitbucketServerImportJobsLimit *int `json:"concurrentBitbucketServerImportJobsLimit,omitempty"`
+	// +optional
+	ConcurrentGitHubImportJobsLimit *int `json:"concurrentGitHubImportJobsLimit,omitempty"`
+	// +optional
+	ContainerExpirationPoliciesEnableHistoricEntries *bool `json:"containerExpirationPoliciesEnableHistoricEntries,omitempty"`
+	// +optional
+	ContainerRegistryCleanupTagsServiceMaxListSize *int `json:"containerRegistryCleanupTagsServiceMaxListSize,omitempty"`
+	// +optional
+	ContainerRegistryDeleteTagsServiceTimeout *int `json:"containerRegistryDeleteTagsServiceTimeout,omitempty"`
+	// +optional
+	ContainerRegistryExpirationPoliciesCaching *bool `json:"containerRegistryExpirationPoliciesCaching,omitempty"`
+	// +optional
+	ContainerRegistryExpirationPoliciesWorkerCapacity *int `json:"containerRegistryExpirationPoliciesWorkerCapacity,omitempty"`
+	// +optional
+	ContainerRegistryImportCreatedBefore *metav1.Time `json:"containerRegistryImportCreatedBefore,omitempty"`
+	// +optional
+	ContainerRegistryImportMaxRetries *int `json:"containerRegistryImportMaxRetries,omitempty"`
+	// +optional
+	ContainerRegistryImportMaxStepDuration *int `json:"containerRegistryImportMaxStepDuration,omitempty"`
+	// +optional
+	ContainerRegistryImportMaxTagsCount *int `json:"containerRegistryImportMaxTagsCount,omitempty"`
+	// +optional
+	ContainerRegistryImportStartMaxRetries *int `json:"containerRegistryImportStartMaxRetries,omitempty"`
+	// +optional
+	ContainerRegistryImportTargetPlan *string `json:"containerRegistryImportTargetPlan,omitempty"`
+	// +optional
+	ContainerRegistryTokenExpireDelay *int `json:"containerRegistryTokenExpireDelay,omitempty"`
+	// +optional
+	CustomHTTPCloneURLRoot *string `json:"customHTTPCloneUrlRoot,omitempty"`
+	// +optional
+	DNSRebindingProtectionEnabled *bool `json:"dnsRebindingProtectionEnabled,omitempty"`
+	// +optional
+	DSAKeyRestriction *int `json:"dsaKeyRestriction,omitempty"`
+	// +optional
+	DeactivateDormantUsers *bool `json:"deactivateDormantUsers,omitempty"`
+	// +optional
+	DeactivateDormantUsersPeriod *int `json:"deactivateDormantUsersPeriod,omitempty"`
+	// +optional
+	DecompressArchiveFileTimeout *int `json:"decompressArchiveFileTimeout,omitempty"`
+	// +optional
+	DefaultArtifactsExpireIn *string `json:"defaultArtifactsExpireIn,omitempty"`
+	// +optional
+	DefaultBranchName *string `json:"defaultBranchName,omitempty"`
+	// +optional
+	DefaultBranchProtectionDefaults *DefaultBranchProtectionDefaultsOptions `json:"defaultBranchProtectionDefaults,omitempty"`
+	// +optional
+	DefaultCiConfigPath *string `json:"defaultCiConfigPath,omitempty"`
+	// +optional
+	DefaultGroupVisibility *string `json:"defaultGroupVisibility,omitempty"`
+	// +optional
+	DefaultPreferredLanguage *string `json:"defaultPreferredLanguage,omitempty"`
+	// +optional
+	DefaultProjectCreation *int `json:"defaultProjectCreation,omitempty"`
+	// +optional
+	DefaultProjectDeletionProtection *bool `json:"defaultProjectDeletionProtection,omitempty"`
+	// +optional
+	DefaultProjectVisibility *string `json:"defaultProjectVisibility,omitempty"`
+	// +optional
+	DefaultProjectsLimit *int `json:"defaultProjectsLimit,omitempty"`
+	// +optional
+	DefaultSnippetVisibility *string `json:"defaultSnippetVisibility,omitempty"`
+	// +optional
+	DefaultSyntaxHighlightingTheme *int `json:"defaultSyntaxHighlightingTheme,omitempty"`
+	// +optional
+	DelayedGroupDeletion *bool `json:"delayedGroupDeletion,omitempty"`
+	// +optional
+	DelayedProjectDeletion *bool `json:"delayedProjectDeletion,omitempty"`
+	// +optional
+	DeleteInactiveProjects *bool `json:"deleteInactiveProjects,omitempty"`
+	// +optional
+	DeleteUnconfirmedUsers *bool `json:"deleteUnconfirmedUsers,omitempty"`
+	// +optional
+	DeletionAdjournedPeriod *int `json:"deletionAdjournedPeriod,omitempty"`
+	// +optional
+	DiagramsnetEnabled *bool `json:"diagramsnetEnabled,omitempty"`
+	// +optional
+	DiagramsnetURL *string `json:"diagramsnetUrl,omitempty"`
+	// +optional
+	DiffMaxFiles *int `json:"diffMaxFiles,omitempty"`
+	// +optional
+	DiffMaxLines *int `json:"diffMaxLines,omitempty"`
+	// +optional
+	DiffMaxPatchBytes *int `json:"diffMaxPatchBytes,omitempty"`
+	// +optional
+	DisableFeedToken *bool `json:"disableFeedToken,omitempty"`
+	// +optional
+	DisableAdminOAuthScopes *bool `json:"disableAdminOAuthScopes,omitempty"`
+	// +optional
+	DisableOverridingApproversPerMergeRequest *bool `json:"disableOverridingApproversPerMergeRequest,omitempty"`
+	// +optional
+	DisablePersonalAccessTokens *bool `json:"disablePersonalAccessTokens,omitempty"`
+	// +optional
+	DisabledOauthSignInSources *[]string `json:"disabledOauthSignInSources,omitempty"`
+	// +optional
+	DomainAllowlist *[]string `json:"domainAllowlist,omitempty"`
+	// +optional
+	DomainDenylist *[]string `json:"domainDenylist,omitempty"`
+	// +optional
+	DomainDenylistEnabled *bool `json:"domainDenylistEnabled,omitempty"`
+	// +optional
+	DownstreamPipelineTriggerLimitPerProjectUserSHA *int `json:"downstreamPipelineTriggerLimitPerProjectUserSHA,omitempty"`
+	// +optional
+	DuoFeaturesEnabled *bool `json:"duoFeaturesEnabled,omitempty"`
+	// +optional
+	ECDSAKeyRestriction *int `json:"ecdsaKeyRestriction,omitempty"`
+	// +optional
+	ECDSASKKeyRestriction *int `json:"ecdsaskKeyRestriction,omitempty"`
+	// +optional
+	EKSAccessKeyID *string `json:"eksAccessKeyId,omitempty"`
+	// +optional
+	EKSAccountID *string `json:"eksAccountId,omitempty"`
+	// +optional
+	EKSIntegrationEnabled *bool `json:"eksIntegrationEnabled,omitempty"`
+	// +optional
+	EKSSecretAccessKey *string `json:"eksSecretAccessKey,omitempty"`
+	// +optional
+	Ed25519KeyRestriction *int `json:"ed25519KeyRestriction,omitempty"`
+	// +optional
+	Ed25519SKKeyRestriction *int `json:"ed25519SKKeyRestriction,omitempty"`
+	// +optional
+	ElasticsearchAWS *bool `json:"elasticsearchAws,omitempty"`
+	// +optional
+	ElasticsearchAWSAccessKey *string `json:"elasticsearchAwsAccessKey,omitempty"`
+	// +optional
+	ElasticsearchAWSRegion *string `json:"elasticsearchAwsRegion,omitempty"`
+	// +optional
+	ElasticsearchAWSSecretAccessKey *string `json:"elasticsearchAwsSecretAccessKey,omitempty"`
+	// +optional
+	ElasticsearchAnalyzersKuromojiEnabled *bool `json:"elasticsearchAnalyzersKuromojiEnabled,omitempty"`
+	// +optional
+	ElasticsearchAnalyzersKuromojiSearch *int `json:"elasticsearchAnalyzersKuromojiSearch,omitempty"`
+	// +optional
+	ElasticsearchAnalyzersSmartCNEnabled *bool `json:"elasticsearchAnalyzersSmartCnEnabled,omitempty"`
+	// +optional
+	ElasticsearchAnalyzersSmartCNSearch *int `json:"elasticsearchAnalyzersSmartCnSearch,omitempty"`
+	// +optional
+	ElasticsearchClientRequestTimeout *int `json:"elasticsearchClientRequestTimeout,omitempty"`
+	// +optional
+	ElasticsearchIndexedFieldLengthLimit *int `json:"elasticsearchIndexedFieldLengthLimit,omitempty"`
+	// +optional
+	ElasticsearchIndexedFileSizeLimitKB *int `json:"elasticsearchIndexedFileSizeLimitKB,omitempty"`
+	// +optional
+	ElasticsearchIndexing *bool `json:"elasticsearchIndexing,omitempty"`
+	// +optional
+	ElasticsearchLimitIndexing *bool `json:"elasticsearchLimitIndexing,omitempty"`
+	// +optional
+	ElasticsearchMaxBulkConcurrency *int `json:"elasticsearchMaxBulkConcurrency,omitempty"`
+	// +optional
+	ElasticsearchMaxBulkSizeMB *int `json:"elasticsearchMaxBulkSizeMB,omitempty"`
+	// +optional
+	ElasticsearchMaxCodeIndexingConcurrency *int `json:"elasticsearchMaxCodeIndexingConcurrency,omitempty"`
+	// +optional
+	ElasticsearchNamespaceIDs *[]int `json:"elasticsearchNamespaceIds,omitempty"`
+	// +optional
+	ElasticsearchPassword *string `json:"elasticsearchPassword,omitempty"`
+	// +optional
+	ElasticsearchPauseIndexing *bool `json:"elasticsearchPauseIndexing,omitempty"`
+	// +optional
+	ElasticsearchProjectIDs *[]int `json:"elasticsearchProjectIds,omitempty"`
+	// +optional
+	ElasticsearchReplicas *int `json:"elasticsearchReplicas,omitempty"`
+	// +optional
+	ElasticsearchRequeueWorkers *bool `json:"elasticsearchRequeueWorkers,omitempty"`
+	// +optional
+	ElasticsearchRetryOnFailure *int `json:"elasticsearchRetryOnFailure,omitempty"`
+	// +optional
+	ElasticsearchSearch *bool `json:"elasticsearchSearch,omitempty"`
+	// +optional
+	ElasticsearchShards *int `json:"elasticsearchShards,omitempty"`
+	// +optional
+	ElasticsearchURL *string `json:"elasticsearchUrl,omitempty"`
+	// +optional
+	ElasticsearchUsername *string `json:"elasticsearchUsername,omitempty"`
+	// +optional
+	ElasticsearchWorkerNumberOfShards *int `json:"elasticsearchWorkerNumberOfShards,omitempty"`
+	// +optional
+	EmailAdditionalText *string `json:"emailAdditionalText,omitempty"`
+	// +optional
+	EmailAuthorInBody *bool `json:"emailAuthorInBody,omitempty"`
+	// +optional
+	EmailConfirmationSetting *string `json:"emailConfirmationSetting,omitempty"`
+	// +optional
+	EmailRestrictions *string `json:"emailRestrictions,omitempty"`
+	// +optional
+	EmailRestrictionsEnabled *bool `json:"emailRestrictionsEnabled,omitempty"`
+	// +optional
+	EnableArtifactExternalRedirectWarningPage *bool `json:"enableArtifactExternalRedirectWarningPage,omitempty"`
+	// +optional
+	EnabledGitAccessProtocol *string `json:"enabledGitAccessProtocol,omitempty"`
+	// +optional
+	EnforceCIInboundJobTokenScopeEnabled *bool `json:"enforceCIInboundJobTokenScopeEnabled,omitempty"`
+	// +optional
+	EnforceNamespaceStorageLimit *bool `json:"enforceNamespaceStorageLimit,omitempty"`
+	// +optional
+	EnforcePATExpiration *bool `json:"enforcePATExpiration,omitempty"`
+	// +optional
+	EnforceSSHKeyExpiration *bool `json:"enforceSshKeyExpiration,omitempty"`
+	// +optional
+	EnforceTerms *bool `json:"enforceTerms,omitempty"`
+	// +optional
+	ExternalAuthClientCert *string `json:"externalAuthClientCert,omitempty"`
+	// +optional
+	ExternalAuthClientKey *string `json:"externalAuthClientKey,omitempty"`
+	// +optional
+	ExternalAuthClientKeyPass *string `json:"externalAuthClientKeyPass,omitempty"`
+	// +optional
+	ExternalAuthorizationServiceDefaultLabel *string `json:"externalAuthorizationServiceDefaultLabel,omitempty"`
+	// +optional
+	ExternalAuthorizationServiceEnabled *bool `json:"externalAuthorizationServiceEnabled,omitempty"`
+	// +optional
+	ExternalAuthorizationServiceTimeout *float64 `json:"externalAuthorizationServiceTimeout,omitempty"`
+	// +optional
+	ExternalAuthorizationServiceURL *string `json:"externalAuthorizationServiceUrl,omitempty"`
+	// +optional
+	ExternalPipelineValidationServiceTimeout *int `json:"externalPipelineValidationServiceTimeout,omitempty"`
+	// +optional
+	ExternalPipelineValidationServiceToken *string `json:"externalPipelineValidationServiceToken,omitempty"`
+	// +optional
+	ExternalPipelineValidationServiceURL *string `json:"externalPipelineValidationServiceUrl,omitempty"`
+	// +optional
+	FailedLoginAttemptsUnlockPeriodInMinutes *int `json:"failedLoginAttemptsUnlockPeriodInMinutes,omitempty"`
+	// +optional
+	FileTemplateProjectID *int `json:"fileTemplateProjectId,omitempty"`
+	// +optional
+	FirstDayOfWeek *int `json:"firstDayOfWeek,omitempty"`
+	// +optional
+	FlocEnabled *bool `json:"flocEnabled,omitempty"`
+	// +optional
+	GeoNodeAllowedIPs *string `json:"geoNodeAllowedIps,omitempty"`
+	// +optional
+	GeoStatusTimeout *int `json:"geoStatusTimeout,omitempty"`
+	// +optional
+	GitRateLimitUsersAlertlist *[]int `json:"gitRateLimitUsersAlertlist,omitempty"`
+	// +optional
+	GitTwoFactorSessionExpiry *int `json:"gitTwoFactorSessionExpiry,omitempty"`
+	// +optional
+	GitalyTimeoutDefault *int `json:"gitalyTimeoutDefault,omitempty"`
+	// +optional
+	GitalyTimeoutFast *int `json:"gitalyTimeoutFast,omitempty"`
+	// +optional
+	GitalyTimeoutMedium *int `json:"gitalyTimeoutMedium,omitempty"`
+	// +optional
+	GitlabDedicatedInstance *bool `json:"gitlabDedicatedInstance,omitempty"`
+	// +optional
+	GitlabEnvironmentToolkitInstance *bool `json:"gitlabEnvironmentToolkitInstance,omitempty"`
+	// +optional
+	GitlabShellOperationLimit *int `json:"gitlabShellOperationLimit,omitempty"`
+	// +optional
+	GitpodEnabled *bool `json:"gitpodEnabled,omitempty"`
+	// +optional
+	GitpodURL *string `json:"gitpodUrl,omitempty"`
+	// +optional
+	GitRateLimitUsersAllowlist *[]string `json:"gitRateLimitUsersAllowlist,omitempty"`
+	// +optional
+	GloballyAllowedIPs *string `json:"globallyAllowedIps,omitempty"`
+	// +optional
+	GrafanaEnabled *bool `json:"grafanaEnabled,omitempty"`
+	// +optional
+	GrafanaURL *string `json:"grafanaUrl,omitempty"`
+	// +optional
+	GravatarEnabled *bool `json:"gravatarEnabled,omitempty"`
+	// +optional
+	GroupDownloadExportLimit *int `json:"groupDownloadExportLimit,omitempty"`
+	// +optional
+	GroupExportLimit *int `json:"groupExportLimit,omitempty"`
+	// +optional
+	GroupImportLimit *int `json:"groupImportLimit,omitempty"`
+	// +optional
+	GroupOwnersCanManageDefaultBranchProtection *bool `json:"groupOwnersCanManageDefaultBranchProtection,omitempty"`
+	// +optional
+	GroupRunnerTokenExpirationInterval *int `json:"groupRunnerTokenExpirationInterval,omitempty"`
+	// +optional
+	HTMLEmailsEnabled *bool `json:"htmlEmailsEnabled,omitempty"`
+	// +optional
+	HashedStorageEnabled *bool `json:"hashedStorageEnabled,omitempty"`
+	// +optional
+	HelpPageDocumentationBaseURL *string `json:"helpPageDocumentationBaseUrl,omitempty"`
+	// +optional
+	HelpPageHideCommercialContent *bool `json:"helpPageHideCommercialContent,omitempty"`
+	// +optional
+	HelpPageSupportURL *string `json:"helpPageSupportUrl,omitempty"`
+	// +optional
+	HelpPageText *string `json:"helpPageText,omitempty"`
+	// +optional
+	HelpText *string `json:"helpText,omitempty"`
+	// +optional
+	HideThirdPartyOffers *bool `json:"hideThirdPartyOffers,omitempty"`
+	// +optional
+	HomePageURL *string `json:"homePageUrl,omitempty"`
+	// +optional
+	HousekeepingEnabled *bool `json:"housekeepingEnabled,omitempty"`
+	// +optional
+	HousekeepingOptimizeRepositoryPeriod *int `json:"housekeepingOptimizeRepositoryPeriod,omitempty"`
+	// +optional
+	ImportSources *[]string `json:"importSources,omitempty"`
+	// +optional
+	InactiveProjectsDeleteAfterMonths *int `json:"inactiveProjectsDeleteAfterMonths,omitempty"`
+	// +optional
+	InactiveProjectsMinSizeMB *int `json:"inactiveProjectsMinSizeMB,omitempty"`
+	// +optional
+	InactiveProjectsSendWarningEmailAfterMonths *int `json:"inactiveProjectsSendWarningEmailAfterMonths,omitempty"`
+	// +optional
+	IncludeOptionalMetricsInServicePing *bool `json:"includeOptionalMetricsInServicePing,omitempty"`
+	// +optional
+	InProductMarketingEmailsEnabled *bool `json:"inProductMarketingEmailsEnabled,omitempty"`
+	// +optional
+	InvisibleCaptchaEnabled *bool `json:"invisibleCaptchaEnabled,omitempty"`
+	// +optional
+	IssuesCreateLimit *int `json:"issuesCreateLimit,omitempty"`
+	// +optional
+	JiraConnectApplicationKey *string `json:"jiraConnectApplicationKey,omitempty"`
+	// +optional
+	JiraConnectPublicKeyStorageEnabled *bool `json:"jiraConnectPublicKeyStorageEnabled,omitempty"`
+	// +optional
+	JiraConnectProxyURL *string `json:"jiraConnectProxyUrl,omitempty"`
+	// +optional
+	KeepLatestArtifact *bool `json:"keepLatestArtifact,omitempty"`
+	// +optional
+	KrokiEnabled *bool `json:"krokiEnabled,omitempty"`
+	// +optional
+	KrokiFormats *map[string]bool `json:"krokiFormats,omitempty"`
+	// +optional
+	KrokiURL *string `json:"krokiUrl,omitempty"`
+	// +optional
+	LocalMarkdownVersion *int `json:"localMarkdownVersion,omitempty"`
+	// +optional
+	LockDuoFeaturesEnabled *bool `json:"lockDuoFeaturesEnabled,omitempty"`
+	// +optional
+	LockMembershipsToLDAP *bool `json:"lockMembershipsToLdap,omitempty"`
+	// +optional
+	LoginRecaptchaProtectionEnabled *bool `json:"loginRecaptchaProtectionEnabled,omitempty"`
+	// +optional
+	MailgunEventsEnabled *bool `json:"mailgunEventsEnabled,omitempty"`
+	// +optional
+	MailgunSigningKey *string `json:"mailgunSigningKey,omitempty"`
+	// +optional
+	MaintenanceMode *bool `json:"maintenanceMode,omitempty"`
+	// +optional
+	MaintenanceModeMessage *string `json:"maintenanceModeMessage,omitempty"`
+	// +optional
+	MavenPackageRequestsForwarding *bool `json:"mavenPackageRequestsForwarding,omitempty"`
+	// +optional
+	MaxArtifactsSize *int `json:"maxArtifactsSize,omitempty"`
+	// +optional
+	MaxAttachmentSize *int `json:"maxAttachmentSize,omitempty"`
+	// +optional
+	MaxDecompressedArchiveSize *int `json:"maxDecompressedArchiveSize,omitempty"`
+	// +optional
+	MaxExportSize *int `json:"maxExportSize,omitempty"`
+	// +optional
+	MaxImportRemoteFileSize *int `json:"maxImportRemoteFileSize,omitempty"`
+	// +optional
+	MaxImportSize *int `json:"maxImportSize,omitempty"`
+	// +optional
+	MaxLoginAttempts *int `json:"maxLoginAttempts,omitempty"`
+	// +optional
+	MaxNumberOfRepositoryDownloads *int `json:"maxNumberOfRepositoryDownloads,omitempty"`
+	// +optional
+	MaxNumberOfRepositoryDownloadsWithinTimePeriod *int `json:"maxNumberOfRepositoryDownloadsWithinTimePeriod,omitempty"`
+	// +optional
+	MaxPagesSize *int `json:"maxPagesSize,omitempty"`
+	// +optional
+	MaxPersonalAccessTokenLifetime *int `json:"maxPersonalAccessTokenLifetime,omitempty"`
+	// +optional
+	MaxSSHKeyLifetime *int `json:"maxSshKeyLifetime,omitempty"`
+	// +optional
+	MaxTerraformStateSizeBytes *int `json:"maxTerraformStateSizeBytes,omitempty"`
+	// +optional
+	MaxYAMLDepth *int `json:"maxYamlDepth,omitempty"`
+	// +optional
+	MaxYAMLSizeBytes *int `json:"maxYamlSizeBytes,omitempty"`
+	// +optional
+	MetricsMethodCallThreshold *int `json:"metricsMethodCallThreshold,omitempty"`
+	// +optional
+	MinimumPasswordLength *int `json:"minimumPasswordLength,omitempty"`
+	// +optional
+	MirrorAvailable *bool `json:"mirrorAvailable,omitempty"`
+	// +optional
+	MirrorCapacityThreshold *int `json:"mirrorCapacityThreshold,omitempty"`
+	// +optional
+	MirrorMaxCapacity *int `json:"mirrorMaxCapacity,omitempty"`
+	// +optional
+	MirrorMaxDelay *int `json:"mirrorMaxDelay,omitempty"`
+	// +optional
+	NPMPackageRequestsForwarding *bool `json:"npmPackageRequestsForwarding,omitempty"`
+	// +optional
+	NotesCreateLimit *int `json:"notesCreateLimit,omitempty"`
+	// +optional
+	NotifyOnUnknownSignIn *bool `json:"notifyOnUnknownSignIn,omitempty"`
+	// +optional
+	NugetSkipMetadataURLValidation *bool `json:"nugetSkipMetadataUrlValidation,omitempty"`
+	// +optional
+	OutboundLocalRequestsAllowlistRaw *string `json:"outboundLocalRequestsAllowlistRaw,omitempty"`
+	// +optional
+	OutboundLocalRequestsWhitelist *[]string `json:"outboundLocalRequestsWhitelist,omitempty"`
+	// +optional
+	PackageMetadataPURLTypes *[]int `json:"packageMetadataPUrlTypes,omitempty"`
+	// +optional
+	PackageRegistryAllowAnyoneToPullOption *bool `json:"packageRegistryAllowAnyoneToPullOption,omitempty"`
+	// +optional
+	PackageRegistryCleanupPoliciesWorkerCapacity *int `json:"packageRegistryCleanupPoliciesWorkerCapacity,omitempty"`
+	// +optional
+	PagesDomainVerificationEnabled *bool `json:"pagesDomainVerificationEnabled,omitempty"`
+	// +optional
+	PasswordAuthenticationEnabledForGit *bool `json:"passwordAuthenticationEnabledForGit,omitempty"`
+	// +optional
+	PasswordAuthenticationEnabledForWeb *bool `json:"passwordAuthenticationEnabledForWeb,omitempty"`
+	// +optional
+	PasswordNumberRequired *bool `json:"passwordNumberRequired,omitempty"`
+	// +optional
+	PasswordSymbolRequired *bool `json:"passwordSymbolRequired,omitempty"`
+	// +optional
+	PasswordUppercaseRequired *bool `json:"passwordUppercaseRequired,omitempty"`
+	// +optional
+	PasswordLowercaseRequired *bool `json:"passwordLowercaseRequired,omitempty"`
+	// +optional
+	PerformanceBarAllowedGroupPath *string `json:"performanceBarAllowedGroupPath,omitempty"`
+	// +optional
+	PersonalAccessTokenPrefix *string `json:"personalAccessTokenPrefix,omitempty"`
+	// +optional
+	PlantumlEnabled *bool `json:"plantumlEnabled,omitempty"`
+	// +optional
+	PlantumlURL *string `json:"plantumlUrl,omitempty"`
+	// +optional
+	PipelineLimitPerProjectUserSha *int `json:"pipelineLimitPerProjectUserSha,omitempty"`
+	// +optional
+	PollingIntervalMultiplier *float64 `json:"pollingIntervalMultiplier,omitempty"`
+	// +optional
+	PreventMergeRequestsAuthorApproval *bool `json:"preventMergeRequestsAuthorApproval,omitempty"`
+	// +optional
+	PreventMergeRequestsCommittersApproval *bool `json:"preventMergeRequestsCommittersApproval,omitempty"`
+	// +optional
+	ProjectDownloadExportLimit *int `json:"projectDownloadExportLimit,omitempty"`
+	// +optional
+	ProjectExportEnabled *bool `json:"projectExportEnabled,omitempty"`
+	// +optional
+	ProjectExportLimit *int `json:"projectExportLimit,omitempty"`
+	// +optional
+	ProjectImportLimit *int `json:"projectImportLimit,omitempty"`
+	// +optional
+	ProjectJobsAPIRateLimit *int `json:"projectJobsApiRateLimit,omitempty"`
+	// +optional
+	ProjectRunnerTokenExpirationInterval *int `json:"projectRunnerTokenExpirationInterval,omitempty"`
+	// +optional
+	ProjectsAPIRateLimitUnauthenticated *int `json:"projectsApiRateLimitUnauthenticated,omitempty"`
+	// +optional
+	PrometheusMetricsEnabled *bool `json:"prometheusMetricsEnabled,omitempty"`
+	// +optional
+	ProtectedCIVariables *bool `json:"protectedCIVariables,omitempty"`
+	// +optional
+	PseudonymizerEnabled *bool `json:"pseudonymizerEnabled,omitempty"`
+	// +optional
+	PushEventActivitiesLimit *int `json:"pushEventActivitiesLimit,omitempty"`
+	// +optional
+	PushEventHooksLimit *int `json:"pushEventHooksLimit,omitempty"`
+	// +optional
+	PyPIPackageRequestsForwarding *bool `json:"pyPIpackageRequestsForwarding,omitempty"`
+	// +optional
+	RSAKeyRestriction *int `json:"rsaKeyRestriction,omitempty"`
+	// +optional
+	RateLimitingResponseText *string `json:"rateLimitingResponseText,omitempty"`
+	// +optional
+	RawBlobRequestLimit *int `json:"rawBlobRequestLimit,omitempty"`
+	// +optional
+	RecaptchaEnabled *bool `json:"recaptchaEnabled,omitempty"`
+	// +optional
+	RecaptchaPrivateKey *string `json:"recaptchaPrivateKey,omitempty"`
+	// +optional
+	RecaptchaSiteKey *string `json:"recaptchaSiteKey,omitempty"`
+	// +optional
+	ReceiveMaxInputSize *int `json:"receiveMaxInputSize,omitempty"`
+	// +optional
+	ReceptiveClusterAgentsEnabled *bool `json:"receptiveClusterAgentsEnabled,omitempty"`
+	// +optional
+	RememberMeEnabled *bool `json:"rememberMeEnabled,omitempty"`
+	// +optional
+	RepositoryChecksEnabled *bool `json:"repositoryChecksEnabled,omitempty"`
+	// +optional
+	RepositorySizeLimit *int `json:"repositorySizeLimit,omitempty"`
+	// +optional
+	RepositoryStorages *[]string `json:"repositoryStorages,omitempty"`
+	// +optional
+	RepositoryStoragesWeighted *map[string]int `json:"repositoryStoragesWeighted,omitempty"`
+	// +optional
+	RequireAdminApprovalAfterUserSignup *bool `json:"requireAdminApprovalAfterUserSignup,omitempty"`
+	// +optional
+	RequireAdminTwoFactorAuthentication *bool `json:"requireAdminTwoFactorAuthentication,omitempty"`
+	// +optional
+	RequirePersonalAccessTokenExpiry *bool `json:"requirePersonalAccessTokenExpiry,omitempty"`
+	// +optional
+	RequireTwoFactorAuthentication *bool `json:"requireTwoFactorAuthentication,omitempty"`
+	// +optional
+	RestrictedVisibilityLevels *[]string `json:"restrictedVisibilityLevels,omitempty"`
+	// +optional
+	RunnerTokenExpirationInterval *int `json:"runnerTokenExpirationInterval,omitempty"`
+	// +optional
+	SearchRateLimit *int `json:"searchRateLimit,omitempty"`
+	// +optional
+	SearchRateLimitUnauthenticated *int `json:"searchRateLimitUnauthenticated,omitempty"`
+	// +optional
+	SecretDetectionRevocationTokenTypesURL *string `json:"secretDetectionRevocationTokenTypesUrl,omitempty"`
+	// +optional
+	SecretDetectionTokenRevocationEnabled *bool `json:"secretDetectionTokenRevocationEnabled,omitempty"`
+	// +optional
+	SecretDetectionTokenRevocationToken *string `json:"secretDetectionTokenRevocationToken,omitempty"`
+	// +optional
+	SecretDetectionTokenRevocationURL *string `json:"secretDetectionTokenRevocationUrl,omitempty"`
+	// +optional
+	SecurityApprovalPoliciesLimit *int `json:"securityApprovalPoliciesLimit,omitempty"`
+	// +optional
+	SecurityPolicyGlobalGroupApproversEnabled *bool `json:"securityPolicyGlobalGroupApproversEnabled,omitempty"`
+	// +optional
+	SecurityTXTContent *string `json:"securityTXTContent,omitempty"`
+	// +optional
+	SendUserConfirmationEmail *bool `json:"sendUserConfirmationEmail,omitempty"`
+	// +optional
+	SentryClientsideDSN *string `json:"sentryClientsideDSN,omitempty"`
+	// +optional
+	SentryDSN *string `json:"sentryDSN,omitempty"`
+	// +optional
+	SentryEnabled *string `json:"sentryEnabled,omitempty"`
+	// +optional
+	SentryEnvironment *string `json:"sentryEnvironment,omitempty"`
+	// +optional
+	ServiceAccessTokensExpirationEnforced *bool `json:"serviceAccessTokensExpirationEnforced,omitempty"`
+	// +optional
+	SessionExpireDelay *int `json:"sessionExpireDelay,omitempty"`
+	// +optional
+	SharedRunnersEnabled *bool `json:"sharedRunnersEnabled,omitempty"`
+	// +optional
+	SharedRunnersMinutes *int `json:"sharedRunnersMinutes,omitempty"`
+	// +optional
+	SharedRunnersText *string `json:"sharedRunnersText,omitempty"`
+	// +optional
+	SidekiqJobLimiterCompressionThresholdBytes *int `json:"sidekiqJobLimiterCompressionThresholdBytes,omitempty"`
+	// +optional
+	SidekiqJobLimiterLimitBytes *int `json:"sidekiqJobLimiterLimitBytes,omitempty"`
+	// +optional
+	SidekiqJobLimiterMode *string `json:"sidekiqJobLimiterMode,omitempty"`
+	// +optional
+	SignInText *string `json:"signInText,omitempty"`
+	// +optional
+	SignupEnabled *bool `json:"signupEnabled,omitempty"`
+	// +optional
+	SilentAdminExportsEnabled *bool `json:"silentAdminExportsEnabled,omitempty"`
+	// +optional
+	SilentModeEnabled *bool `json:"silentModeEnabled,omitempty"`
+	// +optional
+	SlackAppEnabled *bool `json:"slackAppEnabled,omitempty"`
+	// +optional
+	SlackAppID *string `json:"slackAppId,omitempty"`
+	// +optional
+	SlackAppSecret *string `json:"slackAppSecret,omitempty"`
+	// +optional
+	SlackAppSigningSecret *string `json:"slackAppSigningSecret,omitempty"`
+	// +optional
+	SlackAppVerificationToken *string `json:"slackAppVerificationToken,omitempty"`
+	// +optional
+	SnippetSizeLimit *int `json:"snippetSizeLimit,omitempty"`
+	// +optional
+	SnowplowAppID *string `json:"snowplowAppId,omitempty"`
+	// +optional
+	SnowplowCollectorHostname *string `json:"snowplowCollectorHostname,omitempty"`
+	// +optional
+	SnowplowCookieDomain *string `json:"snowplowCookieDomain,omitempty"`
+	// +optional
+	SnowplowDatabaseCollectorHostname *string `json:"snowplowDatabaseCollectorHostname,omitempty"`
+	// +optional
+	SnowplowEnabled *bool `json:"snowplowEnabled,omitempty"`
+	// +optional
+	SourcegraphEnabled *bool `json:"sourcegraphEnabled,omitempty"`
+	// +optional
+	SourcegraphPublicOnly *bool `json:"sourcegraphPublicOnly,omitempty"`
+	// +optional
+	SourcegraphURL *string `json:"sourcegraphUrl,omitempty"`
+	// +optional
+	SpamCheckAPIKey *string `json:"spamCheckApiKey,omitempty"`
+	// +optional
+	SpamCheckEndpointEnabled *bool `json:"spamCheckEndpointEnabled,omitempty"`
+	// +optional
+	SpamCheckEndpointURL *string `json:"spamCheckEndpointUrl,omitempty"`
+	// +optional
+	StaticObjectsExternalStorageAuthToken *string `json:"staticObjectsExternalStorageAuthToken,omitempty"`
+	// +optional
+	StaticObjectsExternalStorageURL *string `json:"staticObjectsExternalStorageUrl,omitempty"`
+	// +optional
+	SuggestPipelineEnabled *bool `json:"suggestPipelineEnabled,omitempty"`
+	// +optional
+	TerminalMaxSessionTime *int `json:"terminalMaxSessionTime,omitempty"`
+	// +optional
+	Terms *string `json:"terms,omitempty"`
+	// +optional
+	ThrottleAuthenticatedAPIEnabled *bool `json:"throttleAuthenticatedApiEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedAPIPeriodInSeconds *int `json:"throttleAuthenticatedApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedAPIRequestsPerPeriod *int `json:"throttleAuthenticatedApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedDeprecatedAPIEnabled *bool `json:"throttleAuthenticatedDeprecatedApiEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds *int `json:"throttleAuthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod *int `json:"throttleAuthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedFilesAPIEnabled *bool `json:"throttleAuthenticatedFilesApiEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedFilesAPIPeriodInSeconds *int `json:"throttleAuthenticatedFilesApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedFilesAPIRequestsPerPeriod *int `json:"throttleAuthenticatedFilesApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedGitLFSEnabled *bool `json:"throttleAuthenticatedGitLFSEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedGitLFSPeriodInSeconds *int `json:"throttleAuthenticatedGitLFSPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedGitLFSRequestsPerPeriod *int `json:"throttleAuthenticatedGitLFSRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedPackagesAPIEnabled *bool `json:"throttleAuthenticatedPackagesApiEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedPackagesAPIPeriodInSeconds *int `json:"throttleAuthenticatedPackagesApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedPackagesAPIRequestsPerPeriod *int `json:"throttleAuthenticatedPackagesApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedWebEnabled *bool `json:"throttleAuthenticatedWebEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedWebPeriodInSeconds *int `json:"throttleAuthenticatedWebPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedWebRequestsPerPeriod *int `json:"throttleAuthenticatedWebRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleIncidentManagementNotificationEnabled *bool `json:"throttleIncidentManagementNotificationEnabled,omitempty"`
+	// +optional
+	ThrottleIncidentManagementNotificationPerPeriod *int `json:"throttleIncidentManagementNotificationPerPeriod,omitempty"`
+	// +optional
+	ThrottleIncidentManagementNotificationPeriodInSeconds *int `json:"throttleIncidentManagementNotificationPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleProtectedPathsEnabled *bool `json:"throttleProtectedPathsEnabled,omitempty"`
+	// +optional
+	ThrottleProtectedPathsPeriodInSeconds *int `json:"throttleProtectedPathsPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleProtectedPathsRequestsPerPeriod *int `json:"throttleProtectedPathsRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedAPIEnabled *bool `json:"throttleUnauthenticatedApiEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedAPIPeriodInSeconds *int `json:"throttleUnauthenticatedApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedAPIRequestsPerPeriod *int `json:"throttleUnauthenticatedApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedDeprecatedAPIEnabled *bool `json:"throttleUnauthenticatedDeprecatedApiEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds *int `json:"throttleUnauthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod *int `json:"throttleUnauthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedFilesAPIEnabled *bool `json:"throttleUnauthenticatedFilesApiEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedFilesAPIPeriodInSeconds *int `json:"throttleUnauthenticatedFilesApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedFilesAPIRequestsPerPeriod *int `json:"throttleUnauthenticatedFilesApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedGitLFSEnabled *bool `json:"throttleUnauthenticatedGitLFSEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedGitLFSPeriodInSeconds *int `json:"throttleUnauthenticatedGitLFSPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedGitLFSRequestsPerPeriod *int `json:"throttleUnauthenticatedGitLFSRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedPackagesAPIEnabled *bool `json:"throttleUnauthenticatedPackagesApiEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedPackagesAPIPeriodInSeconds *int `json:"throttleUnauthenticatedPackagesApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod *int `json:"throttleUnauthenticatedPackagesApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedWebEnabled *bool `json:"throttleUnauthenticatedWebEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedWebPeriodInSeconds *int `json:"throttleUnauthenticatedWebPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedWebRequestsPerPeriod *int `json:"throttleUnauthenticatedWebRequestsPerPeriod,omitempty"`
+	// +optional
+	TimeTrackingLimitToHours *bool `json:"timeTrackingLimitToHours,omitempty"`
+	// +optional
+	TwoFactorGracePeriod *int `json:"twoFactorGracePeriod,omitempty"`
+	// +optional
+	UnconfirmedUsersDeleteAfterDays *int `json:"unconfirmedUsersDeleteAfterDays,omitempty"`
+	// +optional
+	UniqueIPsLimitEnabled *bool `json:"uniqueIpsLimitEnabled,omitempty"`
+	// +optional
+	UniqueIPsLimitPerUser *int `json:"uniqueIpsLimitPerUser,omitempty"`
+	// +optional
+	UniqueIPsLimitTimeWindow *int `json:"uniqueIpsLimitTimeWindow,omitempty"`
+	// +optional
+	UpdateRunnerVersionsEnabled *bool `json:"updateRunnerVersionsEnabled,omitempty"`
+	// +optional
+	UpdatingNameDisabledForUsers *bool `json:"updatingNameDisabledForUsers,omitempty"`
+	// +optional
+	UsagePingEnabled *bool `json:"usagePingEnabled,omitempty"`
+	// +optional
+	UsagePingFeaturesEnabled *bool `json:"usagePingFeaturesEnabled,omitempty"`
+	// +optional
+	UseClickhouseForAnalytics *bool `json:"useClickhouseForAnalytics,omitempty"`
+	// +optional
+	UserDeactivationEmailsEnabled *bool `json:"userDeactivationEmailsEnabled,omitempty"`
+	// +optional
+	UserDefaultExternal *bool `json:"userDefaultExternal,omitempty"`
+	// +optional
+	UserDefaultInternalRegex *string `json:"userDefaultInternalRegex,omitempty"`
+	// +optional
+	UserDefaultsToPrivateProfile *bool `json:"userDefaultsToPrivateProfile,omitempty"`
+	// +optional
+	UserEmailLookupLimit *int `json:"userEmailLookupLimit,omitempty"`
+	// +optional
+	UserOauthApplications *bool `json:"userOauthApplications,omitempty"`
+	// +optional
+	UserShowAddSSHKeyMessage *bool `json:"userShowAddSshKeyMessage,omitempty"`
+	// +optional
+	UsersGetByIDLimit *int `json:"usersGetByIdLimit,omitempty"`
+	// +optional
+	UsersGetByIDLimitAllowlistRaw *string `json:"usersGetByIdLimitAllowlistRaw,omitempty"`
+	// +optional
+	ValidRunnerRegistrars *[]string `json:"validRunnerRegistrars,omitempty"`
+	// +optional
+	VersionCheckEnabled *bool `json:"versionCheckEnabled,omitempty"`
+	// +optional
+	WebIDEClientsidePreviewEnabled *bool `json:"webIdEClientsidePreviewEnabled,omitempty"`
+	// +optional
+	WhatsNewVariant *string `json:"whatsNewVariant,omitempty"`
+	// +optional
+	WikiPageMaxContentBytes *int `json:"wikiPageMaxContentBytes,omitempty"`
+	// +optional
+	AdminNotificationEmail *string `json:"adminNotificationEmail,omitempty"`
+	// +optional
+	AllowLocalRequestsFromHooksAndServices *bool `json:"allowLocalRequestsFromHooksAndServices,omitempty"`
+	// +optional
+	AssetProxyWhitelist *[]string `json:"assetProxyWhitelist,omitempty"`
+	// +optional
+	DefaultBranchProtection *int `json:"defaultBranchProtection,omitempty"`
+	// +optional
+	HousekeepingBitmapsEnabled *bool `json:"housekeepingBitmapsEnabled,omitempty"`
+	// +optional
+	HousekeepingFullRepackPeriod *int `json:"housekeepingFullRepackPeriod,omitempty"`
+	// +optional
+	HousekeepingGcPeriod *int `json:"housekeepingGcPeriod,omitempty"`
+	// +optional
+	HousekeepingIncrementalRepackPeriod *int `json:"housekeepingIncrementalRepackPeriod,omitempty"`
+	// +optional
+	PerformanceBarAllowedGroupID *int `json:"performanceBarAllowedGroupId,omitempty"`
+	// +optional
+	PerformanceBarEnabled *bool `json:"performanceBarEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedEnabled *bool `json:"throttleUnauthenticatedEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedPeriodInSeconds *int `json:"throttleUnauthenticatedPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedRequestsPerPeriod *int `json:"throttleUnauthenticatedRequestsPerPeriod,omitempty"`
 }
 
 // ApplicationSettingsObservation defines the observed state for ApplicationSettings
 // This struct was generated from gitlab.Settings struct, with just a rework of the json tags.
 type ApplicationSettingsObservation struct {
-	ID                                                    int                       `json:"id,omitempty"`
-	AbuseNotificationEmail                                string                    `json:"abuseNotificationEmail,omitempty"`
-	AdminMode                                             bool                      `json:"adminMode,omitempty"`
-	AfterSignOutPath                                      string                    `json:"afterSignOutPath,omitempty"`
-	AfterSignUpText                                       string                    `json:"afterSignUpText,omitempty"`
-	AkismetAPIKey                                         string                    `json:"akismetApiKey,omitempty"`
-	AkismetEnabled                                        bool                      `json:"akismetEnabled,omitempty"`
-	AllowAccountDeletion                                  bool                      `json:"allowAccountDeletion,omitempty"`
-	AllowAllIntegrations                                  bool                      `json:"allowAllIntegrations,omitempty"`
-	AllowedIntegrations                                   []string                  `json:"allowedIntegrations,omitempty"`
-	AllowGroupOwnersToManageLDAP                          bool                      `json:"allowGroupOwnersToManageLdap,omitempty"`
-	AllowLocalRequestsFromSystemHooks                     bool                      `json:"allowLocalRequestsFromSystemHooks,omitempty"`
-	AllowLocalRequestsFromWebHooksAndServices             bool                      `json:"allowLocalRequestsFromWebHooksAndServices,omitempty"`
-	AllowProjectCreationForGuestAndBelow                  bool                      `json:"allowProjectCreationForGuestAndBelow,omitempty"`
-	AllowRunnerRegistrationToken                          bool                      `json:"allowRunnerRegistrationToken,omitempty"`
-	ArchiveBuildsInHumanReadable                          string                    `json:"archiveBuildsInHumanReadable,omitempty"`
-	ASCIIDocMaxIncludes                                   int                       `json:"asciiDocMaxIncludes,omitempty"`
-	AssetProxyAllowlist                                   []string                  `json:"assetProxyAllowlist,omitempty"`
-	AssetProxyEnabled                                     bool                      `json:"assetProxyEnabled,omitempty"`
-	AssetProxyURL                                         string                    `json:"assetProxyUrl,omitempty"`
-	AssetProxySecretKey                                   string                    `json:"assetProxySecretKey,omitempty"`
-	AuthorizedKeysEnabled                                 bool                      `json:"authorizedKeysEnabled,omitempty"`
-	AutoBanUserOnExcessiveProjectsDownload                bool                      `json:"autoBanUserOnExcessiveProjectsDownload,omitempty"`
-	AutocompleteUsers                                     int                       `json:"autocompleteUsers,omitempty"`
-	AutocompleteUsersUnauthenticated                      int                       `json:"autocompleteUsersUnauthenticated,omitempty"`
-	AutoDevOpsDomain                                      string                    `json:"autoDevOpsDomain,omitempty"`
-	AutoDevOpsEnabled                                     bool                      `json:"autoDevOpsEnabled,omitempty"`
-	AutomaticPurchasedStorageAllocation                   bool                      `json:"automaticPurchasedStorageAllocation,omitempty"`
-	BulkImportConcurrentPipelineBatchLimit                int                       `json:"bulkImportConcurrentPipelineBatchLimit,omitempty"`
-	BulkImportEnabled                                     bool                      `json:"bulkImportEnabled,omitempty"`
-	BulkImportMaxDownloadFileSize                         int                       `json:"bulkImportMaxDownloadFileSize,omitempty"`
-	CanCreateGroup                                        bool                      `json:"canCreateGroup,omitempty"`
-	CheckNamespacePlan                                    bool                      `json:"checkNamespacePlan,omitempty"`
-	CIJobLiveTraceEnabled                                 bool                      `json:"ciJobLiveTraceEnabled,omitempty"`
-	CIMaxIncludes                                         int                       `json:"ciMaxIncludes,omitempty"`
-	CIMaxTotalYAMLSizeBytes                               int                       `json:"ciMaxTotalYamlSizeBytes,omitempty"`
-	CIPartitionsSizeLimit                                 int                       `json:"ciPartitionsSizeLimit,omitempty"`
-	CommitEmailHostname                                   string                    `json:"commitEmailHostname,omitempty"`
-	ConcurrentBitbucketImportJobsLimit                    int                       `json:"concurrentBitbucketImportJobsLimit,omitempty"`
-	ConcurrentBitbucketServerImportJobsLimit              int                       `json:"concurrentBitbucketServerImportJobsLimit,omitempty"`
-	ConcurrentGitHubImportJobsLimit                       int                       `json:"concurrentGitHubImportJobsLimit,omitempty"`
-	ContainerExpirationPoliciesEnableHistoricEntries      bool                      `json:"containerExpirationPoliciesEnableHistoricEntries,omitempty"`
-	ContainerRegistryCleanupTagsServiceMaxListSize        int                       `json:"containerRegistryCleanupTagsServiceMaxListSize,omitempty"`
-	ContainerRegistryDeleteTagsServiceTimeout             int                       `json:"containerRegistryDeleteTagsServiceTimeout,omitempty"`
-	ContainerRegistryExpirationPoliciesCaching            bool                      `json:"containerRegistryExpirationPoliciesCaching,omitempty"`
-	ContainerRegistryExpirationPoliciesWorkerCapacity     int                       `json:"containerRegistryExpirationPoliciesWorkerCapacity,omitempty"`
-	ContainerRegistryImportCreatedBefore                  *metav1.Time              `json:"containerRegistryImportCreatedBefore,omitempty"`
-	ContainerRegistryImportMaxRetries                     int                       `json:"containerRegistryImportMaxRetries,omitempty"`
-	ContainerRegistryImportMaxStepDuration                int                       `json:"containerRegistryImportMaxStepDuration,omitempty"`
-	ContainerRegistryImportMaxTagsCount                   int                       `json:"containerRegistryImportMaxTagsCount,omitempty"`
-	ContainerRegistryImportStartMaxRetries                int                       `json:"containerRegistryImportStartMaxRetries,omitempty"`
-	ContainerRegistryImportTargetPlan                     string                    `json:"containerRegistryImportTargetPlan,omitempty"`
-	ContainerRegistryTokenExpireDelay                     int                       `json:"containerRegistryTokenExpireDelay,omitempty"`
-	CreatedAt                                             *metav1.Time              `json:"createdAt,omitempty"`
-	CustomHTTPCloneURLRoot                                string                    `json:"customHTTPCloneUrlRoot,omitempty"`
-	DNSRebindingProtectionEnabled                         bool                      `json:"dnsRebindingProtectionEnabled,omitempty"`
-	DSAKeyRestriction                                     int                       `json:"dsaKeyRestriction,omitempty"`
-	DeactivateDormantUsers                                bool                      `json:"deactivateDormantUsers,omitempty"`
-	DeactivateDormantUsersPeriod                          int                       `json:"deactivateDormantUsersPeriod,omitempty"`
-	DecompressArchiveFileTimeout                          int                       `json:"decompressArchiveFileTimeout,omitempty"`
-	DefaultArtifactsExpireIn                              string                    `json:"defaultArtifactsExpireIn,omitempty"`
-	DefaultBranchName                                     string                    `json:"defaultBranchName,omitempty"`
-	DefaultBranchProtectionDefaults                       *BranchProtectionDefaults `json:"defaultBranchProtectionDefaults,omitempty"`
-	DefaultCiConfigPath                                   string                    `json:"defaultCiConfigPath,omitempty"`
-	DefaultGroupVisibility                                string                    `json:"defaultGroupVisibility,omitempty"`
-	DefaultPreferredLanguage                              string                    `json:"defaultPreferredLanguage,omitempty"`
-	DefaultProjectCreation                                int                       `json:"defaultProjectCreation,omitempty"`
-	DefaultProjectDeletionProtection                      bool                      `json:"defaultProjectDeletionProtection,omitempty"`
-	DefaultProjectVisibility                              string                    `json:"defaultProjectVisibility,omitempty"`
-	DefaultProjectsLimit                                  int                       `json:"defaultProjectsLimit,omitempty"`
-	DefaultSnippetVisibility                              string                    `json:"defaultSnippetVisibility,omitempty"`
-	DefaultSyntaxHighlightingTheme                        int                       `json:"defaultSyntaxHighlightingTheme,omitempty"`
-	DelayedGroupDeletion                                  bool                      `json:"delayedGroupDeletion,omitempty"`
-	DelayedProjectDeletion                                bool                      `json:"delayedProjectDeletion,omitempty"`
-	DeleteInactiveProjects                                bool                      `json:"deleteInactiveProjects,omitempty"`
-	DeleteUnconfirmedUsers                                bool                      `json:"deleteUnconfirmedUsers,omitempty"`
-	DeletionAdjournedPeriod                               int                       `json:"deletionAdjournedPeriod,omitempty"`
-	DiagramsnetEnabled                                    bool                      `json:"diagramsnetEnabled,omitempty"`
-	DiagramsnetURL                                        string                    `json:"diagramsnetUrl,omitempty"`
-	DiffMaxFiles                                          int                       `json:"diffMaxFiles,omitempty"`
-	DiffMaxLines                                          int                       `json:"diffMaxLines,omitempty"`
-	DiffMaxPatchBytes                                     int                       `json:"diffMaxPatchBytes,omitempty"`
-	DisableAdminOAuthScopes                               bool                      `json:"disableAdminOAuthScopes,omitempty"`
-	DisableFeedToken                                      bool                      `json:"disableFeedToken,omitempty"`
-	DisableOverridingApproversPerMergeRequest             bool                      `json:"disableOverridingApproversPerMergeRequest,omitempty"`
-	DisablePersonalAccessTokens                           bool                      `json:"disablePersonalAccessTokens,omitempty"`
-	DisabledOauthSignInSources                            []string                  `json:"disabledOauthSignInSources,omitempty"`
-	DomainAllowlist                                       []string                  `json:"domainAllowlist,omitempty"`
-	DomainDenylist                                        []string                  `json:"domainDenylist,omitempty"`
-	DomainDenylistEnabled                                 bool                      `json:"domainDenylistEnabled,omitempty"`
-	DownstreamPipelineTriggerLimitPerProjectUserSHA       int                       `json:"downstreamPipelineTriggerLimitPerProjectUserSHA,omitempty"`
-	DuoFeaturesEnabled                                    bool                      `json:"duoFeaturesEnabled,omitempty"`
-	ECDSAKeyRestriction                                   int                       `json:"ecdsaKeyRestriction,omitempty"`
-	ECDSASKKeyRestriction                                 int                       `json:"ecdsaskKeyRestriction,omitempty"`
-	EKSAccessKeyID                                        string                    `json:"eksAccessKeyId,omitempty"`
-	EKSAccountID                                          string                    `json:"eksAccountId,omitempty"`
-	EKSIntegrationEnabled                                 bool                      `json:"eksIntegrationEnabled,omitempty"`
-	EKSSecretAccessKey                                    string                    `json:"eksSecretAccessKey,omitempty"`
-	Ed25519KeyRestriction                                 int                       `json:"ed25519KeyRestriction,omitempty"`
-	Ed25519SKKeyRestriction                               int                       `json:"ed25519SKKeyRestriction,omitempty"`
-	ElasticsearchAWS                                      bool                      `json:"elasticsearchAws,omitempty"`
-	ElasticsearchAWSAccessKey                             string                    `json:"elasticsearchAwsAccessKey,omitempty"`
-	ElasticsearchAWSRegion                                string                    `json:"elasticsearchAwsRegion,omitempty"`
-	ElasticsearchAWSSecretAccessKey                       string                    `json:"elasticsearchAwsSecretAccessKey,omitempty"`
-	ElasticsearchAnalyzersKuromojiEnabled                 bool                      `json:"elasticsearchAnalyzersKuromojiEnabled,omitempty"`
-	ElasticsearchAnalyzersKuromojiSearch                  bool                      `json:"elasticsearchAnalyzersKuromojiSearch,omitempty"`
-	ElasticsearchAnalyzersSmartCNEnabled                  bool                      `json:"elasticsearchAnalyzersSmartCnEnabled,omitempty"`
-	ElasticsearchAnalyzersSmartCNSearch                   bool                      `json:"elasticsearchAnalyzersSmartCnSearch,omitempty"`
-	ElasticsearchClientRequestTimeout                     int                       `json:"elasticsearchClientRequestTimeout,omitempty"`
-	ElasticsearchIndexedFieldLengthLimit                  int                       `json:"elasticsearchIndexedFieldLengthLimit,omitempty"`
-	ElasticsearchIndexedFileSizeLimitKB                   int                       `json:"elasticsearchIndexedFileSizeLimitKB,omitempty"`
-	ElasticsearchIndexing                                 bool                      `json:"elasticsearchIndexing,omitempty"`
-	ElasticsearchLimitIndexing                            bool                      `json:"elasticsearchLimitIndexing,omitempty"`
-	ElasticsearchMaxBulkConcurrency                       int                       `json:"elasticsearchMaxBulkConcurrency,omitempty"`
-	ElasticsearchMaxBulkSizeMB                            int                       `json:"elasticsearchMaxBulkSizeMB,omitempty"`
-	ElasticsearchMaxCodeIndexingConcurrency               int                       `json:"elasticsearchMaxCodeIndexingConcurrency,omitempty"`
-	ElasticsearchNamespaceIDs                             []int                     `json:"elasticsearchNamespaceIds,omitempty"`
-	ElasticsearchPassword                                 string                    `json:"elasticsearchPassword,omitempty"`
-	ElasticsearchPauseIndexing                            bool                      `json:"elasticsearchPauseIndexing,omitempty"`
-	ElasticsearchProjectIDs                               []int                     `json:"elasticsearchProjectIds,omitempty"`
-	ElasticsearchReplicas                                 int                       `json:"elasticsearchReplicas,omitempty"`
-	ElasticsearchRequeueWorkers                           bool                      `json:"elasticsearchRequeueWorkers,omitempty"`
-	ElasticsearchRetryOnFailure                           int                       `json:"elasticsearchRetryOnFailure,omitempty"`
-	ElasticsearchSearch                                   bool                      `json:"elasticsearchSearch,omitempty"`
-	ElasticsearchShards                                   int                       `json:"elasticsearchShards,omitempty"`
-	ElasticsearchURL                                      []string                  `json:"elasticsearchUrl,omitempty"`
-	ElasticsearchUsername                                 string                    `json:"elasticsearchUsername,omitempty"`
-	ElasticsearchWorkerNumberOfShards                     int                       `json:"elasticsearchWorkerNumberOfShards,omitempty"`
-	EmailAdditionalText                                   string                    `json:"emailAdditionalText,omitempty"`
-	EmailAuthorInBody                                     bool                      `json:"emailAuthorInBody,omitempty"`
-	EmailConfirmationSetting                              string                    `json:"emailConfirmationSetting,omitempty"`
-	EmailRestrictions                                     string                    `json:"emailRestrictions,omitempty"`
-	EmailRestrictionsEnabled                              bool                      `json:"emailRestrictionsEnabled,omitempty"`
-	EnableArtifactExternalRedirectWarningPage             bool                      `json:"enableArtifactExternalRedirectWarningPage,omitempty"`
-	EnabledGitAccessProtocol                              string                    `json:"enabledGitAccessProtocol,omitempty"`
-	EnforceCIInboundJobTokenScopeEnabled                  bool                      `json:"enforceCIInboundJobTokenScopeEnabled,omitempty"`
-	EnforceNamespaceStorageLimit                          bool                      `json:"enforceNamespaceStorageLimit,omitempty"`
-	EnforcePATExpiration                                  bool                      `json:"enforcePATExpiration,omitempty"`
-	EnforceSSHKeyExpiration                               bool                      `json:"enforceSshKeyExpiration,omitempty"`
-	EnforceTerms                                          bool                      `json:"enforceTerms,omitempty"`
-	ExternalAuthClientCert                                string                    `json:"externalAuthClientCert,omitempty"`
-	ExternalAuthClientKey                                 string                    `json:"externalAuthClientKey,omitempty"`
-	ExternalAuthClientKeyPass                             string                    `json:"externalAuthClientKeyPass,omitempty"`
-	ExternalAuthorizationServiceDefaultLabel              string                    `json:"externalAuthorizationServiceDefaultLabel,omitempty"`
-	ExternalAuthorizationServiceEnabled                   bool                      `json:"externalAuthorizationServiceEnabled,omitempty"`
-	ExternalAuthorizationServiceTimeout                   float64                   `json:"externalAuthorizationServiceTimeout,omitempty"`
-	ExternalAuthorizationServiceURL                       string                    `json:"externalAuthorizationServiceUrl,omitempty"`
-	ExternalPipelineValidationServiceTimeout              int                       `json:"externalPipelineValidationServiceTimeout,omitempty"`
-	ExternalPipelineValidationServiceToken                string                    `json:"externalPipelineValidationServiceToken,omitempty"`
-	ExternalPipelineValidationServiceURL                  string                    `json:"externalPipelineValidationServiceUrl,omitempty"`
-	FailedLoginAttemptsUnlockPeriodInMinutes              int                       `json:"failedLoginAttemptsUnlockPeriodInMinutes,omitempty"`
-	FileTemplateProjectID                                 int                       `json:"fileTemplateProjectId,omitempty"`
-	FirstDayOfWeek                                        int                       `json:"firstDayOfWeek,omitempty"`
-	FlocEnabled                                           bool                      `json:"flocEnabled,omitempty"`
-	GeoNodeAllowedIPs                                     string                    `json:"geoNodeAllowedIps,omitempty"`
-	GeoStatusTimeout                                      int                       `json:"geoStatusTimeout,omitempty"`
-	GitRateLimitUsersAlertlist                            []int                     `json:"gitRateLimitUsersAlertlist,omitempty"`
-	GitTwoFactorSessionExpiry                             int                       `json:"gitTwoFactorSessionExpiry,omitempty"`
-	GitalyTimeoutDefault                                  int                       `json:"gitalyTimeoutDefault,omitempty"`
-	GitalyTimeoutFast                                     int                       `json:"gitalyTimeoutFast,omitempty"`
-	GitalyTimeoutMedium                                   int                       `json:"gitalyTimeoutMedium,omitempty"`
-	GitlabDedicatedInstance                               bool                      `json:"gitlabDedicatedInstance,omitempty"`
-	GitlabEnvironmentToolkitInstance                      bool                      `json:"gitlabEnvironmentToolkitInstance,omitempty"`
-	GitlabShellOperationLimit                             int                       `json:"gitlabShellOperationLimit,omitempty"`
-	GitpodEnabled                                         bool                      `json:"gitpodEnabled,omitempty"`
-	GitpodURL                                             string                    `json:"gitpodUrl,omitempty"`
-	GitRateLimitUsersAllowlist                            []string                  `json:"gitRateLimitUsersAllowlist,omitempty"`
-	GloballyAllowedIPs                                    string                    `json:"globallyAllowedIps,omitempty"`
-	GrafanaEnabled                                        bool                      `json:"grafanaEnabled,omitempty"`
-	GrafanaURL                                            string                    `json:"grafanaUrl,omitempty"`
-	GravatarEnabled                                       bool                      `json:"gravatarEnabled,omitempty"`
-	GroupDownloadExportLimit                              int                       `json:"groupDownloadExportLimit,omitempty"`
-	GroupExportLimit                                      int                       `json:"groupExportLimit,omitempty"`
-	GroupImportLimit                                      int                       `json:"groupImportLimit,omitempty"`
-	GroupOwnersCanManageDefaultBranchProtection           bool                      `json:"groupOwnersCanManageDefaultBranchProtection,omitempty"`
-	GroupRunnerTokenExpirationInterval                    int                       `json:"groupRunnerTokenExpirationInterval,omitempty"`
-	HTMLEmailsEnabled                                     bool                      `json:"htmlEmailsEnabled,omitempty"`
-	HashedStorageEnabled                                  bool                      `json:"hashedStorageEnabled,omitempty"`
-	HelpPageDocumentationBaseURL                          string                    `json:"helpPageDocumentationBaseUrl,omitempty"`
-	HelpPageHideCommercialContent                         bool                      `json:"helpPageHideCommercialContent,omitempty"`
-	HelpPageSupportURL                                    string                    `json:"helpPageSupportUrl,omitempty"`
-	HelpPageText                                          string                    `json:"helpPageText,omitempty"`
-	HelpText                                              string                    `json:"helpText,omitempty"`
-	HideThirdPartyOffers                                  bool                      `json:"hideThirdPartyOffers,omitempty"`
-	HomePageURL                                           string                    `json:"homePageUrl,omitempty"`
-	HousekeepingEnabled                                   bool                      `json:"housekeepingEnabled,omitempty"`
-	HousekeepingOptimizeRepositoryPeriod                  int                       `json:"housekeepingOptimizeRepositoryPeriod,omitempty"`
-	ImportSources                                         []string                  `json:"importSources,omitempty"`
-	InactiveProjectsDeleteAfterMonths                     int                       `json:"inactiveProjectsDeleteAfterMonths,omitempty"`
-	InactiveProjectsMinSizeMB                             int                       `json:"inactiveProjectsMinSizeMB,omitempty"`
-	InactiveProjectsSendWarningEmailAfterMonths           int                       `json:"inactiveProjectsSendWarningEmailAfterMonths,omitempty"`
-	IncludeOptionalMetricsInServicePing                   bool                      `json:"includeOptionalMetricsInServicePing,omitempty"`
-	InProductMarketingEmailsEnabled                       bool                      `json:"inProductMarketingEmailsEnabled,omitempty"`
-	InvisibleCaptchaEnabled                               bool                      `json:"invisibleCaptchaEnabled,omitempty"`
-	IssuesCreateLimit                                     int                       `json:"issuesCreateLimit,omitempty"`
-	JiraConnectApplicationKey                             string                    `json:"jiraConnectApplicationKey,omitempty"`
-	JiraConnectPublicKeyStorageEnabled                    bool                      `json:"jiraConnectPublicKeyStorageEnabled,omitempty"`
-	JiraConnectProxyURL                                   string                    `json:"jiraConnectProxyUrl,omitempty"`
-	KeepLatestArtifact                                    bool                      `json:"keepLatestArtifact,omitempty"`
-	KrokiEnabled                                          bool                      `json:"krokiEnabled,omitempty"`
-	KrokiFormats                                          map[string]bool           `json:"krokiFormats,omitempty"`
-	KrokiURL                                              string                    `json:"krokiUrl,omitempty"`
-	LocalMarkdownVersion                                  int                       `json:"localMarkdownVersion,omitempty"`
-	LockDuoFeaturesEnabled                                bool                      `json:"lockDuoFeaturesEnabled,omitempty"`
-	LockMembershipsToLDAP                                 bool                      `json:"lockMembershipsToLdap,omitempty"`
-	LoginRecaptchaProtectionEnabled                       bool                      `json:"loginRecaptchaProtectionEnabled,omitempty"`
-	MailgunEventsEnabled                                  bool                      `json:"mailgunEventsEnabled,omitempty"`
-	MailgunSigningKey                                     string                    `json:"mailgunSigningKey,omitempty"`
-	MaintenanceMode                                       bool                      `json:"maintenanceMode,omitempty"`
-	MaintenanceModeMessage                                string                    `json:"maintenanceModeMessage,omitempty"`
-	MavenPackageRequestsForwarding                        bool                      `json:"mavenPackageRequestsForwarding,omitempty"`
-	MaxArtifactsSize                                      int                       `json:"maxArtifactsSize,omitempty"`
-	MaxAttachmentSize                                     int                       `json:"maxAttachmentSize,omitempty"`
-	MaxDecompressedArchiveSize                            int                       `json:"maxDecompressedArchiveSize,omitempty"`
-	MaxExportSize                                         int                       `json:"maxExportSize,omitempty"`
-	MaxImportRemoteFileSize                               int                       `json:"maxImportRemoteFileSize,omitempty"`
-	MaxImportSize                                         int                       `json:"maxImportSize,omitempty"`
-	MaxLoginAttempts                                      int                       `json:"maxLoginAttempts,omitempty"`
-	MaxNumberOfRepositoryDownloads                        int                       `json:"maxNumberOfRepositoryDownloads,omitempty"`
-	MaxNumberOfRepositoryDownloadsWithinTimePeriod        int                       `json:"maxNumberOfRepositoryDownloadsWithinTimePeriod,omitempty"`
-	MaxPagesSize                                          int                       `json:"maxPagesSize,omitempty"`
-	MaxPersonalAccessTokenLifetime                        int                       `json:"maxPersonalAccessTokenLifetime,omitempty"`
-	MaxSSHKeyLifetime                                     int                       `json:"maxSshKeyLifetime,omitempty"`
-	MaxTerraformStateSizeBytes                            int                       `json:"maxTerraformStateSizeBytes,omitempty"`
-	MaxYAMLDepth                                          int                       `json:"maxYamlDepth,omitempty"`
-	MaxYAMLSizeBytes                                      int                       `json:"maxYamlSizeBytes,omitempty"`
-	MetricsMethodCallThreshold                            int                       `json:"metricsMethodCallThreshold,omitempty"`
-	MinimumPasswordLength                                 int                       `json:"minimumPasswordLength,omitempty"`
-	MirrorAvailable                                       bool                      `json:"mirrorAvailable,omitempty"`
-	MirrorCapacityThreshold                               int                       `json:"mirrorCapacityThreshold,omitempty"`
-	MirrorMaxCapacity                                     int                       `json:"mirrorMaxCapacity,omitempty"`
-	MirrorMaxDelay                                        int                       `json:"mirrorMaxDelay,omitempty"`
-	NPMPackageRequestsForwarding                          bool                      `json:"npmPackageRequestsForwarding,omitempty"`
-	NotesCreateLimit                                      int                       `json:"notesCreateLimit,omitempty"`
-	NotifyOnUnknownSignIn                                 bool                      `json:"notifyOnUnknownSignIn,omitempty"`
-	NugetSkipMetadataURLValidation                        bool                      `json:"nugetSkipMetadataUrlValidation,omitempty"`
-	OutboundLocalRequestsAllowlistRaw                     string                    `json:"outboundLocalRequestsAllowlistRaw,omitempty"`
-	OutboundLocalRequestsWhitelist                        []string                  `json:"outboundLocalRequestsWhitelist,omitempty"`
-	PackageMetadataPURLTypes                              []int                     `json:"packageMetadataPUrlTypes,omitempty"`
-	PackageRegistryAllowAnyoneToPullOption                bool                      `json:"packageRegistryAllowAnyoneToPullOption,omitempty"`
-	PackageRegistryCleanupPoliciesWorkerCapacity          int                       `json:"packageRegistryCleanupPoliciesWorkerCapacity,omitempty"`
-	PagesDomainVerificationEnabled                        bool                      `json:"pagesDomainVerificationEnabled,omitempty"`
-	PasswordAuthenticationEnabledForGit                   bool                      `json:"passwordAuthenticationEnabledForGit,omitempty"`
-	PasswordAuthenticationEnabledForWeb                   bool                      `json:"passwordAuthenticationEnabledForWeb,omitempty"`
-	PasswordNumberRequired                                bool                      `json:"passwordNumberRequired,omitempty"`
-	PasswordSymbolRequired                                bool                      `json:"passwordSymbolRequired,omitempty"`
-	PasswordUppercaseRequired                             bool                      `json:"passwordUppercaseRequired,omitempty"`
-	PasswordLowercaseRequired                             bool                      `json:"passwordLowercaseRequired,omitempty"`
-	PerformanceBarAllowedGroupPath                        string                    `json:"performanceBarAllowedGroupPath,omitempty"`
-	PersonalAccessTokenPrefix                             string                    `json:"personalAccessTokenPrefix,omitempty"`
-	PipelineLimitPerProjectUserSha                        int                       `json:"pipelineLimitPerProjectUserSha,omitempty"`
-	PlantumlEnabled                                       bool                      `json:"plantumlEnabled,omitempty"`
-	PlantumlURL                                           string                    `json:"plantumlUrl,omitempty"`
-	PollingIntervalMultiplier                             float64                   `json:"pollingIntervalMultiplier,omitempty"`
-	PreventMergeRequestsAuthorApproval                    bool                      `json:"preventMergeRequestsAuthorApproval,omitempty"`
-	PreventMergeRequestsCommittersApproval                bool                      `json:"preventMergeRequestsCommittersApproval,omitempty"`
-	ProjectDownloadExportLimit                            int                       `json:"projectDownloadExportLimit,omitempty"`
-	ProjectExportEnabled                                  bool                      `json:"projectExportEnabled,omitempty"`
-	ProjectExportLimit                                    int                       `json:"projectExportLimit,omitempty"`
-	ProjectImportLimit                                    int                       `json:"projectImportLimit,omitempty"`
-	ProjectJobsAPIRateLimit                               int                       `json:"projectJobsApiRateLimit,omitempty"`
-	ProjectRunnerTokenExpirationInterval                  int                       `json:"projectRunnerTokenExpirationInterval,omitempty"`
-	ProjectsAPIRateLimitUnauthenticated                   int                       `json:"projectsApiRateLimitUnauthenticated,omitempty"`
-	PrometheusMetricsEnabled                              bool                      `json:"prometheusMetricsEnabled,omitempty"`
-	ProtectedCIVariables                                  bool                      `json:"protectedCIVariables,omitempty"`
-	PseudonymizerEnabled                                  bool                      `json:"pseudonymizerEnabled,omitempty"`
-	PushEventActivitiesLimit                              int                       `json:"pushEventActivitiesLimit,omitempty"`
-	PushEventHooksLimit                                   int                       `json:"pushEventHooksLimit,omitempty"`
-	PyPIPackageRequestsForwarding                         bool                      `json:"pyPIpackageRequestsForwarding,omitempty"`
-	RSAKeyRestriction                                     int                       `json:"rsaKeyRestriction,omitempty"`
-	RateLimitingResponseText                              string                    `json:"rateLimitingResponseText,omitempty"`
-	RawBlobRequestLimit                                   int                       `json:"rawBlobRequestLimit,omitempty"`
-	RecaptchaEnabled                                      bool                      `json:"recaptchaEnabled,omitempty"`
-	RecaptchaPrivateKey                                   string                    `json:"recaptchaPrivateKey,omitempty"`
-	RecaptchaSiteKey                                      string                    `json:"recaptchaSiteKey,omitempty"`
-	ReceiveMaxInputSize                                   int                       `json:"receiveMaxInputSize,omitempty"`
-	ReceptiveClusterAgentsEnabled                         bool                      `json:"receptiveClusterAgentsEnabled,omitempty"`
-	RememberMeEnabled                                     bool                      `json:"rememberMeEnabled,omitempty"`
-	RepositoryChecksEnabled                               bool                      `json:"repositoryChecksEnabled,omitempty"`
-	RepositorySizeLimit                                   int                       `json:"repositorySizeLimit,omitempty"`
-	RepositoryStorages                                    []string                  `json:"repositoryStorages,omitempty"`
-	RepositoryStoragesWeighted                            map[string]int            `json:"repositoryStoragesWeighted,omitempty"`
-	RequireAdminApprovalAfterUserSignup                   bool                      `json:"requireAdminApprovalAfterUserSignup,omitempty"`
-	RequireAdminTwoFactorAuthentication                   bool                      `json:"requireAdminTwoFactorAuthentication,omitempty"`
-	RequirePersonalAccessTokenExpiry                      bool                      `json:"requirePersonalAccessTokenExpiry,omitempty"`
-	RequireTwoFactorAuthentication                        bool                      `json:"requireTwoFactorAuthentication,omitempty"`
-	RestrictedVisibilityLevels                            []string                  `json:"restrictedVisibilityLevels,omitempty"`
-	RunnerTokenExpirationInterval                         int                       `json:"runnerTokenExpirationInterval,omitempty"`
-	SearchRateLimit                                       int                       `json:"searchRateLimit,omitempty"`
-	SearchRateLimitUnauthenticated                        int                       `json:"searchRateLimitUnauthenticated,omitempty"`
-	SecretDetectionRevocationTokenTypesURL                string                    `json:"secretDetectionRevocationTokenTypesUrl,omitempty"`
-	SecretDetectionTokenRevocationEnabled                 bool                      `json:"secretDetectionTokenRevocationEnabled,omitempty"`
-	SecretDetectionTokenRevocationToken                   string                    `json:"secretDetectionTokenRevocationToken,omitempty"`
-	SecretDetectionTokenRevocationURL                     string                    `json:"secretDetectionTokenRevocationUrl,omitempty"`
-	SecurityApprovalPoliciesLimit                         int                       `json:"securityApprovalPoliciesLimit,omitempty"`
-	SecurityPolicyGlobalGroupApproversEnabled             bool                      `json:"securityPolicyGlobalGroupApproversEnabled,omitempty"`
-	SecurityTXTContent                                    string                    `json:"securityTXTContent,omitempty"`
-	SendUserConfirmationEmail                             bool                      `json:"sendUserConfirmationEmail,omitempty"`
-	SentryClientsideDSN                                   string                    `json:"sentryClientsideDSN,omitempty"`
-	SentryDSN                                             string                    `json:"sentryDSN,omitempty"`
-	SentryEnabled                                         bool                      `json:"sentryEnabled,omitempty"`
-	SentryEnvironment                                     string                    `json:"sentryEnvironment,omitempty"`
-	ServiceAccessTokensExpirationEnforced                 bool                      `json:"serviceAccessTokensExpirationEnforced,omitempty"`
-	SessionExpireDelay                                    int                       `json:"sessionExpireDelay,omitempty"`
-	SharedRunnersEnabled                                  bool                      `json:"sharedRunnersEnabled,omitempty"`
-	SharedRunnersMinutes                                  int                       `json:"sharedRunnersMinutes,omitempty"`
-	SharedRunnersText                                     string                    `json:"sharedRunnersText,omitempty"`
-	SidekiqJobLimiterCompressionThresholdBytes            int                       `json:"sidekiqJobLimiterCompressionThresholdBytes,omitempty"`
-	SidekiqJobLimiterLimitBytes                           int                       `json:"sidekiqJobLimiterLimitBytes,omitempty"`
-	SidekiqJobLimiterMode                                 string                    `json:"sidekiqJobLimiterMode,omitempty"`
-	SignInText                                            string                    `json:"signInText,omitempty"`
-	SignupEnabled                                         bool                      `json:"signupEnabled,omitempty"`
-	SilentAdminExportsEnabled                             bool                      `json:"silentAdminExportsEnabled,omitempty"`
-	SilentModeEnabled                                     bool                      `json:"silentModeEnabled,omitempty"`
-	SlackAppEnabled                                       bool                      `json:"slackAppEnabled,omitempty"`
-	SlackAppID                                            string                    `json:"slackAppId,omitempty"`
-	SlackAppSecret                                        string                    `json:"slackAppSecret,omitempty"`
-	SlackAppSigningSecret                                 string                    `json:"slackAppSigningSecret,omitempty"`
-	SlackAppVerificationToken                             string                    `json:"slackAppVerificationToken,omitempty"`
-	SnippetSizeLimit                                      int                       `json:"snippetSizeLimit,omitempty"`
-	SnowplowAppID                                         string                    `json:"snowplowAppId,omitempty"`
-	SnowplowCollectorHostname                             string                    `json:"snowplowCollectorHostname,omitempty"`
-	SnowplowCookieDomain                                  string                    `json:"snowplowCookieDomain,omitempty"`
-	SnowplowDatabaseCollectorHostname                     string                    `json:"snowplowDatabaseCollectorHostname,omitempty"`
-	SnowplowEnabled                                       bool                      `json:"snowplowEnabled,omitempty"`
-	SourcegraphEnabled                                    bool                      `json:"sourcegraphEnabled,omitempty"`
-	SourcegraphPublicOnly                                 bool                      `json:"sourcegraphPublicOnly,omitempty"`
-	SourcegraphURL                                        string                    `json:"sourcegraphUrl,omitempty"`
-	SpamCheckAPIKey                                       string                    `json:"spamCheckApiKey,omitempty"`
-	SpamCheckEndpointEnabled                              bool                      `json:"spamCheckEndpointEnabled,omitempty"`
-	SpamCheckEndpointURL                                  string                    `json:"spamCheckEndpointUrl,omitempty"`
-	StaticObjectsExternalStorageAuthToken                 string                    `json:"staticObjectsExternalStorageAuthToken,omitempty"`
-	StaticObjectsExternalStorageURL                       string                    `json:"staticObjectsExternalStorageUrl,omitempty"`
-	SuggestPipelineEnabled                                bool                      `json:"suggestPipelineEnabled,omitempty"`
-	TerminalMaxSessionTime                                int                       `json:"terminalMaxSessionTime,omitempty"`
-	Terms                                                 string                    `json:"terms,omitempty"`
-	ThrottleAuthenticatedAPIEnabled                       bool                      `json:"throttleAuthenticatedApiEnabled,omitempty"`
-	ThrottleAuthenticatedAPIPeriodInSeconds               int                       `json:"throttleAuthenticatedApiPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedAPIRequestsPerPeriod             int                       `json:"throttleAuthenticatedApiRequestsPerPeriod,omitempty"`
-	ThrottleAuthenticatedDeprecatedAPIEnabled             bool                      `json:"throttleAuthenticatedDeprecatedApiEnabled,omitempty"`
-	ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds     int                       `json:"throttleAuthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod   int                       `json:"throttleAuthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
-	ThrottleAuthenticatedFilesAPIEnabled                  bool                      `json:"throttleAuthenticatedFilesApiEnabled,omitempty"`
-	ThrottleAuthenticatedFilesAPIPeriodInSeconds          int                       `json:"throttleAuthenticatedFilesApiPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedFilesAPIRequestsPerPeriod        int                       `json:"throttleAuthenticatedFilesApiRequestsPerPeriod,omitempty"`
-	ThrottleAuthenticatedGitLFSEnabled                    bool                      `json:"throttleAuthenticatedGitLFSEnabled,omitempty"`
-	ThrottleAuthenticatedGitLFSPeriodInSeconds            int                       `json:"throttleAuthenticatedGitLFSPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedGitLFSRequestsPerPeriod          int                       `json:"throttleAuthenticatedGitLFSRequestsPerPeriod,omitempty"`
-	ThrottleAuthenticatedPackagesAPIEnabled               bool                      `json:"throttleAuthenticatedPackagesApiEnabled,omitempty"`
-	ThrottleAuthenticatedPackagesAPIPeriodInSeconds       int                       `json:"throttleAuthenticatedPackagesApiPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedPackagesAPIRequestsPerPeriod     int                       `json:"throttleAuthenticatedPackagesApiRequestsPerPeriod,omitempty"`
-	ThrottleAuthenticatedWebEnabled                       bool                      `json:"throttleAuthenticatedWebEnabled,omitempty"`
-	ThrottleAuthenticatedWebPeriodInSeconds               int                       `json:"throttleAuthenticatedWebPeriodInSeconds,omitempty"`
-	ThrottleAuthenticatedWebRequestsPerPeriod             int                       `json:"throttleAuthenticatedWebRequestsPerPeriod,omitempty"`
-	ThrottleIncidentManagementNotificationEnabled         bool                      `json:"throttleIncidentManagementNotificationEnabled,omitempty"`
-	ThrottleIncidentManagementNotificationPerPeriod       int                       `json:"throttleIncidentManagementNotificationPerPeriod,omitempty"`
-	ThrottleIncidentManagementNotificationPeriodInSeconds int                       `json:"throttleIncidentManagementNotificationPeriodInSeconds,omitempty"`
-	ThrottleProtectedPathsEnabled                         bool                      `json:"throttleProtectedPathsEnabled,omitempty"`
-	ThrottleProtectedPathsPeriodInSeconds                 int                       `json:"throttleProtectedPathsPeriodInSeconds,omitempty"`
-	ThrottleProtectedPathsRequestsPerPeriod               int                       `json:"throttleProtectedPathsRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedAPIEnabled                     bool                      `json:"throttleUnauthenticatedApiEnabled,omitempty"`
-	ThrottleUnauthenticatedAPIPeriodInSeconds             int                       `json:"throttleUnauthenticatedApiPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedAPIRequestsPerPeriod           int                       `json:"throttleUnauthenticatedApiRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedDeprecatedAPIEnabled           bool                      `json:"throttleUnauthenticatedDeprecatedApiEnabled,omitempty"`
-	ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds   int                       `json:"throttleUnauthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod int                       `json:"throttleUnauthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedFilesAPIEnabled                bool                      `json:"throttleUnauthenticatedFilesApiEnabled,omitempty"`
-	ThrottleUnauthenticatedFilesAPIPeriodInSeconds        int                       `json:"throttleUnauthenticatedFilesApiPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedFilesAPIRequestsPerPeriod      int                       `json:"throttleUnauthenticatedFilesApiRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedGitLFSEnabled                  bool                      `json:"throttleUnauthenticatedGitLFSEnabled,omitempty"`
-	ThrottleUnauthenticatedGitLFSPeriodInSeconds          int                       `json:"throttleUnauthenticatedGitLFSPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedGitLFSRequestsPerPeriod        int                       `json:"throttleUnauthenticatedGitLFSRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedPackagesAPIEnabled             bool                      `json:"throttleUnauthenticatedPackagesApiEnabled,omitempty"`
-	ThrottleUnauthenticatedPackagesAPIPeriodInSeconds     int                       `json:"throttleUnauthenticatedPackagesApiPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod   int                       `json:"throttleUnauthenticatedPackagesApiRequestsPerPeriod,omitempty"`
-	ThrottleUnauthenticatedWebEnabled                     bool                      `json:"throttleUnauthenticatedWebEnabled,omitempty"`
-	ThrottleUnauthenticatedWebPeriodInSeconds             int                       `json:"throttleUnauthenticatedWebPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedWebRequestsPerPeriod           int                       `json:"throttleUnauthenticatedWebRequestsPerPeriod,omitempty"`
-	TimeTrackingLimitToHours                              bool                      `json:"timeTrackingLimitToHours,omitempty"`
-	TwoFactorGracePeriod                                  int                       `json:"twoFactorGracePeriod,omitempty"`
-	UnconfirmedUsersDeleteAfterDays                       int                       `json:"unconfirmedUsersDeleteAfterDays,omitempty"`
-	UniqueIPsLimitEnabled                                 bool                      `json:"uniqueIpsLimitEnabled,omitempty"`
-	UniqueIPsLimitPerUser                                 int                       `json:"uniqueIpsLimitPerUser,omitempty"`
-	UniqueIPsLimitTimeWindow                              int                       `json:"uniqueIpsLimitTimeWindow,omitempty"`
-	UpdateRunnerVersionsEnabled                           bool                      `json:"updateRunnerVersionsEnabled,omitempty"`
-	UpdatedAt                                             *metav1.Time              `json:"updatedAt,omitempty"`
-	UpdatingNameDisabledForUsers                          bool                      `json:"updatingNameDisabledForUsers,omitempty"`
-	UsagePingEnabled                                      bool                      `json:"usagePingEnabled,omitempty"`
-	UsagePingFeaturesEnabled                              bool                      `json:"usagePingFeaturesEnabled,omitempty"`
-	UseClickhouseForAnalytics                             bool                      `json:"useClickhouseForAnalytics,omitempty"`
-	UserDeactivationEmailsEnabled                         bool                      `json:"userDeactivationEmailsEnabled,omitempty"`
-	UserDefaultExternal                                   bool                      `json:"userDefaultExternal,omitempty"`
-	UserDefaultInternalRegex                              string                    `json:"userDefaultInternalRegex,omitempty"`
-	UserDefaultsToPrivateProfile                          bool                      `json:"userDefaultsToPrivateProfile,omitempty"`
-	UserOauthApplications                                 bool                      `json:"userOauthApplications,omitempty"`
-	UserShowAddSSHKeyMessage                              bool                      `json:"userShowAddSshKeyMessage,omitempty"`
-	UsersGetByIDLimit                                     int                       `json:"usersGetByIdLimit,omitempty"`
-	UsersGetByIDLimitAllowlistRaw                         string                    `json:"usersGetByIdLimitAllowlistRaw,omitempty"`
-	ValidRunnerRegistrars                                 []string                  `json:"validRunnerRegistrars,omitempty"`
-	VersionCheckEnabled                                   bool                      `json:"versionCheckEnabled,omitempty"`
-	WebIDEClientsidePreviewEnabled                        bool                      `json:"webIdEClientsidePreviewEnabled,omitempty"`
-	WhatsNewVariant                                       string                    `json:"whatsNewVariant,omitempty"`
-	WikiPageMaxContentBytes                               int                       `json:"wikiPageMaxContentBytes,omitempty"`
-	DefaultBranchProtection                               int                       `json:"defaultBranchProtection,omitempty"`
-	HousekeepingBitmapsEnabled                            bool                      `json:"housekeepingBitmapsEnabled,omitempty"`
-	HousekeepingFullRepackPeriod                          int                       `json:"housekeepingFullRepackPeriod,omitempty"`
-	HousekeepingGcPeriod                                  int                       `json:"housekeepingGcPeriod,omitempty"`
-	HousekeepingIncrementalRepackPeriod                   int                       `json:"housekeepingIncrementalRepackPeriod,omitempty"`
-	PerformanceBarAllowedGroupID                          int                       `json:"performanceBarAllowedGroupId,omitempty"`
-	PerformanceBarEnabled                                 bool                      `json:"performanceBarEnabled,omitempty"`
-	AdminNotificationEmail                                string                    `json:"adminNotificationEmail,omitempty"`
-	AllowLocalRequestsFromHooksAndServices                bool                      `json:"allowLocalRequestsFromHooksAndServices,omitempty"`
-	AssetProxyWhitelist                                   []string                  `json:"assetProxyWhitelist,omitempty"`
-	ThrottleUnauthenticatedEnabled                        bool                      `json:"throttleUnauthenticatedEnabled,omitempty"`
-	ThrottleUnauthenticatedPeriodInSeconds                int                       `json:"throttleUnauthenticatedPeriodInSeconds,omitempty"`
-	ThrottleUnauthenticatedRequestsPerPeriod              int                       `json:"throttleUnauthenticatedRequestsPerPeriod,omitempty"`
-	UserEmailLookupLimit                                  int                       `json:"userEmailLookupLimit,omitempty"`
+	// +optional
+	ID int `json:"id,omitempty"`
+	// +optional
+	AbuseNotificationEmail string `json:"abuseNotificationEmail,omitempty"`
+	// +optional
+	AdminMode bool `json:"adminMode,omitempty"`
+	// +optional
+	AfterSignOutPath string `json:"afterSignOutPath,omitempty"`
+	// +optional
+	AfterSignUpText string `json:"afterSignUpText,omitempty"`
+	// +optional
+	AkismetAPIKey string `json:"akismetApiKey,omitempty"`
+	// +optional
+	AkismetEnabled bool `json:"akismetEnabled,omitempty"`
+	// +optional
+	AllowAccountDeletion bool `json:"allowAccountDeletion,omitempty"`
+	// +optional
+	AllowAllIntegrations bool `json:"allowAllIntegrations,omitempty"`
+	// +optional
+	AllowedIntegrations []string `json:"allowedIntegrations,omitempty"`
+	// +optional
+	AllowGroupOwnersToManageLDAP bool `json:"allowGroupOwnersToManageLdap,omitempty"`
+	// +optional
+	AllowLocalRequestsFromSystemHooks bool `json:"allowLocalRequestsFromSystemHooks,omitempty"`
+	// +optional
+	AllowLocalRequestsFromWebHooksAndServices bool `json:"allowLocalRequestsFromWebHooksAndServices,omitempty"`
+	// +optional
+	AllowProjectCreationForGuestAndBelow bool `json:"allowProjectCreationForGuestAndBelow,omitempty"`
+	// +optional
+	AllowRunnerRegistrationToken bool `json:"allowRunnerRegistrationToken,omitempty"`
+	// +optional
+	ArchiveBuildsInHumanReadable string `json:"archiveBuildsInHumanReadable,omitempty"`
+	// +optional
+	ASCIIDocMaxIncludes int `json:"asciiDocMaxIncludes,omitempty"`
+	// +optional
+	AssetProxyAllowlist []string `json:"assetProxyAllowlist,omitempty"`
+	// +optional
+	AssetProxyEnabled bool `json:"assetProxyEnabled,omitempty"`
+	// +optional
+	AssetProxyURL string `json:"assetProxyUrl,omitempty"`
+	// +optional
+	AssetProxySecretKey string `json:"assetProxySecretKey,omitempty"`
+	// +optional
+	AuthorizedKeysEnabled bool `json:"authorizedKeysEnabled,omitempty"`
+	// +optional
+	AutoBanUserOnExcessiveProjectsDownload bool `json:"autoBanUserOnExcessiveProjectsDownload,omitempty"`
+	// +optional
+	AutocompleteUsers int `json:"autocompleteUsers,omitempty"`
+	// +optional
+	AutocompleteUsersUnauthenticated int `json:"autocompleteUsersUnauthenticated,omitempty"`
+	// +optional
+	AutoDevOpsDomain string `json:"autoDevOpsDomain,omitempty"`
+	// +optional
+	AutoDevOpsEnabled bool `json:"autoDevOpsEnabled,omitempty"`
+	// +optional
+	AutomaticPurchasedStorageAllocation bool `json:"automaticPurchasedStorageAllocation,omitempty"`
+	// +optional
+	BulkImportConcurrentPipelineBatchLimit int `json:"bulkImportConcurrentPipelineBatchLimit,omitempty"`
+	// +optional
+	BulkImportEnabled bool `json:"bulkImportEnabled,omitempty"`
+	// +optional
+	BulkImportMaxDownloadFileSize int `json:"bulkImportMaxDownloadFileSize,omitempty"`
+	// +optional
+	CanCreateGroup bool `json:"canCreateGroup,omitempty"`
+	// +optional
+	CheckNamespacePlan bool `json:"checkNamespacePlan,omitempty"`
+	// +optional
+	CIJobLiveTraceEnabled bool `json:"ciJobLiveTraceEnabled,omitempty"`
+	// +optional
+	CIMaxIncludes int `json:"ciMaxIncludes,omitempty"`
+	// +optional
+	CIMaxTotalYAMLSizeBytes int `json:"ciMaxTotalYamlSizeBytes,omitempty"`
+	// +optional
+	CIPartitionsSizeLimit int `json:"ciPartitionsSizeLimit,omitempty"`
+	// +optional
+	CommitEmailHostname string `json:"commitEmailHostname,omitempty"`
+	// +optional
+	ConcurrentBitbucketImportJobsLimit int `json:"concurrentBitbucketImportJobsLimit,omitempty"`
+	// +optional
+	ConcurrentBitbucketServerImportJobsLimit int `json:"concurrentBitbucketServerImportJobsLimit,omitempty"`
+	// +optional
+	ConcurrentGitHubImportJobsLimit int `json:"concurrentGitHubImportJobsLimit,omitempty"`
+	// +optional
+	ContainerExpirationPoliciesEnableHistoricEntries bool `json:"containerExpirationPoliciesEnableHistoricEntries,omitempty"`
+	// +optional
+	ContainerRegistryCleanupTagsServiceMaxListSize int `json:"containerRegistryCleanupTagsServiceMaxListSize,omitempty"`
+	// +optional
+	ContainerRegistryDeleteTagsServiceTimeout int `json:"containerRegistryDeleteTagsServiceTimeout,omitempty"`
+	// +optional
+	ContainerRegistryExpirationPoliciesCaching bool `json:"containerRegistryExpirationPoliciesCaching,omitempty"`
+	// +optional
+	ContainerRegistryExpirationPoliciesWorkerCapacity int `json:"containerRegistryExpirationPoliciesWorkerCapacity,omitempty"`
+	// +optional
+	ContainerRegistryImportCreatedBefore *metav1.Time `json:"containerRegistryImportCreatedBefore,omitempty"`
+	// +optional
+	ContainerRegistryImportMaxRetries int `json:"containerRegistryImportMaxRetries,omitempty"`
+	// +optional
+	ContainerRegistryImportMaxStepDuration int `json:"containerRegistryImportMaxStepDuration,omitempty"`
+	// +optional
+	ContainerRegistryImportMaxTagsCount int `json:"containerRegistryImportMaxTagsCount,omitempty"`
+	// +optional
+	ContainerRegistryImportStartMaxRetries int `json:"containerRegistryImportStartMaxRetries,omitempty"`
+	// +optional
+	ContainerRegistryImportTargetPlan string `json:"containerRegistryImportTargetPlan,omitempty"`
+	// +optional
+	ContainerRegistryTokenExpireDelay int `json:"containerRegistryTokenExpireDelay,omitempty"`
+	// +optional
+	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
+	// +optional
+	CustomHTTPCloneURLRoot string `json:"customHTTPCloneUrlRoot,omitempty"`
+	// +optional
+	DNSRebindingProtectionEnabled bool `json:"dnsRebindingProtectionEnabled,omitempty"`
+	// +optional
+	DSAKeyRestriction int `json:"dsaKeyRestriction,omitempty"`
+	// +optional
+	DeactivateDormantUsers bool `json:"deactivateDormantUsers,omitempty"`
+	// +optional
+	DeactivateDormantUsersPeriod int `json:"deactivateDormantUsersPeriod,omitempty"`
+	// +optional
+	DecompressArchiveFileTimeout int `json:"decompressArchiveFileTimeout,omitempty"`
+	// +optional
+	DefaultArtifactsExpireIn string `json:"defaultArtifactsExpireIn,omitempty"`
+	// +optional
+	DefaultBranchName string `json:"defaultBranchName,omitempty"`
+	// +optional
+	DefaultBranchProtectionDefaults *BranchProtectionDefaults `json:"defaultBranchProtectionDefaults,omitempty"`
+	// +optional
+	DefaultCiConfigPath string `json:"defaultCiConfigPath,omitempty"`
+	// +optional
+	DefaultGroupVisibility string `json:"defaultGroupVisibility,omitempty"`
+	// +optional
+	DefaultPreferredLanguage string `json:"defaultPreferredLanguage,omitempty"`
+	// +optional
+	DefaultProjectCreation int `json:"defaultProjectCreation,omitempty"`
+	// +optional
+	DefaultProjectDeletionProtection bool `json:"defaultProjectDeletionProtection,omitempty"`
+	// +optional
+	DefaultProjectVisibility string `json:"defaultProjectVisibility,omitempty"`
+	// +optional
+	DefaultProjectsLimit int `json:"defaultProjectsLimit,omitempty"`
+	// +optional
+	DefaultSnippetVisibility string `json:"defaultSnippetVisibility,omitempty"`
+	// +optional
+	DefaultSyntaxHighlightingTheme int `json:"defaultSyntaxHighlightingTheme,omitempty"`
+	// +optional
+	DelayedGroupDeletion bool `json:"delayedGroupDeletion,omitempty"`
+	// +optional
+	DelayedProjectDeletion bool `json:"delayedProjectDeletion,omitempty"`
+	// +optional
+	DeleteInactiveProjects bool `json:"deleteInactiveProjects,omitempty"`
+	// +optional
+	DeleteUnconfirmedUsers bool `json:"deleteUnconfirmedUsers,omitempty"`
+	// +optional
+	DeletionAdjournedPeriod int `json:"deletionAdjournedPeriod,omitempty"`
+	// +optional
+	DiagramsnetEnabled bool `json:"diagramsnetEnabled,omitempty"`
+	// +optional
+	DiagramsnetURL string `json:"diagramsnetUrl,omitempty"`
+	// +optional
+	DiffMaxFiles int `json:"diffMaxFiles,omitempty"`
+	// +optional
+	DiffMaxLines int `json:"diffMaxLines,omitempty"`
+	// +optional
+	DiffMaxPatchBytes int `json:"diffMaxPatchBytes,omitempty"`
+	// +optional
+	DisableAdminOAuthScopes bool `json:"disableAdminOAuthScopes,omitempty"`
+	// +optional
+	DisableFeedToken bool `json:"disableFeedToken,omitempty"`
+	// +optional
+	DisableOverridingApproversPerMergeRequest bool `json:"disableOverridingApproversPerMergeRequest,omitempty"`
+	// +optional
+	DisablePersonalAccessTokens bool `json:"disablePersonalAccessTokens,omitempty"`
+	// +optional
+	DisabledOauthSignInSources []string `json:"disabledOauthSignInSources,omitempty"`
+	// +optional
+	DomainAllowlist []string `json:"domainAllowlist,omitempty"`
+	// +optional
+	DomainDenylist []string `json:"domainDenylist,omitempty"`
+	// +optional
+	DomainDenylistEnabled bool `json:"domainDenylistEnabled,omitempty"`
+	// +optional
+	DownstreamPipelineTriggerLimitPerProjectUserSHA int `json:"downstreamPipelineTriggerLimitPerProjectUserSHA,omitempty"`
+	// +optional
+	DuoFeaturesEnabled bool `json:"duoFeaturesEnabled,omitempty"`
+	// +optional
+	ECDSAKeyRestriction int `json:"ecdsaKeyRestriction,omitempty"`
+	// +optional
+	ECDSASKKeyRestriction int `json:"ecdsaskKeyRestriction,omitempty"`
+	// +optional
+	EKSAccessKeyID string `json:"eksAccessKeyId,omitempty"`
+	// +optional
+	EKSAccountID string `json:"eksAccountId,omitempty"`
+	// +optional
+	EKSIntegrationEnabled bool `json:"eksIntegrationEnabled,omitempty"`
+	// +optional
+	EKSSecretAccessKey string `json:"eksSecretAccessKey,omitempty"`
+	// +optional
+	Ed25519KeyRestriction int `json:"ed25519KeyRestriction,omitempty"`
+	// +optional
+	Ed25519SKKeyRestriction int `json:"ed25519SKKeyRestriction,omitempty"`
+	// +optional
+	ElasticsearchAWS bool `json:"elasticsearchAws,omitempty"`
+	// +optional
+	ElasticsearchAWSAccessKey string `json:"elasticsearchAwsAccessKey,omitempty"`
+	// +optional
+	ElasticsearchAWSRegion string `json:"elasticsearchAwsRegion,omitempty"`
+	// +optional
+	ElasticsearchAWSSecretAccessKey string `json:"elasticsearchAwsSecretAccessKey,omitempty"`
+	// +optional
+	ElasticsearchAnalyzersKuromojiEnabled bool `json:"elasticsearchAnalyzersKuromojiEnabled,omitempty"`
+	// +optional
+	ElasticsearchAnalyzersKuromojiSearch bool `json:"elasticsearchAnalyzersKuromojiSearch,omitempty"`
+	// +optional
+	ElasticsearchAnalyzersSmartCNEnabled bool `json:"elasticsearchAnalyzersSmartCnEnabled,omitempty"`
+	// +optional
+	ElasticsearchAnalyzersSmartCNSearch bool `json:"elasticsearchAnalyzersSmartCnSearch,omitempty"`
+	// +optional
+	ElasticsearchClientRequestTimeout int `json:"elasticsearchClientRequestTimeout,omitempty"`
+	// +optional
+	ElasticsearchIndexedFieldLengthLimit int `json:"elasticsearchIndexedFieldLengthLimit,omitempty"`
+	// +optional
+	ElasticsearchIndexedFileSizeLimitKB int `json:"elasticsearchIndexedFileSizeLimitKB,omitempty"`
+	// +optional
+	ElasticsearchIndexing bool `json:"elasticsearchIndexing,omitempty"`
+	// +optional
+	ElasticsearchLimitIndexing bool `json:"elasticsearchLimitIndexing,omitempty"`
+	// +optional
+	ElasticsearchMaxBulkConcurrency int `json:"elasticsearchMaxBulkConcurrency,omitempty"`
+	// +optional
+	ElasticsearchMaxBulkSizeMB int `json:"elasticsearchMaxBulkSizeMB,omitempty"`
+	// +optional
+	ElasticsearchMaxCodeIndexingConcurrency int `json:"elasticsearchMaxCodeIndexingConcurrency,omitempty"`
+	// +optional
+	ElasticsearchNamespaceIDs []int `json:"elasticsearchNamespaceIds,omitempty"`
+	// +optional
+	ElasticsearchPassword string `json:"elasticsearchPassword,omitempty"`
+	// +optional
+	ElasticsearchPauseIndexing bool `json:"elasticsearchPauseIndexing,omitempty"`
+	// +optional
+	ElasticsearchProjectIDs []int `json:"elasticsearchProjectIds,omitempty"`
+	// +optional
+	ElasticsearchReplicas int `json:"elasticsearchReplicas,omitempty"`
+	// +optional
+	ElasticsearchRequeueWorkers bool `json:"elasticsearchRequeueWorkers,omitempty"`
+	// +optional
+	ElasticsearchRetryOnFailure int `json:"elasticsearchRetryOnFailure,omitempty"`
+	// +optional
+	ElasticsearchSearch bool `json:"elasticsearchSearch,omitempty"`
+	// +optional
+	ElasticsearchShards int `json:"elasticsearchShards,omitempty"`
+	// +optional
+	ElasticsearchURL []string `json:"elasticsearchUrl,omitempty"`
+	// +optional
+	ElasticsearchUsername string `json:"elasticsearchUsername,omitempty"`
+	// +optional
+	ElasticsearchWorkerNumberOfShards int `json:"elasticsearchWorkerNumberOfShards,omitempty"`
+	// +optional
+	EmailAdditionalText string `json:"emailAdditionalText,omitempty"`
+	// +optional
+	EmailAuthorInBody bool `json:"emailAuthorInBody,omitempty"`
+	// +optional
+	EmailConfirmationSetting string `json:"emailConfirmationSetting,omitempty"`
+	// +optional
+	EmailRestrictions string `json:"emailRestrictions,omitempty"`
+	// +optional
+	EmailRestrictionsEnabled bool `json:"emailRestrictionsEnabled,omitempty"`
+	// +optional
+	EnableArtifactExternalRedirectWarningPage bool `json:"enableArtifactExternalRedirectWarningPage,omitempty"`
+	// +optional
+	EnabledGitAccessProtocol string `json:"enabledGitAccessProtocol,omitempty"`
+	// +optional
+	EnforceCIInboundJobTokenScopeEnabled bool `json:"enforceCIInboundJobTokenScopeEnabled,omitempty"`
+	// +optional
+	EnforceNamespaceStorageLimit bool `json:"enforceNamespaceStorageLimit,omitempty"`
+	// +optional
+	EnforcePATExpiration bool `json:"enforcePATExpiration,omitempty"`
+	// +optional
+	EnforceSSHKeyExpiration bool `json:"enforceSshKeyExpiration,omitempty"`
+	// +optional
+	EnforceTerms bool `json:"enforceTerms,omitempty"`
+	// +optional
+	ExternalAuthClientCert string `json:"externalAuthClientCert,omitempty"`
+	// +optional
+	ExternalAuthClientKey string `json:"externalAuthClientKey,omitempty"`
+	// +optional
+	ExternalAuthClientKeyPass string `json:"externalAuthClientKeyPass,omitempty"`
+	// +optional
+	ExternalAuthorizationServiceDefaultLabel string `json:"externalAuthorizationServiceDefaultLabel,omitempty"`
+	// +optional
+	ExternalAuthorizationServiceEnabled bool `json:"externalAuthorizationServiceEnabled,omitempty"`
+	// +optional
+	ExternalAuthorizationServiceTimeout float64 `json:"externalAuthorizationServiceTimeout,omitempty"`
+	// +optional
+	ExternalAuthorizationServiceURL string `json:"externalAuthorizationServiceUrl,omitempty"`
+	// +optional
+	ExternalPipelineValidationServiceTimeout int `json:"externalPipelineValidationServiceTimeout,omitempty"`
+	// +optional
+	ExternalPipelineValidationServiceToken string `json:"externalPipelineValidationServiceToken,omitempty"`
+	// +optional
+	ExternalPipelineValidationServiceURL string `json:"externalPipelineValidationServiceUrl,omitempty"`
+	// +optional
+	FailedLoginAttemptsUnlockPeriodInMinutes int `json:"failedLoginAttemptsUnlockPeriodInMinutes,omitempty"`
+	// +optional
+	FileTemplateProjectID int `json:"fileTemplateProjectId,omitempty"`
+	// +optional
+	FirstDayOfWeek int `json:"firstDayOfWeek,omitempty"`
+	// +optional
+	FlocEnabled bool `json:"flocEnabled,omitempty"`
+	// +optional
+	GeoNodeAllowedIPs string `json:"geoNodeAllowedIps,omitempty"`
+	// +optional
+	GeoStatusTimeout int `json:"geoStatusTimeout,omitempty"`
+	// +optional
+	GitRateLimitUsersAlertlist []int `json:"gitRateLimitUsersAlertlist,omitempty"`
+	// +optional
+	GitTwoFactorSessionExpiry int `json:"gitTwoFactorSessionExpiry,omitempty"`
+	// +optional
+	GitalyTimeoutDefault int `json:"gitalyTimeoutDefault,omitempty"`
+	// +optional
+	GitalyTimeoutFast int `json:"gitalyTimeoutFast,omitempty"`
+	// +optional
+	GitalyTimeoutMedium int `json:"gitalyTimeoutMedium,omitempty"`
+	// +optional
+	GitlabDedicatedInstance bool `json:"gitlabDedicatedInstance,omitempty"`
+	// +optional
+	GitlabEnvironmentToolkitInstance bool `json:"gitlabEnvironmentToolkitInstance,omitempty"`
+	// +optional
+	GitlabShellOperationLimit int `json:"gitlabShellOperationLimit,omitempty"`
+	// +optional
+	GitpodEnabled bool `json:"gitpodEnabled,omitempty"`
+	// +optional
+	GitpodURL string `json:"gitpodUrl,omitempty"`
+	// +optional
+	GitRateLimitUsersAllowlist []string `json:"gitRateLimitUsersAllowlist,omitempty"`
+	// +optional
+	GloballyAllowedIPs string `json:"globallyAllowedIps,omitempty"`
+	// +optional
+	GrafanaEnabled bool `json:"grafanaEnabled,omitempty"`
+	// +optional
+	GrafanaURL string `json:"grafanaUrl,omitempty"`
+	// +optional
+	GravatarEnabled bool `json:"gravatarEnabled,omitempty"`
+	// +optional
+	GroupDownloadExportLimit int `json:"groupDownloadExportLimit,omitempty"`
+	// +optional
+	GroupExportLimit int `json:"groupExportLimit,omitempty"`
+	// +optional
+	GroupImportLimit int `json:"groupImportLimit,omitempty"`
+	// +optional
+	GroupOwnersCanManageDefaultBranchProtection bool `json:"groupOwnersCanManageDefaultBranchProtection,omitempty"`
+	// +optional
+	GroupRunnerTokenExpirationInterval int `json:"groupRunnerTokenExpirationInterval,omitempty"`
+	// +optional
+	HTMLEmailsEnabled bool `json:"htmlEmailsEnabled,omitempty"`
+	// +optional
+	HashedStorageEnabled bool `json:"hashedStorageEnabled,omitempty"`
+	// +optional
+	HelpPageDocumentationBaseURL string `json:"helpPageDocumentationBaseUrl,omitempty"`
+	// +optional
+	HelpPageHideCommercialContent bool `json:"helpPageHideCommercialContent,omitempty"`
+	// +optional
+	HelpPageSupportURL string `json:"helpPageSupportUrl,omitempty"`
+	// +optional
+	HelpPageText string `json:"helpPageText,omitempty"`
+	// +optional
+	HelpText string `json:"helpText,omitempty"`
+	// +optional
+	HideThirdPartyOffers bool `json:"hideThirdPartyOffers,omitempty"`
+	// +optional
+	HomePageURL string `json:"homePageUrl,omitempty"`
+	// +optional
+	HousekeepingEnabled bool `json:"housekeepingEnabled,omitempty"`
+	// +optional
+	HousekeepingOptimizeRepositoryPeriod int `json:"housekeepingOptimizeRepositoryPeriod,omitempty"`
+	// +optional
+	ImportSources []string `json:"importSources,omitempty"`
+	// +optional
+	InactiveProjectsDeleteAfterMonths int `json:"inactiveProjectsDeleteAfterMonths,omitempty"`
+	// +optional
+	InactiveProjectsMinSizeMB int `json:"inactiveProjectsMinSizeMB,omitempty"`
+	// +optional
+	InactiveProjectsSendWarningEmailAfterMonths int `json:"inactiveProjectsSendWarningEmailAfterMonths,omitempty"`
+	// +optional
+	IncludeOptionalMetricsInServicePing bool `json:"includeOptionalMetricsInServicePing,omitempty"`
+	// +optional
+	InProductMarketingEmailsEnabled bool `json:"inProductMarketingEmailsEnabled,omitempty"`
+	// +optional
+	InvisibleCaptchaEnabled bool `json:"invisibleCaptchaEnabled,omitempty"`
+	// +optional
+	IssuesCreateLimit int `json:"issuesCreateLimit,omitempty"`
+	// +optional
+	JiraConnectApplicationKey string `json:"jiraConnectApplicationKey,omitempty"`
+	// +optional
+	JiraConnectPublicKeyStorageEnabled bool `json:"jiraConnectPublicKeyStorageEnabled,omitempty"`
+	// +optional
+	JiraConnectProxyURL string `json:"jiraConnectProxyUrl,omitempty"`
+	// +optional
+	KeepLatestArtifact bool `json:"keepLatestArtifact,omitempty"`
+	// +optional
+	KrokiEnabled bool `json:"krokiEnabled,omitempty"`
+	// +optional
+	KrokiFormats map[string]bool `json:"krokiFormats,omitempty"`
+	// +optional
+	KrokiURL string `json:"krokiUrl,omitempty"`
+	// +optional
+	LocalMarkdownVersion int `json:"localMarkdownVersion,omitempty"`
+	// +optional
+	LockDuoFeaturesEnabled bool `json:"lockDuoFeaturesEnabled,omitempty"`
+	// +optional
+	LockMembershipsToLDAP bool `json:"lockMembershipsToLdap,omitempty"`
+	// +optional
+	LoginRecaptchaProtectionEnabled bool `json:"loginRecaptchaProtectionEnabled,omitempty"`
+	// +optional
+	MailgunEventsEnabled bool `json:"mailgunEventsEnabled,omitempty"`
+	// +optional
+	MailgunSigningKey string `json:"mailgunSigningKey,omitempty"`
+	// +optional
+	MaintenanceMode bool `json:"maintenanceMode,omitempty"`
+	// +optional
+	MaintenanceModeMessage string `json:"maintenanceModeMessage,omitempty"`
+	// +optional
+	MavenPackageRequestsForwarding bool `json:"mavenPackageRequestsForwarding,omitempty"`
+	// +optional
+	MaxArtifactsSize int `json:"maxArtifactsSize,omitempty"`
+	// +optional
+	MaxAttachmentSize int `json:"maxAttachmentSize,omitempty"`
+	// +optional
+	MaxDecompressedArchiveSize int `json:"maxDecompressedArchiveSize,omitempty"`
+	// +optional
+	MaxExportSize int `json:"maxExportSize,omitempty"`
+	// +optional
+	MaxImportRemoteFileSize int `json:"maxImportRemoteFileSize,omitempty"`
+	// +optional
+	MaxImportSize int `json:"maxImportSize,omitempty"`
+	// +optional
+	MaxLoginAttempts int `json:"maxLoginAttempts,omitempty"`
+	// +optional
+	MaxNumberOfRepositoryDownloads int `json:"maxNumberOfRepositoryDownloads,omitempty"`
+	// +optional
+	MaxNumberOfRepositoryDownloadsWithinTimePeriod int `json:"maxNumberOfRepositoryDownloadsWithinTimePeriod,omitempty"`
+	// +optional
+	MaxPagesSize int `json:"maxPagesSize,omitempty"`
+	// +optional
+	MaxPersonalAccessTokenLifetime int `json:"maxPersonalAccessTokenLifetime,omitempty"`
+	// +optional
+	MaxSSHKeyLifetime int `json:"maxSshKeyLifetime,omitempty"`
+	// +optional
+	MaxTerraformStateSizeBytes int `json:"maxTerraformStateSizeBytes,omitempty"`
+	// +optional
+	MaxYAMLDepth int `json:"maxYamlDepth,omitempty"`
+	// +optional
+	MaxYAMLSizeBytes int `json:"maxYamlSizeBytes,omitempty"`
+	// +optional
+	MetricsMethodCallThreshold int `json:"metricsMethodCallThreshold,omitempty"`
+	// +optional
+	MinimumPasswordLength int `json:"minimumPasswordLength,omitempty"`
+	// +optional
+	MirrorAvailable bool `json:"mirrorAvailable,omitempty"`
+	// +optional
+	MirrorCapacityThreshold int `json:"mirrorCapacityThreshold,omitempty"`
+	// +optional
+	MirrorMaxCapacity int `json:"mirrorMaxCapacity,omitempty"`
+	// +optional
+	MirrorMaxDelay int `json:"mirrorMaxDelay,omitempty"`
+	// +optional
+	NPMPackageRequestsForwarding bool `json:"npmPackageRequestsForwarding,omitempty"`
+	// +optional
+	NotesCreateLimit int `json:"notesCreateLimit,omitempty"`
+	// +optional
+	NotifyOnUnknownSignIn bool `json:"notifyOnUnknownSignIn,omitempty"`
+	// +optional
+	NugetSkipMetadataURLValidation bool `json:"nugetSkipMetadataUrlValidation,omitempty"`
+	// +optional
+	OutboundLocalRequestsAllowlistRaw string `json:"outboundLocalRequestsAllowlistRaw,omitempty"`
+	// +optional
+	OutboundLocalRequestsWhitelist []string `json:"outboundLocalRequestsWhitelist,omitempty"`
+	// +optional
+	PackageMetadataPURLTypes []int `json:"packageMetadataPUrlTypes,omitempty"`
+	// +optional
+	PackageRegistryAllowAnyoneToPullOption bool `json:"packageRegistryAllowAnyoneToPullOption,omitempty"`
+	// +optional
+	PackageRegistryCleanupPoliciesWorkerCapacity int `json:"packageRegistryCleanupPoliciesWorkerCapacity,omitempty"`
+	// +optional
+	PagesDomainVerificationEnabled bool `json:"pagesDomainVerificationEnabled,omitempty"`
+	// +optional
+	PasswordAuthenticationEnabledForGit bool `json:"passwordAuthenticationEnabledForGit,omitempty"`
+	// +optional
+	PasswordAuthenticationEnabledForWeb bool `json:"passwordAuthenticationEnabledForWeb,omitempty"`
+	// +optional
+	PasswordNumberRequired bool `json:"passwordNumberRequired,omitempty"`
+	// +optional
+	PasswordSymbolRequired bool `json:"passwordSymbolRequired,omitempty"`
+	// +optional
+	PasswordUppercaseRequired bool `json:"passwordUppercaseRequired,omitempty"`
+	// +optional
+	PasswordLowercaseRequired bool `json:"passwordLowercaseRequired,omitempty"`
+	// +optional
+	PerformanceBarAllowedGroupPath string `json:"performanceBarAllowedGroupPath,omitempty"`
+	// +optional
+	PersonalAccessTokenPrefix string `json:"personalAccessTokenPrefix,omitempty"`
+	// +optional
+	PipelineLimitPerProjectUserSha int `json:"pipelineLimitPerProjectUserSha,omitempty"`
+	// +optional
+	PlantumlEnabled bool `json:"plantumlEnabled,omitempty"`
+	// +optional
+	PlantumlURL string `json:"plantumlUrl,omitempty"`
+	// +optional
+	PollingIntervalMultiplier float64 `json:"pollingIntervalMultiplier,omitempty"`
+	// +optional
+	PreventMergeRequestsAuthorApproval bool `json:"preventMergeRequestsAuthorApproval,omitempty"`
+	// +optional
+	PreventMergeRequestsCommittersApproval bool `json:"preventMergeRequestsCommittersApproval,omitempty"`
+	// +optional
+	ProjectDownloadExportLimit int `json:"projectDownloadExportLimit,omitempty"`
+	// +optional
+	ProjectExportEnabled bool `json:"projectExportEnabled,omitempty"`
+	// +optional
+	ProjectExportLimit int `json:"projectExportLimit,omitempty"`
+	// +optional
+	ProjectImportLimit int `json:"projectImportLimit,omitempty"`
+	// +optional
+	ProjectJobsAPIRateLimit int `json:"projectJobsApiRateLimit,omitempty"`
+	// +optional
+	ProjectRunnerTokenExpirationInterval int `json:"projectRunnerTokenExpirationInterval,omitempty"`
+	// +optional
+	ProjectsAPIRateLimitUnauthenticated int `json:"projectsApiRateLimitUnauthenticated,omitempty"`
+	// +optional
+	PrometheusMetricsEnabled bool `json:"prometheusMetricsEnabled,omitempty"`
+	// +optional
+	ProtectedCIVariables bool `json:"protectedCIVariables,omitempty"`
+	// +optional
+	PseudonymizerEnabled bool `json:"pseudonymizerEnabled,omitempty"`
+	// +optional
+	PushEventActivitiesLimit int `json:"pushEventActivitiesLimit,omitempty"`
+	// +optional
+	PushEventHooksLimit int `json:"pushEventHooksLimit,omitempty"`
+	// +optional
+	PyPIPackageRequestsForwarding bool `json:"pyPIpackageRequestsForwarding,omitempty"`
+	// +optional
+	RSAKeyRestriction int `json:"rsaKeyRestriction,omitempty"`
+	// +optional
+	RateLimitingResponseText string `json:"rateLimitingResponseText,omitempty"`
+	// +optional
+	RawBlobRequestLimit int `json:"rawBlobRequestLimit,omitempty"`
+	// +optional
+	RecaptchaEnabled bool `json:"recaptchaEnabled,omitempty"`
+	// +optional
+	RecaptchaPrivateKey string `json:"recaptchaPrivateKey,omitempty"`
+	// +optional
+	RecaptchaSiteKey string `json:"recaptchaSiteKey,omitempty"`
+	// +optional
+	ReceiveMaxInputSize int `json:"receiveMaxInputSize,omitempty"`
+	// +optional
+	ReceptiveClusterAgentsEnabled bool `json:"receptiveClusterAgentsEnabled,omitempty"`
+	// +optional
+	RememberMeEnabled bool `json:"rememberMeEnabled,omitempty"`
+	// +optional
+	RepositoryChecksEnabled bool `json:"repositoryChecksEnabled,omitempty"`
+	// +optional
+	RepositorySizeLimit int `json:"repositorySizeLimit,omitempty"`
+	// +optional
+	RepositoryStorages []string `json:"repositoryStorages,omitempty"`
+	// +optional
+	RepositoryStoragesWeighted map[string]int `json:"repositoryStoragesWeighted,omitempty"`
+	// +optional
+	RequireAdminApprovalAfterUserSignup bool `json:"requireAdminApprovalAfterUserSignup,omitempty"`
+	// +optional
+	RequireAdminTwoFactorAuthentication bool `json:"requireAdminTwoFactorAuthentication,omitempty"`
+	// +optional
+	RequirePersonalAccessTokenExpiry bool `json:"requirePersonalAccessTokenExpiry,omitempty"`
+	// +optional
+	RequireTwoFactorAuthentication bool `json:"requireTwoFactorAuthentication,omitempty"`
+	// +optional
+	RestrictedVisibilityLevels []string `json:"restrictedVisibilityLevels,omitempty"`
+	// +optional
+	RunnerTokenExpirationInterval int `json:"runnerTokenExpirationInterval,omitempty"`
+	// +optional
+	SearchRateLimit int `json:"searchRateLimit,omitempty"`
+	// +optional
+	SearchRateLimitUnauthenticated int `json:"searchRateLimitUnauthenticated,omitempty"`
+	// +optional
+	SecretDetectionRevocationTokenTypesURL string `json:"secretDetectionRevocationTokenTypesUrl,omitempty"`
+	// +optional
+	SecretDetectionTokenRevocationEnabled bool `json:"secretDetectionTokenRevocationEnabled,omitempty"`
+	// +optional
+	SecretDetectionTokenRevocationToken string `json:"secretDetectionTokenRevocationToken,omitempty"`
+	// +optional
+	SecretDetectionTokenRevocationURL string `json:"secretDetectionTokenRevocationUrl,omitempty"`
+	// +optional
+	SecurityApprovalPoliciesLimit int `json:"securityApprovalPoliciesLimit,omitempty"`
+	// +optional
+	SecurityPolicyGlobalGroupApproversEnabled bool `json:"securityPolicyGlobalGroupApproversEnabled,omitempty"`
+	// +optional
+	SecurityTXTContent string `json:"securityTXTContent,omitempty"`
+	// +optional
+	SendUserConfirmationEmail bool `json:"sendUserConfirmationEmail,omitempty"`
+	// +optional
+	SentryClientsideDSN string `json:"sentryClientsideDSN,omitempty"`
+	// +optional
+	SentryDSN string `json:"sentryDSN,omitempty"`
+	// +optional
+	SentryEnabled bool `json:"sentryEnabled,omitempty"`
+	// +optional
+	SentryEnvironment string `json:"sentryEnvironment,omitempty"`
+	// +optional
+	ServiceAccessTokensExpirationEnforced bool `json:"serviceAccessTokensExpirationEnforced,omitempty"`
+	// +optional
+	SessionExpireDelay int `json:"sessionExpireDelay,omitempty"`
+	// +optional
+	SharedRunnersEnabled bool `json:"sharedRunnersEnabled,omitempty"`
+	// +optional
+	SharedRunnersMinutes int `json:"sharedRunnersMinutes,omitempty"`
+	// +optional
+	SharedRunnersText string `json:"sharedRunnersText,omitempty"`
+	// +optional
+	SidekiqJobLimiterCompressionThresholdBytes int `json:"sidekiqJobLimiterCompressionThresholdBytes,omitempty"`
+	// +optional
+	SidekiqJobLimiterLimitBytes int `json:"sidekiqJobLimiterLimitBytes,omitempty"`
+	// +optional
+	SidekiqJobLimiterMode string `json:"sidekiqJobLimiterMode,omitempty"`
+	// +optional
+	SignInText string `json:"signInText,omitempty"`
+	// +optional
+	SignupEnabled bool `json:"signupEnabled,omitempty"`
+	// +optional
+	SilentAdminExportsEnabled bool `json:"silentAdminExportsEnabled,omitempty"`
+	// +optional
+	SilentModeEnabled bool `json:"silentModeEnabled,omitempty"`
+	// +optional
+	SlackAppEnabled bool `json:"slackAppEnabled,omitempty"`
+	// +optional
+	SlackAppID string `json:"slackAppId,omitempty"`
+	// +optional
+	SlackAppSecret string `json:"slackAppSecret,omitempty"`
+	// +optional
+	SlackAppSigningSecret string `json:"slackAppSigningSecret,omitempty"`
+	// +optional
+	SlackAppVerificationToken string `json:"slackAppVerificationToken,omitempty"`
+	// +optional
+	SnippetSizeLimit int `json:"snippetSizeLimit,omitempty"`
+	// +optional
+	SnowplowAppID string `json:"snowplowAppId,omitempty"`
+	// +optional
+	SnowplowCollectorHostname string `json:"snowplowCollectorHostname,omitempty"`
+	// +optional
+	SnowplowCookieDomain string `json:"snowplowCookieDomain,omitempty"`
+	// +optional
+	SnowplowDatabaseCollectorHostname string `json:"snowplowDatabaseCollectorHostname,omitempty"`
+	// +optional
+	SnowplowEnabled bool `json:"snowplowEnabled,omitempty"`
+	// +optional
+	SourcegraphEnabled bool `json:"sourcegraphEnabled,omitempty"`
+	// +optional
+	SourcegraphPublicOnly bool `json:"sourcegraphPublicOnly,omitempty"`
+	// +optional
+	SourcegraphURL string `json:"sourcegraphUrl,omitempty"`
+	// +optional
+	SpamCheckAPIKey string `json:"spamCheckApiKey,omitempty"`
+	// +optional
+	SpamCheckEndpointEnabled bool `json:"spamCheckEndpointEnabled,omitempty"`
+	// +optional
+	SpamCheckEndpointURL string `json:"spamCheckEndpointUrl,omitempty"`
+	// +optional
+	StaticObjectsExternalStorageAuthToken string `json:"staticObjectsExternalStorageAuthToken,omitempty"`
+	// +optional
+	StaticObjectsExternalStorageURL string `json:"staticObjectsExternalStorageUrl,omitempty"`
+	// +optional
+	SuggestPipelineEnabled bool `json:"suggestPipelineEnabled,omitempty"`
+	// +optional
+	TerminalMaxSessionTime int `json:"terminalMaxSessionTime,omitempty"`
+	// +optional
+	Terms string `json:"terms,omitempty"`
+	// +optional
+	ThrottleAuthenticatedAPIEnabled bool `json:"throttleAuthenticatedApiEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedAPIPeriodInSeconds int `json:"throttleAuthenticatedApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedAPIRequestsPerPeriod int `json:"throttleAuthenticatedApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedDeprecatedAPIEnabled bool `json:"throttleAuthenticatedDeprecatedApiEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds int `json:"throttleAuthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod int `json:"throttleAuthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedFilesAPIEnabled bool `json:"throttleAuthenticatedFilesApiEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedFilesAPIPeriodInSeconds int `json:"throttleAuthenticatedFilesApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedFilesAPIRequestsPerPeriod int `json:"throttleAuthenticatedFilesApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedGitLFSEnabled bool `json:"throttleAuthenticatedGitLFSEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedGitLFSPeriodInSeconds int `json:"throttleAuthenticatedGitLFSPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedGitLFSRequestsPerPeriod int `json:"throttleAuthenticatedGitLFSRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedPackagesAPIEnabled bool `json:"throttleAuthenticatedPackagesApiEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedPackagesAPIPeriodInSeconds int `json:"throttleAuthenticatedPackagesApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedPackagesAPIRequestsPerPeriod int `json:"throttleAuthenticatedPackagesApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedWebEnabled bool `json:"throttleAuthenticatedWebEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedWebPeriodInSeconds int `json:"throttleAuthenticatedWebPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedWebRequestsPerPeriod int `json:"throttleAuthenticatedWebRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleIncidentManagementNotificationEnabled bool `json:"throttleIncidentManagementNotificationEnabled,omitempty"`
+	// +optional
+	ThrottleIncidentManagementNotificationPerPeriod int `json:"throttleIncidentManagementNotificationPerPeriod,omitempty"`
+	// +optional
+	ThrottleIncidentManagementNotificationPeriodInSeconds int `json:"throttleIncidentManagementNotificationPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleProtectedPathsEnabled bool `json:"throttleProtectedPathsEnabled,omitempty"`
+	// +optional
+	ThrottleProtectedPathsPeriodInSeconds int `json:"throttleProtectedPathsPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleProtectedPathsRequestsPerPeriod int `json:"throttleProtectedPathsRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedAPIEnabled bool `json:"throttleUnauthenticatedApiEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedAPIPeriodInSeconds int `json:"throttleUnauthenticatedApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedAPIRequestsPerPeriod int `json:"throttleUnauthenticatedApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedDeprecatedAPIEnabled bool `json:"throttleUnauthenticatedDeprecatedApiEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds int `json:"throttleUnauthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod int `json:"throttleUnauthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedFilesAPIEnabled bool `json:"throttleUnauthenticatedFilesApiEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedFilesAPIPeriodInSeconds int `json:"throttleUnauthenticatedFilesApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedFilesAPIRequestsPerPeriod int `json:"throttleUnauthenticatedFilesApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedGitLFSEnabled bool `json:"throttleUnauthenticatedGitLFSEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedGitLFSPeriodInSeconds int `json:"throttleUnauthenticatedGitLFSPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedGitLFSRequestsPerPeriod int `json:"throttleUnauthenticatedGitLFSRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedPackagesAPIEnabled bool `json:"throttleUnauthenticatedPackagesApiEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedPackagesAPIPeriodInSeconds int `json:"throttleUnauthenticatedPackagesApiPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod int `json:"throttleUnauthenticatedPackagesApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedWebEnabled bool `json:"throttleUnauthenticatedWebEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedWebPeriodInSeconds int `json:"throttleUnauthenticatedWebPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedWebRequestsPerPeriod int `json:"throttleUnauthenticatedWebRequestsPerPeriod,omitempty"`
+	// +optional
+	TimeTrackingLimitToHours bool `json:"timeTrackingLimitToHours,omitempty"`
+	// +optional
+	TwoFactorGracePeriod int `json:"twoFactorGracePeriod,omitempty"`
+	// +optional
+	UnconfirmedUsersDeleteAfterDays int `json:"unconfirmedUsersDeleteAfterDays,omitempty"`
+	// +optional
+	UniqueIPsLimitEnabled bool `json:"uniqueIpsLimitEnabled,omitempty"`
+	// +optional
+	UniqueIPsLimitPerUser int `json:"uniqueIpsLimitPerUser,omitempty"`
+	// +optional
+	UniqueIPsLimitTimeWindow int `json:"uniqueIpsLimitTimeWindow,omitempty"`
+	// +optional
+	UpdateRunnerVersionsEnabled bool `json:"updateRunnerVersionsEnabled,omitempty"`
+	// +optional
+	UpdatedAt *metav1.Time `json:"updatedAt,omitempty"`
+	// +optional
+	UpdatingNameDisabledForUsers bool `json:"updatingNameDisabledForUsers,omitempty"`
+	// +optional
+	UsagePingEnabled bool `json:"usagePingEnabled,omitempty"`
+	// +optional
+	UsagePingFeaturesEnabled bool `json:"usagePingFeaturesEnabled,omitempty"`
+	// +optional
+	UseClickhouseForAnalytics bool `json:"useClickhouseForAnalytics,omitempty"`
+	// +optional
+	UserDeactivationEmailsEnabled bool `json:"userDeactivationEmailsEnabled,omitempty"`
+	// +optional
+	UserDefaultExternal bool `json:"userDefaultExternal,omitempty"`
+	// +optional
+	UserDefaultInternalRegex string `json:"userDefaultInternalRegex,omitempty"`
+	// +optional
+	UserDefaultsToPrivateProfile bool `json:"userDefaultsToPrivateProfile,omitempty"`
+	// +optional
+	UserOauthApplications bool `json:"userOauthApplications,omitempty"`
+	// +optional
+	UserShowAddSSHKeyMessage bool `json:"userShowAddSshKeyMessage,omitempty"`
+	// +optional
+	UsersGetByIDLimit int `json:"usersGetByIdLimit,omitempty"`
+	// +optional
+	UsersGetByIDLimitAllowlistRaw string `json:"usersGetByIdLimitAllowlistRaw,omitempty"`
+	// +optional
+	ValidRunnerRegistrars []string `json:"validRunnerRegistrars,omitempty"`
+	// +optional
+	VersionCheckEnabled bool `json:"versionCheckEnabled,omitempty"`
+	// +optional
+	WebIDEClientsidePreviewEnabled bool `json:"webIdEClientsidePreviewEnabled,omitempty"`
+	// +optional
+	WhatsNewVariant string `json:"whatsNewVariant,omitempty"`
+	// +optional
+	WikiPageMaxContentBytes int `json:"wikiPageMaxContentBytes,omitempty"`
+	// +optional
+	DefaultBranchProtection int `json:"defaultBranchProtection,omitempty"`
+	// +optional
+	HousekeepingBitmapsEnabled bool `json:"housekeepingBitmapsEnabled,omitempty"`
+	// +optional
+	HousekeepingFullRepackPeriod int `json:"housekeepingFullRepackPeriod,omitempty"`
+	// +optional
+	HousekeepingGcPeriod int `json:"housekeepingGcPeriod,omitempty"`
+	// +optional
+	HousekeepingIncrementalRepackPeriod int `json:"housekeepingIncrementalRepackPeriod,omitempty"`
+	// +optional
+	PerformanceBarAllowedGroupID int `json:"performanceBarAllowedGroupId,omitempty"`
+	// +optional
+	PerformanceBarEnabled bool `json:"performanceBarEnabled,omitempty"`
+	// +optional
+	AdminNotificationEmail string `json:"adminNotificationEmail,omitempty"`
+	// +optional
+	AllowLocalRequestsFromHooksAndServices bool `json:"allowLocalRequestsFromHooksAndServices,omitempty"`
+	// +optional
+	AssetProxyWhitelist []string `json:"assetProxyWhitelist,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedEnabled bool `json:"throttleUnauthenticatedEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedPeriodInSeconds int `json:"throttleUnauthenticatedPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedRequestsPerPeriod int `json:"throttleUnauthenticatedRequestsPerPeriod,omitempty"`
+	// +optional
+	UserEmailLookupLimit int `json:"userEmailLookupLimit,omitempty"`
 }

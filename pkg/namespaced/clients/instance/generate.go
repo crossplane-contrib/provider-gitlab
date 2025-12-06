@@ -221,8 +221,8 @@ func generateUpdateAssignment(fieldName string, gitlabType, v1Type reflect.Type)
 	}
 
 	// Check for *time.Time -> *time.Time
-	if gitlabType.String() == "*time.Time" && v1Type.String() == "*v1.Time" {
-		return fmt.Sprintf("o.%s = &p.%s.Time", fieldName, fieldName)
+	if gitlabType.String() == "*time.Time" && strings.HasSuffix(v1Type.String(), ".Time") {
+		return fmt.Sprintf("if p.%s != nil {\n\t\to.%s = &p.%s.Time\n\t}", fieldName, fieldName, fieldName)
 	}
 
 	// Check for same types
@@ -321,8 +321,8 @@ func generateUpToDateCheck(fieldName string, gitlabType, v1Type reflect.Type) st
 	}
 
 	// Check for *v1.Time -> *time.Time
-	if gitlabType.String() == "*time.Time" && v1Type.String() == "*v1.Time" {
-		return fmt.Sprintf("if !clients.IsComparablePtrEqualToComparablePtr(&p.%s.Time, g.%s) {\n\t\treturn false\n\t}", fieldName, fieldName)
+	if gitlabType.String() == "*time.Time" && strings.HasSuffix(v1Type.String(), ".Time") {
+		return fmt.Sprintf("if p.%s != nil && !clients.IsComparablePtrEqualToComparablePtr(&p.%s.Time, g.%s) {\n\t\treturn false\n\t}", fieldName, fieldName, fieldName)
 	}
 
 	// Check for same types (pointers)
@@ -388,7 +388,7 @@ func generateLateInitializeAssignment(fieldName string, gitlabType, v1Type refle
 	}
 
 	// Check for *v1.Time -> *time.Time
-	if gitlabType.String() == "*time.Time" && v1Type.String() == "*v1.Time" {
+	if gitlabType.String() == "*time.Time" && strings.HasSuffix(v1Type.String(), ".Time") {
 		return fmt.Sprintf("in.%s = clients.LateInitialize(in.%s, clients.TimeToMetaTime(settings.%s))", fieldName, fieldName, fieldName)
 	}
 

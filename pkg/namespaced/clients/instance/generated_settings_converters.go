@@ -78,7 +78,9 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.ContainerRegistryDeleteTagsServiceTimeout = p.ContainerRegistryDeleteTagsServiceTimeout
 	o.ContainerRegistryExpirationPoliciesCaching = p.ContainerRegistryExpirationPoliciesCaching
 	o.ContainerRegistryExpirationPoliciesWorkerCapacity = p.ContainerRegistryExpirationPoliciesWorkerCapacity
-	o.ContainerRegistryImportCreatedBefore = &p.ContainerRegistryImportCreatedBefore.Time
+	if p.ContainerRegistryImportCreatedBefore != nil {
+		o.ContainerRegistryImportCreatedBefore = &p.ContainerRegistryImportCreatedBefore.Time
+	}
 	o.ContainerRegistryImportMaxRetries = p.ContainerRegistryImportMaxRetries
 	o.ContainerRegistryImportMaxStepDuration = p.ContainerRegistryImportMaxStepDuration
 	o.ContainerRegistryImportMaxTagsCount = p.ContainerRegistryImportMaxTagsCount
@@ -1030,7 +1032,7 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.ContainerRegistryExpirationPoliciesWorkerCapacity, g.ContainerRegistryExpirationPoliciesWorkerCapacity) {
 		return false
 	}
-	if !clients.IsComparablePtrEqualToComparablePtr(&p.ContainerRegistryImportCreatedBefore.Time, g.ContainerRegistryImportCreatedBefore) {
+	if p.ContainerRegistryImportCreatedBefore != nil && !clients.IsComparablePtrEqualToComparablePtr(&p.ContainerRegistryImportCreatedBefore.Time, g.ContainerRegistryImportCreatedBefore) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ContainerRegistryImportMaxRetries, g.ContainerRegistryImportMaxRetries) {

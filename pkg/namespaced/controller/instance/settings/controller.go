@@ -26,7 +26,6 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
-	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -134,15 +133,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: true}, nil
 	}
 
-	current := cr.Spec.ForProvider.DeepCopy()
-	instance.LateInitializeApplicationSettings(&cr.Spec.ForProvider, settings)
-
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
 		ResourceUpToDate:        instance.IsApplicationSettingsUpToDate(&cr.Spec.ForProvider, settings),
-		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
+		ResourceLateInitialized: false,
 	}, nil
 }
 
