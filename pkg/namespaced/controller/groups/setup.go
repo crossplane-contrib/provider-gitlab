@@ -21,6 +21,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/accesstokens"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/badges"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/members"
@@ -39,6 +40,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		variables.SetupVariable,
 		samlgrouplinks.SetupSamlGroupLink,
 		runners.SetupRunner,
+		badges.SetupBadge,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -58,6 +60,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		variables.SetupVariableGated,
 		samlgrouplinks.SetupSamlGroupLinkGated,
 		runners.SetupRunnerGated,
+		badges.SetupBadgeGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

@@ -77,6 +77,14 @@ var (
 	AccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(AccessTokenKind)
 )
 
+// Badge type metadata
+var (
+	BadgeKind             = reflect.TypeOf(Badge{}).Name()
+	BadgeGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: BadgeKind}.String()
+	BadgeKindAPIVersion   = BadgeKind + "." + SchemeGroupVersion.String()
+	BadgeGroupVersionKind = SchemeGroupVersion.WithKind(BadgeKind)
+)
+
 // Variable type metadata
 var (
 	VariableKind             = reflect.TypeOf(Variable{}).Name()
@@ -100,4 +108,5 @@ func init() {
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
 	SchemeBuilder.Register(&SamlGroupLink{}, &SamlGroupLinkList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
+	SchemeBuilder.Register(&Badge{}, &BadgeList{})
 }
