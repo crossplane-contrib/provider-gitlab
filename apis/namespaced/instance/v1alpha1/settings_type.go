@@ -62,6 +62,8 @@ type ApplicationSettingSpec struct {
 // A ApplicationSettingsStatus represents the observed state of the GitLab Instance Settings.
 type ApplicationSettingsStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
+	// Represents the observed state of the ApplicationSettings.
+	AtProvider ApplicationSettingsObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

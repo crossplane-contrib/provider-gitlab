@@ -1051,6 +1051,908 @@ spec:
             description: A ApplicationSettingsStatus represents the observed state
               of the GitLab Instance Settings.
             properties:
+              atProvider:
+                description: Represents the observed state of the ApplicationSettings.
+                properties:
+                  abuseNotificationEmail:
+                    type: string
+                  adminMode:
+                    type: boolean
+                  adminNotificationEmail:
+                    type: string
+                  afterSignOutPath:
+                    type: string
+                  afterSignUpText:
+                    type: string
+                  akismetApiKey:
+                    type: string
+                  akismetEnabled:
+                    type: boolean
+                  allowAccountDeletion:
+                    type: boolean
+                  allowAllIntegrations:
+                    type: boolean
+                  allowGroupOwnersToManageLdap:
+                    type: boolean
+                  allowLocalRequestsFromHooksAndServices:
+                    type: boolean
+                  allowLocalRequestsFromSystemHooks:
+                    type: boolean
+                  allowLocalRequestsFromWebHooksAndServices:
+                    type: boolean
+                  allowProjectCreationForGuestAndBelow:
+                    type: boolean
+                  allowRunnerRegistrationToken:
+                    type: boolean
+                  allowedIntegrations:
+                    items:
+                      type: string
+                    type: array
+                  archiveBuildsInHumanReadable:
+                    type: string
+                  asciiDocMaxIncludes:
+                    type: integer
+                  assetProxyAllowlist:
+                    items:
+                      type: string
+                    type: array
+                  assetProxyEnabled:
+                    type: boolean
+                  assetProxySecretKey:
+                    type: string
+                  assetProxyUrl:
+                    type: string
+                  assetProxyWhitelist:
+                    items:
+                      type: string
+                    type: array
+                  authorizedKeysEnabled:
+                    type: boolean
+                  autoBanUserOnExcessiveProjectsDownload:
+                    type: boolean
+                  autoDevOpsDomain:
+                    type: string
+                  autoDevOpsEnabled:
+                    type: boolean
+                  autocompleteUsers:
+                    type: integer
+                  autocompleteUsersUnauthenticated:
+                    type: integer
+                  automaticPurchasedStorageAllocation:
+                    type: boolean
+                  bulkImportConcurrentPipelineBatchLimit:
+                    type: integer
+                  bulkImportEnabled:
+                    type: boolean
+                  bulkImportMaxDownloadFileSize:
+                    type: integer
+                  canCreateGroup:
+                    type: boolean
+                  checkNamespacePlan:
+                    type: boolean
+                  ciJobLiveTraceEnabled:
+                    type: boolean
+                  ciMaxIncludes:
+                    type: integer
+                  ciMaxTotalYamlSizeBytes:
+                    type: integer
+                  ciPartitionsSizeLimit:
+                    type: integer
+                  commitEmailHostname:
+                    type: string
+                  concurrentBitbucketImportJobsLimit:
+                    type: integer
+                  concurrentBitbucketServerImportJobsLimit:
+                    type: integer
+                  concurrentGitHubImportJobsLimit:
+                    type: integer
+                  containerExpirationPoliciesEnableHistoricEntries:
+                    type: boolean
+                  containerRegistryCleanupTagsServiceMaxListSize:
+                    type: integer
+                  containerRegistryDeleteTagsServiceTimeout:
+                    type: integer
+                  containerRegistryExpirationPoliciesCaching:
+                    type: boolean
+                  containerRegistryExpirationPoliciesWorkerCapacity:
+                    type: integer
+                  containerRegistryImportCreatedBefore:
+                    format: date-time
+                    type: string
+                  containerRegistryImportMaxRetries:
+                    type: integer
+                  containerRegistryImportMaxStepDuration:
+                    type: integer
+                  containerRegistryImportMaxTagsCount:
+                    type: integer
+                  containerRegistryImportStartMaxRetries:
+                    type: integer
+                  containerRegistryImportTargetPlan:
+                    type: string
+                  containerRegistryTokenExpireDelay:
+                    type: integer
+                  createdAt:
+                    format: date-time
+                    type: string
+                  customHTTPCloneUrlRoot:
+                    type: string
+                  deactivateDormantUsers:
+                    type: boolean
+                  deactivateDormantUsersPeriod:
+                    type: integer
+                  decompressArchiveFileTimeout:
+                    type: integer
+                  defaultArtifactsExpireIn:
+                    type: string
+                  defaultBranchName:
+                    type: string
+                  defaultBranchProtection:
+                    type: integer
+                  defaultBranchProtectionDefaults:
+                    description: BranchProtectionDefaults defines rules for branch
+                      branch protection
+                    properties:
+                      allow_force_push:
+                        description: Whether to allow force pushes to the default
+                          branch
+                        type: boolean
+                      allowed_to_merge:
+                        description: List of user or group IDs allowed to merge to
+                          the default branch
+                        items:
+                          type: integer
+                        type: array
+                      allowed_to_push:
+                        description: List of user or group IDs allowed to push to
+                          the default branch
+                        items:
+                          type: integer
+                        type: array
+                      developer_can_initial_push:
+                        description: Whether developers can push the first commit
+                          to the default branch
+                        type: boolean
+                    type: object
+                  defaultCiConfigPath:
+                    type: string
+                  defaultGroupVisibility:
+                    type: string
+                  defaultPreferredLanguage:
+                    type: string
+                  defaultProjectCreation:
+                    type: integer
+                  defaultProjectDeletionProtection:
+                    type: boolean
+                  defaultProjectVisibility:
+                    type: string
+                  defaultProjectsLimit:
+                    type: integer
+                  defaultSnippetVisibility:
+                    type: string
+                  defaultSyntaxHighlightingTheme:
+                    type: integer
+                  delayedGroupDeletion:
+                    type: boolean
+                  delayedProjectDeletion:
+                    type: boolean
+                  deleteInactiveProjects:
+                    type: boolean
+                  deleteUnconfirmedUsers:
+                    type: boolean
+                  deletionAdjournedPeriod:
+                    type: integer
+                  diagramsnetEnabled:
+                    type: boolean
+                  diagramsnetUrl:
+                    type: string
+                  diffMaxFiles:
+                    type: integer
+                  diffMaxLines:
+                    type: integer
+                  diffMaxPatchBytes:
+                    type: integer
+                  disableAdminOAuthScopes:
+                    type: boolean
+                  disableFeedToken:
+                    type: boolean
+                  disableOverridingApproversPerMergeRequest:
+                    type: boolean
+                  disablePersonalAccessTokens:
+                    type: boolean
+                  disabledOauthSignInSources:
+                    items:
+                      type: string
+                    type: array
+                  dnsRebindingProtectionEnabled:
+                    type: boolean
+                  domainAllowlist:
+                    items:
+                      type: string
+                    type: array
+                  domainDenylist:
+                    items:
+                      type: string
+                    type: array
+                  domainDenylistEnabled:
+                    type: boolean
+                  downstreamPipelineTriggerLimitPerProjectUserSHA:
+                    type: integer
+                  dsaKeyRestriction:
+                    type: integer
+                  duoFeaturesEnabled:
+                    type: boolean
+                  ecdsaKeyRestriction:
+                    type: integer
+                  ecdsaskKeyRestriction:
+                    type: integer
+                  ed25519KeyRestriction:
+                    type: integer
+                  ed25519SKKeyRestriction:
+                    type: integer
+                  eksAccessKeyId:
+                    type: string
+                  eksAccountId:
+                    type: string
+                  eksIntegrationEnabled:
+                    type: boolean
+                  eksSecretAccessKey:
+                    type: string
+                  elasticsearchAnalyzersKuromojiEnabled:
+                    type: boolean
+                  elasticsearchAnalyzersKuromojiSearch:
+                    type: boolean
+                  elasticsearchAnalyzersSmartCnEnabled:
+                    type: boolean
+                  elasticsearchAnalyzersSmartCnSearch:
+                    type: boolean
+                  elasticsearchAws:
+                    type: boolean
+                  elasticsearchAwsAccessKey:
+                    type: string
+                  elasticsearchAwsRegion:
+                    type: string
+                  elasticsearchAwsSecretAccessKey:
+                    type: string
+                  elasticsearchClientRequestTimeout:
+                    type: integer
+                  elasticsearchIndexedFieldLengthLimit:
+                    type: integer
+                  elasticsearchIndexedFileSizeLimitKB:
+                    type: integer
+                  elasticsearchIndexing:
+                    type: boolean
+                  elasticsearchLimitIndexing:
+                    type: boolean
+                  elasticsearchMaxBulkConcurrency:
+                    type: integer
+                  elasticsearchMaxBulkSizeMB:
+                    type: integer
+                  elasticsearchMaxCodeIndexingConcurrency:
+                    type: integer
+                  elasticsearchNamespaceIds:
+                    items:
+                      type: integer
+                    type: array
+                  elasticsearchPassword:
+                    type: string
+                  elasticsearchPauseIndexing:
+                    type: boolean
+                  elasticsearchProjectIds:
+                    items:
+                      type: integer
+                    type: array
+                  elasticsearchReplicas:
+                    type: integer
+                  elasticsearchRequeueWorkers:
+                    type: boolean
+                  elasticsearchRetryOnFailure:
+                    type: integer
+                  elasticsearchSearch:
+                    type: boolean
+                  elasticsearchShards:
+                    type: integer
+                  elasticsearchUrl:
+                    items:
+                      type: string
+                    type: array
+                  elasticsearchUsername:
+                    type: string
+                  elasticsearchWorkerNumberOfShards:
+                    type: integer
+                  emailAdditionalText:
+                    type: string
+                  emailAuthorInBody:
+                    type: boolean
+                  emailConfirmationSetting:
+                    type: string
+                  emailRestrictions:
+                    type: string
+                  emailRestrictionsEnabled:
+                    type: boolean
+                  enableArtifactExternalRedirectWarningPage:
+                    type: boolean
+                  enabledGitAccessProtocol:
+                    type: string
+                  enforceCIInboundJobTokenScopeEnabled:
+                    type: boolean
+                  enforceNamespaceStorageLimit:
+                    type: boolean
+                  enforcePATExpiration:
+                    type: boolean
+                  enforceSshKeyExpiration:
+                    type: boolean
+                  enforceTerms:
+                    type: boolean
+                  externalAuthClientCert:
+                    type: string
+                  externalAuthClientKey:
+                    type: string
+                  externalAuthClientKeyPass:
+                    type: string
+                  externalAuthorizationServiceDefaultLabel:
+                    type: string
+                  externalAuthorizationServiceEnabled:
+                    type: boolean
+                  externalAuthorizationServiceTimeout:
+                    type: number
+                  externalAuthorizationServiceUrl:
+                    type: string
+                  externalPipelineValidationServiceTimeout:
+                    type: integer
+                  externalPipelineValidationServiceToken:
+                    type: string
+                  externalPipelineValidationServiceUrl:
+                    type: string
+                  failedLoginAttemptsUnlockPeriodInMinutes:
+                    type: integer
+                  fileTemplateProjectId:
+                    type: integer
+                  firstDayOfWeek:
+                    type: integer
+                  flocEnabled:
+                    type: boolean
+                  geoNodeAllowedIps:
+                    type: string
+                  geoStatusTimeout:
+                    type: integer
+                  gitRateLimitUsersAlertlist:
+                    items:
+                      type: integer
+                    type: array
+                  gitRateLimitUsersAllowlist:
+                    items:
+                      type: string
+                    type: array
+                  gitTwoFactorSessionExpiry:
+                    type: integer
+                  gitalyTimeoutDefault:
+                    type: integer
+                  gitalyTimeoutFast:
+                    type: integer
+                  gitalyTimeoutMedium:
+                    type: integer
+                  gitlabDedicatedInstance:
+                    type: boolean
+                  gitlabEnvironmentToolkitInstance:
+                    type: boolean
+                  gitlabShellOperationLimit:
+                    type: integer
+                  gitpodEnabled:
+                    type: boolean
+                  gitpodUrl:
+                    type: string
+                  globallyAllowedIps:
+                    type: string
+                  grafanaEnabled:
+                    type: boolean
+                  grafanaUrl:
+                    type: string
+                  gravatarEnabled:
+                    type: boolean
+                  groupDownloadExportLimit:
+                    type: integer
+                  groupExportLimit:
+                    type: integer
+                  groupImportLimit:
+                    type: integer
+                  groupOwnersCanManageDefaultBranchProtection:
+                    type: boolean
+                  groupRunnerTokenExpirationInterval:
+                    type: integer
+                  hashedStorageEnabled:
+                    type: boolean
+                  helpPageDocumentationBaseUrl:
+                    type: string
+                  helpPageHideCommercialContent:
+                    type: boolean
+                  helpPageSupportUrl:
+                    type: string
+                  helpPageText:
+                    type: string
+                  helpText:
+                    type: string
+                  hideThirdPartyOffers:
+                    type: boolean
+                  homePageUrl:
+                    type: string
+                  housekeepingBitmapsEnabled:
+                    type: boolean
+                  housekeepingEnabled:
+                    type: boolean
+                  housekeepingFullRepackPeriod:
+                    type: integer
+                  housekeepingGcPeriod:
+                    type: integer
+                  housekeepingIncrementalRepackPeriod:
+                    type: integer
+                  housekeepingOptimizeRepositoryPeriod:
+                    type: integer
+                  htmlEmailsEnabled:
+                    type: boolean
+                  id:
+                    type: integer
+                  importSources:
+                    items:
+                      type: string
+                    type: array
+                  inProductMarketingEmailsEnabled:
+                    type: boolean
+                  inactiveProjectsDeleteAfterMonths:
+                    type: integer
+                  inactiveProjectsMinSizeMB:
+                    type: integer
+                  inactiveProjectsSendWarningEmailAfterMonths:
+                    type: integer
+                  includeOptionalMetricsInServicePing:
+                    type: boolean
+                  invisibleCaptchaEnabled:
+                    type: boolean
+                  issuesCreateLimit:
+                    type: integer
+                  jiraConnectApplicationKey:
+                    type: string
+                  jiraConnectProxyUrl:
+                    type: string
+                  jiraConnectPublicKeyStorageEnabled:
+                    type: boolean
+                  keepLatestArtifact:
+                    type: boolean
+                  krokiEnabled:
+                    type: boolean
+                  krokiFormats:
+                    additionalProperties:
+                      type: boolean
+                    type: object
+                  krokiUrl:
+                    type: string
+                  localMarkdownVersion:
+                    type: integer
+                  lockDuoFeaturesEnabled:
+                    type: boolean
+                  lockMembershipsToLdap:
+                    type: boolean
+                  loginRecaptchaProtectionEnabled:
+                    type: boolean
+                  mailgunEventsEnabled:
+                    type: boolean
+                  mailgunSigningKey:
+                    type: string
+                  maintenanceMode:
+                    type: boolean
+                  maintenanceModeMessage:
+                    type: string
+                  mavenPackageRequestsForwarding:
+                    type: boolean
+                  maxArtifactsSize:
+                    type: integer
+                  maxAttachmentSize:
+                    type: integer
+                  maxDecompressedArchiveSize:
+                    type: integer
+                  maxExportSize:
+                    type: integer
+                  maxImportRemoteFileSize:
+                    type: integer
+                  maxImportSize:
+                    type: integer
+                  maxLoginAttempts:
+                    type: integer
+                  maxNumberOfRepositoryDownloads:
+                    type: integer
+                  maxNumberOfRepositoryDownloadsWithinTimePeriod:
+                    type: integer
+                  maxPagesSize:
+                    type: integer
+                  maxPersonalAccessTokenLifetime:
+                    type: integer
+                  maxSshKeyLifetime:
+                    type: integer
+                  maxTerraformStateSizeBytes:
+                    type: integer
+                  maxYamlDepth:
+                    type: integer
+                  maxYamlSizeBytes:
+                    type: integer
+                  metricsMethodCallThreshold:
+                    type: integer
+                  minimumPasswordLength:
+                    type: integer
+                  mirrorAvailable:
+                    type: boolean
+                  mirrorCapacityThreshold:
+                    type: integer
+                  mirrorMaxCapacity:
+                    type: integer
+                  mirrorMaxDelay:
+                    type: integer
+                  notesCreateLimit:
+                    type: integer
+                  notifyOnUnknownSignIn:
+                    type: boolean
+                  npmPackageRequestsForwarding:
+                    type: boolean
+                  nugetSkipMetadataUrlValidation:
+                    type: boolean
+                  outboundLocalRequestsAllowlistRaw:
+                    type: string
+                  outboundLocalRequestsWhitelist:
+                    items:
+                      type: string
+                    type: array
+                  packageMetadataPUrlTypes:
+                    items:
+                      type: integer
+                    type: array
+                  packageRegistryAllowAnyoneToPullOption:
+                    type: boolean
+                  packageRegistryCleanupPoliciesWorkerCapacity:
+                    type: integer
+                  pagesDomainVerificationEnabled:
+                    type: boolean
+                  passwordAuthenticationEnabledForGit:
+                    type: boolean
+                  passwordAuthenticationEnabledForWeb:
+                    type: boolean
+                  passwordLowercaseRequired:
+                    type: boolean
+                  passwordNumberRequired:
+                    type: boolean
+                  passwordSymbolRequired:
+                    type: boolean
+                  passwordUppercaseRequired:
+                    type: boolean
+                  performanceBarAllowedGroupId:
+                    type: integer
+                  performanceBarAllowedGroupPath:
+                    type: string
+                  performanceBarEnabled:
+                    type: boolean
+                  personalAccessTokenPrefix:
+                    type: string
+                  pipelineLimitPerProjectUserSha:
+                    type: integer
+                  plantumlEnabled:
+                    type: boolean
+                  plantumlUrl:
+                    type: string
+                  pollingIntervalMultiplier:
+                    type: number
+                  preventMergeRequestsAuthorApproval:
+                    type: boolean
+                  preventMergeRequestsCommittersApproval:
+                    type: boolean
+                  projectDownloadExportLimit:
+                    type: integer
+                  projectExportEnabled:
+                    type: boolean
+                  projectExportLimit:
+                    type: integer
+                  projectImportLimit:
+                    type: integer
+                  projectJobsApiRateLimit:
+                    type: integer
+                  projectRunnerTokenExpirationInterval:
+                    type: integer
+                  projectsApiRateLimitUnauthenticated:
+                    type: integer
+                  prometheusMetricsEnabled:
+                    type: boolean
+                  protectedCIVariables:
+                    type: boolean
+                  pseudonymizerEnabled:
+                    type: boolean
+                  pushEventActivitiesLimit:
+                    type: integer
+                  pushEventHooksLimit:
+                    type: integer
+                  pyPIpackageRequestsForwarding:
+                    type: boolean
+                  rateLimitingResponseText:
+                    type: string
+                  rawBlobRequestLimit:
+                    type: integer
+                  recaptchaEnabled:
+                    type: boolean
+                  recaptchaPrivateKey:
+                    type: string
+                  recaptchaSiteKey:
+                    type: string
+                  receiveMaxInputSize:
+                    type: integer
+                  receptiveClusterAgentsEnabled:
+                    type: boolean
+                  rememberMeEnabled:
+                    type: boolean
+                  repositoryChecksEnabled:
+                    type: boolean
+                  repositorySizeLimit:
+                    type: integer
+                  repositoryStorages:
+                    items:
+                      type: string
+                    type: array
+                  repositoryStoragesWeighted:
+                    additionalProperties:
+                      type: integer
+                    type: object
+                  requireAdminApprovalAfterUserSignup:
+                    type: boolean
+                  requireAdminTwoFactorAuthentication:
+                    type: boolean
+                  requirePersonalAccessTokenExpiry:
+                    type: boolean
+                  requireTwoFactorAuthentication:
+                    type: boolean
+                  restrictedVisibilityLevels:
+                    items:
+                      type: string
+                    type: array
+                  rsaKeyRestriction:
+                    type: integer
+                  runnerTokenExpirationInterval:
+                    type: integer
+                  searchRateLimit:
+                    type: integer
+                  searchRateLimitUnauthenticated:
+                    type: integer
+                  secretDetectionRevocationTokenTypesUrl:
+                    type: string
+                  secretDetectionTokenRevocationEnabled:
+                    type: boolean
+                  secretDetectionTokenRevocationToken:
+                    type: string
+                  secretDetectionTokenRevocationUrl:
+                    type: string
+                  securityApprovalPoliciesLimit:
+                    type: integer
+                  securityPolicyGlobalGroupApproversEnabled:
+                    type: boolean
+                  securityTXTContent:
+                    type: string
+                  sendUserConfirmationEmail:
+                    type: boolean
+                  sentryClientsideDSN:
+                    type: string
+                  sentryDSN:
+                    type: string
+                  sentryEnabled:
+                    type: boolean
+                  sentryEnvironment:
+                    type: string
+                  serviceAccessTokensExpirationEnforced:
+                    type: boolean
+                  sessionExpireDelay:
+                    type: integer
+                  sharedRunnersEnabled:
+                    type: boolean
+                  sharedRunnersMinutes:
+                    type: integer
+                  sharedRunnersText:
+                    type: string
+                  sidekiqJobLimiterCompressionThresholdBytes:
+                    type: integer
+                  sidekiqJobLimiterLimitBytes:
+                    type: integer
+                  sidekiqJobLimiterMode:
+                    type: string
+                  signInText:
+                    type: string
+                  signupEnabled:
+                    type: boolean
+                  silentAdminExportsEnabled:
+                    type: boolean
+                  silentModeEnabled:
+                    type: boolean
+                  slackAppEnabled:
+                    type: boolean
+                  slackAppId:
+                    type: string
+                  slackAppSecret:
+                    type: string
+                  slackAppSigningSecret:
+                    type: string
+                  slackAppVerificationToken:
+                    type: string
+                  snippetSizeLimit:
+                    type: integer
+                  snowplowAppId:
+                    type: string
+                  snowplowCollectorHostname:
+                    type: string
+                  snowplowCookieDomain:
+                    type: string
+                  snowplowDatabaseCollectorHostname:
+                    type: string
+                  snowplowEnabled:
+                    type: boolean
+                  sourcegraphEnabled:
+                    type: boolean
+                  sourcegraphPublicOnly:
+                    type: boolean
+                  sourcegraphUrl:
+                    type: string
+                  spamCheckApiKey:
+                    type: string
+                  spamCheckEndpointEnabled:
+                    type: boolean
+                  spamCheckEndpointUrl:
+                    type: string
+                  staticObjectsExternalStorageAuthToken:
+                    type: string
+                  staticObjectsExternalStorageUrl:
+                    type: string
+                  suggestPipelineEnabled:
+                    type: boolean
+                  terminalMaxSessionTime:
+                    type: integer
+                  terms:
+                    type: string
+                  throttleAuthenticatedApiEnabled:
+                    type: boolean
+                  throttleAuthenticatedApiPeriodInSeconds:
+                    type: integer
+                  throttleAuthenticatedApiRequestsPerPeriod:
+                    type: integer
+                  throttleAuthenticatedDeprecatedApiEnabled:
+                    type: boolean
+                  throttleAuthenticatedDeprecatedApiPeriodInSeconds:
+                    type: integer
+                  throttleAuthenticatedDeprecatedApiRequestsPerPeriod:
+                    type: integer
+                  throttleAuthenticatedFilesApiEnabled:
+                    type: boolean
+                  throttleAuthenticatedFilesApiPeriodInSeconds:
+                    type: integer
+                  throttleAuthenticatedFilesApiRequestsPerPeriod:
+                    type: integer
+                  throttleAuthenticatedGitLFSEnabled:
+                    type: boolean
+                  throttleAuthenticatedGitLFSPeriodInSeconds:
+                    type: integer
+                  throttleAuthenticatedGitLFSRequestsPerPeriod:
+                    type: integer
+                  throttleAuthenticatedPackagesApiEnabled:
+                    type: boolean
+                  throttleAuthenticatedPackagesApiPeriodInSeconds:
+                    type: integer
+                  throttleAuthenticatedPackagesApiRequestsPerPeriod:
+                    type: integer
+                  throttleAuthenticatedWebEnabled:
+                    type: boolean
+                  throttleAuthenticatedWebPeriodInSeconds:
+                    type: integer
+                  throttleAuthenticatedWebRequestsPerPeriod:
+                    type: integer
+                  throttleIncidentManagementNotificationEnabled:
+                    type: boolean
+                  throttleIncidentManagementNotificationPerPeriod:
+                    type: integer
+                  throttleIncidentManagementNotificationPeriodInSeconds:
+                    type: integer
+                  throttleProtectedPathsEnabled:
+                    type: boolean
+                  throttleProtectedPathsPeriodInSeconds:
+                    type: integer
+                  throttleProtectedPathsRequestsPerPeriod:
+                    type: integer
+                  throttleUnauthenticatedApiEnabled:
+                    type: boolean
+                  throttleUnauthenticatedApiPeriodInSeconds:
+                    type: integer
+                  throttleUnauthenticatedApiRequestsPerPeriod:
+                    type: integer
+                  throttleUnauthenticatedDeprecatedApiEnabled:
+                    type: boolean
+                  throttleUnauthenticatedDeprecatedApiPeriodInSeconds:
+                    type: integer
+                  throttleUnauthenticatedDeprecatedApiRequestsPerPeriod:
+                    type: integer
+                  throttleUnauthenticatedEnabled:
+                    type: boolean
+                  throttleUnauthenticatedFilesApiEnabled:
+                    type: boolean
+                  throttleUnauthenticatedFilesApiPeriodInSeconds:
+                    type: integer
+                  throttleUnauthenticatedFilesApiRequestsPerPeriod:
+                    type: integer
+                  throttleUnauthenticatedGitLFSEnabled:
+                    type: boolean
+                  throttleUnauthenticatedGitLFSPeriodInSeconds:
+                    type: integer
+                  throttleUnauthenticatedGitLFSRequestsPerPeriod:
+                    type: integer
+                  throttleUnauthenticatedPackagesApiEnabled:
+                    type: boolean
+                  throttleUnauthenticatedPackagesApiPeriodInSeconds:
+                    type: integer
+                  throttleUnauthenticatedPackagesApiRequestsPerPeriod:
+                    type: integer
+                  throttleUnauthenticatedPeriodInSeconds:
+                    type: integer
+                  throttleUnauthenticatedRequestsPerPeriod:
+                    type: integer
+                  throttleUnauthenticatedWebEnabled:
+                    type: boolean
+                  throttleUnauthenticatedWebPeriodInSeconds:
+                    type: integer
+                  throttleUnauthenticatedWebRequestsPerPeriod:
+                    type: integer
+                  timeTrackingLimitToHours:
+                    type: boolean
+                  twoFactorGracePeriod:
+                    type: integer
+                  unconfirmedUsersDeleteAfterDays:
+                    type: integer
+                  uniqueIpsLimitEnabled:
+                    type: boolean
+                  uniqueIpsLimitPerUser:
+                    type: integer
+                  uniqueIpsLimitTimeWindow:
+                    type: integer
+                  updateRunnerVersionsEnabled:
+                    type: boolean
+                  updatedAt:
+                    format: date-time
+                    type: string
+                  updatingNameDisabledForUsers:
+                    type: boolean
+                  usagePingEnabled:
+                    type: boolean
+                  usagePingFeaturesEnabled:
+                    type: boolean
+                  useClickhouseForAnalytics:
+                    type: boolean
+                  userDeactivationEmailsEnabled:
+                    type: boolean
+                  userDefaultExternal:
+                    type: boolean
+                  userDefaultInternalRegex:
+                    type: string
+                  userDefaultsToPrivateProfile:
+                    type: boolean
+                  userEmailLookupLimit:
+                    type: integer
+                  userOauthApplications:
+                    type: boolean
+                  userShowAddSshKeyMessage:
+                    type: boolean
+                  usersGetByIdLimit:
+                    type: integer
+                  usersGetByIdLimitAllowlistRaw:
+                    type: string
+                  validRunnerRegistrars:
+                    items:
+                      type: string
+                    type: array
+                  versionCheckEnabled:
+                    type: boolean
+                  webIdEClientsidePreviewEnabled:
+                    type: boolean
+                  whatsNewVariant:
+                    type: string
+                  wikiPageMaxContentBytes:
+                    type: integer
+                type: object
               conditions:
                 description: Conditions of the resource.
                 items:

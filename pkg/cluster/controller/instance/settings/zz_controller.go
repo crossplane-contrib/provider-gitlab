@@ -138,6 +138,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
+	cr.Status.AtProvider = instance.GenerateApplicationSettingsObservation(settings)
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
