@@ -1888,6 +1888,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.PublicJobs != nil {
+		in, out := &in.PublicJobs, &out.PublicJobs
+		*out = new(bool)
+		**out = **in
+	}
 	if in.PushRules != nil {
 		in, out := &in.PushRules, &out.PushRules
 		*out = new(PushRules)
