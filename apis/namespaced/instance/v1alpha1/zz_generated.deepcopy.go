@@ -21,6 +21,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -259,6 +260,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(string)
 		**out = **in
 	}
+	if in.AkismetAPIKeySecretRef != nil {
+		in, out := &in.AkismetAPIKeySecretRef, &out.AkismetAPIKeySecretRef
+		*out = new(v1.LocalSecretKeySelector)
+		**out = **in
+	}
 	if in.AkismetEnabled != nil {
 		in, out := &in.AkismetEnabled, &out.AkismetEnabled
 		*out = new(bool)
@@ -337,6 +343,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(string)
 		**out = **in
 	}
+	if in.AssetProxySecretKeySecretRef != nil {
+		in, out := &in.AssetProxySecretKeySecretRef, &out.AssetProxySecretKeySecretRef
+		*out = new(v1.LocalSecretKeySelector)
+		**out = **in
+	}
 	if in.AssetProxyURL != nil {
 		in, out := &in.AssetProxyURL, &out.AssetProxyURL
 		*out = new(string)
@@ -394,6 +405,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.CanCreateGroup != nil {
 		in, out := &in.CanCreateGroup, &out.CanCreateGroup
+		*out = new(bool)
+		**out = **in
+	}
+	if in.CanCreateOrganization != nil {
+		in, out := &in.CanCreateOrganization, &out.CanCreateOrganization
 		*out = new(bool)
 		**out = **in
 	}
@@ -718,6 +734,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(string)
 		**out = **in
 	}
+	if in.EKSAccessKeyIDSecretRef != nil {
+		in, out := &in.EKSAccessKeyIDSecretRef, &out.EKSAccessKeyIDSecretRef
+		*out = new(v1.LocalSecretKeySelector)
+		**out = **in
+	}
 	if in.EKSAccountID != nil {
 		in, out := &in.EKSAccountID, &out.EKSAccountID
 		*out = new(string)
@@ -731,6 +752,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	if in.EKSSecretAccessKey != nil {
 		in, out := &in.EKSSecretAccessKey, &out.EKSSecretAccessKey
 		*out = new(string)
+		**out = **in
+	}
+	if in.EKSSecretAccessKeySecretRef != nil {
+		in, out := &in.EKSSecretAccessKeySecretRef, &out.EKSSecretAccessKeySecretRef
+		*out = new(v1.LocalSecretKeySelector)
 		**out = **in
 	}
 	if in.Ed25519KeyRestriction != nil {
@@ -753,6 +779,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(string)
 		**out = **in
 	}
+	if in.ElasticsearchAWSAccessKeySecretRef != nil {
+		in, out := &in.ElasticsearchAWSAccessKeySecretRef, &out.ElasticsearchAWSAccessKeySecretRef
+		*out = new(v1.LocalSecretKeySelector)
+		**out = **in
+	}
 	if in.ElasticsearchAWSRegion != nil {
 		in, out := &in.ElasticsearchAWSRegion, &out.ElasticsearchAWSRegion
 		*out = new(string)
@@ -761,6 +792,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	if in.ElasticsearchAWSSecretAccessKey != nil {
 		in, out := &in.ElasticsearchAWSSecretAccessKey, &out.ElasticsearchAWSSecretAccessKey
 		*out = new(string)
+		**out = **in
+	}
+	if in.ElasticsearchAWSSecretAccessKeySecretRef != nil {
+		in, out := &in.ElasticsearchAWSSecretAccessKeySecretRef, &out.ElasticsearchAWSSecretAccessKeySecretRef
+		*out = new(v1.LocalSecretKeySelector)
 		**out = **in
 	}
 	if in.ElasticsearchAnalyzersKuromojiEnabled != nil {
@@ -835,6 +871,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	if in.ElasticsearchPassword != nil {
 		in, out := &in.ElasticsearchPassword, &out.ElasticsearchPassword
 		*out = new(string)
+		**out = **in
+	}
+	if in.ElasticsearchPasswordSecretRef != nil {
+		in, out := &in.ElasticsearchPasswordSecretRef, &out.ElasticsearchPasswordSecretRef
+		*out = new(v1.LocalSecretKeySelector)
 		**out = **in
 	}
 	if in.ElasticsearchPauseIndexing != nil {
@@ -961,6 +1002,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(string)
 		**out = **in
 	}
+	if in.ExternalAuthClientKeySecretRef != nil {
+		in, out := &in.ExternalAuthClientKeySecretRef, &out.ExternalAuthClientKeySecretRef
+		*out = new(v1.LocalSecretKeySelector)
+		**out = **in
+	}
 	if in.ExternalAuthClientKeyPass != nil {
 		in, out := &in.ExternalAuthClientKeyPass, &out.ExternalAuthClientKeyPass
 		*out = new(string)
@@ -994,6 +1040,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	if in.ExternalPipelineValidationServiceToken != nil {
 		in, out := &in.ExternalPipelineValidationServiceToken, &out.ExternalPipelineValidationServiceToken
 		*out = new(string)
+		**out = **in
+	}
+	if in.ExternalPipelineValidationServiceTokenSecretRef != nil {
+		in, out := &in.ExternalPipelineValidationServiceTokenSecretRef, &out.ExternalPipelineValidationServiceTokenSecretRef
+		*out = new(v1.LocalSecretKeySelector)
 		**out = **in
 	}
 	if in.ExternalPipelineValidationServiceURL != nil {
@@ -1243,6 +1294,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(string)
 		**out = **in
 	}
+	if in.JiraConnectApplicationKeySecretRef != nil {
+		in, out := &in.JiraConnectApplicationKeySecretRef, &out.JiraConnectApplicationKeySecretRef
+		*out = new(v1.LocalSecretKeySelector)
+		**out = **in
+	}
 	if in.JiraConnectPublicKeyStorageEnabled != nil {
 		in, out := &in.JiraConnectPublicKeyStorageEnabled, &out.JiraConnectPublicKeyStorageEnabled
 		*out = new(bool)
@@ -1307,6 +1363,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	if in.MailgunSigningKey != nil {
 		in, out := &in.MailgunSigningKey, &out.MailgunSigningKey
 		*out = new(string)
+		**out = **in
+	}
+	if in.MailgunSigningKeySecretRef != nil {
+		in, out := &in.MailgunSigningKeySecretRef, &out.MailgunSigningKeySecretRef
+		*out = new(v1.LocalSecretKeySelector)
 		**out = **in
 	}
 	if in.MaintenanceMode != nil {
@@ -1647,9 +1708,19 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(string)
 		**out = **in
 	}
+	if in.RecaptchaPrivateKeySecretRef != nil {
+		in, out := &in.RecaptchaPrivateKeySecretRef, &out.RecaptchaPrivateKeySecretRef
+		*out = new(v1.LocalSecretKeySelector)
+		**out = **in
+	}
 	if in.RecaptchaSiteKey != nil {
 		in, out := &in.RecaptchaSiteKey, &out.RecaptchaSiteKey
 		*out = new(string)
+		**out = **in
+	}
+	if in.RecaptchaSiteKeySecretRef != nil {
+		in, out := &in.RecaptchaSiteKeySecretRef, &out.RecaptchaSiteKeySecretRef
+		*out = new(v1.LocalSecretKeySelector)
 		**out = **in
 	}
 	if in.ReceiveMaxInputSize != nil {
@@ -1754,6 +1825,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	if in.SecretDetectionTokenRevocationToken != nil {
 		in, out := &in.SecretDetectionTokenRevocationToken, &out.SecretDetectionTokenRevocationToken
 		*out = new(string)
+		**out = **in
+	}
+	if in.SecretDetectionTokenRevocationTokenSecretRef != nil {
+		in, out := &in.SecretDetectionTokenRevocationTokenSecretRef, &out.SecretDetectionTokenRevocationTokenSecretRef
+		*out = new(v1.LocalSecretKeySelector)
 		**out = **in
 	}
 	if in.SecretDetectionTokenRevocationURL != nil {
@@ -1876,14 +1952,29 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(string)
 		**out = **in
 	}
+	if in.SlackAppSecretSecretRef != nil {
+		in, out := &in.SlackAppSecretSecretRef, &out.SlackAppSecretSecretRef
+		*out = new(v1.LocalSecretKeySelector)
+		**out = **in
+	}
 	if in.SlackAppSigningSecret != nil {
 		in, out := &in.SlackAppSigningSecret, &out.SlackAppSigningSecret
 		*out = new(string)
 		**out = **in
 	}
+	if in.SlackAppSigningSecretSecretRef != nil {
+		in, out := &in.SlackAppSigningSecretSecretRef, &out.SlackAppSigningSecretSecretRef
+		*out = new(v1.LocalSecretKeySelector)
+		**out = **in
+	}
 	if in.SlackAppVerificationToken != nil {
 		in, out := &in.SlackAppVerificationToken, &out.SlackAppVerificationToken
 		*out = new(string)
+		**out = **in
+	}
+	if in.SlackAppVerificationTokenSecretRef != nil {
+		in, out := &in.SlackAppVerificationTokenSecretRef, &out.SlackAppVerificationTokenSecretRef
+		*out = new(v1.LocalSecretKeySelector)
 		**out = **in
 	}
 	if in.SnippetSizeLimit != nil {
@@ -1936,6 +2027,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(string)
 		**out = **in
 	}
+	if in.SpamCheckAPIKeySecretRef != nil {
+		in, out := &in.SpamCheckAPIKeySecretRef, &out.SpamCheckAPIKeySecretRef
+		*out = new(v1.LocalSecretKeySelector)
+		**out = **in
+	}
 	if in.SpamCheckEndpointEnabled != nil {
 		in, out := &in.SpamCheckEndpointEnabled, &out.SpamCheckEndpointEnabled
 		*out = new(bool)
@@ -1949,6 +2045,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	if in.StaticObjectsExternalStorageAuthToken != nil {
 		in, out := &in.StaticObjectsExternalStorageAuthToken, &out.StaticObjectsExternalStorageAuthToken
 		*out = new(string)
+		**out = **in
+	}
+	if in.StaticObjectsExternalStorageAuthTokenSecretRef != nil {
+		in, out := &in.StaticObjectsExternalStorageAuthTokenSecretRef, &out.StaticObjectsExternalStorageAuthTokenSecretRef
+		*out = new(v1.LocalSecretKeySelector)
 		**out = **in
 	}
 	if in.StaticObjectsExternalStorageURL != nil {

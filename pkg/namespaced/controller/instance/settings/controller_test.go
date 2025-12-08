@@ -74,6 +74,12 @@ func withSpec(p v1alpha1.ApplicationSettingsParameters) modifier {
 	}
 }
 
+func withAtProvider(o v1alpha1.ApplicationSettingsObservation) modifier {
+	return func(cr *v1alpha1.ApplicationSettings) {
+		cr.Status.AtProvider = o
+	}
+}
+
 func applicationSettings(m ...modifier) *v1alpha1.ApplicationSettings {
 	cr := &v1alpha1.ApplicationSettings{}
 	for _, f := range m {
@@ -151,6 +157,9 @@ func TestObserve(t *testing.T) {
 					withSpec(v1alpha1.ApplicationSettingsParameters{
 						SignupEnabled: boolPtr(true),
 					}),
+					withAtProvider(instance.GenerateApplicationSettingsObservation(&gitlab.Settings{
+						SignupEnabled: true,
+					})),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:   true,
@@ -179,6 +188,9 @@ func TestObserve(t *testing.T) {
 					withSpec(v1alpha1.ApplicationSettingsParameters{
 						SignupEnabled: boolPtr(true),
 					}),
+					withAtProvider(instance.GenerateApplicationSettingsObservation(&gitlab.Settings{
+						SignupEnabled: false,
+					})),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:   true,

@@ -64,6 +64,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.BulkImportEnabled = p.BulkImportEnabled
 	o.BulkImportMaxDownloadFileSize = p.BulkImportMaxDownloadFileSize
 	o.CanCreateGroup = p.CanCreateGroup
+	o.CanCreateOrganization = p.CanCreateOrganization
 	o.CheckNamespacePlan = p.CheckNamespacePlan
 	o.CIJobLiveTraceEnabled = p.CIJobLiveTraceEnabled
 	o.CIMaxIncludes = p.CIMaxIncludes
@@ -470,7 +471,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.AdminMode = g.AdminMode
 	o.AfterSignOutPath = g.AfterSignOutPath
 	o.AfterSignUpText = g.AfterSignUpText
-	o.AkismetAPIKey = g.AkismetAPIKey
 	o.AkismetEnabled = g.AkismetEnabled
 	o.AllowAccountDeletion = g.AllowAccountDeletion
 	o.AllowAllIntegrations = g.AllowAllIntegrations
@@ -485,7 +485,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.AssetProxyAllowlist = g.AssetProxyAllowlist
 	o.AssetProxyEnabled = g.AssetProxyEnabled
 	o.AssetProxyURL = g.AssetProxyURL
-	o.AssetProxySecretKey = g.AssetProxySecretKey
 	o.AuthorizedKeysEnabled = g.AuthorizedKeysEnabled
 	o.AutoBanUserOnExcessiveProjectsDownload = g.AutoBanUserOnExcessiveProjectsDownload
 	o.AutocompleteUsers = g.AutocompleteUsers
@@ -562,16 +561,12 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.DuoFeaturesEnabled = g.DuoFeaturesEnabled
 	o.ECDSAKeyRestriction = g.ECDSAKeyRestriction
 	o.ECDSASKKeyRestriction = g.ECDSASKKeyRestriction
-	o.EKSAccessKeyID = g.EKSAccessKeyID
 	o.EKSAccountID = g.EKSAccountID
 	o.EKSIntegrationEnabled = g.EKSIntegrationEnabled
-	o.EKSSecretAccessKey = g.EKSSecretAccessKey
 	o.Ed25519KeyRestriction = g.Ed25519KeyRestriction
 	o.Ed25519SKKeyRestriction = g.Ed25519SKKeyRestriction
 	o.ElasticsearchAWS = g.ElasticsearchAWS
-	o.ElasticsearchAWSAccessKey = g.ElasticsearchAWSAccessKey
 	o.ElasticsearchAWSRegion = g.ElasticsearchAWSRegion
-	o.ElasticsearchAWSSecretAccessKey = g.ElasticsearchAWSSecretAccessKey
 	o.ElasticsearchAnalyzersKuromojiEnabled = g.ElasticsearchAnalyzersKuromojiEnabled
 	o.ElasticsearchAnalyzersKuromojiSearch = g.ElasticsearchAnalyzersKuromojiSearch
 	o.ElasticsearchAnalyzersSmartCNEnabled = g.ElasticsearchAnalyzersSmartCNEnabled
@@ -585,7 +580,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.ElasticsearchMaxBulkSizeMB = g.ElasticsearchMaxBulkSizeMB
 	o.ElasticsearchMaxCodeIndexingConcurrency = g.ElasticsearchMaxCodeIndexingConcurrency
 	o.ElasticsearchNamespaceIDs = g.ElasticsearchNamespaceIDs
-	o.ElasticsearchPassword = g.ElasticsearchPassword
 	o.ElasticsearchPauseIndexing = g.ElasticsearchPauseIndexing
 	o.ElasticsearchProjectIDs = g.ElasticsearchProjectIDs
 	o.ElasticsearchReplicas = g.ElasticsearchReplicas
@@ -609,14 +603,12 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.EnforceSSHKeyExpiration = g.EnforceSSHKeyExpiration
 	o.EnforceTerms = g.EnforceTerms
 	o.ExternalAuthClientCert = g.ExternalAuthClientCert
-	o.ExternalAuthClientKey = g.ExternalAuthClientKey
 	o.ExternalAuthClientKeyPass = g.ExternalAuthClientKeyPass
 	o.ExternalAuthorizationServiceDefaultLabel = g.ExternalAuthorizationServiceDefaultLabel
 	o.ExternalAuthorizationServiceEnabled = g.ExternalAuthorizationServiceEnabled
 	o.ExternalAuthorizationServiceTimeout = g.ExternalAuthorizationServiceTimeout
 	o.ExternalAuthorizationServiceURL = g.ExternalAuthorizationServiceURL
 	o.ExternalPipelineValidationServiceTimeout = g.ExternalPipelineValidationServiceTimeout
-	o.ExternalPipelineValidationServiceToken = g.ExternalPipelineValidationServiceToken
 	o.ExternalPipelineValidationServiceURL = g.ExternalPipelineValidationServiceURL
 	o.FailedLoginAttemptsUnlockPeriodInMinutes = g.FailedLoginAttemptsUnlockPeriodInMinutes
 	o.FileTemplateProjectID = g.FileTemplateProjectID
@@ -663,7 +655,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.InProductMarketingEmailsEnabled = g.InProductMarketingEmailsEnabled
 	o.InvisibleCaptchaEnabled = g.InvisibleCaptchaEnabled
 	o.IssuesCreateLimit = g.IssuesCreateLimit
-	o.JiraConnectApplicationKey = g.JiraConnectApplicationKey
 	o.JiraConnectPublicKeyStorageEnabled = g.JiraConnectPublicKeyStorageEnabled
 	o.JiraConnectProxyURL = g.JiraConnectProxyURL
 	o.KeepLatestArtifact = g.KeepLatestArtifact
@@ -675,7 +666,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.LockMembershipsToLDAP = g.LockMembershipsToLDAP
 	o.LoginRecaptchaProtectionEnabled = g.LoginRecaptchaProtectionEnabled
 	o.MailgunEventsEnabled = g.MailgunEventsEnabled
-	o.MailgunSigningKey = g.MailgunSigningKey
 	o.MaintenanceMode = g.MaintenanceMode
 	o.MaintenanceModeMessage = g.MaintenanceModeMessage
 	o.MavenPackageRequestsForwarding = g.MavenPackageRequestsForwarding
@@ -741,8 +731,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.RateLimitingResponseText = g.RateLimitingResponseText
 	o.RawBlobRequestLimit = g.RawBlobRequestLimit
 	o.RecaptchaEnabled = g.RecaptchaEnabled
-	o.RecaptchaPrivateKey = g.RecaptchaPrivateKey
-	o.RecaptchaSiteKey = g.RecaptchaSiteKey
 	o.ReceiveMaxInputSize = g.ReceiveMaxInputSize
 	o.ReceptiveClusterAgentsEnabled = g.ReceptiveClusterAgentsEnabled
 	o.RememberMeEnabled = g.RememberMeEnabled
@@ -760,7 +748,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.SearchRateLimitUnauthenticated = g.SearchRateLimitUnauthenticated
 	o.SecretDetectionRevocationTokenTypesURL = g.SecretDetectionRevocationTokenTypesURL
 	o.SecretDetectionTokenRevocationEnabled = g.SecretDetectionTokenRevocationEnabled
-	o.SecretDetectionTokenRevocationToken = g.SecretDetectionTokenRevocationToken
 	o.SecretDetectionTokenRevocationURL = g.SecretDetectionTokenRevocationURL
 	o.SecurityApprovalPoliciesLimit = g.SecurityApprovalPoliciesLimit
 	o.SecurityPolicyGlobalGroupApproversEnabled = g.SecurityPolicyGlobalGroupApproversEnabled
@@ -784,9 +771,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.SilentModeEnabled = g.SilentModeEnabled
 	o.SlackAppEnabled = g.SlackAppEnabled
 	o.SlackAppID = g.SlackAppID
-	o.SlackAppSecret = g.SlackAppSecret
-	o.SlackAppSigningSecret = g.SlackAppSigningSecret
-	o.SlackAppVerificationToken = g.SlackAppVerificationToken
 	o.SnippetSizeLimit = g.SnippetSizeLimit
 	o.SnowplowAppID = g.SnowplowAppID
 	o.SnowplowCollectorHostname = g.SnowplowCollectorHostname
@@ -796,10 +780,8 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.SourcegraphEnabled = g.SourcegraphEnabled
 	o.SourcegraphPublicOnly = g.SourcegraphPublicOnly
 	o.SourcegraphURL = g.SourcegraphURL
-	o.SpamCheckAPIKey = g.SpamCheckAPIKey
 	o.SpamCheckEndpointEnabled = g.SpamCheckEndpointEnabled
 	o.SpamCheckEndpointURL = g.SpamCheckEndpointURL
-	o.StaticObjectsExternalStorageAuthToken = g.StaticObjectsExternalStorageAuthToken
 	o.StaticObjectsExternalStorageURL = g.StaticObjectsExternalStorageURL
 	o.SuggestPipelineEnabled = g.SuggestPipelineEnabled
 	o.TerminalMaxSessionTime = g.TerminalMaxSessionTime

@@ -40,12 +40,11 @@ import (
 )
 
 const (
-	errNotSettings     = "managed resource is not a Gitlab settings custom resource"
-	errGetFailed       = "cannot get Gitlab settings"
-	errCreateFailed    = "cannot create Gitlab settings"
-	errUpdateFailed    = "cannot update Gitlab settings"
-	errDeleteFailed    = "cannot delete Gitlab settings"
-	errSettingsMissing = "Settings are missing"
+	errNotSettings               = "managed resource is not a Gitlab settings custom resource"
+	errGetFailed                 = "cannot get Gitlab settings"
+	errCreateFailed              = "cannot create Gitlab settings"
+	errUpdateFailed              = "cannot update Gitlab settings"
+	errFailedToUpdateFromSecrets = "failed to update settings from secrets"
 )
 
 // SetupApplicationSettings adds a controller that reconciles GitLab Instance Settings.
@@ -138,6 +137,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
+	// Update settings secret fields from Kubernetes Secrets
+	err = e.updateSettingsFromSecrets(mg, ctx, &cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errFailedToUpdateFromSecrets)
+	}
+
 	cr.Status.AtProvider = instance.GenerateApplicationSettingsObservation(settings)
 	cr.Status.SetConditions(xpv1.Available())
 
@@ -158,7 +163,15 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	cr.Status.SetConditions(xpv1.Creating())
-	_, _, err := e.client.UpdateSettings(
+
+	// Update settings secret fields from Kubernetes Secrets
+	err := e.updateSettingsFromSecrets(mg, ctx, &cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errFailedToUpdateFromSecrets)
+	}
+
+	// Call GitLab Settings API
+	_, _, err = e.client.UpdateSettings(
 		instance.GenerateUpdateApplicationSettingsOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx))
 	if err != nil {
@@ -178,7 +191,15 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	cr.Status.SetConditions(xpv1.Creating())
-	_, _, err := e.client.UpdateSettings(
+
+	// Update settings secret fields from Kubernetes Secrets
+	err := e.updateSettingsFromSecrets(mg, ctx, &cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errFailedToUpdateFromSecrets)
+	}
+
+	// Call GitLab Settings API
+	_, _, err = e.client.UpdateSettings(
 		instance.GenerateUpdateApplicationSettingsOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx))
 	if err != nil {
@@ -201,5 +222,16 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 func (e *external) Disconnect(ctx context.Context) error {
 	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
+}
+
+// updateParameterFromSecret fetches a sensitive setting value from a Kubernetes Secret
+// and assigns it to the provided parameter pointer.
+func (e *external) updateParameterFromSecret(mg resource.Managed, ctx context.Context, selector *xpv1.SecretKeySelector, param **string) error {
+	value, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, selector)
+	if err != nil {
+		return err
+	}
+	*param = value
 	return nil
 }

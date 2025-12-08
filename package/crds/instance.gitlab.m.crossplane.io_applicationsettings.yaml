@@ -70,6 +70,20 @@ spec:
                     type: string
                   akismetApiKey:
                     type: string
+                  akismetApiKeySecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   akismetEnabled:
                     type: boolean
                   allowAccountDeletion:
@@ -104,6 +118,20 @@ spec:
                     type: boolean
                   assetProxySecretKey:
                     type: string
+                  assetProxySecretKeySecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   assetProxyUrl:
                     type: string
                   assetProxyWhitelist:
@@ -131,6 +159,8 @@ spec:
                   bulkImportMaxDownloadFileSize:
                     type: integer
                   canCreateGroup:
+                    type: boolean
+                  canCreateOrganization:
                     type: boolean
                   checkNamespacePlan:
                     type: boolean
@@ -292,12 +322,40 @@ spec:
                     type: integer
                   eksAccessKeyId:
                     type: string
+                  eksAccessKeyIdSecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   eksAccountId:
                     type: string
                   eksIntegrationEnabled:
                     type: boolean
                   eksSecretAccessKey:
                     type: string
+                  eksSecretAccessKeySecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   elasticsearchAnalyzersKuromojiEnabled:
                     type: boolean
                   elasticsearchAnalyzersKuromojiSearch:
@@ -310,10 +368,38 @@ spec:
                     type: boolean
                   elasticsearchAwsAccessKey:
                     type: string
+                  elasticsearchAwsAccessKeySecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   elasticsearchAwsRegion:
                     type: string
                   elasticsearchAwsSecretAccessKey:
                     type: string
+                  elasticsearchAwsSecretAccessKeySecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   elasticsearchClientRequestTimeout:
                     type: integer
                   elasticsearchIndexedFieldLengthLimit:
@@ -336,6 +422,20 @@ spec:
                     type: array
                   elasticsearchPassword:
                     type: string
+                  elasticsearchPasswordSecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   elasticsearchPauseIndexing:
                     type: boolean
                   elasticsearchProjectIds:
@@ -388,6 +488,20 @@ spec:
                     type: string
                   externalAuthClientKeyPass:
                     type: string
+                  externalAuthClientKeySecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   externalAuthorizationServiceDefaultLabel:
                     type: string
                   externalAuthorizationServiceEnabled:
@@ -400,6 +514,20 @@ spec:
                     type: integer
                   externalPipelineValidationServiceToken:
                     type: string
+                  externalPipelineValidationServiceTokenSecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   externalPipelineValidationServiceUrl:
                     type: string
                   failedLoginAttemptsUnlockPeriodInMinutes:
@@ -508,6 +636,20 @@ spec:
                     type: integer
                   jiraConnectApplicationKey:
                     type: string
+                  jiraConnectApplicationKeySecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   jiraConnectProxyUrl:
                     type: string
                   jiraConnectPublicKeyStorageEnabled:
@@ -534,6 +676,20 @@ spec:
                     type: boolean
                   mailgunSigningKey:
                     type: string
+                  mailgunSigningKeySecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   maintenanceMode:
                     type: boolean
                   maintenanceModeMessage:
@@ -672,8 +828,36 @@ spec:
                     type: boolean
                   recaptchaPrivateKey:
                     type: string
+                  recaptchaPrivateKeySecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   recaptchaSiteKey:
                     type: string
+                  recaptchaSiteKeySecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   receiveMaxInputSize:
                     type: integer
                   receptiveClusterAgentsEnabled:
@@ -718,6 +902,20 @@ spec:
                     type: boolean
                   secretDetectionTokenRevocationToken:
                     type: string
+                  secretDetectionTokenRevocationTokenSecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   secretDetectionTokenRevocationUrl:
                     type: string
                   securityApprovalPoliciesLimit:
@@ -766,10 +964,52 @@ spec:
                     type: string
                   slackAppSecret:
                     type: string
+                  slackAppSecretSecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   slackAppSigningSecret:
                     type: string
+                  slackAppSigningSecretSecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   slackAppVerificationToken:
                     type: string
+                  slackAppVerificationTokenSecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   snippetSizeLimit:
                     type: integer
                   snowplowAppId:
@@ -790,12 +1030,40 @@ spec:
                     type: string
                   spamCheckApiKey:
                     type: string
+                  spamCheckApiKeySecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   spamCheckEndpointEnabled:
                     type: boolean
                   spamCheckEndpointUrl:
                     type: string
                   staticObjectsExternalStorageAuthToken:
                     type: string
+                  staticObjectsExternalStorageAuthTokenSecretRef:
+                    description: |-
+                      A LocalSecretKeySelector is a reference to a secret key
+                      in the same namespace with the referencing object.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   staticObjectsExternalStorageUrl:
                     type: string
                   suggestPipelineEnabled:
@@ -1022,8 +1290,6 @@ spec:
                     type: string
                   afterSignUpText:
                     type: string
-                  akismetApiKey:
-                    type: string
                   akismetEnabled:
                     type: boolean
                   allowAccountDeletion:
@@ -1056,8 +1322,6 @@ spec:
                     type: array
                   assetProxyEnabled:
                     type: boolean
-                  assetProxySecretKey:
-                    type: string
                   assetProxyUrl:
                     type: string
                   assetProxyWhitelist:
@@ -1247,14 +1511,10 @@ spec:
                     type: integer
                   ed25519SKKeyRestriction:
                     type: integer
-                  eksAccessKeyId:
-                    type: string
                   eksAccountId:
                     type: string
                   eksIntegrationEnabled:
                     type: boolean
-                  eksSecretAccessKey:
-                    type: string
                   elasticsearchAnalyzersKuromojiEnabled:
                     type: boolean
                   elasticsearchAnalyzersKuromojiSearch:
@@ -1265,11 +1525,7 @@ spec:
                     type: boolean
                   elasticsearchAws:
                     type: boolean
-                  elasticsearchAwsAccessKey:
-                    type: string
                   elasticsearchAwsRegion:
-                    type: string
-                  elasticsearchAwsSecretAccessKey:
                     type: string
                   elasticsearchClientRequestTimeout:
                     type: integer
@@ -1291,8 +1547,6 @@ spec:
                     items:
                       type: integer
                     type: array
-                  elasticsearchPassword:
-                    type: string
                   elasticsearchPauseIndexing:
                     type: boolean
                   elasticsearchProjectIds:
@@ -1343,8 +1597,6 @@ spec:
                     type: boolean
                   externalAuthClientCert:
                     type: string
-                  externalAuthClientKey:
-                    type: string
                   externalAuthClientKeyPass:
                     type: string
                   externalAuthorizationServiceDefaultLabel:
@@ -1357,8 +1609,6 @@ spec:
                     type: string
                   externalPipelineValidationServiceTimeout:
                     type: integer
-                  externalPipelineValidationServiceToken:
-                    type: string
                   externalPipelineValidationServiceUrl:
                     type: string
                   failedLoginAttemptsUnlockPeriodInMinutes:
@@ -1467,8 +1717,6 @@ spec:
                     type: boolean
                   issuesCreateLimit:
                     type: integer
-                  jiraConnectApplicationKey:
-                    type: string
                   jiraConnectProxyUrl:
                     type: string
                   jiraConnectPublicKeyStorageEnabled:
@@ -1493,8 +1741,6 @@ spec:
                     type: boolean
                   mailgunEventsEnabled:
                     type: boolean
-                  mailgunSigningKey:
-                    type: string
                   maintenanceMode:
                     type: boolean
                   maintenanceModeMessage:
@@ -1631,10 +1877,6 @@ spec:
                     type: integer
                   recaptchaEnabled:
                     type: boolean
-                  recaptchaPrivateKey:
-                    type: string
-                  recaptchaSiteKey:
-                    type: string
                   receiveMaxInputSize:
                     type: integer
                   receptiveClusterAgentsEnabled:
@@ -1677,8 +1919,6 @@ spec:
                     type: string
                   secretDetectionTokenRevocationEnabled:
                     type: boolean
-                  secretDetectionTokenRevocationToken:
-                    type: string
                   secretDetectionTokenRevocationUrl:
                     type: string
                   securityApprovalPoliciesLimit:
@@ -1725,12 +1965,6 @@ spec:
                     type: boolean
                   slackAppId:
                     type: string
-                  slackAppSecret:
-                    type: string
-                  slackAppSigningSecret:
-                    type: string
-                  slackAppVerificationToken:
-                    type: string
                   snippetSizeLimit:
                     type: integer
                   snowplowAppId:
@@ -1749,13 +1983,9 @@ spec:
                     type: boolean
                   sourcegraphUrl:
                     type: string
-                  spamCheckApiKey:
-                    type: string
                   spamCheckEndpointEnabled:
                     type: boolean
                   spamCheckEndpointUrl:
-                    type: string
-                  staticObjectsExternalStorageAuthToken:
                     type: string
                   staticObjectsExternalStorageUrl:
                     type: string

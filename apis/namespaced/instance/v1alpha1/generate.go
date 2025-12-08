@@ -57,9 +57,20 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 )
 
 `
+
+var (
+	sensitiveFieldsKeywords = []string{
+		"password",
+		"token",
+		"key",
+		"keyid",
+		"secret",
+	}
+)
 
 func main() {
 	out := &strings.Builder{}
@@ -82,7 +93,7 @@ func main() {
 }
 
 func generateStruct(out *strings.Builder, name string, t reflect.Type) {
-	out.WriteString(fmt.Sprintf("type %s struct {\n", name))
+	fmt.Fprintf(out, "type %s struct {\n", name)
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		fieldName := field.Name
@@ -91,6 +102,22 @@ func generateStruct(out *strings.Builder, name string, t reflect.Type) {
 		// Skip unexported fields
 		if len(fieldName) > 0 && unicode.IsLower([]rune(fieldName)[0]) {
 			continue
+		}
+
+		// Skip if field is sensitive and string type
+		// This is to avoid including sensitive information in the observed state
+		lowerFieldName := strings.ToLower(fieldName)
+		if fieldType.Kind() == reflect.String {
+			skip := false
+			for _, keyword := range sensitiveFieldsKeywords {
+				if strings.HasSuffix(lowerFieldName, keyword) {
+					skip = true
+					break
+				}
+			}
+			if skip {
+				continue
+			}
 		}
 
 		goType := toGoType(fieldType)
@@ -102,13 +129,24 @@ func generateStruct(out *strings.Builder, name string, t reflect.Type) {
 		// Add omitempty
 		tag := fmt.Sprintf("`json:\"%s,omitempty\"`", jsonTag)
 
-		out.WriteString(fmt.Sprintf("// +optional\n\t%s %s %s\n", fieldName, goType, tag))
+		fmt.Fprintf(out, "\t// +optional\n\t%s %s %s\n", fieldName, goType, tag)
+
+		// If the field name contains sensitive keywords, add a SecretRef
+		// This is only required for string pointer fields (that are used in ApplicationSettingsParameters)
+		if fieldType.Kind() == reflect.Pointer && fieldType.Elem().Kind() == reflect.String {
+			for _, keyword := range sensitiveFieldsKeywords {
+				if strings.HasSuffix(lowerFieldName, keyword) {
+					fmt.Fprintf(out, "\t// +optional\n\t%sSecretRef *xpv1.LocalSecretKeySelector `json:\"%sSecretRef,omitempty\"`\n", fieldName, jsonTag)
+					break
+				}
+			}
+		}
 	}
 	out.WriteString("}\n\n")
 }
 
 func toGoType(t reflect.Type) string {
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		return "*" + toGoType(t.Elem())
 	}
 	if t.Kind() == reflect.Slice {

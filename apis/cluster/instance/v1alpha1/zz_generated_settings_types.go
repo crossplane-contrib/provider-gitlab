@@ -23,6 +23,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -39,6 +40,8 @@ type ApplicationSettingsParameters struct {
 	AfterSignUpText *string `json:"afterSignUpText,omitempty"`
 	// +optional
 	AkismetAPIKey *string `json:"akismetApiKey,omitempty"`
+	// +optional
+	AkismetAPIKeySecretRef *xpv1.SecretKeySelector `json:"akismetApiKeySecretRef,omitempty"`
 	// +optional
 	AkismetEnabled *bool `json:"akismetEnabled,omitempty"`
 	// +optional
@@ -68,6 +71,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	AssetProxySecretKey *string `json:"assetProxySecretKey,omitempty"`
 	// +optional
+	AssetProxySecretKeySecretRef *xpv1.SecretKeySelector `json:"assetProxySecretKeySecretRef,omitempty"`
+	// +optional
 	AssetProxyURL *string `json:"assetProxyUrl,omitempty"`
 	// +optional
 	AuthorizedKeysEnabled *bool `json:"authorizedKeysEnabled,omitempty"`
@@ -91,6 +96,8 @@ type ApplicationSettingsParameters struct {
 	BulkImportMaxDownloadFileSize *int `json:"bulkImportMaxDownloadFileSize,omitempty"`
 	// +optional
 	CanCreateGroup *bool `json:"canCreateGroup,omitempty"`
+	// +optional
+	CanCreateOrganization *bool `json:"canCreateOrganization,omitempty"`
 	// +optional
 	CheckNamespacePlan *bool `json:"checkNamespacePlan,omitempty"`
 	// +optional
@@ -216,11 +223,15 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	EKSAccessKeyID *string `json:"eksAccessKeyId,omitempty"`
 	// +optional
+	EKSAccessKeyIDSecretRef *xpv1.SecretKeySelector `json:"eksAccessKeyIdSecretRef,omitempty"`
+	// +optional
 	EKSAccountID *string `json:"eksAccountId,omitempty"`
 	// +optional
 	EKSIntegrationEnabled *bool `json:"eksIntegrationEnabled,omitempty"`
 	// +optional
 	EKSSecretAccessKey *string `json:"eksSecretAccessKey,omitempty"`
+	// +optional
+	EKSSecretAccessKeySecretRef *xpv1.SecretKeySelector `json:"eksSecretAccessKeySecretRef,omitempty"`
 	// +optional
 	Ed25519KeyRestriction *int `json:"ed25519KeyRestriction,omitempty"`
 	// +optional
@@ -230,9 +241,13 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ElasticsearchAWSAccessKey *string `json:"elasticsearchAwsAccessKey,omitempty"`
 	// +optional
+	ElasticsearchAWSAccessKeySecretRef *xpv1.SecretKeySelector `json:"elasticsearchAwsAccessKeySecretRef,omitempty"`
+	// +optional
 	ElasticsearchAWSRegion *string `json:"elasticsearchAwsRegion,omitempty"`
 	// +optional
 	ElasticsearchAWSSecretAccessKey *string `json:"elasticsearchAwsSecretAccessKey,omitempty"`
+	// +optional
+	ElasticsearchAWSSecretAccessKeySecretRef *xpv1.SecretKeySelector `json:"elasticsearchAwsSecretAccessKeySecretRef,omitempty"`
 	// +optional
 	ElasticsearchAnalyzersKuromojiEnabled *bool `json:"elasticsearchAnalyzersKuromojiEnabled,omitempty"`
 	// +optional
@@ -261,6 +276,8 @@ type ApplicationSettingsParameters struct {
 	ElasticsearchNamespaceIDs *[]int `json:"elasticsearchNamespaceIds,omitempty"`
 	// +optional
 	ElasticsearchPassword *string `json:"elasticsearchPassword,omitempty"`
+	// +optional
+	ElasticsearchPasswordSecretRef *xpv1.SecretKeySelector `json:"elasticsearchPasswordSecretRef,omitempty"`
 	// +optional
 	ElasticsearchPauseIndexing *bool `json:"elasticsearchPauseIndexing,omitempty"`
 	// +optional
@@ -310,6 +327,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ExternalAuthClientKey *string `json:"externalAuthClientKey,omitempty"`
 	// +optional
+	ExternalAuthClientKeySecretRef *xpv1.SecretKeySelector `json:"externalAuthClientKeySecretRef,omitempty"`
+	// +optional
 	ExternalAuthClientKeyPass *string `json:"externalAuthClientKeyPass,omitempty"`
 	// +optional
 	ExternalAuthorizationServiceDefaultLabel *string `json:"externalAuthorizationServiceDefaultLabel,omitempty"`
@@ -323,6 +342,8 @@ type ApplicationSettingsParameters struct {
 	ExternalPipelineValidationServiceTimeout *int `json:"externalPipelineValidationServiceTimeout,omitempty"`
 	// +optional
 	ExternalPipelineValidationServiceToken *string `json:"externalPipelineValidationServiceToken,omitempty"`
+	// +optional
+	ExternalPipelineValidationServiceTokenSecretRef *xpv1.SecretKeySelector `json:"externalPipelineValidationServiceTokenSecretRef,omitempty"`
 	// +optional
 	ExternalPipelineValidationServiceURL *string `json:"externalPipelineValidationServiceUrl,omitempty"`
 	// +optional
@@ -418,6 +439,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	JiraConnectApplicationKey *string `json:"jiraConnectApplicationKey,omitempty"`
 	// +optional
+	JiraConnectApplicationKeySecretRef *xpv1.SecretKeySelector `json:"jiraConnectApplicationKeySecretRef,omitempty"`
+	// +optional
 	JiraConnectPublicKeyStorageEnabled *bool `json:"jiraConnectPublicKeyStorageEnabled,omitempty"`
 	// +optional
 	JiraConnectProxyURL *string `json:"jiraConnectProxyUrl,omitempty"`
@@ -441,6 +464,8 @@ type ApplicationSettingsParameters struct {
 	MailgunEventsEnabled *bool `json:"mailgunEventsEnabled,omitempty"`
 	// +optional
 	MailgunSigningKey *string `json:"mailgunSigningKey,omitempty"`
+	// +optional
+	MailgunSigningKeySecretRef *xpv1.SecretKeySelector `json:"mailgunSigningKeySecretRef,omitempty"`
 	// +optional
 	MaintenanceMode *bool `json:"maintenanceMode,omitempty"`
 	// +optional
@@ -574,7 +599,11 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	RecaptchaPrivateKey *string `json:"recaptchaPrivateKey,omitempty"`
 	// +optional
+	RecaptchaPrivateKeySecretRef *xpv1.SecretKeySelector `json:"recaptchaPrivateKeySecretRef,omitempty"`
+	// +optional
 	RecaptchaSiteKey *string `json:"recaptchaSiteKey,omitempty"`
+	// +optional
+	RecaptchaSiteKeySecretRef *xpv1.SecretKeySelector `json:"recaptchaSiteKeySecretRef,omitempty"`
 	// +optional
 	ReceiveMaxInputSize *int `json:"receiveMaxInputSize,omitempty"`
 	// +optional
@@ -611,6 +640,8 @@ type ApplicationSettingsParameters struct {
 	SecretDetectionTokenRevocationEnabled *bool `json:"secretDetectionTokenRevocationEnabled,omitempty"`
 	// +optional
 	SecretDetectionTokenRevocationToken *string `json:"secretDetectionTokenRevocationToken,omitempty"`
+	// +optional
+	SecretDetectionTokenRevocationTokenSecretRef *xpv1.SecretKeySelector `json:"secretDetectionTokenRevocationTokenSecretRef,omitempty"`
 	// +optional
 	SecretDetectionTokenRevocationURL *string `json:"secretDetectionTokenRevocationUrl,omitempty"`
 	// +optional
@@ -660,9 +691,15 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	SlackAppSecret *string `json:"slackAppSecret,omitempty"`
 	// +optional
+	SlackAppSecretSecretRef *xpv1.SecretKeySelector `json:"slackAppSecretSecretRef,omitempty"`
+	// +optional
 	SlackAppSigningSecret *string `json:"slackAppSigningSecret,omitempty"`
 	// +optional
+	SlackAppSigningSecretSecretRef *xpv1.SecretKeySelector `json:"slackAppSigningSecretSecretRef,omitempty"`
+	// +optional
 	SlackAppVerificationToken *string `json:"slackAppVerificationToken,omitempty"`
+	// +optional
+	SlackAppVerificationTokenSecretRef *xpv1.SecretKeySelector `json:"slackAppVerificationTokenSecretRef,omitempty"`
 	// +optional
 	SnippetSizeLimit *int `json:"snippetSizeLimit,omitempty"`
 	// +optional
@@ -684,11 +721,15 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	SpamCheckAPIKey *string `json:"spamCheckApiKey,omitempty"`
 	// +optional
+	SpamCheckAPIKeySecretRef *xpv1.SecretKeySelector `json:"spamCheckApiKeySecretRef,omitempty"`
+	// +optional
 	SpamCheckEndpointEnabled *bool `json:"spamCheckEndpointEnabled,omitempty"`
 	// +optional
 	SpamCheckEndpointURL *string `json:"spamCheckEndpointUrl,omitempty"`
 	// +optional
 	StaticObjectsExternalStorageAuthToken *string `json:"staticObjectsExternalStorageAuthToken,omitempty"`
+	// +optional
+	StaticObjectsExternalStorageAuthTokenSecretRef *xpv1.SecretKeySelector `json:"staticObjectsExternalStorageAuthTokenSecretRef,omitempty"`
 	// +optional
 	StaticObjectsExternalStorageURL *string `json:"staticObjectsExternalStorageUrl,omitempty"`
 	// +optional
@@ -873,8 +914,6 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	AfterSignUpText string `json:"afterSignUpText,omitempty"`
 	// +optional
-	AkismetAPIKey string `json:"akismetApiKey,omitempty"`
-	// +optional
 	AkismetEnabled bool `json:"akismetEnabled,omitempty"`
 	// +optional
 	AllowAccountDeletion bool `json:"allowAccountDeletion,omitempty"`
@@ -902,8 +941,6 @@ type ApplicationSettingsObservation struct {
 	AssetProxyEnabled bool `json:"assetProxyEnabled,omitempty"`
 	// +optional
 	AssetProxyURL string `json:"assetProxyUrl,omitempty"`
-	// +optional
-	AssetProxySecretKey string `json:"assetProxySecretKey,omitempty"`
 	// +optional
 	AuthorizedKeysEnabled bool `json:"authorizedKeysEnabled,omitempty"`
 	// +optional
@@ -1051,13 +1088,9 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	ECDSASKKeyRestriction int `json:"ecdsaskKeyRestriction,omitempty"`
 	// +optional
-	EKSAccessKeyID string `json:"eksAccessKeyId,omitempty"`
-	// +optional
 	EKSAccountID string `json:"eksAccountId,omitempty"`
 	// +optional
 	EKSIntegrationEnabled bool `json:"eksIntegrationEnabled,omitempty"`
-	// +optional
-	EKSSecretAccessKey string `json:"eksSecretAccessKey,omitempty"`
 	// +optional
 	Ed25519KeyRestriction int `json:"ed25519KeyRestriction,omitempty"`
 	// +optional
@@ -1065,11 +1098,7 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	ElasticsearchAWS bool `json:"elasticsearchAws,omitempty"`
 	// +optional
-	ElasticsearchAWSAccessKey string `json:"elasticsearchAwsAccessKey,omitempty"`
-	// +optional
 	ElasticsearchAWSRegion string `json:"elasticsearchAwsRegion,omitempty"`
-	// +optional
-	ElasticsearchAWSSecretAccessKey string `json:"elasticsearchAwsSecretAccessKey,omitempty"`
 	// +optional
 	ElasticsearchAnalyzersKuromojiEnabled bool `json:"elasticsearchAnalyzersKuromojiEnabled,omitempty"`
 	// +optional
@@ -1096,8 +1125,6 @@ type ApplicationSettingsObservation struct {
 	ElasticsearchMaxCodeIndexingConcurrency int `json:"elasticsearchMaxCodeIndexingConcurrency,omitempty"`
 	// +optional
 	ElasticsearchNamespaceIDs []int `json:"elasticsearchNamespaceIds,omitempty"`
-	// +optional
-	ElasticsearchPassword string `json:"elasticsearchPassword,omitempty"`
 	// +optional
 	ElasticsearchPauseIndexing bool `json:"elasticsearchPauseIndexing,omitempty"`
 	// +optional
@@ -1145,8 +1172,6 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	ExternalAuthClientCert string `json:"externalAuthClientCert,omitempty"`
 	// +optional
-	ExternalAuthClientKey string `json:"externalAuthClientKey,omitempty"`
-	// +optional
 	ExternalAuthClientKeyPass string `json:"externalAuthClientKeyPass,omitempty"`
 	// +optional
 	ExternalAuthorizationServiceDefaultLabel string `json:"externalAuthorizationServiceDefaultLabel,omitempty"`
@@ -1158,8 +1183,6 @@ type ApplicationSettingsObservation struct {
 	ExternalAuthorizationServiceURL string `json:"externalAuthorizationServiceUrl,omitempty"`
 	// +optional
 	ExternalPipelineValidationServiceTimeout int `json:"externalPipelineValidationServiceTimeout,omitempty"`
-	// +optional
-	ExternalPipelineValidationServiceToken string `json:"externalPipelineValidationServiceToken,omitempty"`
 	// +optional
 	ExternalPipelineValidationServiceURL string `json:"externalPipelineValidationServiceUrl,omitempty"`
 	// +optional
@@ -1253,8 +1276,6 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	IssuesCreateLimit int `json:"issuesCreateLimit,omitempty"`
 	// +optional
-	JiraConnectApplicationKey string `json:"jiraConnectApplicationKey,omitempty"`
-	// +optional
 	JiraConnectPublicKeyStorageEnabled bool `json:"jiraConnectPublicKeyStorageEnabled,omitempty"`
 	// +optional
 	JiraConnectProxyURL string `json:"jiraConnectProxyUrl,omitempty"`
@@ -1276,8 +1297,6 @@ type ApplicationSettingsObservation struct {
 	LoginRecaptchaProtectionEnabled bool `json:"loginRecaptchaProtectionEnabled,omitempty"`
 	// +optional
 	MailgunEventsEnabled bool `json:"mailgunEventsEnabled,omitempty"`
-	// +optional
-	MailgunSigningKey string `json:"mailgunSigningKey,omitempty"`
 	// +optional
 	MaintenanceMode bool `json:"maintenanceMode,omitempty"`
 	// +optional
@@ -1409,10 +1428,6 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	RecaptchaEnabled bool `json:"recaptchaEnabled,omitempty"`
 	// +optional
-	RecaptchaPrivateKey string `json:"recaptchaPrivateKey,omitempty"`
-	// +optional
-	RecaptchaSiteKey string `json:"recaptchaSiteKey,omitempty"`
-	// +optional
 	ReceiveMaxInputSize int `json:"receiveMaxInputSize,omitempty"`
 	// +optional
 	ReceptiveClusterAgentsEnabled bool `json:"receptiveClusterAgentsEnabled,omitempty"`
@@ -1446,8 +1461,6 @@ type ApplicationSettingsObservation struct {
 	SecretDetectionRevocationTokenTypesURL string `json:"secretDetectionRevocationTokenTypesUrl,omitempty"`
 	// +optional
 	SecretDetectionTokenRevocationEnabled bool `json:"secretDetectionTokenRevocationEnabled,omitempty"`
-	// +optional
-	SecretDetectionTokenRevocationToken string `json:"secretDetectionTokenRevocationToken,omitempty"`
 	// +optional
 	SecretDetectionTokenRevocationURL string `json:"secretDetectionTokenRevocationUrl,omitempty"`
 	// +optional
@@ -1495,12 +1508,6 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	SlackAppID string `json:"slackAppId,omitempty"`
 	// +optional
-	SlackAppSecret string `json:"slackAppSecret,omitempty"`
-	// +optional
-	SlackAppSigningSecret string `json:"slackAppSigningSecret,omitempty"`
-	// +optional
-	SlackAppVerificationToken string `json:"slackAppVerificationToken,omitempty"`
-	// +optional
 	SnippetSizeLimit int `json:"snippetSizeLimit,omitempty"`
 	// +optional
 	SnowplowAppID string `json:"snowplowAppId,omitempty"`
@@ -1519,13 +1526,9 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	SourcegraphURL string `json:"sourcegraphUrl,omitempty"`
 	// +optional
-	SpamCheckAPIKey string `json:"spamCheckApiKey,omitempty"`
-	// +optional
 	SpamCheckEndpointEnabled bool `json:"spamCheckEndpointEnabled,omitempty"`
 	// +optional
 	SpamCheckEndpointURL string `json:"spamCheckEndpointUrl,omitempty"`
-	// +optional
-	StaticObjectsExternalStorageAuthToken string `json:"staticObjectsExternalStorageAuthToken,omitempty"`
 	// +optional
 	StaticObjectsExternalStorageURL string `json:"staticObjectsExternalStorageUrl,omitempty"`
 	// +optional
