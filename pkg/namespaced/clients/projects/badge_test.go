@@ -1,0 +1,72 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package projects
+
+import (
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+)
+
+func TestGenerateAddEditOptionsAndObservation(t *testing.T) {
+	name := "n"
+	img := "img"
+	link := "link"
+	p := &v1alpha1.BadgeParameters{
+		Name:     &name,
+		ImageURL: &img,
+		LinkURL:  &link,
+	}
+
+	add := GenerateAddProjectBadgeOptions(p)
+	if add == nil || *add.Name != name || *add.ImageURL != img || *add.LinkURL != link {
+		t.Fatalf("GenerateAddProjectBadgeOptions did not produce expected values")
+	}
+
+	edit := GenerateEditProjectBadgeOptions(p)
+	if edit == nil || *edit.Name != name || *edit.ImageURL != img || *edit.LinkURL != link {
+		t.Fatalf("GenerateEditProjectBadgeOptions did not produce expected values")
+	}
+
+	// observation
+	b := &gitlab.ProjectBadge{ID: 5, LinkURL: link, RenderedLinkURL: link, ImageURL: img, RenderedImageURL: img, Name: name}
+	obs := GenerateBadgeObservation(b)
+	want := v1alpha1.BadgeObservation{ID: 5, LinkURL: link, RenderedLinkURL: link, ImageURL: img, RenderedImageURL: img, Name: name}
+	if diff := cmp.Diff(want, obs); diff != "" {
+		t.Fatalf("GenerateBadgeObservation() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestIsErrorProjectBadgeNotFound(t *testing.T) {
+	if !IsErrorProjectBadgeNotFound(errors.New(errProjectNotFound)) {
+		t.Fatalf("expected IsErrorProjectBadgeNotFound to return true for %s", errProjectNotFound)
+	}
+
+	// nil error should return false
+	if IsErrorProjectBadgeNotFound(nil) {
+		t.Fatalf("expected IsErrorProjectBadgeNotFound to return false for nil error")
+	}
+
+	// other errors should return false
+	if IsErrorProjectBadgeNotFound(errors.New("some other error")) {
+		t.Fatalf("expected IsErrorProjectBadgeNotFound to return false for some other error")
+	}
+}
