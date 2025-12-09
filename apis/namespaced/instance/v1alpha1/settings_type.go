@@ -1,0 +1,92 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// +kubebuilder:object:generate=true
+
+// +cluster-scope:delete=1
+//go:generate go run generate.go
+
+package v1alpha1
+
+import (
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	// +cluster-scope:delete=1
+	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// DefaultBranchProtectionDefaultsOptions defines the rules for default branch protection
+type DefaultBranchProtectionDefaultsOptions struct {
+	// List of user or group IDs allowed to push to the default branch
+	AllowedToPush *[]int `json:"allowedToPush,omitempty"`
+	// Whether to allow force pushes to the default branch
+	AllowForcePush *bool `json:"allowForcePush,omitempty"`
+	// List of user or group IDs allowed to merge to the default branch
+	AllowedToMerge *[]int `json:"allowedToMerge,omitempty"`
+	// Whether developers can push the first commit to the default branch
+	DeveloperCanInitialPush *bool `json:"developerCanInitialPush,omitempty"`
+}
+
+// BranchProtectionDefaults defines rules for branch branch protection
+type BranchProtectionDefaults struct {
+	// List of user or group IDs allowed to push to the default branch
+	AllowedToPush []*int `json:"allowed_to_push,omitempty"`
+	// Whether to allow force pushes to the default branch
+	AllowForcePush bool `json:"allow_force_push,omitempty"`
+	// List of user or group IDs allowed to merge to the default branch
+	AllowedToMerge []*int `json:"allowed_to_merge,omitempty"`
+	// Whether developers can push the first commit to the default branch
+	DeveloperCanInitialPush bool `json:"developer_can_initial_push,omitempty"`
+}
+
+// A ApplicationSettingSpec defines the desired state of a Gitlab Instance Settings.
+type ApplicationSettingSpec struct {
+	xpv2.ManagedResourceSpec `json:",inline"`
+	// Defines the desired state of the ApplicationSettings.
+	ForProvider ApplicationSettingsParameters `json:"forProvider"`
+}
+
+// A ApplicationSettingsStatus represents the observed state of the GitLab Instance Settings.
+type ApplicationSettingsStatus struct {
+	xpv1.ResourceStatus `json:",inline"`
+	// Represents the observed state of the ApplicationSettings.
+	AtProvider ApplicationSettingsObservation `json:"atProvider,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// A ApplicationSettings is a managed resource that represents a Gitlab instance Settings.
+// +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+// +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitlab}
+type ApplicationSettings struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   ApplicationSettingSpec    `json:"spec"`
+	Status ApplicationSettingsStatus `json:"status,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// ApplicationSettingsList contains a list of ApplicationSettings items.
+type ApplicationSettingsList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []ApplicationSettings `json:"items"`
+}

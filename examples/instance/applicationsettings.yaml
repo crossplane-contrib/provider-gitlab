@@ -1,0 +1,16 @@
+---
+apiVersion: instance.gitlab.m.crossplane.io/v1alpha1
+kind: ApplicationSettings
+metadata:
+  name: config
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    maxArtifactsSize: 222
+    externalAuthClientKeySecretRef:
+      key: token
+      name: external-auth-client-key
+    staticObjectsExternalStorageAuthToken: "NEVER-HARDCODE-CREDS-THIS-IS-AN-EXAMPLE"
