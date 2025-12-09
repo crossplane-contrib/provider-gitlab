@@ -1,0 +1,181 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package projects
+
+import (
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+)
+
+func TestGenerateAddEditOptionsAndObservation(t *testing.T) {
+	name := "n"
+	img := "img"
+	link := "link"
+	p := &v1alpha1.BadgeParameters{
+		Name:     &name,
+		ImageURL: img,
+		LinkURL:  link,
+	}
+
+	add := GenerateAddProjectBadgeOptions(p)
+	if add == nil || *add.Name != name || *add.ImageURL != img || *add.LinkURL != link {
+		t.Fatalf("GenerateAddProjectBadgeOptions did not produce expected values")
+	}
+
+	edit := GenerateEditProjectBadgeOptions(p)
+	if edit == nil || *edit.Name != name || *edit.ImageURL != img || *edit.LinkURL != link {
+		t.Fatalf("GenerateEditProjectBadgeOptions did not produce expected values")
+	}
+
+	// observation
+	b := &gitlab.ProjectBadge{ID: 5, LinkURL: link, RenderedLinkURL: link, ImageURL: img, RenderedImageURL: img, Name: name}
+	obs := GenerateBadgeObservation(b)
+	want := v1alpha1.BadgeObservation{ID: 5, LinkURL: link, RenderedLinkURL: link, ImageURL: img, RenderedImageURL: img, Name: name}
+	if diff := cmp.Diff(want, obs); diff != "" {
+		t.Fatalf("GenerateBadgeObservation() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestIsErrorProjectBadgeNotFound(t *testing.T) {
+	if !IsErrorProjectBadgeNotFound(errors.New(errProjectNotFound)) {
+		t.Fatalf("expected IsErrorProjectBadgeNotFound to return true for %s", errProjectNotFound)
+	}
+
+	// nil error should return false
+	if IsErrorProjectBadgeNotFound(nil) {
+		t.Fatalf("expected IsErrorProjectBadgeNotFound to return false for nil error")
+	}
+
+	// other errors should return false
+	if IsErrorProjectBadgeNotFound(errors.New("some other error")) {
+		t.Fatalf("expected IsErrorProjectBadgeNotFound to return false for some other error")
+	}
+}
+
+func TestIsBadgeUpToDate(t *testing.T) {
+	name := "test-badge"
+	imageURL := "https://example.com/badge.svg"
+	linkURL := "https://example.com"
+	differentURL := "https://different.com"
+
+	type args struct {
+		spec     *v1alpha1.BadgeParameters
+		observed *gitlab.ProjectBadge
+	}
+
+	cases := map[string]struct {
+		args args
+		want bool
+	}{
+		"SameFields": {
+			args: args{
+				spec: &v1alpha1.BadgeParameters{
+					Name:     &name,
+					ImageURL: imageURL,
+					LinkURL:  linkURL,
+				},
+				observed: &gitlab.ProjectBadge{
+					Name:     name,
+					ImageURL: imageURL,
+					LinkURL:  linkURL,
+				},
+			},
+			want: true,
+		},
+		"DifferentImageURL": {
+			args: args{
+				spec: &v1alpha1.BadgeParameters{
+					Name:     &name,
+					ImageURL: differentURL,
+					LinkURL:  linkURL,
+				},
+				observed: &gitlab.ProjectBadge{
+					Name:     name,
+					ImageURL: imageURL,
+					LinkURL:  linkURL,
+				},
+			},
+			want: false,
+		},
+		"DifferentLinkURL": {
+			args: args{
+				spec: &v1alpha1.BadgeParameters{
+					Name:     &name,
+					ImageURL: imageURL,
+					LinkURL:  differentURL,
+				},
+				observed: &gitlab.ProjectBadge{
+					Name:     name,
+					ImageURL: imageURL,
+					LinkURL:  linkURL,
+				},
+			},
+			want: false,
+		},
+		"DifferentName": {
+			args: args{
+				spec: &v1alpha1.BadgeParameters{
+					Name:     &differentURL,
+					ImageURL: imageURL,
+					LinkURL:  linkURL,
+				},
+				observed: &gitlab.ProjectBadge{
+					Name:     name,
+					ImageURL: imageURL,
+					LinkURL:  linkURL,
+				},
+			},
+			want: false,
+		},
+		"NilSpec": {
+			args: args{
+				spec: nil,
+				observed: &gitlab.ProjectBadge{
+					Name:     name,
+					ImageURL: imageURL,
+					LinkURL:  linkURL,
+				},
+			},
+			want: true,
+		},
+		"NilObserved": {
+			args: args{
+				spec: &v1alpha1.BadgeParameters{
+					Name:     &name,
+					ImageURL: imageURL,
+					LinkURL:  linkURL,
+				},
+				observed: nil,
+			},
+			want: false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsBadgeUpToDate(tc.args.spec, tc.args.observed)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("IsBadgeUpToDate() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
