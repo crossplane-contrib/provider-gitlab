@@ -24,6 +24,7 @@ import (
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
+	instancev1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
@@ -52,6 +53,20 @@ func IsErrorRunnerNotFound(err error) bool {
 		return false
 	}
 	return strings.Contains(err.Error(), errRunnerNotFound)
+}
+
+// GenerateInstanceRunnerObservation is used to produce v1alpha1.RunnerObservation from
+// gitlab.RunnerDetails.
+func GenerateInstanceRunnerObservation(runner *gitlab.RunnerDetails) instancev1alpha1.RunnerObservation {
+	if runner == nil {
+		return instancev1alpha1.RunnerObservation{}
+	}
+
+	commonRunnerObservation := generateCommonRunnerObservation(runner)
+
+	return instancev1alpha1.RunnerObservation{
+		CommonRunnerObservation: commonRunnerObservation,
+	}
 }
 
 // GenerateGroupRunnerObservation is used to produce groupsv1alpha1.RunnerObservation from
