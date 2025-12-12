@@ -52,6 +52,15 @@ var (
 	ApplicationSettingsListGroupVersionKind = SchemeGroupVersion.WithKind(ApplicationSettingsListKind)
 )
 
+// Runner type metadata
+var (
+	RunnerKind             = reflect.TypeOf(Runner{}).Name()
+	RunnerGroupKind        = schema.GroupKind{Group: Group, Kind: RunnerKind}.String()
+	RunnerKindAPIVersion   = RunnerKind + "." + SchemeGroupVersion.String()
+	RunnerGroupVersionKind = SchemeGroupVersion.WithKind(RunnerKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&ApplicationSettings{}, &ApplicationSettingsList{})
+	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 }

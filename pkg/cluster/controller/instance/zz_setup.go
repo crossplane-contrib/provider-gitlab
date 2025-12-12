@@ -22,12 +22,14 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/settings"
 )
 
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		settings.SetupApplicationSettings,
+		runners.SetupRunner,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -41,6 +43,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		settings.SetupApplicationSettingsGated,
+		runners.SetupRunnerGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

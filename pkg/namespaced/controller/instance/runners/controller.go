@@ -35,7 +35,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 	runners "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/runners"
@@ -49,13 +49,11 @@ const (
 	errCreateFailed            = "cannot create Gitlab Runner"
 	errUpdateFailed            = "cannot update Gitlab Runner"
 	errDeleteFailed            = "cannot delete Gitlab Runner"
-	errRunnertNotFound         = "cannot find Gitlab Runner"
-	errMissingProjectID        = "missing Spec.ForProvider.ProjectID"
 	errMissingExternalName     = "external name annotation not found"
 	errMissingConnectionSecret = "writeConnectionSecretToRef or publishConnectionDetailsTo must be specified to receive the runner token"
 )
 
-// SetupRunner adds a controller that reconciles projects runners.
+// SetupRunner adds a controller that reconciles instance runners.
 func SetupRunner(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v1alpha1.RunnerGroupKind)
 
@@ -99,12 +97,14 @@ func SetupRunnerGated(mgr ctrl.Manager, o controller.Options) error {
 	return nil
 }
 
+// connector is responsible for producing an ExternalClient for Runners
 type connector struct {
 	kube              client.Client
 	newGitlabClientFn func(cfg common.Config) runners.RunnerClient
 	newRunnerClientFn func(cfg common.Config) users.RunnerClient
 }
 
+// Connect establishes a connection to the external resource
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
 	cr, ok := mg.(*v1alpha1.Runner)
 	if !ok {
@@ -118,20 +118,18 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), userRunnerClient: c.newRunnerClientFn(*cfg)}, nil
 }
 
+// external is the external client used to manage Gitlab Runners.
 type external struct {
 	kube             client.Client
 	client           runners.RunnerClient
 	userRunnerClient users.RunnerClient
 }
 
+// Update updates the external resource to match the desired state
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
 	cr, ok := mg.(*v1alpha1.Runner)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotRunner)
-	}
-
-	if cr.Spec.ForProvider.ProjectID == nil {
-		return managed.ExternalObservation{}, errors.New(errMissingProjectID)
 	}
 
 	externalName := meta.GetExternalName(cr)
@@ -154,7 +152,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	// we need to make sure the token expiration time is preserved as it is not returned by the API
 	tokenExpiresAt := cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt
-	cr.Status.AtProvider = runners.GenerateProjectRunnerObservation(runner)
+	cr.Status.AtProvider = runners.GenerateInstanceRunnerObservation(runner)
 	cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = tokenExpiresAt
 	cr.SetConditions(xpv1.Available())
 
@@ -165,14 +163,11 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}, nil
 }
 
+// Create creates the external resource with the desired state
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
 	cr, ok := mg.(*v1alpha1.Runner)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotRunner)
-	}
-
-	if cr.Spec.ForProvider.ProjectID == nil {
-		return managed.ExternalCreation{}, errors.New(errMissingProjectID)
 	}
 
 	// Validate that connection details will be published
@@ -181,7 +176,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	runner, _, err := e.userRunnerClient.CreateUserRunner(
-		users.GenerateProjectRunnerOptions(&cr.Spec.ForProvider),
+		users.GenerateInstanceRunnerOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
@@ -206,13 +201,11 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}, nil
 }
 
+// Update handles updates to the external resource.
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
 	cr, ok := mg.(*v1alpha1.Runner)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotRunner)
-	}
-	if cr.Spec.ForProvider.ProjectID == nil {
-		return managed.ExternalUpdate{}, errors.New(errMissingProjectID)
 	}
 
 	externalName := meta.GetExternalName(cr)
@@ -237,13 +230,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, nil
 }
 
+// Delete removes the external resource
 func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Runner)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotRunner)
-	}
-	if cr.Spec.ForProvider.ProjectID == nil {
-		return managed.ExternalDelete{}, errors.New(errMissingProjectID)
 	}
 
 	externalName := meta.GetExternalName(cr)
@@ -269,6 +260,8 @@ func (e *external) Disconnect(ctx context.Context) error {
 	return nil
 }
 
+// isRunnerUpToDate checks whether the observed state of the runner matches the desired state specified
+// in the RunnerParameters. It compares each relevant field and returns false if any discrepancies are found.
 func isRunnerUpToDate(p *v1alpha1.RunnerParameters, r *gitlab.RunnerDetails) bool { //nolint:gocyclo
 	if p.Description != nil && *p.Description != r.Description {
 		return false
