@@ -52,6 +52,15 @@ var (
 	ApplicationSettingsListGroupVersionKind = SchemeGroupVersion.WithKind(ApplicationSettingsListKind)
 )
 
+// Variable type metadata
+var (
+	ServiceAccountKind             = reflect.TypeOf(ServiceAccount{}).Name()
+	ServiceAccountGroupKind        = schema.GroupKind{Group: Group, Kind: ServiceAccountKind}.String()
+	ServiceAccountKindAPIVersion   = ServiceAccountKind + "." + SchemeGroupVersion.String()
+	ServiceAccountGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&ApplicationSettings{}, &ApplicationSettingsList{})
+	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 }
