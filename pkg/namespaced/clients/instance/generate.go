@@ -28,8 +28,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 )
 
 const outputHeader = `/*
