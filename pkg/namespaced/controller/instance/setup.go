@@ -22,6 +22,7 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/appearance"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/runners"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/serviceaccounts"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/settings"
 )
 
@@ -30,6 +31,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		settings.SetupApplicationSettings,
 		runners.SetupRunner,
 		appearance.SetupAppearance,
+		serviceaccounts.SetupServiceAccount,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -45,6 +47,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		settings.SetupApplicationSettingsGated,
 		runners.SetupRunnerGated,
 		appearance.SetupAppearanceGated,
+		serviceaccounts.SetupServiceAccountGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
