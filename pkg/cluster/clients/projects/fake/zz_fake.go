@@ -85,6 +85,13 @@ type MockClient struct {
 	MockGetProtectedBranch          func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error)
 	MockProtectRepositoryBranches   func(pid any, opt *gitlab.ProtectRepositoryBranchesOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error)
 	MockUnprotectRepositoryBranches func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockGetFile    func(pid any, fileName string, opt *gitlab.GetFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.File, *gitlab.Response, error)
+	MockCreateFile func(pid any, fileName string, opt *gitlab.CreateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error)
+	MockUpdateFile func(pid any, fileName string, opt *gitlab.UpdateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error)
+	MockDeleteFile func(pid any, fileName string, opt *gitlab.DeleteFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockGetCommit func(pid any, sha string, opt *gitlab.GetCommitOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Commit, *gitlab.Response, error)
 }
 
 // GetPipelineSchedule calls the underlying MockGetPipelineSchedule method.
@@ -306,4 +313,29 @@ func (c *MockClient) ProtectRepositoryBranches(pid any, opt *gitlab.ProtectRepos
 // UnprotectRepositoryBranches calls the underlying MockUnprotectRepositoryBranches method.
 func (c *MockClient) UnprotectRepositoryBranches(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockUnprotectRepositoryBranches(pid, branch, options...)
+}
+
+// GetFile calls the underlying MockGetFile method.
+func (c *MockClient) GetFile(pid any, fileName string, opt *gitlab.GetFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.File, *gitlab.Response, error) {
+	return c.MockGetFile(pid, fileName, opt, options...)
+}
+
+// CreateFile calls the underlying MockCreateFile method.
+func (c *MockClient) CreateFile(pid any, fileName string, opt *gitlab.CreateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error) {
+	return c.MockCreateFile(pid, fileName, opt, options...)
+}
+
+// UpdateFile calls the underlying MockUpdateFile method.
+func (c *MockClient) UpdateFile(pid any, fileName string, opt *gitlab.UpdateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error) {
+	return c.MockUpdateFile(pid, fileName, opt, options...)
+}
+
+// DeleteFile calls the underlying MockDeleteFile method.
+func (c *MockClient) DeleteFile(pid any, fileName string, opt *gitlab.DeleteFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteFile(pid, fileName, opt, options...)
+}
+
+// GetCommit calls the underlying MockGetCommit method.
+func (c *MockClient) GetCommit(pid any, sha string, opt *gitlab.GetCommitOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Commit, *gitlab.Response, error) {
+	return c.MockGetCommit(pid, sha, opt, options...)
 }

@@ -126,6 +126,14 @@ var (
 	ProtectedBranchGroupVersionKind = SchemeGroupVersion.WithKind(ProtectedBranchKind)
 )
 
+// File type metadata
+var (
+	FileKind             = reflect.TypeOf(File{}).Name()
+	FileGroupKind        = schema.GroupKind{Group: Group, Kind: FileKind}.String()
+	FileKindAPIVersion   = FileKind + "." + SchemeGroupVersion.String()
+	FileGroupVersionKind = SchemeGroupVersion.WithKind(FileKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
@@ -138,4 +146,5 @@ func init() {
 	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&ProtectedBranch{}, &ProtectedBranchList{})
+	SchemeBuilder.Register(&File{}, &FileList{})
 }
