@@ -1,0 +1,345 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package appearance
+
+import (
+	"context"
+	"net/http"
+	"testing"
+	"time"
+
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
+)
+
+// These tests are intentionally table-driven and mirror patterns used across
+// this repo (e.g. instance settings controller tests). They focus on:
+// - error handling and 404 behavior
+// - deletion semantics (instance appearance cannot be deleted)
+// - condition and status updates on successful observe
+
+var (
+	unexpectedItem resource.Managed
+	errBoom        = errors.New("boom")
+)
+
+const (
+	testTitleUpToDate    = "My GitLab"
+	testTitleNotUpToDate = "Different"
+)
+
+type MockClient struct {
+	MockGetAppearance    func(options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error)
+	MockChangeAppearance func(opt *gitlab.ChangeAppearanceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error)
+}
+
+func (m *MockClient) GetAppearance(options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
+	return m.MockGetAppearance(options...)
+}
+
+func (m *MockClient) ChangeAppearance(opt *gitlab.ChangeAppearanceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
+	return m.MockChangeAppearance(opt, options...)
+}
+
+type args struct {
+	client instance.AppearanceClient
+	kube   client.Client
+	cr     resource.Managed
+}
+
+type modifier func(*v1alpha1.Appearance)
+
+func withConditions(c ...xpv1.Condition) modifier {
+	return func(cr *v1alpha1.Appearance) {
+		cr.Status.SetConditions(c...)
+	}
+}
+
+func withSpec(p v1alpha1.AppearanceParameters) modifier {
+	return func(cr *v1alpha1.Appearance) {
+		cr.Spec.ForProvider = p
+	}
+}
+
+func withAtProvider(o v1alpha1.AppearanceObservation) modifier {
+	return func(cr *v1alpha1.Appearance) {
+		cr.Status.AtProvider = o
+	}
+}
+
+func withDeletionTimestamp(t metav1.Time) modifier {
+	return func(cr *v1alpha1.Appearance) {
+		cr.ObjectMeta.DeletionTimestamp = &t
+	}
+}
+
+func appearance(m ...modifier) *v1alpha1.Appearance {
+	cr := &v1alpha1.Appearance{}
+	for _, f := range m {
+		f(cr)
+	}
+	return cr
+}
+
+func TestObserve(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalObservation
+		err    error
+	}
+
+	upToDateTitle := testTitleUpToDate
+	notUpToDateTitle := testTitleNotUpToDate
+
+	cases := map[string]struct {
+		args args
+		want want
+	}{
+		"InValidInput": {
+			args: args{cr: unexpectedItem},
+			want: want{cr: unexpectedItem, err: errors.New(errNotAppearance)},
+		},
+		"ErrGet": {
+			args: args{client: &MockClient{MockGetAppearance: func(options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: 500}}, errBoom
+			}}, cr: appearance()},
+			want: want{cr: appearance(), err: errors.Wrap(errBoom, errGetFailed)},
+		},
+		"ErrGet404": {
+			args: args{client: &MockClient{MockGetAppearance: func(options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
+			}}, cr: appearance()},
+			want: want{cr: appearance(), result: managed.ExternalObservation{}},
+		},
+		"DeletingShouldAllowCRDeletion": func() struct {
+			args args
+			want want
+		} {
+			now := metav1.NewTime(time.Now())
+			deleted := appearance(withDeletionTimestamp(now))
+			return struct {
+				args args
+				want want
+			}{
+				args: args{client: &MockClient{MockGetAppearance: func(options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
+					return &gitlab.Appearance{}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+				}}, cr: deleted},
+				want: want{cr: deleted, result: managed.ExternalObservation{ResourceExists: false}},
+			}
+		}(),
+		"SuccessfulAvailableUpToDate": {
+			args: args{client: &MockClient{MockGetAppearance: func(options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
+				return &gitlab.Appearance{Title: upToDateTitle}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
+			want: want{
+				cr: appearance(
+					withConditions(xpv1.Available()),
+					withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}),
+					withAtProvider(instance.GenerateAppearanceObservation(&gitlab.Appearance{Title: upToDateTitle})),
+				),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true, ResourceLateInitialized: false},
+			},
+		},
+		"SuccessfulAvailableNotUpToDate": {
+			args: args{client: &MockClient{MockGetAppearance: func(options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
+				return &gitlab.Appearance{Title: notUpToDateTitle}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
+			want: want{
+				cr: appearance(
+					withConditions(xpv1.Available()),
+					withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}),
+					withAtProvider(instance.GenerateAppearanceObservation(&gitlab.Appearance{Title: notUpToDateTitle})),
+				),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false, ResourceLateInitialized: false},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.args.kube, client: tc.args.client}
+			got, err := e.Observe(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("Observe(...): -want error, +got error:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, got); diff != "" {
+				t.Errorf("Observe(...): -want result, +got result:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("Observe(...): -want cr, +got cr:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestCreate(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalCreation
+		err    error
+	}
+
+	upToDateTitle := testTitleUpToDate
+
+	cases := map[string]struct {
+		args args
+		want want
+	}{
+		"InValidInput": {
+			args: args{cr: unexpectedItem},
+			want: want{cr: unexpectedItem, err: errors.New(errNotAppearance)},
+		},
+		"ErrUpdate": {
+			args: args{client: &MockClient{MockChangeAppearance: func(opt *gitlab.ChangeAppearanceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
+				if opt == nil || opt.Title == nil || *opt.Title != upToDateTitle {
+					t.Fatalf("got options %v, want title %q", opt, upToDateTitle)
+				}
+				return nil, nil, errBoom
+			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
+			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(xpv1.Creating())), err: errors.Wrap(errBoom, errCreateFailed)},
+		},
+		"Successful": {
+			args: args{client: &MockClient{MockChangeAppearance: func(opt *gitlab.ChangeAppearanceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
+				return &gitlab.Appearance{}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
+			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(xpv1.Creating())), result: managed.ExternalCreation{}},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.args.kube, client: tc.args.client}
+			got, err := e.Create(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("Create(...): -want error, +got error:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, got); diff != "" {
+				t.Errorf("Create(...): -want result, +got result:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("Create(...): -want cr, +got cr:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalUpdate
+		err    error
+	}
+
+	upToDateTitle := testTitleUpToDate
+
+	cases := map[string]struct {
+		args args
+		want want
+	}{
+		"InValidInput": {
+			args: args{cr: unexpectedItem},
+			want: want{cr: unexpectedItem, err: errors.New(errNotAppearance)},
+		},
+		"ErrUpdate": {
+			args: args{client: &MockClient{MockChangeAppearance: func(opt *gitlab.ChangeAppearanceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
+				return nil, nil, errBoom
+			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
+			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(xpv1.Creating())), err: errors.Wrap(errBoom, errUpdateFailed)},
+		},
+		"Successful": {
+			args: args{client: &MockClient{MockChangeAppearance: func(opt *gitlab.ChangeAppearanceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
+				return &gitlab.Appearance{}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
+			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(xpv1.Creating())), result: managed.ExternalUpdate{}},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.args.kube, client: tc.args.client}
+			got, err := e.Update(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("Update(...): -want error, +got error:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, got); diff != "" {
+				t.Errorf("Update(...): -want result, +got result:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("Update(...): -want cr, +got cr:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestDelete(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalDelete
+		err    error
+	}
+
+	cases := map[string]struct {
+		args args
+		want want
+	}{
+		"InValidInput": {
+			args: args{cr: unexpectedItem},
+			want: want{cr: unexpectedItem, err: errors.New(errNotAppearance)},
+		},
+		"Successful": {
+			args: args{cr: appearance()},
+			want: want{cr: appearance(), result: managed.ExternalDelete{}},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.args.kube, client: tc.args.client}
+			got, err := e.Delete(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("Delete(...): -want error, +got error:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, got); diff != "" {
+				t.Errorf("Delete(...): -want result, +got result:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("Delete(...): -want cr, +got cr:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestDisconnect(t *testing.T) {
+	e := &external{}
+	if err := e.Disconnect(context.Background()); err != nil {
+		t.Fatalf("Disconnect(): got error %v, want nil", err)
+	}
+}

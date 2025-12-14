@@ -1,0 +1,172 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package instance
+
+import (
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+)
+
+// These tests focus on the small helper functions in appearance.go.
+// The helpers are used by the controller layer to translate CRD spec/status to
+// GitLab API types and to check whether resources are up-to-date.
+
+func TestNewAppearanceClient(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("NewAppearanceClient panicked: %v", r)
+		}
+	}()
+
+	c := NewAppearanceClient(common.Config{})
+	if c == nil {
+		t.Fatal("NewAppearanceClient returned nil")
+	}
+}
+
+func TestGenerateUpdateAppearanceOptions(t *testing.T) {
+	title := "t"
+	bg := "#fff"
+	enabled := true
+
+	cases := map[string]struct {
+		params *v1alpha1.AppearanceParameters
+		want   *gitlab.ChangeAppearanceOptions
+	}{
+		"NilParams": {
+			params: nil,
+			want:   &gitlab.ChangeAppearanceOptions{},
+		},
+		"AllFieldsMapped": {
+			params: &v1alpha1.AppearanceParameters{
+				Title:                       &title,
+				MessageBackgroundColor:      &bg,
+				EmailHeaderAndFooterEnabled: &enabled,
+			},
+			want: &gitlab.ChangeAppearanceOptions{
+				Title:                       &title,
+				MessageBackgroundColor:      &bg,
+				EmailHeaderAndFooterEnabled: &enabled,
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateUpdateAppearanceOptions(tc.params)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Fatalf("GenerateUpdateAppearanceOptions(...): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGenerateAppearanceObservation(t *testing.T) {
+	title := "GitLab"
+	bg := "#000"
+	enabled := true
+
+	cases := map[string]struct {
+		observed *gitlab.Appearance
+		want     v1alpha1.AppearanceObservation
+	}{
+		"NilObserved": {
+			observed: nil,
+			want:     v1alpha1.AppearanceObservation{},
+		},
+		"MapsFields": {
+			observed: &gitlab.Appearance{Title: title, MessageBackgroundColor: bg, EmailHeaderAndFooterEnabled: enabled},
+			want:     v1alpha1.AppearanceObservation{Title: title, MessageBackgroundColor: bg, EmailHeaderAndFooterEnabled: enabled},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateAppearanceObservation(tc.observed)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Fatalf("GenerateAppearanceObservation(...): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestIsAppearanceUpToDate(t *testing.T) {
+	// Use non-empty values so the "match" case exercises all field comparisons.
+	val := func(s string) *string { return &s }
+	boolVal := func(b bool) *bool { return &b }
+
+	specAll := &v1alpha1.AppearanceParameters{
+		Title:                       val("title"),
+		Description:                 val("desc"),
+		PWAName:                     val("pwa"),
+		PWAShortName:                val("pwa-short"),
+		PWADescription:              val("pwa-desc"),
+		PWAIcon:                     val("pwa-icon"),
+		Logo:                        val("logo"),
+		HeaderLogo:                  val("header-logo"),
+		Favicon:                     val("favicon"),
+		MemberGuidelines:            val("member"),
+		NewProjectGuidelines:        val("new"),
+		ProfileImageGuidelines:      val("profile"),
+		HeaderMessage:               val("header"),
+		FooterMessage:               val("footer"),
+		MessageBackgroundColor:      val("bg"),
+		MessageFontColor:            val("font"),
+		EmailHeaderAndFooterEnabled: boolVal(true),
+	}
+
+	observedAll := &gitlab.Appearance{
+		Title:                       "title",
+		Description:                 "desc",
+		PWAName:                     "pwa",
+		PWAShortName:                "pwa-short",
+		PWADescription:              "pwa-desc",
+		PWAIcon:                     "pwa-icon",
+		Logo:                        "logo",
+		HeaderLogo:                  "header-logo",
+		Favicon:                     "favicon",
+		MemberGuidelines:            "member",
+		NewProjectGuidelines:        "new",
+		ProfileImageGuidelines:      "profile",
+		HeaderMessage:               "header",
+		FooterMessage:               "footer",
+		MessageBackgroundColor:      "bg",
+		MessageFontColor:            "font",
+		EmailHeaderAndFooterEnabled: true,
+	}
+
+	if got := IsAppearanceUpToDate(nil, observedAll); got != true {
+		t.Fatalf("IsAppearanceUpToDate(nil, observed): got %v, want true", got)
+	}
+	if got := IsAppearanceUpToDate(specAll, nil); got != false {
+		t.Fatalf("IsAppearanceUpToDate(spec, nil): got %v, want false", got)
+	}
+	if got := IsAppearanceUpToDate(specAll, observedAll); got != true {
+		t.Fatalf("IsAppearanceUpToDate(match): got %v, want true", got)
+	}
+
+	observedMismatch := *observedAll
+	observedMismatch.Title = "different"
+	if got := IsAppearanceUpToDate(specAll, &observedMismatch); got != false {
+		t.Fatalf("IsAppearanceUpToDate(mismatch): got %v, want false", got)
+	}
+}

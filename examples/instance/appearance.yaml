@@ -1,0 +1,12 @@
+---
+apiVersion: instance.gitlab.m.crossplane.io/v1alpha1
+kind: Appearance
+metadata:
+  name: example-appearance
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    title: "My GitLab Instance"
