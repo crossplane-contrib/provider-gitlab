@@ -27,6 +27,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/samlgrouplinks"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/serviceaccounts"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/variables"
 )
 
@@ -41,6 +42,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		samlgrouplinks.SetupSamlGroupLink,
 		runners.SetupRunner,
 		badges.SetupBadge,
+		serviceaccounts.SetupServiceAccount,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -61,6 +63,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		samlgrouplinks.SetupSamlGroupLinkGated,
 		runners.SetupRunnerGated,
 		badges.SetupBadgeGated,
+		serviceaccounts.SetupServiceAccountGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

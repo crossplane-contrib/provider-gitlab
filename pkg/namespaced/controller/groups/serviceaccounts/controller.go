@@ -1,0 +1,267 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package serviceaccounts
+
+import (
+	"context"
+	"strconv"
+
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
+)
+
+const (
+	errNotServiceAccount = "managed resource is not a Gitlab service account custom resource"
+	errGetFailed         = "cannot get Gitlab service account"
+	errCreateFailed      = "cannot create Gitlab service account"
+	errUpdateFailed      = "cannot update Gitlab service account"
+	errDeleteFailed      = "cannot delete Gitlab service account"
+	errIDNotInt          = "specified ID is not an integer"
+	errMissingGroupID    = "missing Spec.ForProvider.GroupID"
+)
+
+// SetupServiceAccount adds a controller that reconciles GitLab Service Accounts.
+func SetupServiceAccount(mgr ctrl.Manager, o controller.Options) error {
+	name := managed.ControllerName(v1alpha1.ServiceAccountGroupKind)
+
+	reconcilerOpts := []managed.ReconcilerOption{
+		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewServiceAccountClient}),
+		managed.WithInitializers(),
+		managed.WithPollInterval(o.PollInterval),
+		managed.WithLogger(o.Logger.WithValues("controller", name)),
+		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
+	}
+
+	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
+		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
+	}
+
+	r := managed.NewReconciler(mgr,
+		resource.ManagedKind(v1alpha1.ServiceAccountGroupVersionKind),
+		reconcilerOpts...)
+
+	if err := mgr.Add(statemetrics.NewMRStateRecorder(
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.ServiceAccountList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		return err
+	}
+
+	return ctrl.NewControllerManagedBy(mgr).
+		Named(name).
+		For(&v1alpha1.ServiceAccount{}).
+		Complete(r)
+}
+
+// SetupServiceAccountGated adds a controller with CRD gate support.
+func SetupServiceAccountGated(mgr ctrl.Manager, o controller.Options) error {
+	o.Gate.Register(func() {
+		if err := SetupServiceAccount(mgr, o); err != nil {
+			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.ServiceAccountGroupVersionKind.String())
+		}
+	}, v1alpha1.ServiceAccountGroupVersionKind)
+	return nil
+}
+
+// connector is responsible for producing an ExternalClient for Gitlab Service Accounts
+type connector struct {
+	kube              client.Client
+	newGitlabClientFn func(cfg common.Config) groups.ServiceAccountClient
+}
+
+// Connect creates a new Gitlab client for the given managed resource.
+// It fetches the provider configuration and uses it to instantiate the client.
+func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
+	cr, ok := mg.(*v1alpha1.ServiceAccount)
+	if !ok {
+		return nil, errors.New(errNotServiceAccount)
+	}
+	cfg, err := common.GetConfig(ctx, c.kube, cr)
+	if err != nil {
+		return nil, err
+	}
+	return &external{
+		kube:   c.kube,
+		client: c.newGitlabClientFn(*cfg),
+		// Call users client to get service account info
+		userClient: instance.NewServiceAccountClient(*cfg),
+	}, nil
+}
+
+// external represents the external client for Gitlab Service Accounts
+type external struct {
+	kube   client.Client
+	client groups.ServiceAccountClient
+	// This is a small hack to not duplicate code and still call user get users API
+	userClient instance.ServiceAccountClient
+}
+
+// Observe checks if the Gitlab Service Account external resource exists and whether
+// if it is up to date.
+func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+	cr, ok := mg.(*v1alpha1.ServiceAccount)
+	if !ok {
+		return managed.ExternalObservation{}, errors.New(errNotServiceAccount)
+	}
+
+	externalName := meta.GetExternalName(cr)
+	if externalName == "" {
+		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
+
+	serviceAccountID, err := strconv.Atoi(externalName)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.New(errIDNotInt)
+	}
+
+	serviceAccount, res, err := e.userClient.GetUser(serviceAccountID, gitlab.GetUsersOptions{}, gitlab.WithContext(ctx))
+	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
+	}
+
+	cr.Status.AtProvider = groups.GenerateServiceAccountObservationFromUser(serviceAccount)
+	cr.Status.SetConditions(xpv1.Available())
+
+	return managed.ExternalObservation{
+		ResourceExists:          true,
+		ResourceUpToDate:        groups.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount),
+		ResourceLateInitialized: false,
+	}, nil
+}
+
+// Create creates the external resource for Gitlab Group Service Account
+// by calling the Gitlab API.
+func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
+	cr, ok := mg.(*v1alpha1.ServiceAccount)
+	if !ok {
+		return managed.ExternalCreation{}, errors.New(errNotServiceAccount)
+	}
+
+	cr.Status.SetConditions(xpv1.Creating())
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalCreation{}, errors.New(errMissingGroupID)
+	}
+
+	// Call GitLab Service Accounts API
+	serviceAccount, _, err := e.client.CreateServiceAccount(
+		*cr.Spec.ForProvider.GroupID,
+		groups.GenerateServiceAccountCreateOptions(&cr.Spec.ForProvider),
+		gitlab.WithContext(ctx))
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
+	}
+
+	meta.SetExternalName(cr, strconv.Itoa(serviceAccount.ID))
+	cr.Status.AtProvider = groups.GenerateServiceAccountObservation(serviceAccount)
+
+	return managed.ExternalCreation{}, nil
+}
+
+// Update updates the external resource to match the desired state.
+func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
+	cr, ok := mg.(*v1alpha1.ServiceAccount)
+	if !ok {
+		return managed.ExternalUpdate{}, errors.New(errNotServiceAccount)
+	}
+
+	cr.Status.SetConditions(xpv1.Creating())
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalUpdate{}, errors.New(errMissingGroupID)
+	}
+
+	externalName := meta.GetExternalName(cr)
+	if externalName == "" {
+		return managed.ExternalUpdate{}, errors.New(errCreateFailed)
+	}
+
+	serviceAccountID, err := strconv.Atoi(externalName)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
+	}
+
+	// Call GitLab Service Accounts API
+	serviceAccount, _, err := e.client.UpdateServiceAccount(
+		*cr.Spec.ForProvider.GroupID,
+		serviceAccountID,
+		groups.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider),
+		gitlab.WithContext(ctx))
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	}
+
+	cr.Status.AtProvider = groups.GenerateServiceAccountObservation(serviceAccount)
+
+	return managed.ExternalUpdate{}, nil
+}
+
+// Delete removes the service account resource.
+// WARNING: on most instances, GitLab does not allow reusing usernames or emails of deleted users.
+// WARNING: on most instances, deleting a user will also delete all resources owned by that user.
+// WARNING: on most instances, user deletion can only be performed by administrators,
+// and is a delayed operation, meaning the user may still exist for some time after deletion is requested.
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+	cr, ok := mg.(*v1alpha1.ServiceAccount)
+	if !ok {
+		return managed.ExternalDelete{}, errors.New(errNotServiceAccount)
+	}
+
+	externalName := meta.GetExternalName(mg)
+	if externalName == "" {
+		return managed.ExternalDelete{}, nil
+	}
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalDelete{}, errors.New(errMissingGroupID)
+	}
+
+	serviceAccountID, err := strconv.Atoi(externalName)
+	if err != nil {
+		return managed.ExternalDelete{}, errors.New(errIDNotInt)
+	}
+
+	_, err = e.client.DeleteServiceAccount(
+		*cr.Spec.ForProvider.GroupID,
+		serviceAccountID,
+		&gitlab.DeleteServiceAccountOptions{},
+		gitlab.WithContext(ctx))
+	if err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+	}
+
+	return managed.ExternalDelete{}, nil
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
+}
