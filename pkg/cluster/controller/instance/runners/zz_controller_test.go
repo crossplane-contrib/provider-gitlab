@@ -22,6 +22,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
@@ -31,6 +32,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
@@ -241,7 +243,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				runnerClient: &runnersfake.MockClient{
 					MockGetRunnerDetails: func(rid any, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error) {
-						return nil, &gitlab.Response{}, nil
+						return &gitlab.RunnerDetails{}, &gitlab.Response{}, nil
 					},
 				},
 				cr: runner(
@@ -414,6 +416,8 @@ func TestCreate(t *testing.T) {
 		err    error
 	}
 
+	expiresAt := time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC)
+
 	cases := map[string]struct {
 		args
 		want
@@ -484,6 +488,34 @@ func TestCreate(t *testing.T) {
 				result: managed.ExternalCreation{
 					ConnectionDetails: managed.ConnectionDetails{
 						"token": []byte(""),
+					},
+				},
+			},
+		},
+		"SuccessfulCreationWithExpiresAt": {
+			args: args{
+				userRunnerClient: &usersfake.MockClient{
+					MockCreateUserRunner: func(opts *gitlab.CreateUserRunnerOptions, options ...gitlab.RequestOptionFunc) (*gitlab.UserRunner, *gitlab.Response, error) {
+						return &gitlab.UserRunner{ID: runnerID, Token: "abc", TokenExpiresAt: &expiresAt}, &gitlab.Response{}, nil
+					},
+				},
+				cr: runner(
+					withConnectionSecretRef(),
+					withSpec(v1alpha1.RunnerParameters{}),
+				),
+			},
+			want: want{
+				cr: runner(
+					withConnectionSecretRef(),
+					withSpec(v1alpha1.RunnerParameters{}),
+					withExternalName(extName),
+					withAtProvider(v1alpha1.RunnerObservation{CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{TokenExpiresAt: func() *metav1.Time { t := metav1.NewTime(expiresAt); return &t }()}}),
+					withConditions(xpv1.Creating()),
+				),
+				err: nil,
+				result: managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{
+						"token": []byte("abc"),
 					},
 				},
 			},

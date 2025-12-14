@@ -27,6 +27,7 @@ import (
 	instancev1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 )
 
 const (
@@ -170,4 +171,32 @@ func GenerateEditRunnerOptions(p *commonv1alpha1.CommonRunnerParameters) *gitlab
 		MaintenanceNote: p.MaintenanceNote,
 	}
 	return opts
+}
+
+// IsRunnerUpToDate checks whether the observed state of the runner matches the desired state specified
+// in the RunnerParameters. It compares each relevant field and returns false if any discrepancies are found.
+func IsRunnerUpToDate(spec *commonv1alpha1.CommonRunnerParameters, observed *gitlab.RunnerDetails) bool {
+	if spec == nil {
+		return true
+	}
+	if observed == nil {
+		return false
+	}
+	// Use a compact list to keep cyclomatic complexity low
+	checks := []bool{
+		clients.IsComparableEqualToComparablePtr(spec.Description, observed.Description),
+		clients.IsComparableEqualToComparablePtr(spec.Paused, observed.Paused),
+		clients.IsComparableEqualToComparablePtr(spec.Locked, observed.Locked),
+		clients.IsComparableEqualToComparablePtr(spec.RunUntagged, observed.RunUntagged),
+		clients.IsComparableSliceEqualToComparableSlicePtr(spec.TagList, observed.TagList),
+		clients.IsComparableEqualToComparablePtr(spec.AccessLevel, observed.AccessLevel),
+		clients.IsComparableEqualToComparablePtr(spec.MaximumTimeout, observed.MaximumTimeout),
+		clients.IsComparableEqualToComparablePtr(spec.MaintenanceNote, observed.MaintenanceNote),
+	}
+	for _, ok := range checks {
+		if !ok {
+			return false
+		}
+	}
+	return true
 }

@@ -18,7 +18,6 @@ package runners
 
 import (
 	"context"
-	"slices"
 	"strconv"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
@@ -158,7 +157,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        isRunnerUpToDate(&cr.Spec.ForProvider, runner),
+		ResourceUpToDate:        runners.IsRunnerUpToDate(&cr.Spec.ForProvider.CommonRunnerParameters, runner),
 		ResourceLateInitialized: false,
 	}, nil
 }
@@ -258,35 +257,4 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 func (e *external) Disconnect(ctx context.Context) error {
 	// Disconnect is not implemented as it is a new method required by the SDK
 	return nil
-}
-
-// isRunnerUpToDate checks whether the observed state of the runner matches the desired state specified
-// in the RunnerParameters. It compares each relevant field and returns false if any discrepancies are found.
-func isRunnerUpToDate(p *v1alpha1.RunnerParameters, r *gitlab.RunnerDetails) bool { //nolint:gocyclo
-	if p.Description != nil && *p.Description != r.Description {
-		return false
-	}
-	if p.Paused != nil && *p.Paused != r.Paused {
-		return false
-	}
-	if p.Locked != nil && *p.Locked != r.Locked {
-		return false
-	}
-	if p.RunUntagged != nil && *p.RunUntagged != r.RunUntagged {
-		return false
-	}
-	if p.TagList != nil && !slices.Equal(*p.TagList, r.TagList) {
-		return false
-	}
-	if p.AccessLevel != nil && *p.AccessLevel != r.AccessLevel {
-		return false
-	}
-	if p.MaximumTimeout != nil && *p.MaximumTimeout != r.MaximumTimeout {
-		return false
-	}
-	if p.MaintenanceNote != nil && *p.MaintenanceNote != r.MaintenanceNote {
-		return false
-	}
-
-	return true
 }
