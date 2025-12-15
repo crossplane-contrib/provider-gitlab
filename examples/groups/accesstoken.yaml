@@ -1,12 +1,12 @@
-apiVersion: projects.gitlab.crossplane.io/v1alpha1
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
 kind: AccessToken
 metadata:
-  name: example-access-token
+  name: example-group-access-token
 spec:
   forProvider:
-    name: example-access-token
-    projectIdRef:
-      name: example-project
+    name: example-group-access-token
+    groupIdRef:
+      name: example-group
     accessLevel: 40
     expiresAt: "2025-06-15T08:00:00Z"
     scopes:
@@ -14,18 +14,18 @@ spec:
   providerConfigRef:
     name: gitlab-provider
   writeConnectionSecretToRef:
-    name: gitlab-example-access-token
+    name: gitlab-example-group-access-token
     namespace: crossplane-system
 ---
-apiVersion: projects.gitlab.crossplane.io/v1alpha1
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
 kind: AccessToken
 metadata:
-  name: example-access-token-no-expiry
+  name: example-group-access-token-no-expiry
 spec:
   forProvider:
-    name: example-access-token-no-expiry
-    projectIdRef:
-      name: example-project
+    name: example-group-access-token-no-expiry
+    groupIdRef:
+      name: example-group
     accessLevel: 40
     expiresAt: null # This configures the expiration date to the maximum allowable lifetime limit set by GitLab instance
     scopes:
@@ -33,5 +33,5 @@ spec:
   providerConfigRef:
     name: gitlab-provider
   writeConnectionSecretToRef:
-    name: gitlab-example-access-token-no-expiry
+    name: gitlab-example-group-access-token-no-expiry
     namespace: crossplane-system
