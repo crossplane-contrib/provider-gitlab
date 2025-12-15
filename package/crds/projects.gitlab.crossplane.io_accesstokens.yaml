@@ -84,6 +84,7 @@ spec:
                       If not set, the maximum allowable lifetime of a personal access token is 365 days.
                       Expected in ISO 8601 format (2019-03-15T08:00:00Z)
                     format: date-time
+                    nullable: true
                     type: string
                   name:
                     description: Name of the project access token
