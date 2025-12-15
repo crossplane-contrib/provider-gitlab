@@ -178,6 +178,7 @@ spec:
                       type: string
                     type: array
                 required:
+                - expiresAt
                 - name
                 - scopes
                 type: object
