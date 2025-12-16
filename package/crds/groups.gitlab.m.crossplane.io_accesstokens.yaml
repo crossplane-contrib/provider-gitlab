@@ -70,6 +70,7 @@ spec:
                       If not set, the maximum allowable lifetime of a group access token is configured to the maximum allowable lifetime limit.
                       Expected in ISO 8601 format (2019-03-15T08:00:00Z)
                     format: date-time
+                    nullable: true
                     type: string
                   groupId:
                     description: GroupID is the ID of the group to create the deploy
