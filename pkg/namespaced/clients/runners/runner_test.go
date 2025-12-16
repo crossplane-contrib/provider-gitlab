@@ -1,0 +1,324 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package users
+
+import (
+	"errors"
+	"testing"
+	"time"
+
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
+	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
+	instancev1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+)
+
+func stringPtr(s string) *string { return &s }
+func boolPtr(b bool) *bool       { return &b }
+func intPtr(i int) *int          { return &i }
+
+// These tests validate that we correctly:
+// - detect GitLab "runner not found" errors
+// - map GitLab RunnerDetails into our Crossplane observation types
+// - generate update options
+// - compute up-to-date status (including edge cases with nil pointers)
+//
+// They are unit tests only: no network calls and no controller-runtime dependencies.
+
+func TestIsErrorRunnerNotFound(t *testing.T) {
+	cases := map[string]struct {
+		err  error
+		want bool
+	}{
+		"NilError": {
+			err:  nil,
+			want: false,
+		},
+		"NotFoundSubstring": {
+			err:  errors.New("some prefix: 404 Runner Not Found: extra"),
+			want: true,
+		},
+		"OtherError": {
+			err:  errors.New("boom"),
+			want: false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsErrorRunnerNotFound(tc.err)
+			if got != tc.want {
+				t.Errorf("IsErrorRunnerNotFound() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestGenerateCommonRunnerObservation(t *testing.T) {
+	contactedAt := time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC)
+
+	cases := map[string]struct {
+		runner *gitlab.RunnerDetails
+		want   commonv1alpha1.CommonRunnerObservation
+	}{
+		"NilInput": {
+			runner: nil,
+			want:   commonv1alpha1.CommonRunnerObservation{},
+		},
+		"FullInputWithContactedAt": {
+			runner: &gitlab.RunnerDetails{
+				ID:              42,
+				Description:     "desc",
+				Paused:          true,
+				Locked:          false,
+				TagList:         []string{"a", "b"},
+				RunnerType:      "instance_type",
+				MaintenanceNote: "note",
+				Name:            "runner-name",
+				Online:          true,
+				Status:          "online",
+				RunUntagged:     false,
+				AccessLevel:     "not_protected",
+				MaximumTimeout:  600,
+				IsShared:        true,
+				ContactedAt:     &contactedAt,
+			},
+			want: commonv1alpha1.CommonRunnerObservation{
+				ID:              42,
+				Description:     "desc",
+				Paused:          true,
+				Locked:          false,
+				TagList:         []string{"a", "b"},
+				RunnerType:      "instance_type",
+				MaintenanceNote: "note",
+				Name:            "runner-name",
+				Online:          true,
+				Status:          "online",
+				RunUntagged:     false,
+				AccessLevel:     "not_protected",
+				MaximumTimeout:  600,
+				IsShared:        true,
+				ContactedAt:     &metav1.Time{Time: contactedAt},
+			},
+		},
+		"InputWithoutContactedAt": {
+			runner: &gitlab.RunnerDetails{ID: 1},
+			want:   commonv1alpha1.CommonRunnerObservation{ID: 1},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := generateCommonRunnerObservation(tc.runner)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("generateCommonRunnerObservation() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGenerateInstanceRunnerObservation(t *testing.T) {
+	cases := map[string]struct {
+		runner *gitlab.RunnerDetails
+		want   instancev1alpha1.RunnerObservation
+	}{
+		"NilInput": {
+			runner: nil,
+			want:   instancev1alpha1.RunnerObservation{},
+		},
+		"MinimalInput": {
+			runner: &gitlab.RunnerDetails{ID: 99, Description: "d"},
+			want: instancev1alpha1.RunnerObservation{
+				CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{ID: 99, Description: "d"},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateInstanceRunnerObservation(tc.runner)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("GenerateInstanceRunnerObservation() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGenerateObservationsGroupAndProject(t *testing.T) {
+	contactedAt := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	input := &gitlab.RunnerDetails{
+		ID:          7,
+		Description: "desc",
+		ContactedAt: &contactedAt,
+		Groups: []struct {
+			ID     int    `json:"id"`
+			Name   string `json:"name"`
+			WebURL string `json:"web_url"`
+		}{
+			{ID: 11, Name: "g1", WebURL: "https://example.com/g1"},
+			{ID: 12, Name: "g2", WebURL: "https://example.com/g2"},
+		},
+		Projects: []struct {
+			ID                int    `json:"id"`
+			Name              string `json:"name"`
+			NameWithNamespace string `json:"name_with_namespace"`
+			Path              string `json:"path"`
+			PathWithNamespace string `json:"path_with_namespace"`
+		}{
+			{ID: 21, Name: "p1", NameWithNamespace: "ns/p1", Path: "p1", PathWithNamespace: "ns/p1"},
+		},
+	}
+
+	// Group observation should include common fields + converted group slice.
+	gotGroup := GenerateGroupRunnerObservation(input)
+	if gotGroup.ID != 7 {
+		t.Fatalf("GenerateGroupRunnerObservation() ID = %d, want %d", gotGroup.ID, 7)
+	}
+	if gotGroup.ContactedAt == nil || !gotGroup.ContactedAt.Time.Equal(contactedAt) {
+		t.Fatalf("GenerateGroupRunnerObservation() ContactedAt = %v, want %v", gotGroup.ContactedAt, contactedAt)
+	}
+	wantGroups := []groupsv1alpha1.RunnerGroup{
+		{ID: 11, Name: "g1", WebURL: "https://example.com/g1"},
+		{ID: 12, Name: "g2", WebURL: "https://example.com/g2"},
+	}
+	if diff := cmp.Diff(wantGroups, gotGroup.Groups); diff != "" {
+		t.Fatalf("GenerateGroupRunnerObservation() Groups mismatch (-want +got):\n%s", diff)
+	}
+
+	// Project observation should include common fields + converted project slice.
+	gotProject := GenerateProjectRunnerObservation(input)
+	if gotProject.ID != 7 {
+		t.Fatalf("GenerateProjectRunnerObservation() ID = %d, want %d", gotProject.ID, 7)
+	}
+	wantProjects := []projectsv1alpha1.RunnerProject{
+		{ID: 21, Name: "p1", NameWithNamespace: "ns/p1", Path: "p1", PathWithNamespace: "ns/p1"},
+	}
+	if diff := cmp.Diff(wantProjects, gotProject.Projects); diff != "" {
+		t.Fatalf("GenerateProjectRunnerObservation() Projects mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestGenerateEditRunnerOptions(t *testing.T) {
+	params := &commonv1alpha1.CommonRunnerParameters{
+		Description:     stringPtr("desc"),
+		Paused:          boolPtr(true),
+		TagList:         &[]string{"t1", "t2"},
+		RunUntagged:     boolPtr(false),
+		Locked:          boolPtr(true),
+		AccessLevel:     stringPtr("ref_protected"),
+		MaximumTimeout:  intPtr(3600),
+		MaintenanceNote: stringPtr("note"),
+	}
+
+	got := GenerateEditRunnerOptions(params)
+	want := &gitlab.UpdateRunnerDetailsOptions{
+		Description:     params.Description,
+		Paused:          params.Paused,
+		TagList:         params.TagList,
+		RunUntagged:     params.RunUntagged,
+		Locked:          params.Locked,
+		AccessLevel:     params.AccessLevel,
+		MaximumTimeout:  params.MaximumTimeout,
+		MaintenanceNote: params.MaintenanceNote,
+	}
+
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("GenerateEditRunnerOptions() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestIsRunnerUpToDate(t *testing.T) {
+	cases := map[string]struct {
+		spec     *commonv1alpha1.CommonRunnerParameters
+		observed *gitlab.RunnerDetails
+		want     bool
+	}{
+		"SpecNilIsUpToDate": {
+			spec:     nil,
+			observed: &gitlab.RunnerDetails{},
+			want:     true,
+		},
+		"ObservedNilIsNotUpToDate": {
+			spec:     &commonv1alpha1.CommonRunnerParameters{},
+			observed: nil,
+			want:     false,
+		},
+		"Equal": {
+			spec: &commonv1alpha1.CommonRunnerParameters{
+				Description:     stringPtr("desc"),
+				Paused:          boolPtr(false),
+				Locked:          boolPtr(true),
+				RunUntagged:     boolPtr(true),
+				TagList:         &[]string{"a"},
+				AccessLevel:     stringPtr("not_protected"),
+				MaximumTimeout:  intPtr(10),
+				MaintenanceNote: stringPtr("note"),
+			},
+			observed: &gitlab.RunnerDetails{
+				Description:     "desc",
+				Paused:          false,
+				Locked:          true,
+				RunUntagged:     true,
+				TagList:         []string{"a"},
+				AccessLevel:     "not_protected",
+				MaximumTimeout:  10,
+				MaintenanceNote: "note",
+			},
+			want: true,
+		},
+		"NilFieldsInSpecAreWildcards": {
+			spec: &commonv1alpha1.CommonRunnerParameters{
+				// nil pointers should be treated as "don't care".
+				Description: nil,
+				TagList:     nil,
+			},
+			observed: &gitlab.RunnerDetails{
+				Description: "anything",
+				TagList:     []string{"x"},
+			},
+			want: true,
+		},
+		"NotEqualTagList": {
+			spec: &commonv1alpha1.CommonRunnerParameters{
+				TagList: &[]string{"a", "b"},
+			},
+			observed: &gitlab.RunnerDetails{TagList: []string{"a"}},
+			want:     false,
+		},
+		"NotEqualMaintenanceNote": {
+			spec: &commonv1alpha1.CommonRunnerParameters{
+				MaintenanceNote: stringPtr("one"),
+			},
+			observed: &gitlab.RunnerDetails{MaintenanceNote: "two"},
+			want:     false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsRunnerUpToDate(tc.spec, tc.observed)
+			if got != tc.want {
+				t.Errorf("IsRunnerUpToDate() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

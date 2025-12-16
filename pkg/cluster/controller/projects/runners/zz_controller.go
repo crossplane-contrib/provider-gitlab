@@ -57,7 +57,7 @@ const (
 	errMissingConnectionSecret = "writeConnectionSecretToRef or publishConnectionDetailsTo must be specified to receive the runner token"
 )
 
-// SetupRunner adds a controller that reconciles samlgrouplinks.
+// SetupRunner adds a controller that reconciles projects runners.
 func SetupRunner(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v1alpha1.RunnerGroupKind)
 

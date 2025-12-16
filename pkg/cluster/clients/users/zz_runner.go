@@ -22,17 +22,19 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
+	instancev1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 var (
-	groupRunnerType   string = "group_type"
-	projectRunnerType string = "project_type"
+	groupRunnerType    string = "group_type"
+	projectRunnerType  string = "project_type"
+	instanceRunnerType string = "instance_type"
 )
 
-// UserClient defines Gitlab User service operations
+// RunnerClient defines Gitlab User service operations
 type RunnerClient interface {
 	CreateUserRunner(opts *gitlab.CreateUserRunnerOptions, options ...gitlab.RequestOptionFunc) (*gitlab.UserRunner, *gitlab.Response, error)
 }
@@ -41,6 +43,15 @@ type RunnerClient interface {
 func NewRunnerClient(cfg common.Config) RunnerClient {
 	git := common.NewClient(cfg)
 	return git.Users
+}
+
+// GenerateInstanceRunnerOptions generates user runner creation options for a runner linked to the instance
+func GenerateInstanceRunnerOptions(p *instancev1alpha1.RunnerParameters) *gitlab.CreateUserRunnerOptions {
+	opts := generateCommonRunnerOptions(&p.CommonRunnerParameters)
+
+	opts.RunnerType = &instanceRunnerType
+
+	return opts
 }
 
 // GenerateGroupRunnerOptions generates user runner creation options for a runner linked to a group
@@ -69,6 +80,7 @@ func GenerateProjectRunnerOptions(p *projectsv1alpha1.RunnerParameters) *gitlab.
 	return opts
 }
 
+// generateCommonRunnerOptions generates user runner creation options common to all runner types
 func generateCommonRunnerOptions(p *commonv1alpha1.CommonRunnerParameters) *gitlab.CreateUserRunnerOptions {
 	return &gitlab.CreateUserRunnerOptions{
 		Description:     p.Description,
