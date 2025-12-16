@@ -1,0 +1,551 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package variables
+
+import (
+	"context"
+	stderrors "errors"
+	"net/http"
+	"testing"
+	"time"
+
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/logging"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	"github.com/go-logr/logr"
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/record"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/config"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
+)
+
+var (
+	unexpectedItem             resource.Managed
+	errBoom                    = errors.New("boom")
+	errUnexpectedObjectTypeFmt = "unexpected object type %T"
+
+	variableKey         = "VARIABLE_KEY"
+	variableValue       = "1234"
+	variableType        = commonv1alpha1.VariableTypeEnvVar
+	variableDescription = "desc"
+	f                   = false
+)
+
+var deletionTime = metav1.Now()
+
+type MockClient struct {
+	MockGetVariable    func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error)
+	MockCreateVariable func(opt *gitlab.CreateInstanceVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error)
+	MockUpdateVariable func(key string, opt *gitlab.UpdateInstanceVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error)
+	MockRemoveVariable func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+func (m *MockClient) GetVariable(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+	return m.MockGetVariable(key, options...)
+}
+
+func (m *MockClient) CreateVariable(opt *gitlab.CreateInstanceVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+	return m.MockCreateVariable(opt, options...)
+}
+
+func (m *MockClient) UpdateVariable(key string, opt *gitlab.UpdateInstanceVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+	return m.MockUpdateVariable(key, opt, options...)
+}
+
+func (m *MockClient) RemoveVariable(key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return m.MockRemoveVariable(key, options...)
+}
+
+type args struct {
+	client instance.VariableClient
+	kube   client.Client
+	cr     resource.Managed
+}
+
+type modifier func(*v1alpha1.Variable)
+
+func withConditions(c ...xpv1.Condition) modifier {
+	return func(cr *v1alpha1.Variable) {
+		cr.Status.SetConditions(c...)
+	}
+}
+
+func withSpec(p v1alpha1.VariableParameters) modifier {
+	return func(cr *v1alpha1.Variable) {
+		cr.Spec.ForProvider = p
+	}
+}
+
+func withDeletionTimestamp() modifier {
+	return func(cr *v1alpha1.Variable) {
+		cr.ObjectMeta.DeletionTimestamp = &deletionTime
+	}
+}
+
+func variable(m ...modifier) *v1alpha1.Variable {
+	cr := &v1alpha1.Variable{}
+	for _, f := range m {
+		f(cr)
+	}
+	return cr
+}
+
+type recordingGate struct {
+	callbacks []func()
+	gvks      []schema.GroupVersionKind
+}
+
+func (g *recordingGate) Register(callback func(), gvks ...schema.GroupVersionKind) {
+	g.callbacks = append(g.callbacks, callback)
+	g.gvks = append(g.gvks, gvks...)
+}
+
+func (g *recordingGate) Set(schema.GroupVersionKind, bool) bool { return false }
+
+type fakeManager struct {
+	cl       client.Client
+	scheme   *runtime.Scheme
+	addErr   error
+	logger   logr.Logger
+	recorder record.EventRecorder
+}
+
+func (m *fakeManager) Add(manager.Runnable) error { return m.addErr }
+func (m *fakeManager) Elected() <-chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}
+func (m *fakeManager) AddMetricsServerExtraHandler(string, http.Handler) error { return nil }
+func (m *fakeManager) AddHealthzCheck(string, healthz.Checker) error           { return nil }
+func (m *fakeManager) AddReadyzCheck(string, healthz.Checker) error            { return nil }
+func (m *fakeManager) Start(context.Context) error                             { return nil }
+func (m *fakeManager) GetWebhookServer() webhook.Server                        { return nil }
+func (m *fakeManager) GetLogger() logr.Logger {
+	if m.logger.GetSink() == nil {
+		return logr.Discard()
+	}
+	return m.logger
+}
+func (m *fakeManager) GetControllerOptions() config.Controller { return config.Controller{} }
+func (m *fakeManager) GetHTTPClient() *http.Client             { return &http.Client{} }
+func (m *fakeManager) GetConfig() *rest.Config                 { return &rest.Config{} }
+func (m *fakeManager) GetCache() cache.Cache                   { return nil }
+func (m *fakeManager) GetScheme() *runtime.Scheme              { return m.scheme }
+func (m *fakeManager) GetClient() client.Client                { return m.cl }
+func (m *fakeManager) GetFieldIndexer() client.FieldIndexer    { return nil }
+func (m *fakeManager) GetEventRecorderFor(string) record.EventRecorder {
+	if m.recorder == nil {
+		m.recorder = record.NewFakeRecorder(32)
+	}
+	return m.recorder
+}
+func (m *fakeManager) GetRESTMapper() meta.RESTMapper { return nil }
+func (m *fakeManager) GetAPIReader() client.Reader    { return m.cl }
+
+func TestSetupVariableGated(t *testing.T) {
+	g := &recordingGate{}
+	o := controller.Options{Gate: g}
+
+	// mgr is not used until the callback is invoked.
+	if err := SetupVariableGated(nil, o); err != nil {
+		t.Fatalf("SetupVariableGated(...) error = %v, want nil", err)
+	}
+
+	if len(g.gvks) != 1 {
+		t.Fatalf("expected exactly 1 gvk registration, got %d", len(g.gvks))
+	}
+	if g.gvks[0] != v1alpha1.VariableGroupVersionKind {
+		t.Fatalf("registered gvk = %v, want %v", g.gvks[0], v1alpha1.VariableGroupVersionKind)
+	}
+	if len(g.callbacks) != 1 || g.callbacks[0] == nil {
+		t.Fatalf("expected 1 non-nil callback, got %d", len(g.callbacks))
+	}
+}
+
+func TestSetupVariableReturnsAddError(t *testing.T) {
+	s := runtime.NewScheme()
+	if err := v1alpha1.SchemeBuilder.AddToScheme(s); err != nil {
+		t.Fatalf("AddToScheme(...) error = %v", err)
+	}
+	cl := fake.NewClientBuilder().WithScheme(s).Build()
+
+	mgr := &fakeManager{cl: cl, scheme: s, addErr: errBoom}
+	o := controller.Options{
+		Logger:       logging.NewNopLogger(),
+		PollInterval: time.Second,
+		Features:     &feature.Flags{},
+		MetricOptions: &controller.MetricOptions{
+			MRStateMetrics: &statemetrics.MRStateMetrics{},
+		},
+	}
+
+	err := SetupVariable(mgr, o)
+	if !stderrors.Is(err, errBoom) {
+		t.Fatalf("SetupVariable(...) error = %v, want %v", err, errBoom)
+	}
+}
+
+func TestConnectAndDisconnect(t *testing.T) {
+	c := &connector{
+		kube:              &test.MockClient{},
+		newGitlabClientFn: func(common.Config) instance.VariableClient { return nil },
+	}
+
+	if _, err := c.Connect(context.Background(), unexpectedItem); err == nil || err.Error() != errNotVariable {
+		t.Fatalf("Connect(invalid) error = %v, want %q", err, errNotVariable)
+	}
+
+	if _, err := c.Connect(context.Background(), &v1alpha1.Variable{}); err == nil {
+		t.Fatal("Connect(missing ProviderConfigRef) expected error")
+	}
+
+	e := &external{}
+	if err := e.Disconnect(context.Background()); err != nil {
+		t.Fatalf("Disconnect(...) error = %v, want nil", err)
+	}
+}
+
+func TestObserve(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalObservation
+		err    error
+	}
+
+	cases := map[string]struct {
+		args args
+		want want
+	}{
+		"InvalidInput": {
+			args: args{cr: unexpectedItem},
+			want: want{cr: unexpectedItem, err: errors.New(errNotVariable)},
+		},
+		"ErrGet": {
+			args: args{
+				client: &MockClient{MockGetVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errBoom
+				}},
+				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})),
+			},
+			want: want{cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})), err: errors.Wrap(errBoom, errGetFailed)},
+		},
+		"ErrGet404": {
+			args: args{
+				client: &MockClient{MockGetVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+				}},
+				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})),
+			},
+			want: want{cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})), result: managed.ExternalObservation{ResourceExists: false}},
+		},
+		"SuccessfulAvailableUpToDate": {
+			args: args{
+				client: &MockClient{MockGetVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+					return &gitlab.InstanceVariable{Key: variableKey, Value: variableValue, Description: variableDescription, VariableType: gitlab.VariableTypeValue(variableType), Protected: f, Masked: f, Raw: f}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+				}},
+				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: &variableDescription, VariableType: &variableType, Protected: &f, Masked: &f, Raw: &f}})),
+			},
+			want: want{
+				cr:     variable(withConditions(xpv1.Available()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: &variableDescription, VariableType: &variableType, Protected: &f, Masked: &f, Raw: &f}})),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true},
+			},
+		},
+		"SuccessfulNotUpToDate": {
+			args: args{
+				client: &MockClient{MockGetVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+					return &gitlab.InstanceVariable{Key: variableKey, Value: "remote"}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+				}},
+				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: strPtr("local")}})),
+			},
+			want: want{
+				cr: variable(withConditions(xpv1.Available()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+					Key:          variableKey,
+					Value:        strPtr("local"),
+					Description:  strPtr(""),
+					Masked:       gitlab.Ptr(false),
+					Protected:    gitlab.Ptr(false),
+					Raw:          gitlab.Ptr(false),
+					VariableType: varTypePtr(commonv1alpha1.VariableType("")),
+				}})),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false, ResourceLateInitialized: true},
+			},
+		},
+		"ValueSecretRefLateInit": {
+			args: args{
+				kube: &test.MockClient{MockGet: func(_ context.Context, _ client.ObjectKey, obj client.Object) error {
+					secret, ok := obj.(*corev1.Secret)
+					if !ok {
+						return errors.Wrapf(errBoom, errUnexpectedObjectTypeFmt, obj)
+					}
+					secret.Data = map[string][]byte{"blah": []byte(variableValue)}
+					return nil
+				}},
+				client: &MockClient{MockGetVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+					// Protected is not set in the spec and should be late-initialized from the external variable.
+					return &gitlab.InstanceVariable{Key: variableKey, Protected: false, Masked: false, Raw: false}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+				}},
+				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, VariableType: &variableType}, ValueSecretRef: common.TestCreateLocalSecretKeySelector("", "blah")})),
+			},
+			want: want{
+				cr: variable(
+					withConditions(xpv1.Available()),
+					withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: strPtr(""), VariableType: &variableType, Masked: gitlab.Ptr(true), Raw: gitlab.Ptr(true), Protected: gitlab.Ptr(false)}, ValueSecretRef: common.TestCreateLocalSecretKeySelector("", "blah")}),
+				),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceLateInitialized: true, ResourceUpToDate: false},
+			},
+		},
+		"DeletingEarlyReturnSkipsSecret": {
+			args: args{
+				kube: &test.MockClient{MockGet: func(_ context.Context, _ client.ObjectKey, _ client.Object) error { return errBoom }},
+				client: &MockClient{MockGetVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+					return &gitlab.InstanceVariable{Key: variableKey}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+				}},
+				cr: variable(withDeletionTimestamp(), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}, ValueSecretRef: common.TestCreateLocalSecretKeySelector("", "blah")}), withConditions(xpv1.Deleting())),
+			},
+			want: want{cr: variable(withDeletionTimestamp(), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}, ValueSecretRef: common.TestCreateLocalSecretKeySelector("", "blah")}), withConditions(xpv1.Deleting())), result: managed.ExternalObservation{ResourceExists: true}},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.args.kube, client: tc.args.client}
+			got, err := e.Observe(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("Observe(...): -want err, +got err:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, got); diff != "" {
+				t.Errorf("Observe(...): -want result, +got result:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("Observe(...): -want cr, +got cr:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestCreate(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalCreation
+		err    error
+	}
+
+	cases := map[string]struct {
+		args args
+		want want
+	}{
+		"InvalidInput": {
+			args: args{cr: unexpectedItem},
+			want: want{cr: unexpectedItem, err: errors.New(errNotVariable)},
+		},
+		"ErrCreate": {
+			args: args{
+				client: &MockClient{MockCreateVariable: func(opt *gitlab.CreateInstanceVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+					return nil, nil, errBoom
+				}},
+				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})),
+			},
+			want: want{cr: variable(withConditions(xpv1.Creating()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})), err: errors.Wrap(errBoom, errCreateFailed)},
+		},
+		"ValueSecretRef": {
+			args: args{
+				kube: &test.MockClient{MockGet: func(_ context.Context, _ client.ObjectKey, obj client.Object) error {
+					secret, ok := obj.(*corev1.Secret)
+					if !ok {
+						return errors.Wrapf(errBoom, errUnexpectedObjectTypeFmt, obj)
+					}
+					secret.Data = map[string][]byte{"blah": []byte(variableValue)}
+					return nil
+				}},
+				client: &MockClient{MockCreateVariable: func(opt *gitlab.CreateInstanceVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+					// Ensure the value is resolved from secret before creating.
+					if opt.Value == nil || *opt.Value != variableValue {
+						return nil, nil, errors.New("value not set from secret")
+					}
+					return &gitlab.InstanceVariable{}, &gitlab.Response{}, nil
+				}},
+				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, VariableType: &variableType}, ValueSecretRef: common.TestCreateLocalSecretKeySelector("", "blah")})),
+			},
+			want: want{cr: variable(withConditions(xpv1.Creating()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, VariableType: &variableType, Masked: gitlab.Ptr(true), Raw: gitlab.Ptr(true)}, ValueSecretRef: common.TestCreateLocalSecretKeySelector("", "blah")}))},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.args.kube, client: tc.args.client}
+			got, err := e.Create(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("Create(...): -want err, +got err:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, got); diff != "" {
+				t.Errorf("Create(...): -want result, +got result:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("Create(...): -want cr, +got cr:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalUpdate
+		err    error
+	}
+
+	cases := map[string]struct {
+		args args
+		want want
+	}{
+		"InvalidInput": {
+			args: args{cr: unexpectedItem},
+			want: want{cr: unexpectedItem, err: errors.New(errNotVariable)},
+		},
+		"ErrUpdate": {
+			args: args{
+				client: &MockClient{MockUpdateVariable: func(key string, opt *gitlab.UpdateInstanceVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+					return nil, nil, errBoom
+				}},
+				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})),
+			},
+			want: want{cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})), err: errors.Wrap(errBoom, errUpdateFailed)},
+		},
+		"ValueSecretRef": {
+			args: args{
+				kube: &test.MockClient{MockGet: func(_ context.Context, _ client.ObjectKey, obj client.Object) error {
+					secret, ok := obj.(*corev1.Secret)
+					if !ok {
+						return errors.Wrapf(errBoom, errUnexpectedObjectTypeFmt, obj)
+					}
+					secret.Data = map[string][]byte{"blah": []byte(variableValue)}
+					return nil
+				}},
+				client: &MockClient{MockUpdateVariable: func(key string, opt *gitlab.UpdateInstanceVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
+					if opt.Value == nil || *opt.Value != variableValue {
+						return nil, nil, errors.New("value not set from secret")
+					}
+					return &gitlab.InstanceVariable{}, &gitlab.Response{}, nil
+				}},
+				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, VariableType: &variableType}, ValueSecretRef: common.TestCreateLocalSecretKeySelector("", "blah")})),
+			},
+			want: want{cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, VariableType: &variableType, Masked: gitlab.Ptr(true), Raw: gitlab.Ptr(true)}, ValueSecretRef: common.TestCreateLocalSecretKeySelector("", "blah")}))},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.args.kube, client: tc.args.client}
+			got, err := e.Update(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("Update(...): -want err, +got err:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, got); diff != "" {
+				t.Errorf("Update(...): -want result, +got result:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("Update(...): -want cr, +got cr:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestDelete(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalDelete
+		err    error
+	}
+
+	cases := map[string]struct {
+		args args
+		want want
+	}{
+		"InvalidInput": {
+			args: args{cr: unexpectedItem},
+			want: want{cr: unexpectedItem, err: errors.New(errNotVariable)},
+		},
+		"ErrDelete": {
+			args: args{
+				client: &MockClient{MockRemoveVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) { return nil, errBoom }},
+				cr:     variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})),
+			},
+			want: want{cr: variable(withConditions(xpv1.Deleting()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})), err: errors.Wrap(errBoom, errDeleteFailed)},
+		},
+		"Successful": {
+			args: args{
+				client: &MockClient{MockRemoveVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					return &gitlab.Response{}, nil
+				}},
+				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})),
+			},
+			want: want{cr: variable(withConditions(xpv1.Deleting()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}}))},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.args.kube, client: tc.args.client}
+			got, err := e.Delete(context.Background(), tc.args.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("Delete(...): -want err, +got err:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, got); diff != "" {
+				t.Errorf("Delete(...): -want result, +got result:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("Delete(...): -want cr, +got cr:\n%s", diff)
+			}
+		})
+	}
+}
+
+func strPtr(s string) *string {
+	return &s
+}
+
+func varTypePtr(v commonv1alpha1.VariableType) *commonv1alpha1.VariableType {
+	return &v
+}

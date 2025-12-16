@@ -79,10 +79,19 @@ var (
 	LicenseGroupVersionKind = SchemeGroupVersion.WithKind(LicenseKind)
 )
 
+// Variable type metadata
+var (
+	VariableKind             = reflect.TypeOf(Variable{}).Name()
+	VariableGroupKind        = schema.GroupKind{Group: Group, Kind: VariableKind}.String()
+	VariableKindAPIVersion   = VariableKind + "." + SchemeGroupVersion.String()
+	VariableGroupVersionKind = SchemeGroupVersion.WithKind(VariableKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&ApplicationSettings{}, &ApplicationSettingsList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&Appearance{}, &AppearanceList{})
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 	SchemeBuilder.Register(&License{}, &LicenseList{})
+	SchemeBuilder.Register(&Variable{}, &VariableList{})
 }
