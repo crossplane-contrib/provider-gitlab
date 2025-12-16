@@ -34,25 +34,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
+	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups/fake"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 var (
-	errBoom          = errors.New("boom")
-	groupID          = int64(5678)
-	variableKey      = "VARIABLE_KEY"
-	variableValue    = "1234"
-	variableType     = v1alpha1.VariableTypeEnvVar
-	variableEnvScope = "*"
-	f                = false
+	errBoom             = errors.New("boom")
+	groupID             = 5678
+	variableKey         = "VARIABLE_KEY"
+	variableValue       = "1234"
+	variableType        = commonv1alpha1.VariableTypeEnvVar
+	variableEnvScope    = "*"
+	f                   = false
+	variableDescription = "desc"
 )
 
 var (
 	pv = gitlab.GroupVariable{
 		Value:            variableValue,
 		Key:              variableKey,
+		Description:      variableDescription,
 		EnvironmentScope: variableEnvScope,
 		VariableType:     gitlab.VariableTypeValue(variableType),
 		Protected:        f,
@@ -76,13 +79,16 @@ func withConditions(c ...xpv1.Condition) variableModifier {
 func withDefaultValues() variableModifier {
 	return func(pv *v1alpha1.Variable) {
 		pv.Spec.ForProvider = v1alpha1.VariableParameters{
-			GroupID:          &groupID,
-			Key:              variableKey,
-			Value:            &variableValue,
-			Protected:        &f,
-			Masked:           &f,
-			Raw:              &f,
-			VariableType:     &variableType,
+			GroupID: &groupID,
+			CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+				Key:          variableKey,
+				Value:        &variableValue,
+				Description:  &variableDescription,
+				Protected:    &f,
+				Masked:       &f,
+				Raw:          &f,
+				VariableType: &variableType,
+			},
 			EnvironmentScope: &variableEnvScope,
 		}
 	}
@@ -118,13 +124,19 @@ func withMasked(masked bool) variableModifier {
 	}
 }
 
+func withDescription(description string) variableModifier {
+	return func(r *v1alpha1.Variable) {
+		r.Spec.ForProvider.Description = &description
+	}
+}
+
 func withRaw(raw bool) variableModifier {
 	return func(r *v1alpha1.Variable) {
 		r.Spec.ForProvider.Raw = &raw
 	}
 }
 
-func withVariableType(variableType v1alpha1.VariableType) variableModifier {
+func withVariableType(variableType commonv1alpha1.VariableType) variableModifier {
 	return func(r *v1alpha1.Variable) {
 		r.Spec.ForProvider.VariableType = &variableType
 	}
@@ -175,6 +187,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: variable(
 					withDefaultValues(),
+					withDescription(variableDescription),
 					withConditions(xpv1.Available()),
 				),
 				result: managed.ExternalObservation{
@@ -201,6 +214,7 @@ func TestObserve(t *testing.T) {
 				cr: variable(
 					withDefaultValues(),
 					withValue("blah"),
+					withDescription(variableDescription),
 					withConditions(xpv1.Available()),
 				),
 				result: managed.ExternalObservation{
@@ -223,7 +237,7 @@ func TestObserve(t *testing.T) {
 					withGroupID(groupID),
 					withKey(variableKey),
 					withValue(variableValue),
-					withVariableType(v1alpha1.VariableTypeEnvVar),
+					withVariableType(commonv1alpha1.VariableTypeEnvVar),
 					withRaw(false),
 				),
 			},
@@ -235,7 +249,8 @@ func TestObserve(t *testing.T) {
 					withMasked(true),
 					// We expect the variable type value to be unchanged,
 					// as it was already set in the existing CR.
-					withVariableType(v1alpha1.VariableTypeEnvVar),
+					withVariableType(commonv1alpha1.VariableTypeEnvVar),
+					withDescription(variableDescription),
 					withConditions(xpv1.Available()),
 				),
 				result: managed.ExternalObservation{
@@ -307,7 +322,7 @@ func TestObserve(t *testing.T) {
 				},
 				variable: &fake.MockClient{
 					MockGetGroupVariable: func(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
-						return &gitlab.GroupVariable{}, &gitlab.Response{}, nil
+						return &pv, &gitlab.Response{}, nil
 					},
 				},
 				cr: variable(
@@ -317,7 +332,7 @@ func TestObserve(t *testing.T) {
 					withKey(variableKey),
 					withValueSecretRef(common.TestCreateSecretKeySelector("something", "blah")),
 					withEnvironmentScope("*"),
-					withVariableType(v1alpha1.VariableTypeEnvVar),
+					withVariableType(commonv1alpha1.VariableTypeEnvVar),
 				),
 			},
 			want: want{
@@ -326,8 +341,9 @@ func TestObserve(t *testing.T) {
 					withValueSecretRef(common.TestCreateSecretKeySelector("something", "blah")),
 					withMasked(true),
 					withRaw(true),
+					withDescription(variableDescription),
 					withConditions(xpv1.Available()),
-					withVariableType(v1alpha1.VariableTypeEnvVar),
+					withVariableType(commonv1alpha1.VariableTypeEnvVar),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,

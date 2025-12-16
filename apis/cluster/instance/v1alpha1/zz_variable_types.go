@@ -26,7 +26,7 @@ import (
 )
 
 // VariableParameters define the desired state of a Gitlab CI Variable
-// https://docs.gitlab.com/ee/api/group_level_variables.html
+// https://docs.gitlab.com/api/instance_level_ci_variables/
 type VariableParameters struct {
 	v1alpha1.CommonVariableParameters `json:",inline"`
 
@@ -35,24 +35,6 @@ type VariableParameters struct {
 	// +optional
 	// +nullable
 	ValueSecretRef *xpv1.SecretKeySelector `json:"valueSecretRef,omitempty"`
-
-	// GroupID is the ID of the group to create the variable on.
-	// +optional
-	// +immutable
-	GroupID *int64 `json:"groupId,omitempty"`
-
-	// GroupIDRef is a reference to a group to retrieve its groupId.
-	// +optional
-	// +immutable
-	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
-
-	// GroupIDSelector selects reference to a group to retrieve its groupId.
-	// +optional
-	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
-
-	// EnvironmentScope indicates the environment scope of a variable.
-	// +optional
-	EnvironmentScope *string `json:"environmentScope,omitempty"`
 }
 
 // A VariableSpec defines the desired state of a Gitlab Group CI

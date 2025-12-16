@@ -25,20 +25,22 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
+	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 )
 
 var (
-	variableKey       = "A"
-	variableValue     = "B"
-	variableType      = gitlab.EnvVariableType
-	variableMasked    = true
-	variableProtected = false
-	variableEnvScope  = "blah/*"
-	variableRaw       = false
+	variableKey         = "A"
+	variableValue       = "B"
+	variableType        = gitlab.EnvVariableType
+	variableMasked      = true
+	variableProtected   = false
+	variableEnvScope    = "blah/*"
+	variableRaw         = false
+	variableDescription = "desc"
 )
 
 var (
-	variableTypeLocal = v1alpha1.VariableType(variableType)
+	variableTypeLocal = commonv1alpha1.VariableType(variableType)
 )
 
 func TestVariableToParameters(t *testing.T) {
@@ -55,6 +57,7 @@ func TestVariableToParameters(t *testing.T) {
 				ph: gitlab.ProjectVariable{
 					Key:              variableKey,
 					Value:            variableValue,
+					Description:      variableDescription,
 					VariableType:     variableType,
 					Masked:           variableMasked,
 					Protected:        variableProtected,
@@ -63,13 +66,16 @@ func TestVariableToParameters(t *testing.T) {
 				},
 			},
 			want: v1alpha1.VariableParameters{
-				Key:              variableKey,
-				Value:            &variableValue,
-				VariableType:     &variableTypeLocal,
-				Masked:           &variableMasked,
-				Protected:        &variableProtected,
+				CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+					Key:          variableKey,
+					Value:        &variableValue,
+					Description:  &variableDescription,
+					VariableType: &variableTypeLocal,
+					Masked:       &variableMasked,
+					Protected:    &variableProtected,
+					Raw:          &variableRaw,
+				},
 				EnvironmentScope: &variableEnvScope,
-				Raw:              &variableRaw,
 			},
 		},
 	}
@@ -92,17 +98,21 @@ func TestLateInitializeVariable(t *testing.T) {
 			parameters: &v1alpha1.VariableParameters{},
 			variable: &gitlab.ProjectVariable{
 				VariableType:     variableType,
+				Description:      variableDescription,
 				Protected:        variableProtected,
 				Masked:           variableMasked,
 				EnvironmentScope: variableEnvScope,
 				Raw:              variableRaw,
 			},
 			want: &v1alpha1.VariableParameters{
-				VariableType:     &variableTypeLocal,
-				Protected:        &variableProtected,
-				Masked:           &variableMasked,
+				CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+					VariableType: &variableTypeLocal,
+					Description:  &variableDescription,
+					Protected:    &variableProtected,
+					Masked:       &variableMasked,
+					Raw:          &variableRaw,
+				},
 				EnvironmentScope: &variableEnvScope,
-				Raw:              &variableRaw,
 			},
 		},
 	}
@@ -127,13 +137,15 @@ func TestGenerateCreateVariableOptions(t *testing.T) {
 		"AllFields": {
 			args: args{
 				parameters: &v1alpha1.VariableParameters{
-					Key:              variableKey,
-					Value:            &variableValue,
-					VariableType:     &variableTypeLocal,
-					Masked:           &variableMasked,
-					Protected:        &variableProtected,
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key:          variableKey,
+						Value:        &variableValue,
+						VariableType: &variableTypeLocal,
+						Masked:       &variableMasked,
+						Protected:    &variableProtected,
+						Raw:          &variableRaw,
+					},
 					EnvironmentScope: &variableEnvScope,
-					Raw:              &variableRaw,
 				},
 			},
 			want: &gitlab.CreateProjectVariableOptions{
@@ -149,9 +161,11 @@ func TestGenerateCreateVariableOptions(t *testing.T) {
 		"SomeFields": {
 			args: args{
 				parameters: &v1alpha1.VariableParameters{
-					Key:          variableKey,
-					Value:        &variableValue,
-					VariableType: &variableTypeLocal,
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key:          variableKey,
+						Value:        &variableValue,
+						VariableType: &variableTypeLocal,
+					},
 				},
 			},
 			want: &gitlab.CreateProjectVariableOptions{
@@ -182,16 +196,20 @@ func TestGenerateUpdateVariableOptions(t *testing.T) {
 		"AllFields": {
 			args: args{
 				parameters: &v1alpha1.VariableParameters{
-					Value:            &variableValue,
-					VariableType:     &variableTypeLocal,
-					Masked:           &variableMasked,
-					Protected:        &variableProtected,
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Value:        &variableValue,
+						Description:  &variableDescription,
+						VariableType: &variableTypeLocal,
+						Masked:       &variableMasked,
+						Protected:    &variableProtected,
+						Raw:          &variableRaw,
+					},
 					EnvironmentScope: &variableEnvScope,
-					Raw:              &variableRaw,
 				},
 			},
 			want: &gitlab.UpdateProjectVariableOptions{
 				Value:            &variableValue,
+				Description:      &variableDescription,
 				VariableType:     &variableType,
 				Protected:        &variableProtected,
 				Masked:           &variableMasked,
@@ -224,17 +242,21 @@ func TestIsVariableUpToDate(t *testing.T) {
 		"SameFields": {
 			args: args{
 				p: &v1alpha1.VariableParameters{
-					Key:              variableKey,
-					Value:            &variableValue,
-					VariableType:     &variableTypeLocal,
-					Protected:        &variableProtected,
-					Masked:           &variableMasked,
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key:          variableKey,
+						Value:        &variableValue,
+						Description:  &variableDescription,
+						VariableType: &variableTypeLocal,
+						Protected:    &variableProtected,
+						Masked:       &variableMasked,
+						Raw:          &variableRaw,
+					},
 					EnvironmentScope: &variableEnvScope,
-					Raw:              &variableRaw,
 				},
 				variable: &gitlab.ProjectVariable{
 					Key:              variableKey,
 					Value:            variableValue,
+					Description:      variableDescription,
 					VariableType:     variableType,
 					Masked:           variableMasked,
 					Protected:        variableProtected,
@@ -247,17 +269,21 @@ func TestIsVariableUpToDate(t *testing.T) {
 		"DifferentFields": {
 			args: args{
 				p: &v1alpha1.VariableParameters{
-					Key:              variableKey,
-					Value:            &variableValue,
-					VariableType:     &variableTypeLocal,
-					Protected:        &variableProtected,
-					Masked:           &variableMasked,
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key:          variableKey,
+						Value:        &variableValue,
+						Description:  &variableDescription,
+						VariableType: &variableTypeLocal,
+						Protected:    &variableProtected,
+						Masked:       &variableMasked,
+						Raw:          &variableRaw,
+					},
 					EnvironmentScope: &variableEnvScope,
-					Raw:              &variableRaw,
 				},
 				variable: &gitlab.ProjectVariable{
 					Key:              variableKey,
 					Value:            "RANDOM VALUE",
+					Description:      variableDescription,
 					VariableType:     variableType,
 					Masked:           variableMasked,
 					Protected:        variableProtected,

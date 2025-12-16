@@ -1,0 +1,124 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package instance
+
+import (
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+
+	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+// VariableClient defines Gitlab Variable service operations
+type VariableClient interface {
+	GetVariable(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error)
+	CreateVariable(opt *gitlab.CreateInstanceVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error)
+	UpdateVariable(key string, opt *gitlab.UpdateInstanceVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error)
+	RemoveVariable(key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// NewVariableClient returns a new Gitlab Variable service
+func NewVariableClient(cfg common.Config) VariableClient {
+	git := common.NewClient(cfg)
+	return git.InstanceVariables
+}
+
+// GenerateVariableObservation
+
+// LateInitializeVariable fills the empty fields in the variable spec with the
+// values seen in gitlab.Variable.
+func LateInitializeVariable(in *v1alpha1.VariableParameters, variable *gitlab.InstanceVariable) {
+	if variable == nil {
+		return
+	}
+
+	if in.Description == nil {
+		in.Description = &variable.Description
+	}
+
+	if in.VariableType == nil {
+		in.VariableType = (*commonv1alpha1.VariableType)(&variable.VariableType)
+	}
+
+	if in.Protected == nil {
+		in.Protected = &variable.Protected
+	}
+
+	if in.Masked == nil {
+		in.Masked = &variable.Masked
+	}
+
+	if in.Raw == nil {
+		in.Raw = &variable.Raw
+	}
+}
+
+// GenerateCreateVariableOptions creates gitlab CreateInstanceVariableOptions from VariableParameters
+func GenerateCreateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.CreateInstanceVariableOptions {
+	return &gitlab.CreateInstanceVariableOptions{
+		Key:          &p.Key,
+		Value:        p.Value,
+		Description:  p.Description,
+		Masked:       p.Masked,
+		Protected:    p.Protected,
+		Raw:          p.Raw,
+		VariableType: (*gitlab.VariableTypeValue)(p.VariableType),
+	}
+}
+
+// GenerateUpdateVariableOptions creates gitlab UpdateInstanceVariableOptions from VariableParameters
+func GenerateUpdateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.UpdateInstanceVariableOptions {
+	return &gitlab.UpdateInstanceVariableOptions{
+		Value:        p.Value,
+		Description:  p.Description,
+		Masked:       p.Masked,
+		Protected:    p.Protected,
+		Raw:          p.Raw,
+		VariableType: (*gitlab.VariableTypeValue)(p.VariableType),
+	}
+}
+
+// IsVariableUpToDate checks whether the VariableParameters is in sync with the
+// external representation.
+func IsVariableUpToDate(p *v1alpha1.VariableParameters, variable *gitlab.InstanceVariable) bool {
+	if p == nil {
+		return true
+	}
+	if variable == nil {
+		return false
+	}
+
+	// use a slice to reduce cyclomatic complexity
+	checks := []bool{
+		p.Key == variable.Key,
+		clients.IsComparableEqualToComparablePtr(p.Value, variable.Value),
+		clients.IsComparableEqualToComparablePtr(p.Description, variable.Description),
+		clients.IsComparableEqualToComparablePtr((*string)(p.VariableType), (string)(variable.VariableType)),
+		clients.IsComparableEqualToComparablePtr(p.Protected, variable.Protected),
+		clients.IsComparableEqualToComparablePtr(p.Masked, variable.Masked),
+		clients.IsComparableEqualToComparablePtr(p.Raw, variable.Raw),
+	}
+
+	for _, check := range checks {
+		if !check {
+			return false
+		}
+	}
+	return true
+}

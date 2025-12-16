@@ -37,6 +37,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects"
+	variables "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/common/variables"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
@@ -139,7 +140,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	if cr.Spec.ForProvider.ValueSecretRef != nil {
-		if err = e.updateVariableFromSecret(mg, ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider); err != nil {
+		if err = variables.UpdateVariableFromSecret(e.kube, mg, ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider.CommonVariableParameters); err != nil {
 			return managed.ExternalObservation{}, errors.Wrap(err, errUpdateFailed)
 		}
 	}
@@ -163,7 +164,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	if cr.Spec.ForProvider.ValueSecretRef != nil {
-		if err := e.updateVariableFromSecret(mg, ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider); err != nil {
+		if err := variables.UpdateVariableFromSecret(e.kube, mg, ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider.CommonVariableParameters); err != nil {
 			return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 		}
 	}
@@ -189,7 +190,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	if cr.Spec.ForProvider.ValueSecretRef != nil {
-		if err := e.updateVariableFromSecret(mg, ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider); err != nil {
+		if err := variables.UpdateVariableFromSecret(e.kube, mg, ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider.CommonVariableParameters); err != nil {
 			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 		}
 	}
@@ -228,25 +229,5 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 func (e *external) Disconnect(ctx context.Context) error {
 	// Disconnect is not implemented as it is a new method required by the SDK
-	return nil
-}
-
-func (e *external) updateVariableFromSecret(mg resource.Managed, ctx context.Context, selector *xpv1.SecretKeySelector, params *v1alpha1.VariableParameters) error {
-	value, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, selector)
-	if err != nil {
-		return err
-	}
-
-	// Mask variable if it hasn't already been explicitly configured.
-	if params.Masked == nil {
-		params.Masked = gitlab.Ptr(true)
-	}
-
-	// Make variable raw if it hasn't already been explicitly configured.
-	if params.Raw == nil {
-		params.Raw = gitlab.Ptr(true)
-	}
-
-	params.Value = value
 	return nil
 }

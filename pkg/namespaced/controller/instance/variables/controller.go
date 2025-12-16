@@ -32,28 +32,27 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
 	variables "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/common/variables"
 )
 
 const (
-	errNotVariable      = "managed resource is not a Gitlab variable custom resource"
-	errGetFailed        = "cannot get Gitlab variable"
-	errCreateFailed     = "cannot create Gitlab variable"
-	errUpdateFailed     = "cannot update Gitlab variable"
-	errDeleteFailed     = "cannot delete Gitlab variable"
-	errProjectIDMissing = "ProjectID is missing"
+	errNotVariable  = "managed resource is not a Gitlab variable custom resource"
+	errGetFailed    = "cannot get Gitlab variable"
+	errCreateFailed = "cannot create Gitlab variable"
+	errUpdateFailed = "cannot update Gitlab variable"
+	errDeleteFailed = "cannot delete Gitlab variable"
 )
 
-// SetupVariable adds a controller that reconciles Variables.
+// SetupVariable adds a controller that reconciles Instance Variables.
 func SetupVariable(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v1alpha1.VariableGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
-		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewVariableClient}),
+		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: instance.NewVariableClient}),
 		managed.WithInitializers(),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
@@ -89,11 +88,13 @@ func SetupVariableGated(mgr ctrl.Manager, o controller.Options) error {
 	return nil
 }
 
+// connector is responsible for producing an ExternalClient for Variables
 type connector struct {
 	kube              client.Client
-	newGitlabClientFn func(cfg common.Config) projects.VariableClient
+	newGitlabClientFn func(cfg common.Config) instance.VariableClient
 }
 
+// Connect establishes a connection to the external system.
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
 	cr, ok := mg.(*v1alpha1.Variable)
 	if !ok {
@@ -106,24 +107,21 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
 }
 
+// external is an external client for Instance Variables
 type external struct {
 	kube   client.Client
-	client projects.VariableClient
+	client instance.VariableClient
 }
 
+// Observe checks if the variable exists and if it is up to date.
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
 	cr, ok := mg.(*v1alpha1.Variable)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotVariable)
 	}
-	if cr.Spec.ForProvider.ProjectID == nil {
-		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
-	}
 
 	variable, res, err := e.client.GetVariable(
-		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.Key,
-		projects.GenerateGetVariableOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
@@ -144,17 +142,18 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
-	projects.LateInitializeVariable(&cr.Spec.ForProvider, variable)
+	instance.LateInitializeVariable(&cr.Spec.ForProvider, variable)
 
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        projects.IsVariableUpToDate(&cr.Spec.ForProvider, variable),
+		ResourceUpToDate:        instance.IsVariableUpToDate(&cr.Spec.ForProvider, variable),
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 	}, nil
 }
 
+// Create creates the variable in Gitlab using the Gitlab API.
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
 	cr, ok := mg.(*v1alpha1.Variable)
 	if !ok {
@@ -166,14 +165,10 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 			return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 		}
 	}
-	if cr.Spec.ForProvider.ProjectID == nil {
-		return managed.ExternalCreation{}, errors.New(errProjectIDMissing)
-	}
 
 	cr.Status.SetConditions(xpv1.Creating())
 	_, _, err := e.client.CreateVariable(
-		*cr.Spec.ForProvider.ProjectID,
-		projects.GenerateCreateVariableOptions(&cr.Spec.ForProvider),
+		instance.GenerateCreateVariableOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx))
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
@@ -181,6 +176,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalCreation{}, nil
 }
 
+// Update updates the variable in Gitlab using the Gitlab API.
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
 	cr, ok := mg.(*v1alpha1.Variable)
 	if !ok {
@@ -192,39 +188,31 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 		}
 	}
-	if cr.Spec.ForProvider.ProjectID == nil {
-		return managed.ExternalUpdate{}, errors.New(errProjectIDMissing)
-	}
 
 	_, _, err := e.client.UpdateVariable(
-		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.Key,
-		projects.GenerateUpdateVariableOptions(&cr.Spec.ForProvider),
+		instance.GenerateUpdateVariableOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 }
 
+// Delete deletes the variable in Gitlab using the Gitlab API.
 func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Variable)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotVariable)
 	}
 
-	if cr.Spec.ForProvider.ProjectID == nil {
-		return managed.ExternalDelete{}, errors.New(errProjectIDMissing)
-	}
-
 	cr.Status.SetConditions(xpv1.Deleting())
 	_, err := e.client.RemoveVariable(
-		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.Key,
-		projects.GenerateRemoveVariableOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 }
 
+// Disconnect disconnects from the external system (not implemented).
 func (e *external) Disconnect(ctx context.Context) error {
 	// Disconnect is not implemented as it is a new method required by the SDK
 	return nil

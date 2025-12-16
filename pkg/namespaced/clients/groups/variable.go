@@ -17,42 +17,29 @@ limitations under the License.
 package groups
 
 import (
-	"strings"
-
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
+	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
-const (
-	errVariableNotFound = "404 Variable Not Found"
-)
-
 // VariableClient defines Gitlab Variable service operations
 type VariableClient interface {
-	ListVariables(gid interface{}, opt *gitlab.ListGroupVariablesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.GroupVariable, *gitlab.Response, error)
-	GetVariable(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
-	CreateVariable(gid interface{}, opt *gitlab.CreateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
-	UpdateVariable(gid interface{}, key string, opt *gitlab.UpdateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
-	RemoveVariable(gid interface{}, key string, opt *gitlab.RemoveGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	ListVariables(gid any, opt *gitlab.ListGroupVariablesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.GroupVariable, *gitlab.Response, error)
+	GetVariable(gid any, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
+	CreateVariable(gid any, opt *gitlab.CreateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
+	UpdateVariable(gid any, key string, opt *gitlab.UpdateGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error)
+	RemoveVariable(gid any, key string, opt *gitlab.RemoveGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewVariableClient returns a new Gitlab Group service
 func NewVariableClient(cfg common.Config) VariableClient {
 	git := common.NewClient(cfg)
 	return git.GroupVariables
-}
-
-// IsErrorVariableNotFound helper function to test for errGroupNotFound error.
-func IsErrorVariableNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errVariableNotFound)
 }
 
 // LateInitializeVariable fills the empty fields in the groupVariable spec with the
@@ -63,7 +50,11 @@ func LateInitializeVariable(in *v1alpha1.VariableParameters, variable *gitlab.Gr
 	}
 
 	if in.VariableType == nil {
-		in.VariableType = (*v1alpha1.VariableType)(&variable.VariableType)
+		in.VariableType = (*commonv1alpha1.VariableType)(&variable.VariableType)
+	}
+
+	if in.Description == nil {
+		in.Description = &variable.Description
 	}
 
 	if in.Protected == nil {
@@ -87,13 +78,16 @@ func LateInitializeVariable(in *v1alpha1.VariableParameters, variable *gitlab.Gr
 // Group Variable back into our local VariableParameters format
 func VariableToParameters(in gitlab.GroupVariable) v1alpha1.VariableParameters {
 	return v1alpha1.VariableParameters{
-		Key:              in.Key,
-		Value:            &in.Value,
-		VariableType:     (*v1alpha1.VariableType)(&in.VariableType),
-		Protected:        &in.Protected,
-		Masked:           &in.Masked,
+		CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+			Key:          in.Key,
+			Value:        &in.Value,
+			Description:  &in.Description,
+			VariableType: (*commonv1alpha1.VariableType)(&in.VariableType),
+			Protected:    &in.Protected,
+			Masked:       &in.Masked,
+			Raw:          &in.Raw,
+		},
 		EnvironmentScope: &in.EnvironmentScope,
-		Raw:              &in.Raw,
 	}
 }
 
@@ -102,6 +96,7 @@ func GenerateCreateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.Creat
 	variable := &gitlab.CreateGroupVariableOptions{
 		Key:              &p.Key,
 		Value:            p.Value,
+		Description:      p.Description,
 		VariableType:     (*gitlab.VariableTypeValue)(p.VariableType),
 		Protected:        p.Protected,
 		Masked:           p.Masked,
@@ -115,6 +110,7 @@ func GenerateCreateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.Creat
 func GenerateUpdateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.UpdateGroupVariableOptions {
 	variable := &gitlab.UpdateGroupVariableOptions{
 		Value:            p.Value,
+		Description:      p.Description,
 		VariableType:     (*gitlab.VariableTypeValue)(p.VariableType),
 		Protected:        p.Protected,
 		Masked:           p.Masked,
