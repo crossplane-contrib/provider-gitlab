@@ -211,3 +211,26 @@ func (mg *Runner) ResolveReferences(ctx context.Context, c client.Reader) error 
 
 	return nil
 }
+
+// ResolveReferences of this File
+func (mg *File) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPIResolver(c, mg)
+
+	// resolve spec.forProvider.projectIdRef
+	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.ProjectID),
+		Reference:    mg.Spec.ForProvider.ProjectIDRef,
+		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
+		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
+		Extract:      reference.ExternalName(),
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.projectId")
+	}
+
+	mg.Spec.ForProvider.ProjectID = toPtrValue(rsp.ResolvedValue)
+	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
+
+	return nil
+}
