@@ -40,11 +40,10 @@ import (
 )
 
 const (
-	errNotAppearance             = "managed resource is not a Gitlab appearance custom resource"
-	errGetFailed                 = "cannot get Gitlab appearance"
-	errCreateFailed              = "cannot create Gitlab appearance"
-	errUpdateFailed              = "cannot update Gitlab appearance"
-	errFailedToUpdateFromSecrets = "failed to update appearance from secrets"
+	errNotAppearance = "managed resource is not a Gitlab appearance custom resource"
+	errGetFailed     = "cannot get Gitlab appearance"
+	errCreateFailed  = "cannot create Gitlab appearance"
+	errUpdateFailed  = "cannot update Gitlab appearance"
 )
 
 // SetupAppearance adds a controller that reconciles GitLab Instance Appearance.
