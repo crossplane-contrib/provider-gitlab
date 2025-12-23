@@ -85,6 +85,10 @@ type MockClient struct {
 	MockGetProtectedBranch          func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error)
 	MockProtectRepositoryBranches   func(pid any, opt *gitlab.ProtectRepositoryBranchesOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error)
 	MockUnprotectRepositoryBranches func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockGetMattermostService    func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
+	MockSetMattermostService    func(pid any, opt *gitlab.SetMattermostServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
+	MockDeleteMattermostService func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetPipelineSchedule calls the underlying MockGetPipelineSchedule method.
@@ -306,4 +310,19 @@ func (c *MockClient) ProtectRepositoryBranches(pid any, opt *gitlab.ProtectRepos
 // UnprotectRepositoryBranches calls the underlying MockUnprotectRepositoryBranches method.
 func (c *MockClient) UnprotectRepositoryBranches(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockUnprotectRepositoryBranches(pid, branch, options...)
+}
+
+// GetMattermostService calls the underlying MockGetMattermostService method.
+func (c *MockClient) GetMattermostService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error) {
+	return c.MockGetMattermostService(pid, options...)
+}
+
+// SetMattermostService calls the underlying MockSetMattermostService method.
+func (c *MockClient) SetMattermostService(pid any, opt *gitlab.SetMattermostServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error) {
+	return c.MockSetMattermostService(pid, opt, options...)
+}
+
+// DeleteMattermostService calls the underlying MockDeleteMattermostService method.
+func (c *MockClient) DeleteMattermostService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteMattermostService(pid, options...)
 }

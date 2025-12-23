@@ -25,6 +25,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/hooks"
+	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integration_mattermost"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/pipelineschedules"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/projects"
@@ -47,6 +48,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		approvalrules.SetupRules,
 		runners.SetupRunner,
 		protectedbranches.SetupProtectedBranch,
+		integrationmattermost.SetupIntegrationMattermost,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -70,6 +72,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		approvalrules.SetupRulesGated,
 		runners.SetupRunnerGated,
 		protectedbranches.SetupProtectedBranchGated,
+		integrationmattermost.SetupIntegrationMattermostGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
