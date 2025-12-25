@@ -1,0 +1,153 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package instance
+
+import (
+	"testing"
+	"time"
+
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+)
+
+func TestGenerateAddLicenseOptions(t *testing.T) {
+	tests := map[string]struct {
+		in   string
+		want string
+	}{
+		"Empty": {
+			in:   "",
+			want: "",
+		},
+		"NonEmpty": {
+			in:   "super-secret-license",
+			want: "super-secret-license",
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateAddLicenseOptions(tc.in)
+			if got == nil {
+				t.Fatalf("GenerateAddLicenseOptions(%q) returned nil", tc.in)
+			}
+			if got.License == nil {
+				t.Fatalf("GenerateAddLicenseOptions(%q).License is nil", tc.in)
+			}
+			if diff := cmp.Diff(tc.want, *got.License); diff != "" {
+				t.Errorf("License mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestIsLicenseUpToDate(t *testing.T) {
+	spec := &v1alpha1.LicenseParameters{}
+	tests := map[string]struct {
+		spec     *v1alpha1.LicenseParameters
+		observed *gitlab.License
+		want     bool
+	}{
+		"SpecNil_ObservedNil_ReturnsTrue": {
+			spec:     nil,
+			observed: nil,
+			want:     true,
+		},
+		"SpecNotNil_ObservedNil_ReturnsFalse": {
+			spec:     spec,
+			observed: nil,
+			want:     false,
+		},
+		"SpecNotNil_ObservedExpired_ReturnsFalse": {
+			spec:     spec,
+			observed: &gitlab.License{Expired: true},
+			want:     false,
+		},
+		"SpecNotNil_ObservedNotExpired_ReturnsTrue": {
+			spec:     spec,
+			observed: &gitlab.License{Expired: false},
+			want:     true,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := IsLicenseUpToDate(tc.spec, tc.observed)
+			if got != tc.want {
+				t.Fatalf("IsLicenseUpToDate() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestGenerateLicenseObservation(t *testing.T) {
+	created := time.Date(2020, time.January, 2, 3, 4, 5, 0, time.UTC)
+
+	observed := &gitlab.License{
+		ID:               42,
+		Plan:             "ultimate",
+		CreatedAt:        &created,
+		HistoricalMax:    100,
+		MaximumUserCount: 1000,
+		Expired:          false,
+		Overage:          1,
+		UserLimit:        2000,
+		ActiveUsers:      10,
+	}
+
+	want := v1alpha1.LicenseObservation{
+		ID:               42,
+		Plan:             "ultimate",
+		CreatedAt:        &metav1.Time{Time: created},
+		StartsAt:         nil,
+		ExpiresAt:        nil,
+		HistoricalMax:    100,
+		MaximumUserCount: 1000,
+		Expired:          false,
+		Overage:          1,
+		UserLimit:        2000,
+		ActiveUsers:      10,
+		Licensee:         v1alpha1.Licensee{},
+		AddOns:           v1alpha1.AddOns{},
+	}
+
+	got := GenerateLicenseObservation(observed)
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("GenerateLicenseObservation() mismatch (-want +got):\n%s", diff)
+	}
+
+	// Ensure nil input panics to cover unexpected usage
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("GenerateLicenseObservation(nil) did not panic")
+		}
+	}()
+	_ = GenerateLicenseObservation(nil)
+}
+
+func TestNewLicenseClient(t *testing.T) {
+	// Should not panic and should return a non-nil LicenseClient
+	cfg := common.Config{}
+	c := NewLicenseClient(cfg)
+	if c == nil {
+		t.Fatalf("NewLicenseClient returned nil")
+	}
+}

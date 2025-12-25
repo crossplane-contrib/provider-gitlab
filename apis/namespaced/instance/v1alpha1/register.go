@@ -69,9 +69,18 @@ var (
 	ServiceAccountGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountKind)
 )
 
+// License type metadata
+var (
+	LicenseKind             = reflect.TypeOf(License{}).Name()
+	LicenseGroupKind        = schema.GroupKind{Group: Group, Kind: LicenseKind}.String()
+	LicenseKindAPIVersion   = LicenseKind + "." + SchemeGroupVersion.String()
+	LicenseGroupVersionKind = SchemeGroupVersion.WithKind(LicenseKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&ApplicationSettings{}, &ApplicationSettingsList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&Appearance{}, &AppearanceList{})
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
+	SchemeBuilder.Register(&License{}, &LicenseList{})
 }

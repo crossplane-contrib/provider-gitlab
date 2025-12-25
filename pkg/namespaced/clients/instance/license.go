@@ -1,0 +1,91 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package instance
+
+import (
+	"time"
+
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+// LicenseClient defines Gitlab License service operations
+type LicenseClient interface {
+	GetLicense(options ...gitlab.RequestOptionFunc) (*gitlab.License, *gitlab.Response, error)
+	AddLicense(opt *gitlab.AddLicenseOptions, options ...gitlab.RequestOptionFunc) (*gitlab.License, *gitlab.Response, error)
+	DeleteLicense(licenseID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// NewLicenseClient returns a new Gitlab License service
+func NewLicenseClient(cfg common.Config) LicenseClient {
+	git := common.NewClient(cfg)
+	return git.License
+}
+
+// GenerateAddLicenseOptions from a license string
+func GenerateAddLicenseOptions(license string) *gitlab.AddLicenseOptions {
+	return &gitlab.AddLicenseOptions{
+		License: &license,
+	}
+}
+
+// IsLicenseUpToDate checks whether the License is up to date
+// Since the GitLab API does not provide a way to get the current license details,
+// We assume that the license is the one provided.
+// This only checks if the license is expired or not.
+func IsLicenseUpToDate(spec *v1alpha1.LicenseParameters, observed *gitlab.License) bool {
+	if spec == nil {
+		return true
+	}
+	// If there is no observed license, it's not up to date
+	if observed == nil {
+		return false
+	}
+	return !observed.Expired
+}
+
+// GenerateLicenseObservation creates LicenseObservation from Gitlab License
+func GenerateLicenseObservation(observed *gitlab.License) v1alpha1.LicenseObservation {
+	return v1alpha1.LicenseObservation{
+		ID:               observed.ID,
+		Plan:             observed.Plan,
+		CreatedAt:        clients.TimeToMetaTime(observed.CreatedAt),
+		StartsAt:         clients.TimeToMetaTime((*time.Time)(observed.StartsAt)),
+		ExpiresAt:        clients.TimeToMetaTime((*time.Time)(observed.ExpiresAt)),
+		HistoricalMax:    observed.HistoricalMax,
+		MaximumUserCount: observed.MaximumUserCount,
+		Expired:          observed.Expired,
+		Overage:          observed.Overage,
+		UserLimit:        observed.UserLimit,
+		ActiveUsers:      observed.ActiveUsers,
+		Licensee: v1alpha1.Licensee{
+			Name:    observed.Licensee.Name,
+			Company: observed.Licensee.Company,
+			Email:   observed.Licensee.Email,
+		},
+		AddOns: v1alpha1.AddOns{
+			GitLabAuditorUser: observed.AddOns.GitLabAuditorUser,
+			GitLabDeployBoard: observed.AddOns.GitLabDeployBoard,
+			GitLabFileLocks:   observed.AddOns.GitLabFileLocks,
+			GitLabGeo:         observed.AddOns.GitLabGeo,
+			GitLabServiceDesk: observed.AddOns.GitLabServiceDesk,
+		},
+	}
+}
