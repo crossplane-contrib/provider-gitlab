@@ -66,7 +66,7 @@ func GenerateEditGroupBadgeOptions(p *v1alpha1.BadgeParameters) *gitlab.EditGrou
 // GenerateBadgeObservation generates v1alpha1 observation from Gitlab GroupBadge
 func GenerateBadgeObservation(b *gitlab.GroupBadge) v1alpha1.BadgeObservation {
 	return v1alpha1.BadgeObservation{
-		ID:               int(b.ID),
+		ID:               int64(b.ID),
 		LinkURL:          b.LinkURL,
 		RenderedLinkURL:  b.RenderedLinkURL,
 		ImageURL:         b.ImageURL,

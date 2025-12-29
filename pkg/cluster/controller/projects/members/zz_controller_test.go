@@ -39,9 +39,9 @@ import (
 var (
 	unexpecedItem resource.Managed
 	errBoom       = errors.New("boom")
-	projectID     = 0
+	projectID     = int64(0)
 	username      = "username"
-	userID        = 123
+	userID        = int64(123)
 	name          = "name"
 	state         = "state"
 	avatarURL     = "http://avatarURL"
@@ -179,7 +179,7 @@ func TestObserve(t *testing.T) {
 		"ErrGet404": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
@@ -204,7 +204,7 @@ func TestObserve(t *testing.T) {
 		"NoUserIDandNoUserName": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetMember: func(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(pid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return nil, nil, errBoom
 					},
 				},
@@ -229,7 +229,7 @@ func TestObserve(t *testing.T) {
 		"ErrGet": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return nil, nil, errBoom
 					},
 				},
@@ -244,7 +244,7 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{}, &gitlab.Response{}, nil
 					},
 				},
@@ -275,7 +275,7 @@ func TestObserve(t *testing.T) {
 		"IsGroupUpToDateAccessLevel": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{
 							AccessLevel: accessLevel,
 						}, &gitlab.Response{}, nil
@@ -310,7 +310,7 @@ func TestObserve(t *testing.T) {
 		"IsGroupUpToDateExpiresAt": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{ExpiresAt: &expiresAt}, &gitlab.Response{}, nil
 					},
 				},
@@ -343,7 +343,7 @@ func TestObserve(t *testing.T) {
 		"NoUserIDSuccess": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{}, &gitlab.Response{}, nil
 					},
 				},
@@ -542,7 +542,7 @@ func TestUpdate(t *testing.T) {
 		"SuccessfulUpdate": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockEditMember: func(gid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockEditMember: func(gid interface{}, user int64, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{
 							ID:          projectID,
 							Username:    username,
@@ -578,7 +578,7 @@ func TestUpdate(t *testing.T) {
 		"FailedUpdate": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockEditMember: func(gid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
+					MockEditMember: func(gid interface{}, user int64, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error) {
 						return &gitlab.ProjectMember{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -630,7 +630,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockDeleteMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -654,7 +654,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				projectMember: &fake.MockClient{
-					MockDeleteMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},

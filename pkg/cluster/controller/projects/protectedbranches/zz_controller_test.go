@@ -48,7 +48,7 @@ var (
 	unexpectedItem    resource.Managed
 	errBoom           = errors.New("boom")
 	projectID         = "1234"
-	protectedBranchID = 5678
+	protectedBranchID = int64(5678)
 	accessLevel30     = v1alpha1.AccessLevelValue(30) // Developer
 	accessLevel40     = v1alpha1.AccessLevelValue(40) // Maintainer
 )
@@ -303,16 +303,16 @@ func TestObserve(t *testing.T) {
 							{
 								AccessLevel:            &accessLevel40,
 								AccessLevelDescription: ptr.To("Maintainers"),
-								UserID:                 ptr.To(0),
-								GroupID:                ptr.To(0),
+								UserID:                 ptr.To(int64(0)),
+								GroupID:                ptr.To(int64(0)),
 							},
 						},
 						MergeAccessLevels: []*v1alpha1.BranchAccessDescription{
 							{
 								AccessLevel:            &accessLevel30,
 								AccessLevelDescription: ptr.To("Developers + Maintainers"),
-								UserID:                 ptr.To(0),
-								GroupID:                ptr.To(0),
+								UserID:                 ptr.To(int64(0)),
+								GroupID:                ptr.To(int64(0)),
 							},
 						},
 					}),
@@ -360,8 +360,8 @@ func TestObserve(t *testing.T) {
 						{
 							AccessLevel:            &accessLevel40,
 							AccessLevelDescription: ptr.To("Maintainers"),
-							UserID:                 ptr.To(0),
-							GroupID:                ptr.To(0),
+							UserID:                 ptr.To(int64(0)),
+							GroupID:                ptr.To(int64(0)),
 						},
 					}),
 					withConditions(xpv1.Available()),
@@ -373,8 +373,8 @@ func TestObserve(t *testing.T) {
 							{
 								AccessLevel:            &accessLevel40,
 								AccessLevelDescription: ptr.To("Maintainers"),
-								UserID:                 ptr.To(0),
-								GroupID:                ptr.To(0),
+								UserID:                 ptr.To(int64(0)),
+								GroupID:                ptr.To(int64(0)),
 							},
 						},
 					}),

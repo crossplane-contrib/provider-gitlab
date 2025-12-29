@@ -75,7 +75,7 @@ type RunnerObservation struct {
 type RunnerProject struct {
 	// ID is the unique identifier of the project.
 	// +optional
-	ID int `json:"id"`
+	ID int64 `json:"id"`
 
 	// Name is the name of the project.
 	// +optional

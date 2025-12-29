@@ -231,7 +231,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			if notShared(*sh.GroupID, grp) {
 				opt := gitlab.ShareGroupWithGroupOptions{
 					GroupID:     sh.GroupID,
-					GroupAccess: (*gitlab.AccessLevelValue)(&sh.GroupAccessLevel),
+					GroupAccess: gitlab.Ptr(gitlab.AccessLevelValue(sh.GroupAccessLevel)),
 				}
 				if sh.ExpiresAt != nil {
 					opt.ExpiresAt = (*gitlab.ISOTime)(&sh.ExpiresAt.Time)

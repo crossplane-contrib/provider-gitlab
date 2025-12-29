@@ -75,7 +75,7 @@ type RunnerObservation struct {
 type RunnerGroup struct {
 	// ID is the unique identifier of the group.
 	// +optional
-	ID int `json:"id"`
+	ID int64 `json:"id"`
 
 	// Name is the name of the group.
 	// +optional

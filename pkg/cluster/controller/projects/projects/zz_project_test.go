@@ -47,8 +47,8 @@ var (
 	path              = "some/path/to/repo"
 	unexpecedItem     resource.Managed
 	errBoom           = errors.New("boom")
-	projectID         = 1234
-	extName           = strconv.Itoa(projectID)
+	projectID         = int64(1234)
+	extName           = strconv.FormatInt(projectID, 10)
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: extName}
 	timeNow           = time.Now()
 )
@@ -88,11 +88,11 @@ func withProjectPushRules(pr *v1alpha1.PushRules) projectModifier {
 func withClientDefaultValues() projectModifier {
 	return func(p *v1alpha1.Project) {
 		f := false
-		i := 0
+		i64 := int64(0)
 		p.Spec.ForProvider = v1alpha1.ProjectParameters{
 			AllowMergeOnSkippedPipeline:               &f,
 			CIForwardDeploymentEnabled:                &f,
-			NamespaceID:                               &i,
+			NamespaceID:                               &i64,
 			EmailsDisabled:                            &f,
 			ResolveOutdatedDiffDiscussions:            &f,
 			ContainerRegistryEnabled:                  &f,
@@ -104,19 +104,19 @@ func withClientDefaultValues() projectModifier {
 			LFSEnabled:                                &f,
 			RequestAccessEnabled:                      &f,
 			PrintingMergeRequestLinkEnabled:           &f,
-			BuildTimeout:                              &i,
-			CIDefaultGitDepth:                         &i,
+			BuildTimeout:                              &i64,
+			CIDefaultGitDepth:                         &i64,
 			AutoDevopsEnabled:                         &f,
-			ApprovalsBeforeMerge:                      &i,
+			ApprovalsBeforeMerge:                      &i64,
 			Mirror:                                    &f,
-			MirrorUserID:                              &i,
+			MirrorUserID:                              &i64,
 			MirrorTriggerBuilds:                       &f,
 			OnlyMirrorProtectedBranches:               &f,
 			MirrorOverwritesDivergedBranches:          &f,
 			InitializeWithReadme:                      &f,
-			TemplateProjectID:                         &i,
+			TemplateProjectID:                         &i64,
 			UseCustomTemplate:                         &f,
-			GroupWithProjectTemplatesID:               &i,
+			GroupWithProjectTemplatesID:               &i64,
 			PackagesEnabled:                           &f,
 			ServiceDeskEnabled:                        &f,
 			AutocloseReferencedIssues:                 &f,
@@ -411,7 +411,7 @@ func TestObserve(t *testing.T) {
 						CommitMessageRegex:         ptr.To(""),
 						DenyDeleteTag:              ptr.To(false),
 						FileNameRegex:              ptr.To(""),
-						MaxFileSize:                ptr.To(0),
+						MaxFileSize:                ptr.To(int64(0)),
 						MemberCheck:                ptr.To(false),
 						PreventSecrets:             ptr.To(false),
 						RejectUnsignedCommits:      ptr.To(false),
@@ -432,7 +432,7 @@ func TestObserve(t *testing.T) {
 						CommitMessageRegex:         ptr.To(""),
 						DenyDeleteTag:              ptr.To(false),
 						FileNameRegex:              ptr.To(""),
-						MaxFileSize:                ptr.To(0),
+						MaxFileSize:                ptr.To(int64(0)),
 						MemberCheck:                ptr.To(false),
 						PreventSecrets:             ptr.To(false),
 						RejectUnsignedCommits:      ptr.To(false),
@@ -508,7 +508,7 @@ func TestObserve(t *testing.T) {
 						CommitMessageRegex:         ptr.To(""),
 						DenyDeleteTag:              ptr.To(false),
 						FileNameRegex:              ptr.To(""),
-						MaxFileSize:                ptr.To(0),
+						MaxFileSize:                ptr.To(int64(0)),
 						MemberCheck:                ptr.To(false),
 						PreventSecrets:             ptr.To(false),
 						RejectUnsignedCommits:      ptr.To(false),
@@ -532,7 +532,7 @@ func TestObserve(t *testing.T) {
 						CommitMessageRegex:         ptr.To(""),
 						DenyDeleteTag:              ptr.To(false),
 						FileNameRegex:              ptr.To(""),
-						MaxFileSize:                ptr.To(0),
+						MaxFileSize:                ptr.To(int64(0)),
 						MemberCheck:                ptr.To(false),
 						PreventSecrets:             ptr.To(false),
 						RejectUnsignedCommits:      ptr.To(false),
@@ -579,7 +579,7 @@ func TestObserve(t *testing.T) {
 						CommitMessageRegex:         ptr.To(""),
 						DenyDeleteTag:              ptr.To(false),
 						FileNameRegex:              ptr.To(""),
-						MaxFileSize:                ptr.To(0),
+						MaxFileSize:                ptr.To(int64(0)),
 						MemberCheck:                ptr.To(false),
 						PreventSecrets:             ptr.To(false),
 						RejectUnsignedCommits:      ptr.To(false),
@@ -600,7 +600,7 @@ func TestObserve(t *testing.T) {
 						CommitMessageRegex:         ptr.To(""),
 						DenyDeleteTag:              ptr.To(false),
 						FileNameRegex:              ptr.To(""),
-						MaxFileSize:                ptr.To(0),
+						MaxFileSize:                ptr.To(int64(0)),
 						MemberCheck:                ptr.To(false),
 						PreventSecrets:             ptr.To(false),
 						RejectUnsignedCommits:      ptr.To(false),
@@ -648,9 +648,9 @@ func TestObserve(t *testing.T) {
 		"TagList":                                   []string{"tag-1", "tag-2"},
 		"Topics":                                    []string{"tag-1", "tag-2"},
 		"CIConfigPath":                              "CI configPath",
-		"CIDefaultGitDepth":                         1,
+		"CIDefaultGitDepth":                         int64(1),
 		"Mirror":                                    true,
-		"MirrorUserID":                              1,
+		"MirrorUserID":                              int64(1),
 		"MirrorTriggerBuilds":                       true,
 		"OnlyMirrorProtectedBranches":               true,
 		"MirrorOverwritesDivergedBranches":          true,
@@ -662,7 +662,7 @@ func TestObserve(t *testing.T) {
 	}
 
 	f := false
-	i := 0
+	i64 := int64(0)
 	al := v1alpha1.PublicAccessControl
 	tags := []string{"tag-1 new", "tag-2 new"}
 	topics := []string{"tag-1 new", "tag-2 new"}
@@ -678,7 +678,7 @@ func TestObserve(t *testing.T) {
 		IssuesAccessLevel:                &al,
 		RepositoryAccessLevel:            &al,
 		MergeRequestsAccessLevel:         &al,
-		ApprovalsBeforeMerge:             ptr.To(0),
+		ApprovalsBeforeMerge:             ptr.To(int64(0)),
 		ForkingAccessLevel:               &al,
 		BuildsAccessLevel:                &al,
 		WikiAccessLevel:                  &al,
@@ -699,9 +699,9 @@ func TestObserve(t *testing.T) {
 		TagList:                          tags,
 		Topics:                           topics,
 		CIConfigPath:                     &s,
-		CIDefaultGitDepth:                &i,
+		CIDefaultGitDepth:                &i64,
 		Mirror:                           &f,
-		MirrorUserID:                     &i,
+		MirrorUserID:                     &i64,
 		MirrorTriggerBuilds:              &f,
 		OnlyMirrorProtectedBranches:      &f,
 		MirrorOverwritesDivergedBranches: &f,
@@ -719,7 +719,7 @@ func TestObserve(t *testing.T) {
 			CommitMessageRegex:         ptr.To(""),
 			DenyDeleteTag:              ptr.To(true),
 			FileNameRegex:              ptr.To(""),
-			MaxFileSize:                ptr.To(0),
+			MaxFileSize:                ptr.To(int64(0)),
 			MemberCheck:                ptr.To(false),
 			PreventSecrets:             ptr.To(false),
 			RejectUnsignedCommits:      ptr.To(false),
@@ -744,7 +744,7 @@ func TestObserve(t *testing.T) {
 				CommitMessageRegex:         ptr.To(""),
 				DenyDeleteTag:              ptr.To(true),
 				FileNameRegex:              ptr.To(""),
-				MaxFileSize:                ptr.To(0),
+				MaxFileSize:                ptr.To(int64(0)),
 				MemberCheck:                ptr.To(false),
 				PreventSecrets:             ptr.To(false),
 				RejectUnsignedCommits:      ptr.To(false),
@@ -786,10 +786,10 @@ func TestObserve(t *testing.T) {
 			TagList:                          tags,
 			Topics:                           topics,
 			CIConfigPath:                     s,
-			CIDefaultGitDepth:                i,
-			ApprovalsBeforeMerge:             i,
+			CIDefaultGitDepth:                i64,
+			ApprovalsBeforeMerge:             i64,
 			Mirror:                           f,
-			MirrorUserID:                     i,
+			MirrorUserID:                     i64,
 			MirrorTriggerBuilds:              f,
 			OnlyMirrorProtectedBranches:      f,
 			MirrorOverwritesDivergedBranches: f,

@@ -25,8 +25,8 @@ import (
 )
 
 var (
-	groupID                  = 0
-	userID                   = 0
+	groupID                  = int64(0)
+	userID                   = int64(0)
 	accessLevel              = 10
 	expiresAt                = "2021-05-04"
 	v1alpha1AccessLevelValue = v1alpha1.AccessLevelValue(accessLevel)
@@ -40,7 +40,8 @@ func TestGenerateMemberObservation(t *testing.T) {
 	webURL := "Web URL"
 	externUID := "ExternUID"
 	provider := "Provider"
-	samlProviderID := 0
+	samlProviderID := int64(0)
+	samlProviderIDInt64 := int64(0)
 	v1alpha1GroupSAMLIdentity := v1alpha1.MemberSAMLIdentity{
 		ExternUID:      externUID,
 		Provider:       provider,
@@ -49,7 +50,7 @@ func TestGenerateMemberObservation(t *testing.T) {
 	gitlabGroupSAMLIdentity := gitlab.GroupMemberSAMLIdentity{
 		ExternUID:      externUID,
 		Provider:       provider,
-		SAMLProviderID: samlProviderID,
+		SAMLProviderID: samlProviderIDInt64,
 	}
 	name := "Name"
 	type args struct {

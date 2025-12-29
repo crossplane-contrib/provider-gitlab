@@ -273,7 +273,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ElasticsearchMaxCodeIndexingConcurrency *int64 `json:"elasticsearchMaxCodeIndexingConcurrency,omitempty"`
 	// +optional
-	ElasticsearchNamespaceIDs *[]int `json:"elasticsearchNamespaceIds,omitempty"`
+	ElasticsearchNamespaceIDs *[]int64 `json:"elasticsearchNamespaceIds,omitempty"`
 	// +optional
 	ElasticsearchPassword *string `json:"elasticsearchPassword,omitempty"`
 	// +optional
@@ -281,7 +281,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ElasticsearchPauseIndexing *bool `json:"elasticsearchPauseIndexing,omitempty"`
 	// +optional
-	ElasticsearchProjectIDs *[]int `json:"elasticsearchProjectIds,omitempty"`
+	ElasticsearchProjectIDs *[]int64 `json:"elasticsearchProjectIds,omitempty"`
 	// +optional
 	ElasticsearchReplicas *int64 `json:"elasticsearchReplicas,omitempty"`
 	// +optional
@@ -359,7 +359,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	GeoStatusTimeout *int64 `json:"geoStatusTimeout,omitempty"`
 	// +optional
-	GitRateLimitUsersAlertlist *[]int `json:"gitRateLimitUsersAlertlist,omitempty"`
+	GitRateLimitUsersAlertlist *[]int64 `json:"gitRateLimitUsersAlertlist,omitempty"`
 	// +optional
 	GitTwoFactorSessionExpiry *int64 `json:"gitTwoFactorSessionExpiry,omitempty"`
 	// +optional
@@ -527,7 +527,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	OutboundLocalRequestsWhitelist *[]string `json:"outboundLocalRequestsWhitelist,omitempty"`
 	// +optional
-	PackageMetadataPURLTypes *[]int `json:"packageMetadataPUrlTypes,omitempty"`
+	PackageMetadataPURLTypes *[]int64 `json:"packageMetadataPUrlTypes,omitempty"`
 	// +optional
 	PackageRegistryAllowAnyoneToPullOption *bool `json:"packageRegistryAllowAnyoneToPullOption,omitempty"`
 	// +optional
@@ -617,7 +617,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	RepositoryStorages *[]string `json:"repositoryStorages,omitempty"`
 	// +optional
-	RepositoryStoragesWeighted *map[string]int `json:"repositoryStoragesWeighted,omitempty"`
+	RepositoryStoragesWeighted *map[string]int64 `json:"repositoryStoragesWeighted,omitempty"`
 	// +optional
 	RequireAdminApprovalAfterUserSignup *bool `json:"requireAdminApprovalAfterUserSignup,omitempty"`
 	// +optional
@@ -1124,11 +1124,11 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	ElasticsearchMaxCodeIndexingConcurrency int64 `json:"elasticsearchMaxCodeIndexingConcurrency,omitempty"`
 	// +optional
-	ElasticsearchNamespaceIDs []int `json:"elasticsearchNamespaceIds,omitempty"`
+	ElasticsearchNamespaceIDs []int64 `json:"elasticsearchNamespaceIds,omitempty"`
 	// +optional
 	ElasticsearchPauseIndexing bool `json:"elasticsearchPauseIndexing,omitempty"`
 	// +optional
-	ElasticsearchProjectIDs []int `json:"elasticsearchProjectIds,omitempty"`
+	ElasticsearchProjectIDs []int64 `json:"elasticsearchProjectIds,omitempty"`
 	// +optional
 	ElasticsearchReplicas int64 `json:"elasticsearchReplicas,omitempty"`
 	// +optional
@@ -1198,7 +1198,7 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	GeoStatusTimeout int64 `json:"geoStatusTimeout,omitempty"`
 	// +optional
-	GitRateLimitUsersAlertlist []int `json:"gitRateLimitUsersAlertlist,omitempty"`
+	GitRateLimitUsersAlertlist []int64 `json:"gitRateLimitUsersAlertlist,omitempty"`
 	// +optional
 	GitTwoFactorSessionExpiry int64 `json:"gitTwoFactorSessionExpiry,omitempty"`
 	// +optional
@@ -1358,7 +1358,7 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	OutboundLocalRequestsWhitelist []string `json:"outboundLocalRequestsWhitelist,omitempty"`
 	// +optional
-	PackageMetadataPURLTypes []int `json:"packageMetadataPUrlTypes,omitempty"`
+	PackageMetadataPURLTypes []int64 `json:"packageMetadataPUrlTypes,omitempty"`
 	// +optional
 	PackageRegistryAllowAnyoneToPullOption bool `json:"packageRegistryAllowAnyoneToPullOption,omitempty"`
 	// +optional
@@ -1440,7 +1440,7 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	RepositoryStorages []string `json:"repositoryStorages,omitempty"`
 	// +optional
-	RepositoryStoragesWeighted map[string]int `json:"repositoryStoragesWeighted,omitempty"`
+	RepositoryStoragesWeighted map[string]int64 `json:"repositoryStoragesWeighted,omitempty"`
 	// +optional
 	RequireAdminApprovalAfterUserSignup bool `json:"requireAdminApprovalAfterUserSignup,omitempty"`
 	// +optional

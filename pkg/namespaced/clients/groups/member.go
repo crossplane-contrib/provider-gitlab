@@ -109,6 +109,6 @@ func groupMemberSAMLIdentityGitlabToV1alpha1(from *gitlab.GroupMemberSAMLIdentit
 	return &v1alpha1.MemberSAMLIdentity{
 		ExternUID:      from.ExternUID,
 		Provider:       from.Provider,
-		SAMLProviderID: int(from.SAMLProviderID),
+		SAMLProviderID: int64(from.SAMLProviderID),
 	}
 }

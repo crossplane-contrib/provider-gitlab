@@ -44,7 +44,7 @@ var (
 
 	errBoom     = errors.New("boom")
 	name        = "Saml-example"
-	groupID     = 1234
+	groupID     = int64(1234)
 	accessLevel = gitlab.AccessLevelValue(10)
 )
 
@@ -75,7 +75,7 @@ func withExternalName(n string) SamlGroupLinkModifier {
 }
 
 func withMemberRoleID(i int) SamlGroupLinkModifier {
-	return func(r *v1alpha1.SamlGroupLink) { r.Spec.ForProvider.MemberRoleID = ptr.To(i) }
+	return func(r *v1alpha1.SamlGroupLink) { r.Spec.ForProvider.MemberRoleID = ptr.To(int64(i)) }
 }
 
 func samlGroupLink(m ...SamlGroupLinkModifier) *v1alpha1.SamlGroupLink {

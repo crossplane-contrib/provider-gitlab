@@ -141,9 +141,9 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	isLateInitialized := !cmp.Equal(currentState, &cr.Spec.ForProvider)
 
 	cr.Status.AtProvider = v1alpha1.DeployKeyObservation{
-		ID: func() *int {
+		ID: func() *int64 {
 			if dk.ID != 0 {
-				v := int(dk.ID)
+				v := int64(dk.ID)
 				return &v
 			}
 			return nil

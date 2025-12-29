@@ -31,7 +31,7 @@ import (
 type MemberSAMLIdentity struct {
 	ExternUID      string `json:"externUID"`
 	Provider       string `json:"provider"`
-	SAMLProviderID int    `json:"samlProviderID"`
+	SAMLProviderID int64  `json:"samlProviderID"`
 }
 
 // A MemberParameters defines the desired state of a Gitlab Group Member.

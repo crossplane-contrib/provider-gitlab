@@ -83,6 +83,7 @@ spec:
                       How many approvers should approve merge request by default.More actions
                       To configure approval rules, see Merge request approvals API.
                       Deprecated: use Approvals Resource instead
+                    format: int64
                     type: integer
                   autoCancelPendingPipelines:
                     description: Auto-cancel pending pipelines. This isn’t a boolean,
@@ -107,6 +108,7 @@ spec:
                   buildTimeout:
                     description: The maximum amount of time, in seconds, that a job
                       can run.
+                    format: int64
                     type: integer
                   buildsAccessLevel:
                     description: One of disabled, private, or enabled.
@@ -116,6 +118,7 @@ spec:
                     type: string
                   ciDefaultGitDepth:
                     description: Default number of revisions for shallow cloning.
+                    format: int64
                     type: integer
                   ciForwardDeploymentEnabled:
                     description: When a new deployment job starts, skip older deployment
@@ -131,6 +134,7 @@ spec:
                       enabled:
                         type: boolean
                       keepN:
+                        format: int64
                         type: integer
                       name_regex:
                         description: Deprecated members
@@ -171,6 +175,7 @@ spec:
                     description: |-
                       For group-level custom templates, specifies ID of group from which all the custom project templates are sourced.
                       Leave empty for instance-level templates. Requires useCustomTemplate to be true.
+                    format: int64
                     type: integer
                   importUrl:
                     description: URL to import repository from.
@@ -212,6 +217,7 @@ spec:
                   mirrorUserId:
                     description: User responsible for all the activity surrounding
                       a pull mirror event. (admins only)
+                    format: int64
                     type: integer
                   name:
                     description: |-
@@ -222,6 +228,7 @@ spec:
                   namespaceId:
                     description: Namespace for the new project (defaults to the current
                       user’s namespace).
+                    format: int64
                     type: integer
                   namespaceIdRef:
                     description: NamespaceIDRef is a reference to a project to retrieve
@@ -384,6 +391,7 @@ spec:
                         type: string
                       maxFileSize:
                         description: Maximum file size (MB).
+                        format: int64
                         type: integer
                       memberCheck:
                         description: Restrict commits by author (email) to existing
@@ -450,6 +458,7 @@ spec:
                     description: |-
                       When used with useCustomTemplate, project ID of a custom project template.
                       This is preferable to using templateName since templateName may be ambiguous.
+                    format: int64
                     type: integer
                   topics:
                     description: The list of topics for the project;
@@ -584,6 +593,7 @@ spec:
                       enabled:
                         type: boolean
                       keepN:
+                        format: int64
                         type: integer
                       nameRegexDelete:
                         type: string
@@ -607,6 +617,7 @@ spec:
                     format: date-time
                     type: string
                   creatorId:
+                    format: int64
                     type: integer
                   customAttributes:
                     items:
@@ -633,6 +644,7 @@ spec:
                       HTTPURLToRepo:
                         type: string
                       ID:
+                        format: int64
                         type: integer
                       name:
                         type: string
@@ -654,10 +666,12 @@ spec:
                     - webURL
                     type: object
                   forksCount:
+                    format: int64
                     type: integer
                   httpUrlToRepo:
                     type: string
                   id:
+                    format: int64
                     type: integer
                   importError:
                     type: string
@@ -748,6 +762,7 @@ spec:
                     description: ProjectNamespace represents a project namespace.
                     properties:
                       ID:
+                        format: int64
                         type: integer
                       avatarURL:
                         type: string
@@ -771,6 +786,7 @@ spec:
                     - webURL
                     type: object
                   openIssuesCount:
+                    format: int64
                     type: integer
                   owner:
                     description: |-
@@ -779,6 +795,7 @@ spec:
                       GitLab API docs: https://docs.gitlab.com/ee/api/users.html
                     properties:
                       ID:
+                        format: int64
                         type: integer
                       avatarURL:
                         type: string
@@ -789,6 +806,7 @@ spec:
                       canCreateProject:
                         type: boolean
                       colorSchemeID:
+                        format: int64
                         type: integer
                       confirmedAt:
                         format: date-time
@@ -853,18 +871,21 @@ spec:
                       privateProfile:
                         type: boolean
                       projectsLimit:
+                        format: int64
                         type: integer
                       provider:
                         type: string
                       publicEmail:
                         type: string
                       sharedRunnersMinutesLimit:
+                        format: int64
                         type: integer
                       skype:
                         type: string
                       state:
                         type: string
                       themeID:
+                        format: int64
                         type: integer
                       twitter:
                         type: string
@@ -928,8 +949,10 @@ spec:
                       description: SharedWithGroups struct used in gitlab project
                       properties:
                         groupAccessLevel:
+                          format: int64
                           type: integer
                         groupID:
+                          format: int64
                           type: integer
                         groupName:
                           type: string
@@ -947,12 +970,14 @@ spec:
                   sshUrlToRepo:
                     type: string
                   starCount:
+                    format: int64
                     type: integer
                   statistics:
                     description: ProjectStatistics represents a statistics record
                       for a project.
                     properties:
                       commitCount:
+                        format: int64
                         type: integer
                       jobArtifactsSize:
                         format: int64

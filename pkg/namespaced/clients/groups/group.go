@@ -77,7 +77,7 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { //nolint
 		return v1alpha1.GroupObservation{}
 	}
 	group := v1alpha1.GroupObservation{
-		ID:        func() *int { i := int(grp.ID); return &i }(),
+		ID:        func() *int64 { i := int64(grp.ID); return &i }(),
 		AvatarURL: &grp.AvatarURL,
 		WebURL:    &grp.WebURL,
 		FullName:  &grp.FullName,
@@ -122,8 +122,8 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { //nolint
 	if len(grp.SharedWithGroups) > 0 {
 		arr := make([]v1alpha1.SharedWithGroupsObservation, 0)
 		for _, v := range grp.SharedWithGroups {
-			groupID := int(v.GroupID)
-			groupAccessLevel := int(v.GroupAccessLevel)
+			groupID := int64(v.GroupID)
+			groupAccessLevel := int64(v.GroupAccessLevel)
 			sg := v1alpha1.SharedWithGroupsObservation{
 				GroupID:          &groupID,
 				GroupName:        &v.GroupName,

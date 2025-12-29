@@ -45,8 +45,8 @@ var (
 	unexpecedItem resource.Managed
 
 	errBoom           = errors.New("boom")
-	projectID         = 1234
-	runnerID          = 1
+	projectID         = int64(1234)
+	runnerID          = int64(1)
 	extName           = "1"
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: extName}
 )
@@ -349,7 +349,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				runnerClient: &runnersfake.MockClient{
-					MockDeleteRegisteredRunnerByID: func(rid int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteRegisteredRunnerByID: func(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
@@ -371,7 +371,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				runnerClient: &runnersfake.MockClient{
-					MockDeleteRegisteredRunnerByID: func(rid int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteRegisteredRunnerByID: func(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},

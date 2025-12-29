@@ -75,6 +75,7 @@ spec:
                   groupId:
                     description: GroupID is the ID of the group to create the deploy
                       token in.
+                    format: int64
                     type: integer
                   groupIdRef:
                     description: GroupIDRef is a reference to a group to retrieve
@@ -244,6 +245,7 @@ spec:
                   https://docs.gitlab.com/ee/api/group_access_tokens.html
                 properties:
                   id:
+                    format: int64
                     type: integer
                 type: object
               conditions:

@@ -25,8 +25,8 @@ import (
 )
 
 var (
-	projectID                = 0
-	userID                   = 0
+	projectID                = int64(0)
+	userID                   = int64(0)
 	accessLevel              = 10
 	expiresAt                = "2021-05-04"
 	email                    = "simpleemail@gmail.com"

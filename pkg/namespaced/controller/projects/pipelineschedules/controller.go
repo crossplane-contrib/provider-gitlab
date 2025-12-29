@@ -432,7 +432,7 @@ func notUpdated(crv v1alpha1.PipelineVariable, invArr []*gitlab.PipelineVariable
 func generateObservation(cr *v1alpha1.PipelineSchedule, ps *gitlab.PipelineSchedule) {
 	id64 := int64(ps.ID)
 	o := v1alpha1.PipelineScheduleObservation{
-		ID:           common.Int64ToIntPtr(&id64),
+		ID:           &id64,
 		LastPipeline: convertLastPipeline(ps.LastPipeline),
 	}
 	if ps.Owner != nil {
@@ -459,7 +459,7 @@ func convertLastPipeline(lp *gitlab.LastPipeline) *v1alpha1.LastPipeline {
 		return nil
 	}
 	return &v1alpha1.LastPipeline{
-		ID:     int(lp.ID),
+		ID:     lp.ID,
 		SHA:    lp.SHA,
 		Ref:    lp.Ref,
 		Status: lp.Status,

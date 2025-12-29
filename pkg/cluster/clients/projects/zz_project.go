@@ -67,7 +67,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 	}
 
 	o := v1alpha1.ProjectObservation{
-		ID:                       int(prj.ID),
+		ID:                       int64(prj.ID),
 		Public:                   prj.PublicJobs,
 		SSHURLToRepo:             prj.SSHURLToRepo,
 		HTTPURLToRepo:            prj.HTTPURLToRepo,
@@ -77,7 +77,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 		PathWithNamespace:        prj.PathWithNamespace,
 		IssuesEnabled:            prj.IssuesEnabled, //nolint:staticcheck
 		IssuesAccessLevel:        v1alpha1.AccessControlValue(prj.IssuesAccessLevel),
-		OpenIssuesCount:          int(prj.OpenIssuesCount),
+		OpenIssuesCount:          int64(prj.OpenIssuesCount),
 		MergeRequestsEnabled:     prj.MergeRequestsEnabled, //nolint:staticcheck
 		MergeRequestsAccessLevel: v1alpha1.AccessControlValue(prj.MergeRequestsAccessLevel),
 		JobsEnabled:              prj.JobsEnabled, //nolint:staticcheck
@@ -86,12 +86,12 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 		WikiAccessLevel:          v1alpha1.AccessControlValue(prj.WikiAccessLevel),
 		SnippetsEnabled:          prj.SnippetsEnabled, //nolint:staticcheck
 		SnippetsAccessLevel:      v1alpha1.AccessControlValue(prj.SnippetsAccessLevel),
-		CreatorID:                int(prj.CreatorID),
+		CreatorID:                int64(prj.CreatorID),
 		ImportStatus:             prj.ImportStatus,
 		ImportError:              prj.ImportError,
 		Archived:                 prj.Archived,
-		ForksCount:               int(prj.ForksCount),
-		StarCount:                int(prj.StarCount),
+		ForksCount:               int64(prj.ForksCount),
+		StarCount:                int64(prj.StarCount),
 		EmptyRepo:                prj.EmptyRepo,
 		AvatarURL:                prj.AvatarURL,
 		LicenseURL:               prj.LicenseURL,
@@ -101,7 +101,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 	if prj.ContainerExpirationPolicy != nil {
 		o.ContainerExpirationPolicy = &v1alpha1.ContainerExpirationPolicy{
 			Cadence:         prj.ContainerExpirationPolicy.Cadence,
-			KeepN:           int(prj.ContainerExpirationPolicy.KeepN),
+			KeepN:           int64(prj.ContainerExpirationPolicy.KeepN),
 			OlderThan:       prj.ContainerExpirationPolicy.OlderThan,
 			NameRegexDelete: prj.ContainerExpirationPolicy.NameRegexDelete,
 			NameRegexKeep:   prj.ContainerExpirationPolicy.NameRegexKeep,
@@ -171,16 +171,16 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 	if len(o.SharedWithGroups) == 0 && len(prj.SharedWithGroups) > 0 {
 		o.SharedWithGroups = make([]v1alpha1.SharedWithGroups, len(prj.SharedWithGroups))
 		for i, s := range prj.SharedWithGroups {
-			o.SharedWithGroups[i].GroupID = int(s.GroupID)
+			o.SharedWithGroups[i].GroupID = int64(s.GroupID)
 			o.SharedWithGroups[i].GroupName = s.GroupName
-			o.SharedWithGroups[i].GroupAccessLevel = int(s.GroupAccessLevel)
+			o.SharedWithGroups[i].GroupAccessLevel = int64(s.GroupAccessLevel)
 		}
 	}
 
 	if prj.ForkedFromProject != nil {
 		o.ForkedFromProject = &v1alpha1.ForkParent{
 			HTTPURLToRepo:     prj.ForkedFromProject.HTTPURLToRepo,
-			ID:                int(prj.ForkedFromProject.ID),
+			ID:                int64(prj.ForkedFromProject.ID),
 			Name:              prj.ForkedFromProject.Name,
 			NameWithNamespace: prj.ForkedFromProject.NameWithNamespace,
 			Path:              prj.ForkedFromProject.Path,
@@ -207,7 +207,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 
 	if prj.Namespace != nil {
 		o.Namespace = &v1alpha1.ProjectNamespace{
-			ID:        int(prj.Namespace.ID),
+			ID:        int64(prj.Namespace.ID),
 			Name:      prj.Namespace.Name,
 			Path:      prj.Namespace.Path,
 			Kind:      prj.Namespace.Kind,
@@ -227,7 +227,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 // GenerateOwnerObservation generates v1alpha.User from gitlab.User.
 func GenerateOwnerObservation(usr *gitlab.User) *v1alpha1.User {
 	o := &v1alpha1.User{
-		ID:                        int(usr.ID),
+		ID:                        int64(usr.ID),
 		Username:                  usr.Username,
 		Email:                     usr.Email,
 		Name:                      usr.Name,
@@ -243,17 +243,17 @@ func GenerateOwnerObservation(usr *gitlab.User) *v1alpha1.User {
 		Organization:              usr.Organization,
 		ExternUID:                 usr.ExternUID,
 		Provider:                  usr.Provider,
-		ThemeID:                   int(usr.ThemeID),
-		ColorSchemeID:             int(usr.ColorSchemeID),
+		ThemeID:                   int64(usr.ThemeID),
+		ColorSchemeID:             int64(usr.ColorSchemeID),
 		IsAdmin:                   usr.IsAdmin,
 		AvatarURL:                 usr.AvatarURL,
 		CanCreateGroup:            usr.CanCreateGroup,
 		CanCreateProject:          usr.CanCreateProject,
-		ProjectsLimit:             int(usr.ProjectsLimit),
+		ProjectsLimit:             int64(usr.ProjectsLimit),
 		TwoFactorEnabled:          usr.TwoFactorEnabled,
 		External:                  usr.External,
 		PrivateProfile:            usr.PrivateProfile,
-		SharedRunnersMinutesLimit: int(usr.SharedRunnersMinutesLimit),
+		SharedRunnersMinutesLimit: int64(usr.SharedRunnersMinutesLimit),
 	}
 	if usr.CreatedAt != nil {
 		o.CreatedAt = &metav1.Time{Time: *usr.CreatedAt}
@@ -345,6 +345,11 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		TemplateName:                              p.TemplateName,
 		UseCustomTemplate:                         p.UseCustomTemplate,
 		PackagesEnabled:                           p.PackagesEnabled,
+		ServiceDeskEnabled:                        p.ServiceDeskEnabled,
+		AutocloseReferencedIssues:                 p.AutocloseReferencedIssues,
+		SuggestionCommitMessage:                   p.SuggestionCommitMessage,
+		IssuesTemplate:                            p.IssuesTemplate,
+		MergeRequestsTemplate:                     p.MergeRequestsTemplate,
 	}
 	if p.NamespaceID != nil {
 		val := int64(*p.NamespaceID)

@@ -65,7 +65,7 @@ type BadgeParameters struct {
 // https://docs.gitlab.com/api/project_badges/
 type BadgeObservation struct {
 	// ID of the badge
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// LinkURL is the onclick redirect URL of the badge.
 	LinkURL string `json:"linkURL,omitempty"`
 	// RenderedLinkURL is the rendered onclick redirect URL of the badge.

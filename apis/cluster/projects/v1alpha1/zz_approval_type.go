@@ -60,11 +60,11 @@ type ApprovalRuleParameters struct {
 
 	// The IDs of groups as approvers.
 	// +optional
-	GroupIDs *[]int `json:"groupIds,omitempty"`
+	GroupIDs *[]int64 `json:"groupIds,omitempty"`
 
 	// The IDs of protected branches to scope the rule by.
 	// +optional
-	ProtectedBranchIDs *[]int `json:"protectedBranchIds,omitempty"`
+	ProtectedBranchIDs *[]int64 `json:"protectedBranchIds,omitempty"`
 
 	// The rule type. Supported values include any_approver, regular, and report_approver
 	// +optional
@@ -73,7 +73,7 @@ type ApprovalRuleParameters struct {
 
 	// The IDs of users as approvers. If used with usernames, adds both lists of users.
 	// +optional
-	UserIDs *[]int `json:"userIds,omitempty"`
+	UserIDs *[]int64 `json:"userIds,omitempty"`
 
 	// The usernames of approvers. If used with user_ids, adds both lists of users.
 	// +optional

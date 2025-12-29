@@ -37,9 +37,9 @@ import (
 var (
 	unexpecedItem resource.Managed
 	errBoom       = errors.New("boom")
-	ID            = 0
+	ID            = int64(0)
 	username      = "username"
-	userID        = 123
+	userID        = int64(123)
 	name          = "name"
 	state         = "state"
 	avatarURL     = "http://avatarURL"
@@ -48,7 +48,7 @@ var (
 	now           = time.Now()
 	expiresAt     = gitlab.ISOTime(now.AddDate(0, 0, 7*3))
 	expiresAtNew  = gitlab.ISOTime(now.AddDate(0, 0, 7*4))
-	groupID       = 1234
+	groupID       = int64(1234)
 )
 
 type args struct {
@@ -163,7 +163,7 @@ func TestObserve(t *testing.T) {
 		"FailedGetRequest": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errBoom
 					},
 				},
@@ -182,7 +182,7 @@ func TestObserve(t *testing.T) {
 		"ErrGet404": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
@@ -201,7 +201,7 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{}, &gitlab.Response{}, nil
 					},
 				},
@@ -226,7 +226,7 @@ func TestObserve(t *testing.T) {
 		"IsGroupUpToDateAccessLevel": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{
 							AccessLevel: accessLevel,
 						}, &gitlab.Response{}, nil
@@ -255,7 +255,7 @@ func TestObserve(t *testing.T) {
 		"IsGroupUpToDateExpiresAt": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{ExpiresAt: &expiresAt}, &gitlab.Response{}, nil
 					},
 				},
@@ -282,7 +282,7 @@ func TestObserve(t *testing.T) {
 		"NoUserIDandNoUserName": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return nil, nil, errBoom
 					},
 				},
@@ -306,7 +306,7 @@ func TestObserve(t *testing.T) {
 		"NoUserIDSuccess": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockGetMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{}, &gitlab.Response{}, nil
 					},
 				},
@@ -502,7 +502,7 @@ func TestUpdate(t *testing.T) {
 		"SuccessfulUpdate": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockEditMember: func(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockEditMember: func(gid interface{}, user int64, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{
 							ID:          ID,
 							Username:    username,
@@ -531,7 +531,7 @@ func TestUpdate(t *testing.T) {
 		"FailedUpdate": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockEditMember: func(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					MockEditMember: func(gid interface{}, user int64, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 						return &gitlab.GroupMember{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -587,7 +587,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockRemoveMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRemoveMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -605,7 +605,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				groupMember: &fake.MockClient{
-					MockRemoveMember: func(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRemoveMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
