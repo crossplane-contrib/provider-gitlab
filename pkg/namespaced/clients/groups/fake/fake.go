@@ -47,10 +47,13 @@ type MockClient struct {
 	MockGetGroupAccessToken    func(gid interface{}, accessToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
 	MockCreateGroupAccessToken func(gid interface{}, opt *gitlab.CreateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
 	MockRevokeGroupAccessToken func(gid interface{}, accessToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+<<<<<<< HEAD
 
 	MockListGroupLDAPLinks                func(pid interface{}, options ...gitlab.RequestOptionFunc) ([]*gitlab.LDAPGroupLink, *gitlab.Response, error)
 	MockAddGroupLDAPLink                  func(pid interface{}, opt *gitlab.AddGroupLDAPLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.LDAPGroupLink, *gitlab.Response, error)
 	MockDeleteGroupLDAPLinkWithCNOrFilter func(pid interface{}, opts *gitlab.DeleteGroupLDAPLinkWithCNOrFilterOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+=======
+>>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 
 	MockGetGroupSAMLLink    func(pid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error)
 	MockAddGroupSAMLLink    func(pid interface{}, opt *gitlab.AddGroupSAMLLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error)

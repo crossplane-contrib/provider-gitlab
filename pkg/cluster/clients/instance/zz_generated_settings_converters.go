@@ -50,52 +50,118 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.AllowProjectCreationForGuestAndBelow = p.AllowProjectCreationForGuestAndBelow
 	o.AllowRunnerRegistrationToken = p.AllowRunnerRegistrationToken
 	o.ArchiveBuildsInHumanReadable = p.ArchiveBuildsInHumanReadable
-	o.ASCIIDocMaxIncludes = p.ASCIIDocMaxIncludes
+	if p.ASCIIDocMaxIncludes != nil {
+		val := int64(*p.ASCIIDocMaxIncludes)
+		o.ASCIIDocMaxIncludes = &val
+	}
 	o.AssetProxyAllowlist = p.AssetProxyAllowlist
 	o.AssetProxyEnabled = p.AssetProxyEnabled
 	o.AssetProxySecretKey = p.AssetProxySecretKey
 	o.AssetProxyURL = p.AssetProxyURL
 	o.AuthorizedKeysEnabled = p.AuthorizedKeysEnabled
 	o.AutoBanUserOnExcessiveProjectsDownload = p.AutoBanUserOnExcessiveProjectsDownload
-	o.AutocompleteUsers = p.AutocompleteUsers
-	o.AutocompleteUsersUnauthenticated = p.AutocompleteUsersUnauthenticated
+	if p.AutocompleteUsers != nil {
+		val := int64(*p.AutocompleteUsers)
+		o.AutocompleteUsers = &val
+	}
+	if p.AutocompleteUsersUnauthenticated != nil {
+		val := int64(*p.AutocompleteUsersUnauthenticated)
+		o.AutocompleteUsersUnauthenticated = &val
+	}
 	o.AutoDevOpsDomain = p.AutoDevOpsDomain
 	o.AutoDevOpsEnabled = p.AutoDevOpsEnabled
 	o.AutomaticPurchasedStorageAllocation = p.AutomaticPurchasedStorageAllocation
-	o.BulkImportConcurrentPipelineBatchLimit = p.BulkImportConcurrentPipelineBatchLimit
+	if p.BulkImportConcurrentPipelineBatchLimit != nil {
+		val := int64(*p.BulkImportConcurrentPipelineBatchLimit)
+		o.BulkImportConcurrentPipelineBatchLimit = &val
+	}
 	o.BulkImportEnabled = p.BulkImportEnabled
-	o.BulkImportMaxDownloadFileSize = p.BulkImportMaxDownloadFileSize
+	if p.BulkImportMaxDownloadFileSize != nil {
+		val := int64(*p.BulkImportMaxDownloadFileSize)
+		o.BulkImportMaxDownloadFileSize = &val
+	}
 	o.CanCreateGroup = p.CanCreateGroup
 	o.CanCreateOrganization = p.CanCreateOrganization
 	o.CheckNamespacePlan = p.CheckNamespacePlan
 	o.CIJobLiveTraceEnabled = p.CIJobLiveTraceEnabled
-	o.CIMaxIncludes = p.CIMaxIncludes
-	o.CIMaxTotalYAMLSizeBytes = p.CIMaxTotalYAMLSizeBytes
-	o.CIPartitionsSizeLimit = p.CIPartitionsSizeLimit
+	if p.CIMaxIncludes != nil {
+		val := int64(*p.CIMaxIncludes)
+		o.CIMaxIncludes = &val
+	}
+	if p.CIMaxTotalYAMLSizeBytes != nil {
+		val := int64(*p.CIMaxTotalYAMLSizeBytes)
+		o.CIMaxTotalYAMLSizeBytes = &val
+	}
+	if p.CIPartitionsSizeLimit != nil {
+		val := int64(*p.CIPartitionsSizeLimit)
+		o.CIPartitionsSizeLimit = &val
+	}
 	o.CommitEmailHostname = p.CommitEmailHostname
-	o.ConcurrentBitbucketImportJobsLimit = p.ConcurrentBitbucketImportJobsLimit
-	o.ConcurrentBitbucketServerImportJobsLimit = p.ConcurrentBitbucketServerImportJobsLimit
-	o.ConcurrentGitHubImportJobsLimit = p.ConcurrentGitHubImportJobsLimit
+	if p.ConcurrentBitbucketImportJobsLimit != nil {
+		val := int64(*p.ConcurrentBitbucketImportJobsLimit)
+		o.ConcurrentBitbucketImportJobsLimit = &val
+	}
+	if p.ConcurrentBitbucketServerImportJobsLimit != nil {
+		val := int64(*p.ConcurrentBitbucketServerImportJobsLimit)
+		o.ConcurrentBitbucketServerImportJobsLimit = &val
+	}
+	if p.ConcurrentGitHubImportJobsLimit != nil {
+		val := int64(*p.ConcurrentGitHubImportJobsLimit)
+		o.ConcurrentGitHubImportJobsLimit = &val
+	}
 	o.ContainerExpirationPoliciesEnableHistoricEntries = p.ContainerExpirationPoliciesEnableHistoricEntries
-	o.ContainerRegistryCleanupTagsServiceMaxListSize = p.ContainerRegistryCleanupTagsServiceMaxListSize
-	o.ContainerRegistryDeleteTagsServiceTimeout = p.ContainerRegistryDeleteTagsServiceTimeout
+	if p.ContainerRegistryCleanupTagsServiceMaxListSize != nil {
+		val := int64(*p.ContainerRegistryCleanupTagsServiceMaxListSize)
+		o.ContainerRegistryCleanupTagsServiceMaxListSize = &val
+	}
+	if p.ContainerRegistryDeleteTagsServiceTimeout != nil {
+		val := int64(*p.ContainerRegistryDeleteTagsServiceTimeout)
+		o.ContainerRegistryDeleteTagsServiceTimeout = &val
+	}
 	o.ContainerRegistryExpirationPoliciesCaching = p.ContainerRegistryExpirationPoliciesCaching
-	o.ContainerRegistryExpirationPoliciesWorkerCapacity = p.ContainerRegistryExpirationPoliciesWorkerCapacity
+	if p.ContainerRegistryExpirationPoliciesWorkerCapacity != nil {
+		val := int64(*p.ContainerRegistryExpirationPoliciesWorkerCapacity)
+		o.ContainerRegistryExpirationPoliciesWorkerCapacity = &val
+	}
 	if p.ContainerRegistryImportCreatedBefore != nil {
 		o.ContainerRegistryImportCreatedBefore = &p.ContainerRegistryImportCreatedBefore.Time
 	}
-	o.ContainerRegistryImportMaxRetries = p.ContainerRegistryImportMaxRetries
-	o.ContainerRegistryImportMaxStepDuration = p.ContainerRegistryImportMaxStepDuration
-	o.ContainerRegistryImportMaxTagsCount = p.ContainerRegistryImportMaxTagsCount
-	o.ContainerRegistryImportStartMaxRetries = p.ContainerRegistryImportStartMaxRetries
+	if p.ContainerRegistryImportMaxRetries != nil {
+		val := int64(*p.ContainerRegistryImportMaxRetries)
+		o.ContainerRegistryImportMaxRetries = &val
+	}
+	if p.ContainerRegistryImportMaxStepDuration != nil {
+		val := int64(*p.ContainerRegistryImportMaxStepDuration)
+		o.ContainerRegistryImportMaxStepDuration = &val
+	}
+	if p.ContainerRegistryImportMaxTagsCount != nil {
+		val := int64(*p.ContainerRegistryImportMaxTagsCount)
+		o.ContainerRegistryImportMaxTagsCount = &val
+	}
+	if p.ContainerRegistryImportStartMaxRetries != nil {
+		val := int64(*p.ContainerRegistryImportStartMaxRetries)
+		o.ContainerRegistryImportStartMaxRetries = &val
+	}
 	o.ContainerRegistryImportTargetPlan = p.ContainerRegistryImportTargetPlan
-	o.ContainerRegistryTokenExpireDelay = p.ContainerRegistryTokenExpireDelay
+	if p.ContainerRegistryTokenExpireDelay != nil {
+		val := int64(*p.ContainerRegistryTokenExpireDelay)
+		o.ContainerRegistryTokenExpireDelay = &val
+	}
 	o.CustomHTTPCloneURLRoot = p.CustomHTTPCloneURLRoot
 	o.DNSRebindingProtectionEnabled = p.DNSRebindingProtectionEnabled
-	o.DSAKeyRestriction = p.DSAKeyRestriction
+	if p.DSAKeyRestriction != nil {
+		val := int64(*p.DSAKeyRestriction)
+		o.DSAKeyRestriction = &val
+	}
 	o.DeactivateDormantUsers = p.DeactivateDormantUsers
-	o.DeactivateDormantUsersPeriod = p.DeactivateDormantUsersPeriod
-	o.DecompressArchiveFileTimeout = p.DecompressArchiveFileTimeout
+	if p.DeactivateDormantUsersPeriod != nil {
+		val := int64(*p.DeactivateDormantUsersPeriod)
+		o.DeactivateDormantUsersPeriod = &val
+	}
+	if p.DecompressArchiveFileTimeout != nil {
+		val := int64(*p.DecompressArchiveFileTimeout)
+		o.DecompressArchiveFileTimeout = &val
+	}
 	o.DefaultArtifactsExpireIn = p.DefaultArtifactsExpireIn
 	o.DefaultBranchName = p.DefaultBranchName
 	o.DefaultBranchProtectionDefaults = v1Alpha1DefaultBranchProtectionDefaultsOptionsPtrToGitlabBranchProtectionDefaults(p.DefaultBranchProtectionDefaults)
@@ -104,26 +170,47 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 		o.DefaultGroupVisibility = clients.VisibilityValueStringToGitlab(*p.DefaultGroupVisibility)
 	}
 	o.DefaultPreferredLanguage = p.DefaultPreferredLanguage
-	o.DefaultProjectCreation = p.DefaultProjectCreation
+	if p.DefaultProjectCreation != nil {
+		val := int64(*p.DefaultProjectCreation)
+		o.DefaultProjectCreation = &val
+	}
 	o.DefaultProjectDeletionProtection = p.DefaultProjectDeletionProtection
 	if p.DefaultProjectVisibility != nil {
 		o.DefaultProjectVisibility = clients.VisibilityValueStringToGitlab(*p.DefaultProjectVisibility)
 	}
-	o.DefaultProjectsLimit = p.DefaultProjectsLimit
+	if p.DefaultProjectsLimit != nil {
+		val := int64(*p.DefaultProjectsLimit)
+		o.DefaultProjectsLimit = &val
+	}
 	if p.DefaultSnippetVisibility != nil {
 		o.DefaultSnippetVisibility = clients.VisibilityValueStringToGitlab(*p.DefaultSnippetVisibility)
 	}
-	o.DefaultSyntaxHighlightingTheme = p.DefaultSyntaxHighlightingTheme
+	if p.DefaultSyntaxHighlightingTheme != nil {
+		val := int64(*p.DefaultSyntaxHighlightingTheme)
+		o.DefaultSyntaxHighlightingTheme = &val
+	}
 	o.DelayedGroupDeletion = p.DelayedGroupDeletion
 	o.DelayedProjectDeletion = p.DelayedProjectDeletion
 	o.DeleteInactiveProjects = p.DeleteInactiveProjects
 	o.DeleteUnconfirmedUsers = p.DeleteUnconfirmedUsers
-	o.DeletionAdjournedPeriod = p.DeletionAdjournedPeriod
+	if p.DeletionAdjournedPeriod != nil {
+		val := int64(*p.DeletionAdjournedPeriod)
+		o.DeletionAdjournedPeriod = &val
+	}
 	o.DiagramsnetEnabled = p.DiagramsnetEnabled
 	o.DiagramsnetURL = p.DiagramsnetURL
-	o.DiffMaxFiles = p.DiffMaxFiles
-	o.DiffMaxLines = p.DiffMaxLines
-	o.DiffMaxPatchBytes = p.DiffMaxPatchBytes
+	if p.DiffMaxFiles != nil {
+		val := int64(*p.DiffMaxFiles)
+		o.DiffMaxFiles = &val
+	}
+	if p.DiffMaxLines != nil {
+		val := int64(*p.DiffMaxLines)
+		o.DiffMaxLines = &val
+	}
+	if p.DiffMaxPatchBytes != nil {
+		val := int64(*p.DiffMaxPatchBytes)
+		o.DiffMaxPatchBytes = &val
+	}
 	o.DisableFeedToken = p.DisableFeedToken
 	o.DisableAdminOAuthScopes = p.DisableAdminOAuthScopes
 	o.DisableOverridingApproversPerMergeRequest = p.DisableOverridingApproversPerMergeRequest
@@ -132,44 +219,107 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.DomainAllowlist = p.DomainAllowlist
 	o.DomainDenylist = p.DomainDenylist
 	o.DomainDenylistEnabled = p.DomainDenylistEnabled
-	o.DownstreamPipelineTriggerLimitPerProjectUserSHA = p.DownstreamPipelineTriggerLimitPerProjectUserSHA
+	if p.DownstreamPipelineTriggerLimitPerProjectUserSHA != nil {
+		val := int64(*p.DownstreamPipelineTriggerLimitPerProjectUserSHA)
+		o.DownstreamPipelineTriggerLimitPerProjectUserSHA = &val
+	}
 	o.DuoFeaturesEnabled = p.DuoFeaturesEnabled
-	o.ECDSAKeyRestriction = p.ECDSAKeyRestriction
-	o.ECDSASKKeyRestriction = p.ECDSASKKeyRestriction
+	if p.ECDSAKeyRestriction != nil {
+		val := int64(*p.ECDSAKeyRestriction)
+		o.ECDSAKeyRestriction = &val
+	}
+	if p.ECDSASKKeyRestriction != nil {
+		val := int64(*p.ECDSASKKeyRestriction)
+		o.ECDSASKKeyRestriction = &val
+	}
 	o.EKSAccessKeyID = p.EKSAccessKeyID
 	o.EKSAccountID = p.EKSAccountID
 	o.EKSIntegrationEnabled = p.EKSIntegrationEnabled
 	o.EKSSecretAccessKey = p.EKSSecretAccessKey
-	o.Ed25519KeyRestriction = p.Ed25519KeyRestriction
-	o.Ed25519SKKeyRestriction = p.Ed25519SKKeyRestriction
+	if p.Ed25519KeyRestriction != nil {
+		val := int64(*p.Ed25519KeyRestriction)
+		o.Ed25519KeyRestriction = &val
+	}
+	if p.Ed25519SKKeyRestriction != nil {
+		val := int64(*p.Ed25519SKKeyRestriction)
+		o.Ed25519SKKeyRestriction = &val
+	}
 	o.ElasticsearchAWS = p.ElasticsearchAWS
 	o.ElasticsearchAWSAccessKey = p.ElasticsearchAWSAccessKey
 	o.ElasticsearchAWSRegion = p.ElasticsearchAWSRegion
 	o.ElasticsearchAWSSecretAccessKey = p.ElasticsearchAWSSecretAccessKey
 	o.ElasticsearchAnalyzersKuromojiEnabled = p.ElasticsearchAnalyzersKuromojiEnabled
-	o.ElasticsearchAnalyzersKuromojiSearch = p.ElasticsearchAnalyzersKuromojiSearch
+	if p.ElasticsearchAnalyzersKuromojiSearch != nil {
+		val := int64(*p.ElasticsearchAnalyzersKuromojiSearch)
+		o.ElasticsearchAnalyzersKuromojiSearch = &val
+	}
 	o.ElasticsearchAnalyzersSmartCNEnabled = p.ElasticsearchAnalyzersSmartCNEnabled
-	o.ElasticsearchAnalyzersSmartCNSearch = p.ElasticsearchAnalyzersSmartCNSearch
-	o.ElasticsearchClientRequestTimeout = p.ElasticsearchClientRequestTimeout
-	o.ElasticsearchIndexedFieldLengthLimit = p.ElasticsearchIndexedFieldLengthLimit
-	o.ElasticsearchIndexedFileSizeLimitKB = p.ElasticsearchIndexedFileSizeLimitKB
+	if p.ElasticsearchAnalyzersSmartCNSearch != nil {
+		val := int64(*p.ElasticsearchAnalyzersSmartCNSearch)
+		o.ElasticsearchAnalyzersSmartCNSearch = &val
+	}
+	if p.ElasticsearchClientRequestTimeout != nil {
+		val := int64(*p.ElasticsearchClientRequestTimeout)
+		o.ElasticsearchClientRequestTimeout = &val
+	}
+	if p.ElasticsearchIndexedFieldLengthLimit != nil {
+		val := int64(*p.ElasticsearchIndexedFieldLengthLimit)
+		o.ElasticsearchIndexedFieldLengthLimit = &val
+	}
+	if p.ElasticsearchIndexedFileSizeLimitKB != nil {
+		val := int64(*p.ElasticsearchIndexedFileSizeLimitKB)
+		o.ElasticsearchIndexedFileSizeLimitKB = &val
+	}
 	o.ElasticsearchIndexing = p.ElasticsearchIndexing
 	o.ElasticsearchLimitIndexing = p.ElasticsearchLimitIndexing
-	o.ElasticsearchMaxBulkConcurrency = p.ElasticsearchMaxBulkConcurrency
-	o.ElasticsearchMaxBulkSizeMB = p.ElasticsearchMaxBulkSizeMB
-	o.ElasticsearchMaxCodeIndexingConcurrency = p.ElasticsearchMaxCodeIndexingConcurrency
-	o.ElasticsearchNamespaceIDs = p.ElasticsearchNamespaceIDs
+	if p.ElasticsearchMaxBulkConcurrency != nil {
+		val := int64(*p.ElasticsearchMaxBulkConcurrency)
+		o.ElasticsearchMaxBulkConcurrency = &val
+	}
+	if p.ElasticsearchMaxBulkSizeMB != nil {
+		val := int64(*p.ElasticsearchMaxBulkSizeMB)
+		o.ElasticsearchMaxBulkSizeMB = &val
+	}
+	if p.ElasticsearchMaxCodeIndexingConcurrency != nil {
+		val := int64(*p.ElasticsearchMaxCodeIndexingConcurrency)
+		o.ElasticsearchMaxCodeIndexingConcurrency = &val
+	}
+	if p.ElasticsearchNamespaceIDs != nil {
+		converted := make([]int64, len(*p.ElasticsearchNamespaceIDs))
+		for i, v := range *p.ElasticsearchNamespaceIDs {
+			converted[i] = int64(v)
+		}
+		o.ElasticsearchNamespaceIDs = &converted
+	}
 	o.ElasticsearchPassword = p.ElasticsearchPassword
 	o.ElasticsearchPauseIndexing = p.ElasticsearchPauseIndexing
-	o.ElasticsearchProjectIDs = p.ElasticsearchProjectIDs
-	o.ElasticsearchReplicas = p.ElasticsearchReplicas
+	if p.ElasticsearchProjectIDs != nil {
+		converted := make([]int64, len(*p.ElasticsearchProjectIDs))
+		for i, v := range *p.ElasticsearchProjectIDs {
+			converted[i] = int64(v)
+		}
+		o.ElasticsearchProjectIDs = &converted
+	}
+	if p.ElasticsearchReplicas != nil {
+		val := int64(*p.ElasticsearchReplicas)
+		o.ElasticsearchReplicas = &val
+	}
 	o.ElasticsearchRequeueWorkers = p.ElasticsearchRequeueWorkers
-	o.ElasticsearchRetryOnFailure = p.ElasticsearchRetryOnFailure
+	if p.ElasticsearchRetryOnFailure != nil {
+		val := int64(*p.ElasticsearchRetryOnFailure)
+		o.ElasticsearchRetryOnFailure = &val
+	}
 	o.ElasticsearchSearch = p.ElasticsearchSearch
-	o.ElasticsearchShards = p.ElasticsearchShards
+	if p.ElasticsearchShards != nil {
+		val := int64(*p.ElasticsearchShards)
+		o.ElasticsearchShards = &val
+	}
 	o.ElasticsearchURL = p.ElasticsearchURL
 	o.ElasticsearchUsername = p.ElasticsearchUsername
-	o.ElasticsearchWorkerNumberOfShards = p.ElasticsearchWorkerNumberOfShards
+	if p.ElasticsearchWorkerNumberOfShards != nil {
+		val := int64(*p.ElasticsearchWorkerNumberOfShards)
+		o.ElasticsearchWorkerNumberOfShards = &val
+	}
 	o.EmailAdditionalText = p.EmailAdditionalText
 	o.EmailAuthorInBody = p.EmailAuthorInBody
 	o.EmailConfirmationSetting = p.EmailConfirmationSetting
@@ -189,23 +339,59 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.ExternalAuthorizationServiceEnabled = p.ExternalAuthorizationServiceEnabled
 	o.ExternalAuthorizationServiceTimeout = p.ExternalAuthorizationServiceTimeout
 	o.ExternalAuthorizationServiceURL = p.ExternalAuthorizationServiceURL
-	o.ExternalPipelineValidationServiceTimeout = p.ExternalPipelineValidationServiceTimeout
+	if p.ExternalPipelineValidationServiceTimeout != nil {
+		val := int64(*p.ExternalPipelineValidationServiceTimeout)
+		o.ExternalPipelineValidationServiceTimeout = &val
+	}
 	o.ExternalPipelineValidationServiceToken = p.ExternalPipelineValidationServiceToken
 	o.ExternalPipelineValidationServiceURL = p.ExternalPipelineValidationServiceURL
-	o.FailedLoginAttemptsUnlockPeriodInMinutes = p.FailedLoginAttemptsUnlockPeriodInMinutes
-	o.FileTemplateProjectID = p.FileTemplateProjectID
-	o.FirstDayOfWeek = p.FirstDayOfWeek
+	if p.FailedLoginAttemptsUnlockPeriodInMinutes != nil {
+		val := int64(*p.FailedLoginAttemptsUnlockPeriodInMinutes)
+		o.FailedLoginAttemptsUnlockPeriodInMinutes = &val
+	}
+	if p.FileTemplateProjectID != nil {
+		val := int64(*p.FileTemplateProjectID)
+		o.FileTemplateProjectID = &val
+	}
+	if p.FirstDayOfWeek != nil {
+		val := int64(*p.FirstDayOfWeek)
+		o.FirstDayOfWeek = &val
+	}
 	o.FlocEnabled = p.FlocEnabled
 	o.GeoNodeAllowedIPs = p.GeoNodeAllowedIPs
-	o.GeoStatusTimeout = p.GeoStatusTimeout
-	o.GitRateLimitUsersAlertlist = p.GitRateLimitUsersAlertlist
-	o.GitTwoFactorSessionExpiry = p.GitTwoFactorSessionExpiry
-	o.GitalyTimeoutDefault = p.GitalyTimeoutDefault
-	o.GitalyTimeoutFast = p.GitalyTimeoutFast
-	o.GitalyTimeoutMedium = p.GitalyTimeoutMedium
+	if p.GeoStatusTimeout != nil {
+		val := int64(*p.GeoStatusTimeout)
+		o.GeoStatusTimeout = &val
+	}
+	if p.GitRateLimitUsersAlertlist != nil {
+		converted := make([]int64, len(*p.GitRateLimitUsersAlertlist))
+		for i, v := range *p.GitRateLimitUsersAlertlist {
+			converted[i] = int64(v)
+		}
+		o.GitRateLimitUsersAlertlist = &converted
+	}
+	if p.GitTwoFactorSessionExpiry != nil {
+		val := int64(*p.GitTwoFactorSessionExpiry)
+		o.GitTwoFactorSessionExpiry = &val
+	}
+	if p.GitalyTimeoutDefault != nil {
+		val := int64(*p.GitalyTimeoutDefault)
+		o.GitalyTimeoutDefault = &val
+	}
+	if p.GitalyTimeoutFast != nil {
+		val := int64(*p.GitalyTimeoutFast)
+		o.GitalyTimeoutFast = &val
+	}
+	if p.GitalyTimeoutMedium != nil {
+		val := int64(*p.GitalyTimeoutMedium)
+		o.GitalyTimeoutMedium = &val
+	}
 	o.GitlabDedicatedInstance = p.GitlabDedicatedInstance
 	o.GitlabEnvironmentToolkitInstance = p.GitlabEnvironmentToolkitInstance
-	o.GitlabShellOperationLimit = p.GitlabShellOperationLimit
+	if p.GitlabShellOperationLimit != nil {
+		val := int64(*p.GitlabShellOperationLimit)
+		o.GitlabShellOperationLimit = &val
+	}
 	o.GitpodEnabled = p.GitpodEnabled
 	o.GitpodURL = p.GitpodURL
 	o.GitRateLimitUsersAllowlist = p.GitRateLimitUsersAllowlist
@@ -213,11 +399,23 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.GrafanaEnabled = p.GrafanaEnabled
 	o.GrafanaURL = p.GrafanaURL
 	o.GravatarEnabled = p.GravatarEnabled
-	o.GroupDownloadExportLimit = p.GroupDownloadExportLimit
-	o.GroupExportLimit = p.GroupExportLimit
-	o.GroupImportLimit = p.GroupImportLimit
+	if p.GroupDownloadExportLimit != nil {
+		val := int64(*p.GroupDownloadExportLimit)
+		o.GroupDownloadExportLimit = &val
+	}
+	if p.GroupExportLimit != nil {
+		val := int64(*p.GroupExportLimit)
+		o.GroupExportLimit = &val
+	}
+	if p.GroupImportLimit != nil {
+		val := int64(*p.GroupImportLimit)
+		o.GroupImportLimit = &val
+	}
 	o.GroupOwnersCanManageDefaultBranchProtection = p.GroupOwnersCanManageDefaultBranchProtection
-	o.GroupRunnerTokenExpirationInterval = p.GroupRunnerTokenExpirationInterval
+	if p.GroupRunnerTokenExpirationInterval != nil {
+		val := int64(*p.GroupRunnerTokenExpirationInterval)
+		o.GroupRunnerTokenExpirationInterval = &val
+	}
 	o.HTMLEmailsEnabled = p.HTMLEmailsEnabled
 	o.HashedStorageEnabled = p.HashedStorageEnabled
 	o.HelpPageDocumentationBaseURL = p.HelpPageDocumentationBaseURL
@@ -228,15 +426,30 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.HideThirdPartyOffers = p.HideThirdPartyOffers
 	o.HomePageURL = p.HomePageURL
 	o.HousekeepingEnabled = p.HousekeepingEnabled
-	o.HousekeepingOptimizeRepositoryPeriod = p.HousekeepingOptimizeRepositoryPeriod
+	if p.HousekeepingOptimizeRepositoryPeriod != nil {
+		val := int64(*p.HousekeepingOptimizeRepositoryPeriod)
+		o.HousekeepingOptimizeRepositoryPeriod = &val
+	}
 	o.ImportSources = p.ImportSources
-	o.InactiveProjectsDeleteAfterMonths = p.InactiveProjectsDeleteAfterMonths
-	o.InactiveProjectsMinSizeMB = p.InactiveProjectsMinSizeMB
-	o.InactiveProjectsSendWarningEmailAfterMonths = p.InactiveProjectsSendWarningEmailAfterMonths
+	if p.InactiveProjectsDeleteAfterMonths != nil {
+		val := int64(*p.InactiveProjectsDeleteAfterMonths)
+		o.InactiveProjectsDeleteAfterMonths = &val
+	}
+	if p.InactiveProjectsMinSizeMB != nil {
+		val := int64(*p.InactiveProjectsMinSizeMB)
+		o.InactiveProjectsMinSizeMB = &val
+	}
+	if p.InactiveProjectsSendWarningEmailAfterMonths != nil {
+		val := int64(*p.InactiveProjectsSendWarningEmailAfterMonths)
+		o.InactiveProjectsSendWarningEmailAfterMonths = &val
+	}
 	o.IncludeOptionalMetricsInServicePing = p.IncludeOptionalMetricsInServicePing
 	o.InProductMarketingEmailsEnabled = p.InProductMarketingEmailsEnabled
 	o.InvisibleCaptchaEnabled = p.InvisibleCaptchaEnabled
-	o.IssuesCreateLimit = p.IssuesCreateLimit
+	if p.IssuesCreateLimit != nil {
+		val := int64(*p.IssuesCreateLimit)
+		o.IssuesCreateLimit = &val
+	}
 	o.JiraConnectApplicationKey = p.JiraConnectApplicationKey
 	o.JiraConnectPublicKeyStorageEnabled = p.JiraConnectPublicKeyStorageEnabled
 	o.JiraConnectProxyURL = p.JiraConnectProxyURL
@@ -244,7 +457,10 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.KrokiEnabled = p.KrokiEnabled
 	o.KrokiFormats = p.KrokiFormats
 	o.KrokiURL = p.KrokiURL
-	o.LocalMarkdownVersion = p.LocalMarkdownVersion
+	if p.LocalMarkdownVersion != nil {
+		val := int64(*p.LocalMarkdownVersion)
+		o.LocalMarkdownVersion = &val
+	}
 	o.LockDuoFeaturesEnabled = p.LockDuoFeaturesEnabled
 	o.LockMembershipsToLDAP = p.LockMembershipsToLDAP
 	o.LoginRecaptchaProtectionEnabled = p.LoginRecaptchaProtectionEnabled
@@ -253,36 +469,108 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.MaintenanceMode = p.MaintenanceMode
 	o.MaintenanceModeMessage = p.MaintenanceModeMessage
 	o.MavenPackageRequestsForwarding = p.MavenPackageRequestsForwarding
-	o.MaxArtifactsSize = p.MaxArtifactsSize
-	o.MaxAttachmentSize = p.MaxAttachmentSize
-	o.MaxDecompressedArchiveSize = p.MaxDecompressedArchiveSize
-	o.MaxExportSize = p.MaxExportSize
-	o.MaxImportRemoteFileSize = p.MaxImportRemoteFileSize
-	o.MaxImportSize = p.MaxImportSize
-	o.MaxLoginAttempts = p.MaxLoginAttempts
-	o.MaxNumberOfRepositoryDownloads = p.MaxNumberOfRepositoryDownloads
-	o.MaxNumberOfRepositoryDownloadsWithinTimePeriod = p.MaxNumberOfRepositoryDownloadsWithinTimePeriod
-	o.MaxPagesSize = p.MaxPagesSize
-	o.MaxPersonalAccessTokenLifetime = p.MaxPersonalAccessTokenLifetime
-	o.MaxSSHKeyLifetime = p.MaxSSHKeyLifetime
-	o.MaxTerraformStateSizeBytes = p.MaxTerraformStateSizeBytes
-	o.MaxYAMLDepth = p.MaxYAMLDepth
-	o.MaxYAMLSizeBytes = p.MaxYAMLSizeBytes
-	o.MetricsMethodCallThreshold = p.MetricsMethodCallThreshold
-	o.MinimumPasswordLength = p.MinimumPasswordLength
+	if p.MaxArtifactsSize != nil {
+		val := int64(*p.MaxArtifactsSize)
+		o.MaxArtifactsSize = &val
+	}
+	if p.MaxAttachmentSize != nil {
+		val := int64(*p.MaxAttachmentSize)
+		o.MaxAttachmentSize = &val
+	}
+	if p.MaxDecompressedArchiveSize != nil {
+		val := int64(*p.MaxDecompressedArchiveSize)
+		o.MaxDecompressedArchiveSize = &val
+	}
+	if p.MaxExportSize != nil {
+		val := int64(*p.MaxExportSize)
+		o.MaxExportSize = &val
+	}
+	if p.MaxImportRemoteFileSize != nil {
+		val := int64(*p.MaxImportRemoteFileSize)
+		o.MaxImportRemoteFileSize = &val
+	}
+	if p.MaxImportSize != nil {
+		val := int64(*p.MaxImportSize)
+		o.MaxImportSize = &val
+	}
+	if p.MaxLoginAttempts != nil {
+		val := int64(*p.MaxLoginAttempts)
+		o.MaxLoginAttempts = &val
+	}
+	if p.MaxNumberOfRepositoryDownloads != nil {
+		val := int64(*p.MaxNumberOfRepositoryDownloads)
+		o.MaxNumberOfRepositoryDownloads = &val
+	}
+	if p.MaxNumberOfRepositoryDownloadsWithinTimePeriod != nil {
+		val := int64(*p.MaxNumberOfRepositoryDownloadsWithinTimePeriod)
+		o.MaxNumberOfRepositoryDownloadsWithinTimePeriod = &val
+	}
+	if p.MaxPagesSize != nil {
+		val := int64(*p.MaxPagesSize)
+		o.MaxPagesSize = &val
+	}
+	if p.MaxPersonalAccessTokenLifetime != nil {
+		val := int64(*p.MaxPersonalAccessTokenLifetime)
+		o.MaxPersonalAccessTokenLifetime = &val
+	}
+	if p.MaxSSHKeyLifetime != nil {
+		val := int64(*p.MaxSSHKeyLifetime)
+		o.MaxSSHKeyLifetime = &val
+	}
+	if p.MaxTerraformStateSizeBytes != nil {
+		val := int64(*p.MaxTerraformStateSizeBytes)
+		o.MaxTerraformStateSizeBytes = &val
+	}
+	if p.MaxYAMLDepth != nil {
+		val := int64(*p.MaxYAMLDepth)
+		o.MaxYAMLDepth = &val
+	}
+	if p.MaxYAMLSizeBytes != nil {
+		val := int64(*p.MaxYAMLSizeBytes)
+		o.MaxYAMLSizeBytes = &val
+	}
+	if p.MetricsMethodCallThreshold != nil {
+		val := int64(*p.MetricsMethodCallThreshold)
+		o.MetricsMethodCallThreshold = &val
+	}
+	if p.MinimumPasswordLength != nil {
+		val := int64(*p.MinimumPasswordLength)
+		o.MinimumPasswordLength = &val
+	}
 	o.MirrorAvailable = p.MirrorAvailable
-	o.MirrorCapacityThreshold = p.MirrorCapacityThreshold
-	o.MirrorMaxCapacity = p.MirrorMaxCapacity
-	o.MirrorMaxDelay = p.MirrorMaxDelay
+	if p.MirrorCapacityThreshold != nil {
+		val := int64(*p.MirrorCapacityThreshold)
+		o.MirrorCapacityThreshold = &val
+	}
+	if p.MirrorMaxCapacity != nil {
+		val := int64(*p.MirrorMaxCapacity)
+		o.MirrorMaxCapacity = &val
+	}
+	if p.MirrorMaxDelay != nil {
+		val := int64(*p.MirrorMaxDelay)
+		o.MirrorMaxDelay = &val
+	}
 	o.NPMPackageRequestsForwarding = p.NPMPackageRequestsForwarding
-	o.NotesCreateLimit = p.NotesCreateLimit
+	if p.NotesCreateLimit != nil {
+		val := int64(*p.NotesCreateLimit)
+		o.NotesCreateLimit = &val
+	}
 	o.NotifyOnUnknownSignIn = p.NotifyOnUnknownSignIn
 	o.NugetSkipMetadataURLValidation = p.NugetSkipMetadataURLValidation
 	o.OutboundLocalRequestsAllowlistRaw = p.OutboundLocalRequestsAllowlistRaw
 	o.OutboundLocalRequestsWhitelist = p.OutboundLocalRequestsWhitelist
-	o.PackageMetadataPURLTypes = p.PackageMetadataPURLTypes
+	if p.PackageMetadataPURLTypes != nil {
+		converted := make([]int64, len(*p.PackageMetadataPURLTypes))
+		for i, v := range *p.PackageMetadataPURLTypes {
+			converted[i] = int64(v)
+		}
+		o.PackageMetadataPURLTypes = &converted
+	}
 	o.PackageRegistryAllowAnyoneToPullOption = p.PackageRegistryAllowAnyoneToPullOption
-	o.PackageRegistryCleanupPoliciesWorkerCapacity = p.PackageRegistryCleanupPoliciesWorkerCapacity
+	if p.PackageRegistryCleanupPoliciesWorkerCapacity != nil {
+		val := int64(*p.PackageRegistryCleanupPoliciesWorkerCapacity)
+		o.PackageRegistryCleanupPoliciesWorkerCapacity = &val
+	}
 	o.PagesDomainVerificationEnabled = p.PagesDomainVerificationEnabled
 	o.PasswordAuthenticationEnabledForGit = p.PasswordAuthenticationEnabledForGit
 	o.PasswordAuthenticationEnabledForWeb = p.PasswordAuthenticationEnabledForWeb
@@ -294,49 +582,106 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.PersonalAccessTokenPrefix = p.PersonalAccessTokenPrefix
 	o.PlantumlEnabled = p.PlantumlEnabled
 	o.PlantumlURL = p.PlantumlURL
-	o.PipelineLimitPerProjectUserSha = p.PipelineLimitPerProjectUserSha
+	if p.PipelineLimitPerProjectUserSha != nil {
+		val := int64(*p.PipelineLimitPerProjectUserSha)
+		o.PipelineLimitPerProjectUserSha = &val
+	}
 	o.PollingIntervalMultiplier = p.PollingIntervalMultiplier
 	o.PreventMergeRequestsAuthorApproval = p.PreventMergeRequestsAuthorApproval
 	o.PreventMergeRequestsCommittersApproval = p.PreventMergeRequestsCommittersApproval
-	o.ProjectDownloadExportLimit = p.ProjectDownloadExportLimit
+	if p.ProjectDownloadExportLimit != nil {
+		val := int64(*p.ProjectDownloadExportLimit)
+		o.ProjectDownloadExportLimit = &val
+	}
 	o.ProjectExportEnabled = p.ProjectExportEnabled
-	o.ProjectExportLimit = p.ProjectExportLimit
-	o.ProjectImportLimit = p.ProjectImportLimit
-	o.ProjectJobsAPIRateLimit = p.ProjectJobsAPIRateLimit
-	o.ProjectRunnerTokenExpirationInterval = p.ProjectRunnerTokenExpirationInterval
-	o.ProjectsAPIRateLimitUnauthenticated = p.ProjectsAPIRateLimitUnauthenticated
+	if p.ProjectExportLimit != nil {
+		val := int64(*p.ProjectExportLimit)
+		o.ProjectExportLimit = &val
+	}
+	if p.ProjectImportLimit != nil {
+		val := int64(*p.ProjectImportLimit)
+		o.ProjectImportLimit = &val
+	}
+	if p.ProjectJobsAPIRateLimit != nil {
+		val := int64(*p.ProjectJobsAPIRateLimit)
+		o.ProjectJobsAPIRateLimit = &val
+	}
+	if p.ProjectRunnerTokenExpirationInterval != nil {
+		val := int64(*p.ProjectRunnerTokenExpirationInterval)
+		o.ProjectRunnerTokenExpirationInterval = &val
+	}
+	if p.ProjectsAPIRateLimitUnauthenticated != nil {
+		val := int64(*p.ProjectsAPIRateLimitUnauthenticated)
+		o.ProjectsAPIRateLimitUnauthenticated = &val
+	}
 	o.PrometheusMetricsEnabled = p.PrometheusMetricsEnabled
 	o.ProtectedCIVariables = p.ProtectedCIVariables
 	o.PseudonymizerEnabled = p.PseudonymizerEnabled
-	o.PushEventActivitiesLimit = p.PushEventActivitiesLimit
-	o.PushEventHooksLimit = p.PushEventHooksLimit
+	if p.PushEventActivitiesLimit != nil {
+		val := int64(*p.PushEventActivitiesLimit)
+		o.PushEventActivitiesLimit = &val
+	}
+	if p.PushEventHooksLimit != nil {
+		val := int64(*p.PushEventHooksLimit)
+		o.PushEventHooksLimit = &val
+	}
 	o.PyPIPackageRequestsForwarding = p.PyPIPackageRequestsForwarding
-	o.RSAKeyRestriction = p.RSAKeyRestriction
+	if p.RSAKeyRestriction != nil {
+		val := int64(*p.RSAKeyRestriction)
+		o.RSAKeyRestriction = &val
+	}
 	o.RateLimitingResponseText = p.RateLimitingResponseText
-	o.RawBlobRequestLimit = p.RawBlobRequestLimit
+	if p.RawBlobRequestLimit != nil {
+		val := int64(*p.RawBlobRequestLimit)
+		o.RawBlobRequestLimit = &val
+	}
 	o.RecaptchaEnabled = p.RecaptchaEnabled
 	o.RecaptchaPrivateKey = p.RecaptchaPrivateKey
 	o.RecaptchaSiteKey = p.RecaptchaSiteKey
-	o.ReceiveMaxInputSize = p.ReceiveMaxInputSize
+	if p.ReceiveMaxInputSize != nil {
+		val := int64(*p.ReceiveMaxInputSize)
+		o.ReceiveMaxInputSize = &val
+	}
 	o.ReceptiveClusterAgentsEnabled = p.ReceptiveClusterAgentsEnabled
 	o.RememberMeEnabled = p.RememberMeEnabled
 	o.RepositoryChecksEnabled = p.RepositoryChecksEnabled
-	o.RepositorySizeLimit = p.RepositorySizeLimit
+	if p.RepositorySizeLimit != nil {
+		val := int64(*p.RepositorySizeLimit)
+		o.RepositorySizeLimit = &val
+	}
 	o.RepositoryStorages = p.RepositoryStorages
-	o.RepositoryStoragesWeighted = p.RepositoryStoragesWeighted
+	if p.RepositoryStoragesWeighted != nil {
+		converted := make(map[string]int64)
+		for k, v := range *p.RepositoryStoragesWeighted {
+			converted[k] = int64(v)
+		}
+		o.RepositoryStoragesWeighted = &converted
+	}
 	o.RequireAdminApprovalAfterUserSignup = p.RequireAdminApprovalAfterUserSignup
 	o.RequireAdminTwoFactorAuthentication = p.RequireAdminTwoFactorAuthentication
 	o.RequirePersonalAccessTokenExpiry = p.RequirePersonalAccessTokenExpiry
 	o.RequireTwoFactorAuthentication = p.RequireTwoFactorAuthentication
 	o.RestrictedVisibilityLevels = clients.StringPtrSliceToVisibilityValuePtrSlice(p.RestrictedVisibilityLevels)
-	o.RunnerTokenExpirationInterval = p.RunnerTokenExpirationInterval
-	o.SearchRateLimit = p.SearchRateLimit
-	o.SearchRateLimitUnauthenticated = p.SearchRateLimitUnauthenticated
+	if p.RunnerTokenExpirationInterval != nil {
+		val := int64(*p.RunnerTokenExpirationInterval)
+		o.RunnerTokenExpirationInterval = &val
+	}
+	if p.SearchRateLimit != nil {
+		val := int64(*p.SearchRateLimit)
+		o.SearchRateLimit = &val
+	}
+	if p.SearchRateLimitUnauthenticated != nil {
+		val := int64(*p.SearchRateLimitUnauthenticated)
+		o.SearchRateLimitUnauthenticated = &val
+	}
 	o.SecretDetectionRevocationTokenTypesURL = p.SecretDetectionRevocationTokenTypesURL
 	o.SecretDetectionTokenRevocationEnabled = p.SecretDetectionTokenRevocationEnabled
 	o.SecretDetectionTokenRevocationToken = p.SecretDetectionTokenRevocationToken
 	o.SecretDetectionTokenRevocationURL = p.SecretDetectionTokenRevocationURL
-	o.SecurityApprovalPoliciesLimit = p.SecurityApprovalPoliciesLimit
+	if p.SecurityApprovalPoliciesLimit != nil {
+		val := int64(*p.SecurityApprovalPoliciesLimit)
+		o.SecurityApprovalPoliciesLimit = &val
+	}
 	o.SecurityPolicyGlobalGroupApproversEnabled = p.SecurityPolicyGlobalGroupApproversEnabled
 	o.SecurityTXTContent = p.SecurityTXTContent
 	o.SendUserConfirmationEmail = p.SendUserConfirmationEmail
@@ -345,12 +690,24 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.SentryEnabled = p.SentryEnabled
 	o.SentryEnvironment = p.SentryEnvironment
 	o.ServiceAccessTokensExpirationEnforced = p.ServiceAccessTokensExpirationEnforced
-	o.SessionExpireDelay = p.SessionExpireDelay
+	if p.SessionExpireDelay != nil {
+		val := int64(*p.SessionExpireDelay)
+		o.SessionExpireDelay = &val
+	}
 	o.SharedRunnersEnabled = p.SharedRunnersEnabled
-	o.SharedRunnersMinutes = p.SharedRunnersMinutes
+	if p.SharedRunnersMinutes != nil {
+		val := int64(*p.SharedRunnersMinutes)
+		o.SharedRunnersMinutes = &val
+	}
 	o.SharedRunnersText = p.SharedRunnersText
-	o.SidekiqJobLimiterCompressionThresholdBytes = p.SidekiqJobLimiterCompressionThresholdBytes
-	o.SidekiqJobLimiterLimitBytes = p.SidekiqJobLimiterLimitBytes
+	if p.SidekiqJobLimiterCompressionThresholdBytes != nil {
+		val := int64(*p.SidekiqJobLimiterCompressionThresholdBytes)
+		o.SidekiqJobLimiterCompressionThresholdBytes = &val
+	}
+	if p.SidekiqJobLimiterLimitBytes != nil {
+		val := int64(*p.SidekiqJobLimiterLimitBytes)
+		o.SidekiqJobLimiterLimitBytes = &val
+	}
 	o.SidekiqJobLimiterMode = p.SidekiqJobLimiterMode
 	o.SignInText = p.SignInText
 	o.SignupEnabled = p.SignupEnabled
@@ -361,7 +718,10 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.SlackAppSecret = p.SlackAppSecret
 	o.SlackAppSigningSecret = p.SlackAppSigningSecret
 	o.SlackAppVerificationToken = p.SlackAppVerificationToken
-	o.SnippetSizeLimit = p.SnippetSizeLimit
+	if p.SnippetSizeLimit != nil {
+		val := int64(*p.SnippetSizeLimit)
+		o.SnippetSizeLimit = &val
+	}
 	o.SnowplowAppID = p.SnowplowAppID
 	o.SnowplowCollectorHostname = p.SnowplowCollectorHostname
 	o.SnowplowCookieDomain = p.SnowplowCookieDomain
@@ -376,56 +736,155 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.StaticObjectsExternalStorageAuthToken = p.StaticObjectsExternalStorageAuthToken
 	o.StaticObjectsExternalStorageURL = p.StaticObjectsExternalStorageURL
 	o.SuggestPipelineEnabled = p.SuggestPipelineEnabled
-	o.TerminalMaxSessionTime = p.TerminalMaxSessionTime
+	if p.TerminalMaxSessionTime != nil {
+		val := int64(*p.TerminalMaxSessionTime)
+		o.TerminalMaxSessionTime = &val
+	}
 	o.Terms = p.Terms
 	o.ThrottleAuthenticatedAPIEnabled = p.ThrottleAuthenticatedAPIEnabled
-	o.ThrottleAuthenticatedAPIPeriodInSeconds = p.ThrottleAuthenticatedAPIPeriodInSeconds
-	o.ThrottleAuthenticatedAPIRequestsPerPeriod = p.ThrottleAuthenticatedAPIRequestsPerPeriod
+	if p.ThrottleAuthenticatedAPIPeriodInSeconds != nil {
+		val := int64(*p.ThrottleAuthenticatedAPIPeriodInSeconds)
+		o.ThrottleAuthenticatedAPIPeriodInSeconds = &val
+	}
+	if p.ThrottleAuthenticatedAPIRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleAuthenticatedAPIRequestsPerPeriod)
+		o.ThrottleAuthenticatedAPIRequestsPerPeriod = &val
+	}
 	o.ThrottleAuthenticatedDeprecatedAPIEnabled = p.ThrottleAuthenticatedDeprecatedAPIEnabled
-	o.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds = p.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds
-	o.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod = p.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod
+	if p.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds != nil {
+		val := int64(*p.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds)
+		o.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds = &val
+	}
+	if p.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod)
+		o.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod = &val
+	}
 	o.ThrottleAuthenticatedFilesAPIEnabled = p.ThrottleAuthenticatedFilesAPIEnabled
-	o.ThrottleAuthenticatedFilesAPIPeriodInSeconds = p.ThrottleAuthenticatedFilesAPIPeriodInSeconds
-	o.ThrottleAuthenticatedFilesAPIRequestsPerPeriod = p.ThrottleAuthenticatedFilesAPIRequestsPerPeriod
+	if p.ThrottleAuthenticatedFilesAPIPeriodInSeconds != nil {
+		val := int64(*p.ThrottleAuthenticatedFilesAPIPeriodInSeconds)
+		o.ThrottleAuthenticatedFilesAPIPeriodInSeconds = &val
+	}
+	if p.ThrottleAuthenticatedFilesAPIRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleAuthenticatedFilesAPIRequestsPerPeriod)
+		o.ThrottleAuthenticatedFilesAPIRequestsPerPeriod = &val
+	}
 	o.ThrottleAuthenticatedGitLFSEnabled = p.ThrottleAuthenticatedGitLFSEnabled
-	o.ThrottleAuthenticatedGitLFSPeriodInSeconds = p.ThrottleAuthenticatedGitLFSPeriodInSeconds
-	o.ThrottleAuthenticatedGitLFSRequestsPerPeriod = p.ThrottleAuthenticatedGitLFSRequestsPerPeriod
+	if p.ThrottleAuthenticatedGitLFSPeriodInSeconds != nil {
+		val := int64(*p.ThrottleAuthenticatedGitLFSPeriodInSeconds)
+		o.ThrottleAuthenticatedGitLFSPeriodInSeconds = &val
+	}
+	if p.ThrottleAuthenticatedGitLFSRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleAuthenticatedGitLFSRequestsPerPeriod)
+		o.ThrottleAuthenticatedGitLFSRequestsPerPeriod = &val
+	}
 	o.ThrottleAuthenticatedPackagesAPIEnabled = p.ThrottleAuthenticatedPackagesAPIEnabled
-	o.ThrottleAuthenticatedPackagesAPIPeriodInSeconds = p.ThrottleAuthenticatedPackagesAPIPeriodInSeconds
-	o.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod = p.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod
+	if p.ThrottleAuthenticatedPackagesAPIPeriodInSeconds != nil {
+		val := int64(*p.ThrottleAuthenticatedPackagesAPIPeriodInSeconds)
+		o.ThrottleAuthenticatedPackagesAPIPeriodInSeconds = &val
+	}
+	if p.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod)
+		o.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod = &val
+	}
 	o.ThrottleAuthenticatedWebEnabled = p.ThrottleAuthenticatedWebEnabled
-	o.ThrottleAuthenticatedWebPeriodInSeconds = p.ThrottleAuthenticatedWebPeriodInSeconds
-	o.ThrottleAuthenticatedWebRequestsPerPeriod = p.ThrottleAuthenticatedWebRequestsPerPeriod
+	if p.ThrottleAuthenticatedWebPeriodInSeconds != nil {
+		val := int64(*p.ThrottleAuthenticatedWebPeriodInSeconds)
+		o.ThrottleAuthenticatedWebPeriodInSeconds = &val
+	}
+	if p.ThrottleAuthenticatedWebRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleAuthenticatedWebRequestsPerPeriod)
+		o.ThrottleAuthenticatedWebRequestsPerPeriod = &val
+	}
 	o.ThrottleIncidentManagementNotificationEnabled = p.ThrottleIncidentManagementNotificationEnabled
-	o.ThrottleIncidentManagementNotificationPerPeriod = p.ThrottleIncidentManagementNotificationPerPeriod
-	o.ThrottleIncidentManagementNotificationPeriodInSeconds = p.ThrottleIncidentManagementNotificationPeriodInSeconds
+	if p.ThrottleIncidentManagementNotificationPerPeriod != nil {
+		val := int64(*p.ThrottleIncidentManagementNotificationPerPeriod)
+		o.ThrottleIncidentManagementNotificationPerPeriod = &val
+	}
+	if p.ThrottleIncidentManagementNotificationPeriodInSeconds != nil {
+		val := int64(*p.ThrottleIncidentManagementNotificationPeriodInSeconds)
+		o.ThrottleIncidentManagementNotificationPeriodInSeconds = &val
+	}
 	o.ThrottleProtectedPathsEnabled = p.ThrottleProtectedPathsEnabled
-	o.ThrottleProtectedPathsPeriodInSeconds = p.ThrottleProtectedPathsPeriodInSeconds
-	o.ThrottleProtectedPathsRequestsPerPeriod = p.ThrottleProtectedPathsRequestsPerPeriod
+	if p.ThrottleProtectedPathsPeriodInSeconds != nil {
+		val := int64(*p.ThrottleProtectedPathsPeriodInSeconds)
+		o.ThrottleProtectedPathsPeriodInSeconds = &val
+	}
+	if p.ThrottleProtectedPathsRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleProtectedPathsRequestsPerPeriod)
+		o.ThrottleProtectedPathsRequestsPerPeriod = &val
+	}
 	o.ThrottleUnauthenticatedAPIEnabled = p.ThrottleUnauthenticatedAPIEnabled
-	o.ThrottleUnauthenticatedAPIPeriodInSeconds = p.ThrottleUnauthenticatedAPIPeriodInSeconds
-	o.ThrottleUnauthenticatedAPIRequestsPerPeriod = p.ThrottleUnauthenticatedAPIRequestsPerPeriod
+	if p.ThrottleUnauthenticatedAPIPeriodInSeconds != nil {
+		val := int64(*p.ThrottleUnauthenticatedAPIPeriodInSeconds)
+		o.ThrottleUnauthenticatedAPIPeriodInSeconds = &val
+	}
+	if p.ThrottleUnauthenticatedAPIRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleUnauthenticatedAPIRequestsPerPeriod)
+		o.ThrottleUnauthenticatedAPIRequestsPerPeriod = &val
+	}
 	o.ThrottleUnauthenticatedDeprecatedAPIEnabled = p.ThrottleUnauthenticatedDeprecatedAPIEnabled
-	o.ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds = p.ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds
-	o.ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod = p.ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod
+	if p.ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds != nil {
+		val := int64(*p.ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds)
+		o.ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds = &val
+	}
+	if p.ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod)
+		o.ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod = &val
+	}
 	o.ThrottleUnauthenticatedFilesAPIEnabled = p.ThrottleUnauthenticatedFilesAPIEnabled
-	o.ThrottleUnauthenticatedFilesAPIPeriodInSeconds = p.ThrottleUnauthenticatedFilesAPIPeriodInSeconds
-	o.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod = p.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod
+	if p.ThrottleUnauthenticatedFilesAPIPeriodInSeconds != nil {
+		val := int64(*p.ThrottleUnauthenticatedFilesAPIPeriodInSeconds)
+		o.ThrottleUnauthenticatedFilesAPIPeriodInSeconds = &val
+	}
+	if p.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod)
+		o.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod = &val
+	}
 	o.ThrottleUnauthenticatedGitLFSEnabled = p.ThrottleUnauthenticatedGitLFSEnabled
-	o.ThrottleUnauthenticatedGitLFSPeriodInSeconds = p.ThrottleUnauthenticatedGitLFSPeriodInSeconds
-	o.ThrottleUnauthenticatedGitLFSRequestsPerPeriod = p.ThrottleUnauthenticatedGitLFSRequestsPerPeriod
+	if p.ThrottleUnauthenticatedGitLFSPeriodInSeconds != nil {
+		val := int64(*p.ThrottleUnauthenticatedGitLFSPeriodInSeconds)
+		o.ThrottleUnauthenticatedGitLFSPeriodInSeconds = &val
+	}
+	if p.ThrottleUnauthenticatedGitLFSRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleUnauthenticatedGitLFSRequestsPerPeriod)
+		o.ThrottleUnauthenticatedGitLFSRequestsPerPeriod = &val
+	}
 	o.ThrottleUnauthenticatedPackagesAPIEnabled = p.ThrottleUnauthenticatedPackagesAPIEnabled
-	o.ThrottleUnauthenticatedPackagesAPIPeriodInSeconds = p.ThrottleUnauthenticatedPackagesAPIPeriodInSeconds
-	o.ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod = p.ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod
+	if p.ThrottleUnauthenticatedPackagesAPIPeriodInSeconds != nil {
+		val := int64(*p.ThrottleUnauthenticatedPackagesAPIPeriodInSeconds)
+		o.ThrottleUnauthenticatedPackagesAPIPeriodInSeconds = &val
+	}
+	if p.ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod)
+		o.ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod = &val
+	}
 	o.ThrottleUnauthenticatedWebEnabled = p.ThrottleUnauthenticatedWebEnabled
-	o.ThrottleUnauthenticatedWebPeriodInSeconds = p.ThrottleUnauthenticatedWebPeriodInSeconds
-	o.ThrottleUnauthenticatedWebRequestsPerPeriod = p.ThrottleUnauthenticatedWebRequestsPerPeriod
+	if p.ThrottleUnauthenticatedWebPeriodInSeconds != nil {
+		val := int64(*p.ThrottleUnauthenticatedWebPeriodInSeconds)
+		o.ThrottleUnauthenticatedWebPeriodInSeconds = &val
+	}
+	if p.ThrottleUnauthenticatedWebRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleUnauthenticatedWebRequestsPerPeriod)
+		o.ThrottleUnauthenticatedWebRequestsPerPeriod = &val
+	}
 	o.TimeTrackingLimitToHours = p.TimeTrackingLimitToHours
-	o.TwoFactorGracePeriod = p.TwoFactorGracePeriod
-	o.UnconfirmedUsersDeleteAfterDays = p.UnconfirmedUsersDeleteAfterDays
+	if p.TwoFactorGracePeriod != nil {
+		val := int64(*p.TwoFactorGracePeriod)
+		o.TwoFactorGracePeriod = &val
+	}
+	if p.UnconfirmedUsersDeleteAfterDays != nil {
+		val := int64(*p.UnconfirmedUsersDeleteAfterDays)
+		o.UnconfirmedUsersDeleteAfterDays = &val
+	}
 	o.UniqueIPsLimitEnabled = p.UniqueIPsLimitEnabled
-	o.UniqueIPsLimitPerUser = p.UniqueIPsLimitPerUser
-	o.UniqueIPsLimitTimeWindow = p.UniqueIPsLimitTimeWindow
+	if p.UniqueIPsLimitPerUser != nil {
+		val := int64(*p.UniqueIPsLimitPerUser)
+		o.UniqueIPsLimitPerUser = &val
+	}
+	if p.UniqueIPsLimitTimeWindow != nil {
+		val := int64(*p.UniqueIPsLimitTimeWindow)
+		o.UniqueIPsLimitTimeWindow = &val
+	}
 	o.UpdateRunnerVersionsEnabled = p.UpdateRunnerVersionsEnabled
 	o.UpdatingNameDisabledForUsers = p.UpdatingNameDisabledForUsers
 	o.UsagePingEnabled = p.UsagePingEnabled
@@ -435,29 +894,59 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.UserDefaultExternal = p.UserDefaultExternal
 	o.UserDefaultInternalRegex = p.UserDefaultInternalRegex
 	o.UserDefaultsToPrivateProfile = p.UserDefaultsToPrivateProfile
-	o.UserEmailLookupLimit = p.UserEmailLookupLimit
+	if p.UserEmailLookupLimit != nil {
+		val := int64(*p.UserEmailLookupLimit)
+		o.UserEmailLookupLimit = &val
+	}
 	o.UserOauthApplications = p.UserOauthApplications
 	o.UserShowAddSSHKeyMessage = p.UserShowAddSSHKeyMessage
-	o.UsersGetByIDLimit = p.UsersGetByIDLimit
+	if p.UsersGetByIDLimit != nil {
+		val := int64(*p.UsersGetByIDLimit)
+		o.UsersGetByIDLimit = &val
+	}
 	o.UsersGetByIDLimitAllowlistRaw = p.UsersGetByIDLimitAllowlistRaw
 	o.ValidRunnerRegistrars = p.ValidRunnerRegistrars
 	o.VersionCheckEnabled = p.VersionCheckEnabled
 	o.WebIDEClientsidePreviewEnabled = p.WebIDEClientsidePreviewEnabled
 	o.WhatsNewVariant = p.WhatsNewVariant
-	o.WikiPageMaxContentBytes = p.WikiPageMaxContentBytes
+	if p.WikiPageMaxContentBytes != nil {
+		val := int64(*p.WikiPageMaxContentBytes)
+		o.WikiPageMaxContentBytes = &val
+	}
 	o.AdminNotificationEmail = p.AdminNotificationEmail
 	o.AllowLocalRequestsFromHooksAndServices = p.AllowLocalRequestsFromHooksAndServices
 	o.AssetProxyWhitelist = p.AssetProxyWhitelist
-	o.DefaultBranchProtection = p.DefaultBranchProtection
+	if p.DefaultBranchProtection != nil {
+		val := int64(*p.DefaultBranchProtection)
+		o.DefaultBranchProtection = &val
+	}
 	o.HousekeepingBitmapsEnabled = p.HousekeepingBitmapsEnabled
-	o.HousekeepingFullRepackPeriod = p.HousekeepingFullRepackPeriod
-	o.HousekeepingGcPeriod = p.HousekeepingGcPeriod
-	o.HousekeepingIncrementalRepackPeriod = p.HousekeepingIncrementalRepackPeriod
-	o.PerformanceBarAllowedGroupID = p.PerformanceBarAllowedGroupID
+	if p.HousekeepingFullRepackPeriod != nil {
+		val := int64(*p.HousekeepingFullRepackPeriod)
+		o.HousekeepingFullRepackPeriod = &val
+	}
+	if p.HousekeepingGcPeriod != nil {
+		val := int64(*p.HousekeepingGcPeriod)
+		o.HousekeepingGcPeriod = &val
+	}
+	if p.HousekeepingIncrementalRepackPeriod != nil {
+		val := int64(*p.HousekeepingIncrementalRepackPeriod)
+		o.HousekeepingIncrementalRepackPeriod = &val
+	}
+	if p.PerformanceBarAllowedGroupID != nil {
+		val := int64(*p.PerformanceBarAllowedGroupID)
+		o.PerformanceBarAllowedGroupID = &val
+	}
 	o.PerformanceBarEnabled = p.PerformanceBarEnabled
 	o.ThrottleUnauthenticatedEnabled = p.ThrottleUnauthenticatedEnabled
-	o.ThrottleUnauthenticatedPeriodInSeconds = p.ThrottleUnauthenticatedPeriodInSeconds
-	o.ThrottleUnauthenticatedRequestsPerPeriod = p.ThrottleUnauthenticatedRequestsPerPeriod
+	if p.ThrottleUnauthenticatedPeriodInSeconds != nil {
+		val := int64(*p.ThrottleUnauthenticatedPeriodInSeconds)
+		o.ThrottleUnauthenticatedPeriodInSeconds = &val
+	}
+	if p.ThrottleUnauthenticatedRequestsPerPeriod != nil {
+		val := int64(*p.ThrottleUnauthenticatedRequestsPerPeriod)
+		o.ThrottleUnauthenticatedRequestsPerPeriod = &val
+	}
 	return o
 }
 
@@ -581,9 +1070,21 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.ElasticsearchMaxBulkConcurrency = g.ElasticsearchMaxBulkConcurrency
 	o.ElasticsearchMaxBulkSizeMB = g.ElasticsearchMaxBulkSizeMB
 	o.ElasticsearchMaxCodeIndexingConcurrency = g.ElasticsearchMaxCodeIndexingConcurrency
-	o.ElasticsearchNamespaceIDs = g.ElasticsearchNamespaceIDs
+	if g.ElasticsearchNamespaceIDs != nil {
+		converted := make([]int, len(g.ElasticsearchNamespaceIDs))
+		for i, v := range g.ElasticsearchNamespaceIDs {
+			converted[i] = int(v)
+		}
+		o.ElasticsearchNamespaceIDs = converted
+	}
 	o.ElasticsearchPauseIndexing = g.ElasticsearchPauseIndexing
-	o.ElasticsearchProjectIDs = g.ElasticsearchProjectIDs
+	if g.ElasticsearchProjectIDs != nil {
+		converted := make([]int, len(g.ElasticsearchProjectIDs))
+		for i, v := range g.ElasticsearchProjectIDs {
+			converted[i] = int(v)
+		}
+		o.ElasticsearchProjectIDs = converted
+	}
 	o.ElasticsearchReplicas = g.ElasticsearchReplicas
 	o.ElasticsearchRequeueWorkers = g.ElasticsearchRequeueWorkers
 	o.ElasticsearchRetryOnFailure = g.ElasticsearchRetryOnFailure
@@ -618,7 +1119,13 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.FlocEnabled = g.FlocEnabled
 	o.GeoNodeAllowedIPs = g.GeoNodeAllowedIPs
 	o.GeoStatusTimeout = g.GeoStatusTimeout
-	o.GitRateLimitUsersAlertlist = g.GitRateLimitUsersAlertlist
+	if g.GitRateLimitUsersAlertlist != nil {
+		converted := make([]int, len(g.GitRateLimitUsersAlertlist))
+		for i, v := range g.GitRateLimitUsersAlertlist {
+			converted[i] = int(v)
+		}
+		o.GitRateLimitUsersAlertlist = converted
+	}
 	o.GitTwoFactorSessionExpiry = g.GitTwoFactorSessionExpiry
 	o.GitalyTimeoutDefault = g.GitalyTimeoutDefault
 	o.GitalyTimeoutFast = g.GitalyTimeoutFast
@@ -698,7 +1205,13 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.NugetSkipMetadataURLValidation = g.NugetSkipMetadataURLValidation
 	o.OutboundLocalRequestsAllowlistRaw = g.OutboundLocalRequestsAllowlistRaw
 	o.OutboundLocalRequestsWhitelist = g.OutboundLocalRequestsWhitelist
-	o.PackageMetadataPURLTypes = g.PackageMetadataPURLTypes
+	if g.PackageMetadataPURLTypes != nil {
+		converted := make([]int, len(g.PackageMetadataPURLTypes))
+		for i, v := range g.PackageMetadataPURLTypes {
+			converted[i] = int(v)
+		}
+		o.PackageMetadataPURLTypes = converted
+	}
 	o.PackageRegistryAllowAnyoneToPullOption = g.PackageRegistryAllowAnyoneToPullOption
 	o.PackageRegistryCleanupPoliciesWorkerCapacity = g.PackageRegistryCleanupPoliciesWorkerCapacity
 	o.PagesDomainVerificationEnabled = g.PagesDomainVerificationEnabled
@@ -739,7 +1252,13 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.RepositoryChecksEnabled = g.RepositoryChecksEnabled
 	o.RepositorySizeLimit = g.RepositorySizeLimit
 	o.RepositoryStorages = g.RepositoryStorages
-	o.RepositoryStoragesWeighted = g.RepositoryStoragesWeighted
+	if g.RepositoryStoragesWeighted != nil {
+		converted := make(map[string]int)
+		for k, v := range g.RepositoryStoragesWeighted {
+			converted[k] = int(v)
+		}
+		o.RepositoryStoragesWeighted = converted
+	}
 	o.RequireAdminApprovalAfterUserSignup = g.RequireAdminApprovalAfterUserSignup
 	o.RequireAdminTwoFactorAuthentication = g.RequireAdminTwoFactorAuthentication
 	o.RequirePersonalAccessTokenExpiry = g.RequirePersonalAccessTokenExpiry
@@ -1219,8 +1738,17 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.ElasticsearchMaxCodeIndexingConcurrency, g.ElasticsearchMaxCodeIndexingConcurrency) {
 		return false
 	}
-	if !clients.IsComparableSliceEqualToComparableSlicePtr(p.ElasticsearchNamespaceIDs, g.ElasticsearchNamespaceIDs) {
-		return false
+	{
+		var converted []int
+		if g.ElasticsearchNamespaceIDs != nil {
+			converted = make([]int, len(g.ElasticsearchNamespaceIDs))
+			for i, v := range g.ElasticsearchNamespaceIDs {
+				converted[i] = int(v)
+			}
+		}
+		if !clients.IsComparableSliceEqualToComparableSlicePtr(p.ElasticsearchNamespaceIDs, converted) {
+			return false
+		}
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ElasticsearchPassword, g.ElasticsearchPassword) {
 		return false
@@ -1228,8 +1756,17 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.ElasticsearchPauseIndexing, g.ElasticsearchPauseIndexing) {
 		return false
 	}
-	if !clients.IsComparableSliceEqualToComparableSlicePtr(p.ElasticsearchProjectIDs, g.ElasticsearchProjectIDs) {
-		return false
+	{
+		var converted []int
+		if g.ElasticsearchProjectIDs != nil {
+			converted = make([]int, len(g.ElasticsearchProjectIDs))
+			for i, v := range g.ElasticsearchProjectIDs {
+				converted[i] = int(v)
+			}
+		}
+		if !clients.IsComparableSliceEqualToComparableSlicePtr(p.ElasticsearchProjectIDs, converted) {
+			return false
+		}
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ElasticsearchReplicas, g.ElasticsearchReplicas) {
 		return false
@@ -1343,8 +1880,17 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.GeoStatusTimeout, g.GeoStatusTimeout) {
 		return false
 	}
-	if !clients.IsComparableSliceEqualToComparableSlicePtr(p.GitRateLimitUsersAlertlist, g.GitRateLimitUsersAlertlist) {
-		return false
+	{
+		var converted []int
+		if g.GitRateLimitUsersAlertlist != nil {
+			converted = make([]int, len(g.GitRateLimitUsersAlertlist))
+			for i, v := range g.GitRateLimitUsersAlertlist {
+				converted[i] = int(v)
+			}
+		}
+		if !clients.IsComparableSliceEqualToComparableSlicePtr(p.GitRateLimitUsersAlertlist, converted) {
+			return false
+		}
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.GitTwoFactorSessionExpiry, g.GitTwoFactorSessionExpiry) {
 		return false
@@ -1589,8 +2135,17 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableSliceEqualToComparableSlicePtr(p.OutboundLocalRequestsWhitelist, g.OutboundLocalRequestsWhitelist) {
 		return false
 	}
-	if !clients.IsComparableSliceEqualToComparableSlicePtr(p.PackageMetadataPURLTypes, g.PackageMetadataPURLTypes) {
-		return false
+	{
+		var converted []int
+		if g.PackageMetadataPURLTypes != nil {
+			converted = make([]int, len(g.PackageMetadataPURLTypes))
+			for i, v := range g.PackageMetadataPURLTypes {
+				converted[i] = int(v)
+			}
+		}
+		if !clients.IsComparableSliceEqualToComparableSlicePtr(p.PackageMetadataPURLTypes, converted) {
+			return false
+		}
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.PackageRegistryAllowAnyoneToPullOption, g.PackageRegistryAllowAnyoneToPullOption) {
 		return false
@@ -1718,8 +2273,17 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableSliceEqualToComparableSlicePtr(p.RepositoryStorages, g.RepositoryStorages) {
 		return false
 	}
-	if !clients.IsMapStringToComparableEqualToMapStringToComparablePtr(p.RepositoryStoragesWeighted, g.RepositoryStoragesWeighted) {
-		return false
+	{
+		var converted map[string]int
+		if g.RepositoryStoragesWeighted != nil {
+			converted = make(map[string]int)
+			for k, v := range g.RepositoryStoragesWeighted {
+				converted[k] = int(v)
+			}
+		}
+		if !clients.IsMapStringToComparableEqualToMapStringToComparablePtr(p.RepositoryStoragesWeighted, converted) {
+			return false
+		}
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.RequireAdminApprovalAfterUserSignup, g.RequireAdminApprovalAfterUserSignup) {
 		return false

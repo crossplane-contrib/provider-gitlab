@@ -200,7 +200,11 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
+<<<<<<< HEAD
 	meta.SetExternalName(cr, strconv.FormatInt(prj.ID, 10))
+=======
+	meta.SetExternalName(cr, strconv.FormatInt(int64(prj.ID), 10))
+>>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 	return managed.ExternalCreation{}, errors.Wrap(err, errKubeUpdateFailed)
 }
 
@@ -275,10 +279,16 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	if in.AllowMergeOnSkippedPipeline == nil {
 		in.AllowMergeOnSkippedPipeline = &project.AllowMergeOnSkippedPipeline
 	}
+<<<<<<< HEAD
 	//nolint:staticcheck // SA1019 ApprovalsBeforeMerge is deprecated by GitLab API, will migrate to Merge Request Approvals API later
 	if in.ApprovalsBeforeMerge == nil && project.ApprovalsBeforeMerge != 0 {
 		val := project.ApprovalsBeforeMerge
 		in.ApprovalsBeforeMerge = &val
+=======
+	if in.ApprovalsBeforeMerge == nil && project.ApprovalsBeforeMerge != 0 { //nolint:staticcheck
+		val := project.ApprovalsBeforeMerge
+		in.ApprovalsBeforeMerge = &val //nolint:staticcheck
+>>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 	}
 	if in.AutocloseReferencedIssues == nil {
 		in.AutocloseReferencedIssues = &project.AutocloseReferencedIssues

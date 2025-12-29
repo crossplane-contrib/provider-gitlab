@@ -288,7 +288,7 @@ func isRunnerUpToDate(p *v1alpha1.RunnerParameters, r *gitlab.RunnerDetails) boo
 	if p.AccessLevel != nil && *p.AccessLevel != r.AccessLevel {
 		return false
 	}
-	if p.MaximumTimeout != nil && *p.MaximumTimeout != r.MaximumTimeout {
+	if p.MaximumTimeout != nil && *p.MaximumTimeout != int(r.MaximumTimeout) {
 		return false
 	}
 	if p.MaintenanceNote != nil && *p.MaintenanceNote != r.MaintenanceNote {
