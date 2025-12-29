@@ -29,7 +29,7 @@ type MemberParameters struct {
 	// The ID of the project owned by the authenticated user.
 	// +optional
 	// +immutable
-	ProjectID *int `json:"projectId,omitempty"`
+	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
@@ -42,7 +42,7 @@ type MemberParameters struct {
 
 	// The user ID of the member.
 	// +optional
-	UserID *int `json:"userID,omitempty"`
+	UserID *int64 `json:"userID,omitempty"`
 
 	// The username of the member.
 	// +optional

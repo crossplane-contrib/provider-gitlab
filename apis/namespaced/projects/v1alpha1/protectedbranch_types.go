@@ -27,7 +27,7 @@ import (
 type BranchAccessDescription struct {
 	// // ID is the ID of the access level.
 	// // +optional
-	// ID *int `json:"id,omitempty"`
+	// ID *int64 `json:"id,omitempty"`
 
 	// AccessLevel represents the access level for the branch.
 	// +optional
@@ -39,11 +39,11 @@ type BranchAccessDescription struct {
 
 	// UserID is the ID of the user with access.
 	// +optional
-	UserID *int `json:"userId,omitempty"`
+	UserID *int64 `json:"userId,omitempty"`
 
 	// GroupID is the ID of the group with access.
 	// +optional
-	GroupID *int `json:"groupId,omitempty"`
+	GroupID *int64 `json:"groupId,omitempty"`
 }
 
 // ProtectedBranchParameters defines the desired state of a GitLab Protected Branch.
@@ -89,7 +89,7 @@ type ProtectedBranchParameters struct {
 // ProtectedBranchObservation represents the observed state of a GitLab Protected Branch.
 type ProtectedBranchObservation struct {
 	// ID is the ID of the protected branch.
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 
 	// PushAccessLevels represents the push access levels for the protected branch.
 	PushAccessLevels []*BranchAccessDescription `json:"pushAccessLevels,omitempty"`

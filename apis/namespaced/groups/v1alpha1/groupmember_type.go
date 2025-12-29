@@ -40,7 +40,7 @@ type MemberParameters struct {
 	// The ID of the group owned by the authenticated user.
 	// +optional
 	// +immutable
-	GroupID *int `json:"groupId,omitempty"`
+	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
@@ -53,7 +53,7 @@ type MemberParameters struct {
 
 	// The user ID of the member.
 	// +optional
-	UserID *int `json:"userID,omitempty"`
+	UserID *int64 `json:"userID,omitempty"`
 
 	// The userName of the member.
 	// +optional

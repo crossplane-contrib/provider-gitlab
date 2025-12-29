@@ -35,7 +35,7 @@ type HookParameters struct {
 	// ProjectID is the ID of the project.
 	// +optional
 	// +immutable
-	ProjectID *int `json:"projectId,omitempty"`
+	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional

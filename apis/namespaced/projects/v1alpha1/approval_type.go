@@ -37,7 +37,7 @@ type ApprovalRuleParameters struct {
 	// The ID of the project owned by the authenticated user.
 	// +optional
 	// +immutable
-	ProjectID *int `json:"projectId,omitempty"`
+	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
@@ -49,7 +49,7 @@ type ApprovalRuleParameters struct {
 	ProjectIDSelector *xpv1.NamespacedSelector `json:"projectIdSelector,omitempty"`
 
 	// The number of required approvals for this rule.
-	ApprovalsRequired *int `json:"approvalsRequired,omitempty"`
+	ApprovalsRequired *int64 `json:"approvalsRequired,omitempty"`
 
 	// The name of the approval rule
 	Name *string `json:"name,omitempty"`

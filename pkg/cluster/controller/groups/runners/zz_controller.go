@@ -190,7 +190,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(runner.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(runner.ID, 10))
 
 	if runner.TokenExpiresAt != nil {
 		t := metav1.NewTime(*runner.TokenExpiresAt)
@@ -259,7 +259,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	_, err = e.client.DeleteRegisteredRunnerByID(
-		runnerID,
+		int64(runnerID),
 		gitlab.WithContext(ctx),
 	)
 
@@ -290,7 +290,7 @@ func isRunnerUpToDate(p *v1alpha1.RunnerParameters, r *gitlab.RunnerDetails) boo
 	if p.AccessLevel != nil && *p.AccessLevel != r.AccessLevel {
 		return false
 	}
-	if p.MaximumTimeout != nil && *p.MaximumTimeout != r.MaximumTimeout {
+	if p.MaximumTimeout != nil && *p.MaximumTimeout != int(r.MaximumTimeout) {
 		return false
 	}
 	if p.MaintenanceNote != nil && *p.MaintenanceNote != r.MaintenanceNote {

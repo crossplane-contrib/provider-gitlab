@@ -30,10 +30,10 @@ import (
 // ProjectBadgeClient defines Gitlab Project service operations
 type BadgeClient interface {
 	ListProjectBadges(gid any, opt *gitlab.ListProjectBadgesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.ProjectBadge, *gitlab.Response, error)
-	GetProjectBadge(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectBadge, *gitlab.Response, error)
+	GetProjectBadge(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectBadge, *gitlab.Response, error)
 	AddProjectBadge(gid any, opt *gitlab.AddProjectBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectBadge, *gitlab.Response, error)
-	EditProjectBadge(gid any, badge int, opt *gitlab.EditProjectBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectBadge, *gitlab.Response, error)
-	DeleteProjectBadge(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	EditProjectBadge(gid any, badge int64, opt *gitlab.EditProjectBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectBadge, *gitlab.Response, error)
+	DeleteProjectBadge(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	PreviewProjectBadge(gid any, opt *gitlab.ProjectBadgePreviewOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectBadge, *gitlab.Response, error)
 }
 
@@ -74,7 +74,7 @@ func GenerateEditProjectBadgeOptions(p *v1alpha1.BadgeParameters) *gitlab.EditPr
 // GenerateBadgeObservation generates v1alpha1 observation from Gitlab ProjectBadge
 func GenerateBadgeObservation(b *gitlab.ProjectBadge) v1alpha1.BadgeObservation {
 	return v1alpha1.BadgeObservation{
-		ID:               b.ID,
+		ID:               int(b.ID),
 		LinkURL:          b.LinkURL,
 		RenderedLinkURL:  b.RenderedLinkURL,
 		ImageURL:         b.ImageURL,

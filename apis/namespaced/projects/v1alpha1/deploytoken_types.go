@@ -29,7 +29,7 @@ type DeployTokenParameters struct {
 	// ProjectID is the ID of the project to create the deploy token in.
 	// +optional
 	// +immutable
-	ProjectID *int `json:"projectId,omitempty"`
+	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional

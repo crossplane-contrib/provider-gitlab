@@ -31,8 +31,8 @@ type MockClient struct {
 
 	MockGetRunnerDetails               func(rid any, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error)
 	MockUpdateRunnerDetails            func(rid any, opt *gitlab.UpdateRunnerDetailsOptions, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error)
-	MockDeleteRegisteredRunnerByID     func(rid int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
-	MockResetRunnerAuthenticationToken func(rid int, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerAuthenticationToken, *gitlab.Response, error)
+	MockDeleteRegisteredRunnerByID     func(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockResetRunnerAuthenticationToken func(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerAuthenticationToken, *gitlab.Response, error)
 }
 
 func (m *MockClient) GetRunnerDetails(rid any, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error) {
@@ -43,10 +43,10 @@ func (m *MockClient) UpdateRunnerDetails(rid any, opt *gitlab.UpdateRunnerDetail
 	return m.MockUpdateRunnerDetails(rid, opt)
 }
 
-func (m *MockClient) DeleteRegisteredRunnerByID(rid int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+func (m *MockClient) DeleteRegisteredRunnerByID(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return m.MockDeleteRegisteredRunnerByID(rid)
 }
 
-func (m *MockClient) ResetRunnerAuthenticationToken(rid int, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerAuthenticationToken, *gitlab.Response, error) {
+func (m *MockClient) ResetRunnerAuthenticationToken(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerAuthenticationToken, *gitlab.Response, error) {
 	return m.MockResetRunnerAuthenticationToken(rid)
 }

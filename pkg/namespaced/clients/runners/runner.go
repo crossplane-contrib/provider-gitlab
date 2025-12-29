@@ -38,8 +38,8 @@ const (
 type RunnerClient interface {
 	GetRunnerDetails(rid any, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error)
 	UpdateRunnerDetails(rid any, opt *gitlab.UpdateRunnerDetailsOptions, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error)
-	DeleteRegisteredRunnerByID(rid int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
-	ResetRunnerAuthenticationToken(rid int, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerAuthenticationToken, *gitlab.Response, error)
+	DeleteRegisteredRunnerByID(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	ResetRunnerAuthenticationToken(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerAuthenticationToken, *gitlab.Response, error)
 }
 
 // NewRunnerClient returns a new Gitlab Runner service
@@ -85,7 +85,7 @@ func GenerateGroupRunnerObservation(runner *gitlab.RunnerDetails) groupsv1alpha1
 	groups := make([]groupsv1alpha1.RunnerGroup, 0, len(runner.Groups))
 	for _, group := range runner.Groups {
 		groups = append(groups, groupsv1alpha1.RunnerGroup{
-			ID:     group.ID,
+			ID:     int(group.ID),
 			Name:   group.Name,
 			WebURL: group.WebURL,
 		})
@@ -112,7 +112,7 @@ func GenerateProjectRunnerObservation(runner *gitlab.RunnerDetails) projectsv1al
 	projects := make([]projectsv1alpha1.RunnerProject, 0, len(runner.Projects))
 	for _, project := range runner.Projects {
 		projects = append(projects, projectsv1alpha1.RunnerProject{
-			ID:                project.ID,
+			ID:                int(project.ID),
 			Name:              project.Name,
 			NameWithNamespace: project.NameWithNamespace,
 			Path:              project.Path,
@@ -135,7 +135,7 @@ func generateCommonRunnerObservation(runner *gitlab.RunnerDetails) commonv1alpha
 		return commonv1alpha1.CommonRunnerObservation{}
 	}
 	runnerObservation := commonv1alpha1.CommonRunnerObservation{
-		ID:              runner.ID,
+		ID:              int(runner.ID),
 		Description:     runner.Description,
 		Paused:          runner.Paused,
 		Locked:          runner.Locked,
@@ -147,7 +147,7 @@ func generateCommonRunnerObservation(runner *gitlab.RunnerDetails) commonv1alpha
 		Status:          runner.Status,
 		RunUntagged:     runner.RunUntagged,
 		AccessLevel:     runner.AccessLevel,
-		MaximumTimeout:  runner.MaximumTimeout,
+		MaximumTimeout:  int(runner.MaximumTimeout),
 		IsShared:        runner.IsShared,
 	}
 
@@ -167,8 +167,11 @@ func GenerateEditRunnerOptions(p *commonv1alpha1.CommonRunnerParameters) *gitlab
 		RunUntagged:     p.RunUntagged,
 		Locked:          p.Locked,
 		AccessLevel:     p.AccessLevel,
-		MaximumTimeout:  p.MaximumTimeout,
 		MaintenanceNote: p.MaintenanceNote,
+	}
+	if p.MaximumTimeout != nil {
+		val := int64(*p.MaximumTimeout)
+		opts.MaximumTimeout = &val
 	}
 	return opts
 }
@@ -182,6 +185,8 @@ func IsRunnerUpToDate(spec *commonv1alpha1.CommonRunnerParameters, observed *git
 	if observed == nil {
 		return false
 	}
+	// Convert observed.MaximumTimeout from int64 to int for comparison
+	observedMaxTimeout := int(observed.MaximumTimeout)
 	// Use a compact list to keep cyclomatic complexity low
 	checks := []bool{
 		clients.IsComparableEqualToComparablePtr(spec.Description, observed.Description),
@@ -190,7 +195,7 @@ func IsRunnerUpToDate(spec *commonv1alpha1.CommonRunnerParameters, observed *git
 		clients.IsComparableEqualToComparablePtr(spec.RunUntagged, observed.RunUntagged),
 		clients.IsComparableSliceEqualToComparableSlicePtr(spec.TagList, observed.TagList),
 		clients.IsComparableEqualToComparablePtr(spec.AccessLevel, observed.AccessLevel),
-		clients.IsComparableEqualToComparablePtr(spec.MaximumTimeout, observed.MaximumTimeout),
+		clients.IsComparableEqualToComparablePtr(spec.MaximumTimeout, observedMaxTimeout),
 		clients.IsComparableEqualToComparablePtr(spec.MaintenanceNote, observed.MaintenanceNote),
 	}
 	for _, ok := range checks {

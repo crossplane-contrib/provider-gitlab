@@ -159,7 +159,7 @@ type ProjectParameters struct {
 	// To configure approval rules, see Merge request approvals API.
 	// Deprecated: use Approvals Resource instead
 	// +optional
-	ApprovalsBeforeMerge *int `json:"approvalsBeforeMerge,omitempty"`
+	ApprovalsBeforeMerge *int64 `json:"approvalsBeforeMerge,omitempty"`
 
 	// Auto-cancel pending pipelines. This isn’t a boolean, but enabled/disabled.
 	// +optional
@@ -187,7 +187,7 @@ type ProjectParameters struct {
 
 	// The maximum amount of time, in seconds, that a job can run.
 	// +optional
-	BuildTimeout *int `json:"buildTimeout,omitempty"`
+	BuildTimeout *int64 `json:"buildTimeout,omitempty"`
 
 	// One of disabled, private, or enabled.
 	// +optional
@@ -199,7 +199,7 @@ type ProjectParameters struct {
 
 	// Default number of revisions for shallow cloning.
 	// +optional
-	CIDefaultGitDepth *int `json:"ciDefaultGitDepth,omitempty"`
+	CIDefaultGitDepth *int64 `json:"ciDefaultGitDepth,omitempty"`
 
 	// When a new deployment job starts, skip older deployment jobs that are still pending
 	// +optional
@@ -251,7 +251,7 @@ type ProjectParameters struct {
 	// Leave empty for instance-level templates. Requires useCustomTemplate to be true.
 	// +optional
 	// +immutable
-	GroupWithProjectTemplatesID *int `json:"groupWithProjectTemplatesId,omitempty"`
+	GroupWithProjectTemplatesID *int64 `json:"groupWithProjectTemplatesId,omitempty"`
 
 	// URL to import repository from.
 	// +optional
@@ -302,11 +302,11 @@ type ProjectParameters struct {
 
 	// User responsible for all the activity surrounding a pull mirror event. (admins only)
 	// +optional
-	MirrorUserID *int `json:"mirrorUserId,omitempty"`
+	MirrorUserID *int64 `json:"mirrorUserId,omitempty"`
 
 	// Namespace for the new project (defaults to the current user’s namespace).
 	// +optional
-	NamespaceID *int `json:"namespaceId,omitempty"`
+	NamespaceID *int64 `json:"namespaceId,omitempty"`
 
 	// NamespaceIDRef is a reference to a project to retrieve its namespaceId
 	// +optional
@@ -423,7 +423,7 @@ type ProjectParameters struct {
 	// This is preferable to using templateName since templateName may be ambiguous.
 	// +optional
 	// +immutable
-	TemplateProjectID *int `json:"templateProjectId,omitempty"`
+	TemplateProjectID *int64 `json:"templateProjectId,omitempty"`
 
 	// Use either custom instance or group (with groupWithProjectTemplatesId) project template.
 	// +optional
@@ -477,7 +477,7 @@ type PushRules struct {
 	FileNameRegex *string `json:"fileNameRegex,omitempty"`
 
 	// Maximum file size (MB).
-	MaxFileSize *int `json:"maxFileSize,omitempty"`
+	MaxFileSize *int64 `json:"maxFileSize,omitempty"`
 
 	// Restrict commits by author (email) to existing GitLab users.
 	MemberCheck *bool `json:"memberCheck,omitempty"`
