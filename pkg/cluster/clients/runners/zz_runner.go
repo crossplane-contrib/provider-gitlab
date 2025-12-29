@@ -87,7 +87,7 @@ func GenerateGroupRunnerObservation(runner *gitlab.RunnerDetails) groupsv1alpha1
 	groups := make([]groupsv1alpha1.RunnerGroup, 0, len(runner.Groups))
 	for _, group := range runner.Groups {
 		groups = append(groups, groupsv1alpha1.RunnerGroup{
-			ID:     int64(group.ID),
+			ID:     group.ID,
 			Name:   group.Name,
 			WebURL: group.WebURL,
 		})
@@ -114,7 +114,7 @@ func GenerateProjectRunnerObservation(runner *gitlab.RunnerDetails) projectsv1al
 	projects := make([]projectsv1alpha1.RunnerProject, 0, len(runner.Projects))
 	for _, project := range runner.Projects {
 		projects = append(projects, projectsv1alpha1.RunnerProject{
-			ID:                int64(project.ID),
+			ID:                project.ID,
 			Name:              project.Name,
 			NameWithNamespace: project.NameWithNamespace,
 			Path:              project.Path,
@@ -172,7 +172,7 @@ func GenerateEditRunnerOptions(p *commonv1alpha1.CommonRunnerParameters) *gitlab
 		MaintenanceNote: p.MaintenanceNote,
 	}
 	if p.MaximumTimeout != nil {
-		val := int64(*p.MaximumTimeout)
+		val := *p.MaximumTimeout
 		opts.MaximumTimeout = &val
 	}
 	return opts
@@ -188,7 +188,7 @@ func IsRunnerUpToDate(spec *commonv1alpha1.CommonRunnerParameters, observed *git
 		return false
 	}
 	// Convert observed.MaximumTimeout from int64 to int for comparison
-	observedMaxTimeout := int64(observed.MaximumTimeout)
+	observedMaxTimeout := observed.MaximumTimeout
 	// Use a compact list to keep cyclomatic complexity low
 	checks := []bool{
 		clients.IsComparableEqualToComparablePtr(spec.Description, observed.Description),

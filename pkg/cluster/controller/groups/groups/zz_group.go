@@ -204,7 +204,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.FormatInt(int64(grp.ID), 10))
+	meta.SetExternalName(cr, strconv.FormatInt(grp.ID, 10))
 	return managed.ExternalCreation{}, nil
 }
 
@@ -367,7 +367,7 @@ func isSharedWithGroupsUpToDate(cr *v1alpha1.GroupParameters, in *gitlab.Group) 
 		if v.GroupID == nil {
 			return false, errors.Errorf(errSWGMissingGroupID, v)
 		}
-		crIDs[int64(*v.GroupID)] = nil
+		crIDs[*v.GroupID] = nil
 	}
 
 	for ID := range inIDs {

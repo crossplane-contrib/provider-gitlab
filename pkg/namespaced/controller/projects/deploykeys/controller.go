@@ -143,7 +143,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.Status.AtProvider = v1alpha1.DeployKeyObservation{
 		ID: func() *int64 {
 			if dk.ID != 0 {
-				v := int64(dk.ID)
+				v := dk.ID
 				return &v
 			}
 			return nil
@@ -186,7 +186,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFail)
 	}
 
-	id := strconv.FormatInt(int64(keyResponse.ID), 10)
+	id := strconv.FormatInt(keyResponse.ID, 10)
 	meta.SetExternalName(cr, id)
 
 	return managed.ExternalCreation{}, nil

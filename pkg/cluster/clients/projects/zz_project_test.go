@@ -295,7 +295,7 @@ func TestGenerateObservation(t *testing.T) {
 						RepositorySize:   storageStatistics.RepositorySize,
 						LFSObjectsSize:   storageStatistics.LFSObjectsSize,
 						JobArtifactsSize: storageStatistics.JobArtifactsSize,
-						CommitCount:      int64(projectStatisticsCommitCount),
+						CommitCount:      projectStatisticsCommitCount,
 					},
 					Links: &gitlab.Links{
 						Self: linksSelf,

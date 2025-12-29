@@ -42,7 +42,6 @@ import (
 
 var (
 	errBoom        = errors.New("boom")
-	id             = 0
 	deployTokenID  = int64(1234)
 	sDeployTokenID = strconv.FormatInt(deployTokenID, 10)
 	unexpecedItem  resource.Managed

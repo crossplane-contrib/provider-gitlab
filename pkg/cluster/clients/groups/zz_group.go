@@ -166,19 +166,19 @@ func GenerateCreateGroupOptions(name string, p *v1alpha1.GroupParameters) *gitla
 		RequestAccessEnabled:  p.RequestAccessEnabled,
 	}
 	if p.TwoFactorGracePeriod != nil {
-		val := int64(*p.TwoFactorGracePeriod)
+		val := *p.TwoFactorGracePeriod
 		group.TwoFactorGracePeriod = &val
 	}
 	if p.ParentID != nil {
-		val := int64(*p.ParentID)
+		val := *p.ParentID
 		group.ParentID = &val
 	}
 	if p.SharedRunnersMinutesLimit != nil {
-		val := int64(*p.SharedRunnersMinutesLimit)
+		val := *p.SharedRunnersMinutesLimit
 		group.SharedRunnersMinutesLimit = &val
 	}
 	if p.ExtraSharedRunnersMinutesLimit != nil {
-		val := int64(*p.ExtraSharedRunnersMinutesLimit)
+		val := *p.ExtraSharedRunnersMinutesLimit
 		group.ExtraSharedRunnersMinutesLimit = &val
 	}
 
@@ -209,15 +209,15 @@ func GenerateEditGroupOptions(name string, p *v1alpha1.GroupParameters) *gitlab.
 		RequestAccessEnabled:  p.RequestAccessEnabled,
 	}
 	if p.TwoFactorGracePeriod != nil {
-		val := int64(*p.TwoFactorGracePeriod)
+		val := *p.TwoFactorGracePeriod
 		group.TwoFactorGracePeriod = &val
 	}
 	if p.SharedRunnersMinutesLimit != nil {
-		val := int64(*p.SharedRunnersMinutesLimit)
+		val := *p.SharedRunnersMinutesLimit
 		group.SharedRunnersMinutesLimit = &val
 	}
 	if p.ExtraSharedRunnersMinutesLimit != nil {
-		val := int64(*p.ExtraSharedRunnersMinutesLimit)
+		val := *p.ExtraSharedRunnersMinutesLimit
 		group.ExtraSharedRunnersMinutesLimit = &val
 	}
 	return group

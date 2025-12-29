@@ -73,7 +73,6 @@ var (
 		JobArtifactsSize: jobArtifactsSize,
 	}
 	LDAPAccess       = int64(0)
-	groupAccessLevel = int64(50)
 	gitlabLDAPAccess = gitlab.AccessLevelValue(LDAPAccess)
 )
 
@@ -94,13 +93,6 @@ func TestGenerateObservation(t *testing.T) {
 	gitlabCreatedAt := now
 	gitlabSharedWithGroupsExpireAt := gitlab.ISOTime(now)
 
-	sharedWithGroups := []v1alpha1.SharedWithGroups{
-		{
-			GroupID:          &ID,
-			GroupAccessLevel: int64(1),
-			ExpiresAt:        &metav1.Time{Time: now},
-		},
-	}
 	groupAccessLevel := int64(1)
 	type args struct {
 		p *gitlab.Group
@@ -128,7 +120,7 @@ func TestGenerateObservation(t *testing.T) {
 							GroupID:          ID,
 							GroupName:        name,
 							GroupFullPath:    path,
-							GroupAccessLevel: int64(sharedWithGroups[0].GroupAccessLevel),
+							GroupAccessLevel: int64(1),
 							ExpiresAt:        &gitlabSharedWithGroupsExpireAt,
 							MemberRoleID:     int64(0),
 						},
@@ -171,10 +163,10 @@ func TestGenerateObservation(t *testing.T) {
 				CreatedAt:           v1alpha1CreatedAt,
 				SharedWithGroups: []v1alpha1.SharedWithGroupsObservation{
 					{
-						GroupID:          func() *int64 { v := int64(ID); return &v }(),
+						GroupID:          func() *int64 { v := ID; return &v }(),
 						GroupName:        &name,
 						GroupFullPath:    &path,
-						GroupAccessLevel: &sharedWithGroups[0].GroupAccessLevel,
+						GroupAccessLevel: &groupAccessLevel,
 						ExpiresAt:        &metav1.Time{Time: time.Time(gitlabSharedWithGroupsExpireAt)},
 					},
 				},

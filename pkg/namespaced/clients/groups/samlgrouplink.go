@@ -57,7 +57,7 @@ func GenerateAddSamlGroupLinkOptions(p *v1alpha1.SamlGroupLinkParameters) *gitla
 		AccessLevel:   (*gitlab.AccessLevelValue)(&p.AccessLevel),
 	}
 	if p.MemberRoleID != nil {
-		val := int64(*p.MemberRoleID)
+		val := *p.MemberRoleID
 		samlGroupName.MemberRoleID = &val
 	}
 
