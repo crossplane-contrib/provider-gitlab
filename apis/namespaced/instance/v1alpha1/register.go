@@ -43,11 +43,14 @@ var (
 	ApplicationSettingsGroupKind        = schema.GroupKind{Group: Group, Kind: ApplicationSettingsKind}.String()
 	ApplicationSettingsKindAPIVersion   = ApplicationSettingsKind + "." + SchemeGroupVersion.String()
 	ApplicationSettingsGroupVersionKind = SchemeGroupVersion.WithKind(ApplicationSettingsKind)
+)
 
-	ApplicationSettingsListKind             = reflect.TypeOf(ApplicationSettingsList{}).Name()
-	ApplicationSettingsListGroupKind        = schema.GroupKind{Group: Group, Kind: ApplicationSettingsListKind}.String()
-	ApplicationSettingsListKindAPIVersion   = ApplicationSettingsListKind + "." + SchemeGroupVersion.String()
-	ApplicationSettingsListGroupVersionKind = SchemeGroupVersion.WithKind(ApplicationSettingsListKind)
+// Appearance type metadata
+var (
+	AppearanceKind             = reflect.TypeOf(Appearance{}).Name()
+	AppearanceGroupKind        = schema.GroupKind{Group: Group, Kind: AppearanceKind}.String()
+	AppearanceKindAPIVersion   = AppearanceKind + "." + SchemeGroupVersion.String()
+	AppearanceGroupVersionKind = SchemeGroupVersion.WithKind(AppearanceKind)
 )
 
 // Runner type metadata
@@ -61,4 +64,5 @@ var (
 func init() {
 	SchemeBuilder.Register(&ApplicationSettings{}, &ApplicationSettingsList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
+	SchemeBuilder.Register(&Appearance{}, &AppearanceList{})
 }

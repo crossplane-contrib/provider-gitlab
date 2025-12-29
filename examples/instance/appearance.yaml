@@ -1,0 +1,67 @@
+---
+apiVersion: instance.gitlab.m.crossplane.io/v1alpha1
+kind: Appearance
+metadata:
+  name: example-appearance
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    title: "My GitLab Instance"
+    description: "Welcome to our GitLab"
+    headerMessage: "Maintenance window: Sundays 2-4 AM UTC"
+    messageBackgroundColor: "#FF6B6B"
+    messageFontColor: "#FFFFFF"
+    member_guidelines: |-
+      ## Guidelines
+
+      Welcome to My GitLab server! These guidelines outline my policies regarding access levels and permissions for groups and projects. Please ensure you’re familiar with these policies when managing team members.
+
+      ---
+
+      ### 🔐 Assigning Access Levels
+
+      - 🛠️ Assign access levels based on **roles and responsibilities**:
+        - **Guest:** Read-only access to issues and the project’s repository.
+        - **Reporter:** Read access to the repository and ability to view/submit issues.
+        - **Developer:** Full access to the repository for code contributions (push, merge, etc.).
+        - **Maintainer:** Manage project settings, members, and repositories.
+        - **Owner:** Highest level of access, available only at the group level.
+      - ⚖️ Ensure permissions are appropriately limited to reduce risk and prevent unauthorized changes.
+
+      ---
+
+      ### 🌟 Best Practices for Managing Permissions
+
+      - 🔍 Review access levels periodically to ensure members have the correct permissions.
+      - 🚫 Avoid assigning **higher access levels** (e.g., Maintainer or Owner) unless absolutely necessary.
+      - 📋 Document roles and responsibilities for clarity and accountability.
+
+      ---
+
+      ### 🛑 Removing or Modifying Access
+
+      - 🗑️ Remove access for members who no longer require it to maintain security.
+      - 🔄 Update access levels promptly when a team member’s role changes.
+      - 📢 Notify users of access changes when appropriate.
+
+      ---
+
+      ### ⚙️ Compliance and Policies
+
+      - 📜 Follow all **organizational policies** regarding access control and permissions.
+      - 🔑 Use **two-factor authentication (2FA)** for accounts to enhance security.
+      - 🚨 Report any unauthorized access or suspicious activity to the administrators immediately.
+
+      ---
+
+      ### 👥 Transparency and Collaboration
+
+      - 🤝 Foster a collaborative environment by granting appropriate access to all contributors.
+      - 📢 Communicate access-related decisions to team members to maintain transparency.
+
+      ---
+
+      By following these guidelines, we can ensure a secure and well-managed environment for all groups and projects. Let’s work together to maintain a productive and secure workflow! 🚀
