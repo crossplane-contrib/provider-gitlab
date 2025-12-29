@@ -135,7 +135,10 @@ func ContainerExpirationPolicyAttributesV1alpha1ToGitlab(from *v1alpha1.Containe
 		NameRegexKeep:   from.NameRegexKeep,
 		Enabled:         from.Enabled,
 		NameRegex:       from.NameRegex,
-		KeepN:           from.KeepN,
+	}
+	if from.KeepN != nil {
+		keepN := int64(*from.KeepN)
+		result.KeepN = &keepN
 	}
 	return result
 }

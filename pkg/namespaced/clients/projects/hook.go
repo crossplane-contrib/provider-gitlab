@@ -105,7 +105,7 @@ func GenerateHookObservation(hook *gitlab.ProjectHook) v1alpha1.HookObservation 
 	}
 
 	o := v1alpha1.HookObservation{
-		ID: hook.ID,
+		ID: int(hook.ID),
 	}
 
 	if hook.CreatedAt != nil {

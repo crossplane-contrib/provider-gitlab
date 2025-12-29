@@ -87,7 +87,7 @@ func GenerateGroupRunnerObservation(runner *gitlab.RunnerDetails) groupsv1alpha1
 	groups := make([]groupsv1alpha1.RunnerGroup, 0, len(runner.Groups))
 	for _, group := range runner.Groups {
 		groups = append(groups, groupsv1alpha1.RunnerGroup{
-			ID:     group.ID,
+			ID:     int(group.ID),
 			Name:   group.Name,
 			WebURL: group.WebURL,
 		})
@@ -114,7 +114,7 @@ func GenerateProjectRunnerObservation(runner *gitlab.RunnerDetails) projectsv1al
 	projects := make([]projectsv1alpha1.RunnerProject, 0, len(runner.Projects))
 	for _, project := range runner.Projects {
 		projects = append(projects, projectsv1alpha1.RunnerProject{
-			ID:                project.ID,
+			ID:                int(project.ID),
 			Name:              project.Name,
 			NameWithNamespace: project.NameWithNamespace,
 			Path:              project.Path,
@@ -137,7 +137,7 @@ func generateCommonRunnerObservation(runner *gitlab.RunnerDetails) commonv1alpha
 		return commonv1alpha1.CommonRunnerObservation{}
 	}
 	runnerObservation := commonv1alpha1.CommonRunnerObservation{
-		ID:              runner.ID,
+		ID:              int(runner.ID),
 		Description:     runner.Description,
 		Paused:          runner.Paused,
 		Locked:          runner.Locked,
@@ -149,7 +149,7 @@ func generateCommonRunnerObservation(runner *gitlab.RunnerDetails) commonv1alpha
 		Status:          runner.Status,
 		RunUntagged:     runner.RunUntagged,
 		AccessLevel:     runner.AccessLevel,
-		MaximumTimeout:  runner.MaximumTimeout,
+		MaximumTimeout:  int(runner.MaximumTimeout),
 		IsShared:        runner.IsShared,
 	}
 
@@ -162,7 +162,7 @@ func generateCommonRunnerObservation(runner *gitlab.RunnerDetails) commonv1alpha
 
 // GenerateEditRunnerOptions generates group edit options
 func GenerateEditRunnerOptions(p *commonv1alpha1.CommonRunnerParameters) *gitlab.UpdateRunnerDetailsOptions {
-	return &gitlab.UpdateRunnerDetailsOptions{
+	opts := &gitlab.UpdateRunnerDetailsOptions{
 		Description:     p.Description,
 		Paused:          p.Paused,
 		TagList:         p.TagList,
@@ -170,8 +170,12 @@ func GenerateEditRunnerOptions(p *commonv1alpha1.CommonRunnerParameters) *gitlab
 		Locked:          p.Locked,
 		AccessLevel:     p.AccessLevel,
 		MaintenanceNote: p.MaintenanceNote,
-		MaximumTimeout:  p.MaximumTimeout,
 	}
+	if p.MaximumTimeout != nil {
+		val := int64(*p.MaximumTimeout)
+		opts.MaximumTimeout = &val
+	}
+	return opts
 }
 
 // IsRunnerUpToDate checks whether the observed state of the runner matches the desired state specified
@@ -184,7 +188,7 @@ func IsRunnerUpToDate(spec *commonv1alpha1.CommonRunnerParameters, observed *git
 		return false
 	}
 	// Convert observed.MaximumTimeout from int64 to int for comparison
-	observedMaxTimeout := observed.MaximumTimeout
+	observedMaxTimeout := int(observed.MaximumTimeout)
 	// Use a compact list to keep cyclomatic complexity low
 	checks := []bool{
 		clients.IsComparableEqualToComparablePtr(spec.Description, observed.Description),

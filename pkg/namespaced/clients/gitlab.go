@@ -133,7 +133,14 @@ func ContainerExpirationPolicyAttributesV1alpha1ToGitlab(from *v1alpha1.Containe
 		NameRegexKeep:   from.NameRegexKeep,
 		Enabled:         from.Enabled,
 		NameRegex:       from.NameRegex,
+<<<<<<< HEAD
 		KeepN:           from.KeepN,
+=======
+	}
+	if from.KeepN != nil {
+		keepN := int64(*from.KeepN)
+		result.KeepN = &keepN
+>>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 	}
 	return result
 }

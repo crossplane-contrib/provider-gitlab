@@ -202,7 +202,11 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
+<<<<<<< HEAD
 	meta.SetExternalName(cr, strconv.FormatInt(grp.ID, 10))
+=======
+	meta.SetExternalName(cr, strconv.FormatInt(int64(grp.ID), 10))
+>>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 	return managed.ExternalCreation{}, nil
 }
 
@@ -365,7 +369,7 @@ func isSharedWithGroupsUpToDate(cr *v1alpha1.GroupParameters, in *gitlab.Group) 
 		if v.GroupID == nil {
 			return false, errors.Errorf(errSWGMissingGroupID, v)
 		}
-		crIDs[*v.GroupID] = nil
+		crIDs[int64(*v.GroupID)] = nil
 	}
 
 	for ID := range inIDs {

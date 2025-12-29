@@ -50,22 +50,28 @@ func GenerateCreateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 		Usernames:                     p.Usernames,
 	}
 	if p.ApprovalsRequired != nil {
-		val := p.ApprovalsRequired
-		approvalRulesOptions.ApprovalsRequired = val
+		val := int64(*p.ApprovalsRequired)
+		approvalRulesOptions.ApprovalsRequired = &val
 	}
 	if p.UserIDs != nil {
 		vals := make([]int64, len(*p.UserIDs))
-		copy(vals, *p.UserIDs)
+		for i, v := range *p.UserIDs {
+			vals[i] = int64(v)
+		}
 		approvalRulesOptions.UserIDs = &vals
 	}
 	if p.GroupIDs != nil {
 		vals := make([]int64, len(*p.GroupIDs))
-		copy(vals, *p.GroupIDs)
+		for i, v := range *p.GroupIDs {
+			vals[i] = int64(v)
+		}
 		approvalRulesOptions.GroupIDs = &vals
 	}
 	if p.ProtectedBranchIDs != nil {
 		vals := make([]int64, len(*p.ProtectedBranchIDs))
-		copy(vals, *p.ProtectedBranchIDs)
+		for i, v := range *p.ProtectedBranchIDs {
+			vals[i] = int64(v)
+		}
 		approvalRulesOptions.ProtectedBranchIDs = &vals
 	}
 
@@ -80,22 +86,28 @@ func GenerateUpdateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 		Usernames:                     p.Usernames,
 	}
 	if p.ApprovalsRequired != nil {
-		val := p.ApprovalsRequired
-		approvalRulesOptions.ApprovalsRequired = val
+		val := int64(*p.ApprovalsRequired)
+		approvalRulesOptions.ApprovalsRequired = &val
 	}
 	if p.UserIDs != nil {
 		vals := make([]int64, len(*p.UserIDs))
-		copy(vals, *p.UserIDs)
+		for i, v := range *p.UserIDs {
+			vals[i] = int64(v)
+		}
 		approvalRulesOptions.UserIDs = &vals
 	}
 	if p.GroupIDs != nil {
 		vals := make([]int64, len(*p.GroupIDs))
-		copy(vals, *p.GroupIDs)
+		for i, v := range *p.GroupIDs {
+			vals[i] = int64(v)
+		}
 		approvalRulesOptions.GroupIDs = &vals
 	}
 	if p.ProtectedBranchIDs != nil {
 		vals := make([]int64, len(*p.ProtectedBranchIDs))
-		copy(vals, *p.ProtectedBranchIDs)
+		for i, v := range *p.ProtectedBranchIDs {
+			vals[i] = int64(v)
+		}
 		approvalRulesOptions.ProtectedBranchIDs = &vals
 	}
 
@@ -148,12 +160,12 @@ func isGroupIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectA
 		return false
 	}
 
-	inIDs := make(map[int64]any)
+	inIDs := make(map[int]any)
 	for _, v := range in.Groups {
-		inIDs[v.ID] = nil
+		inIDs[int(v.ID)] = nil
 	}
 
-	crIDs := make(map[int64]any)
+	crIDs := make(map[int]any)
 	for _, v := range *cr.GroupIDs {
 		crIDs[v] = nil
 	}
@@ -184,12 +196,12 @@ func isProtectedBranchesIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *git
 		return false
 	}
 
-	inIDs := make(map[int64]any)
+	inIDs := make(map[int]any)
 	for _, v := range in.ProtectedBranches {
-		inIDs[v.ID] = nil
+		inIDs[int(v.ID)] = nil
 	}
 
-	crIDs := make(map[int64]any)
+	crIDs := make(map[int]any)
 	for _, v := range *cr.ProtectedBranchIDs {
 		crIDs[v] = nil
 	}
@@ -220,12 +232,12 @@ func isUserIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectAp
 		return false
 	}
 
-	inIDs := make(map[int64]any)
+	inIDs := make(map[int]any)
 	for _, v := range in.Users {
-		inIDs[v.ID] = nil
+		inIDs[int(v.ID)] = nil
 	}
 
-	crIDs := make(map[int64]any)
+	crIDs := make(map[int]any)
 	for _, v := range *cr.UserIDs {
 		crIDs[v] = nil
 	}
