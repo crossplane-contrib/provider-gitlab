@@ -124,6 +124,14 @@ var (
 	ProtectedBranchGroupVersionKind = SchemeGroupVersion.WithKind(ProtectedBranchKind)
 )
 
+// Badge type metadata
+var (
+	BadgeKind             = reflect.TypeOf(Badge{}).Name()
+	BadgeGroupKind        = schema.GroupKind{Group: Group, Kind: BadgeKind}.String()
+	BadgeKindAPIVersion   = BadgeKind + "." + SchemeGroupVersion.String()
+	BadgeGroupVersionKind = SchemeGroupVersion.WithKind(BadgeKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
@@ -136,4 +144,5 @@ func init() {
 	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&ProtectedBranch{}, &ProtectedBranchList{})
+	SchemeBuilder.Register(&Badge{}, &BadgeList{})
 }

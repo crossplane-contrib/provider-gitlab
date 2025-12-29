@@ -1,0 +1,15 @@
+---
+apiVersion: groups.gitlab.m.crossplane.io/v1alpha1
+kind: Badge
+metadata:
+  name: example-badge
+  namespace: default
+spec:
+  forProvider:
+    groupId: 7
+    imageURL: "https://gitlab.example.com/%{project_path}/badges/%{default_branch}/pipeline.svg"
+    linkURL: "https://gitlab.example.com/%{project_path}/-/pipelines"
+    name: Pipeline Status
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
