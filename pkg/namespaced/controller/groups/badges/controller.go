@@ -169,7 +169,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	// if ID is already set, check if it does exist, else create a new one
 	if cr.Spec.ForProvider.ID != nil {
 		id := *cr.Spec.ForProvider.ID
-		badge, res, err := e.client.GetGroupBadge(*cr.Spec.ForProvider.GroupID, int64(id))
+		badge, res, err := e.client.GetGroupBadge(*cr.Spec.ForProvider.GroupID, int64(*cr.Spec.ForProvider.ID))
 		if err != nil || clients.IsResponseNotFound(res) {
 			return managed.ExternalCreation{}, errors.Wrap(err, errWrongIDSet)
 		}

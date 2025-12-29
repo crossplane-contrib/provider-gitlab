@@ -39,7 +39,7 @@ import (
 
 var (
 	errBoom          = errors.New("boom")
-	groupID = int64(5678)
+	groupID          = int64(5678)
 	variableKey      = "VARIABLE_KEY"
 	variableValue    = "1234"
 	variableType     = v1alpha1.VariableTypeEnvVar

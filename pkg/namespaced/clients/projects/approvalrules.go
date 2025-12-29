@@ -48,27 +48,27 @@ func GenerateCreateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 		Usernames:                     p.Usernames,
 	}
 	if p.ApprovalsRequired != nil {
-		val := int64(*p.ApprovalsRequired)
-		approvalRulesOptions.ApprovalsRequired = &val
+		val := p.ApprovalsRequired
+		approvalRulesOptions.ApprovalsRequired = val
 	}
 	if p.UserIDs != nil {
 		vals := make([]int64, len(*p.UserIDs))
 		for i, v := range *p.UserIDs {
-			vals[i] = int64(v)
+			vals[i] = v
 		}
 		approvalRulesOptions.UserIDs = &vals
 	}
 	if p.GroupIDs != nil {
 		vals := make([]int64, len(*p.GroupIDs))
 		for i, v := range *p.GroupIDs {
-			vals[i] = int64(v)
+			vals[i] = v
 		}
 		approvalRulesOptions.GroupIDs = &vals
 	}
 	if p.ProtectedBranchIDs != nil {
 		vals := make([]int64, len(*p.ProtectedBranchIDs))
 		for i, v := range *p.ProtectedBranchIDs {
-			vals[i] = int64(v)
+			vals[i] = v
 		}
 		approvalRulesOptions.ProtectedBranchIDs = &vals
 	}
@@ -84,27 +84,27 @@ func GenerateUpdateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 		Usernames:                     p.Usernames,
 	}
 	if p.ApprovalsRequired != nil {
-		val := int64(*p.ApprovalsRequired)
-		approvalRulesOptions.ApprovalsRequired = &val
+		val := p.ApprovalsRequired
+		approvalRulesOptions.ApprovalsRequired = val
 	}
 	if p.UserIDs != nil {
 		vals := make([]int64, len(*p.UserIDs))
 		for i, v := range *p.UserIDs {
-			vals[i] = int64(v)
+			vals[i] = v
 		}
 		approvalRulesOptions.UserIDs = &vals
 	}
 	if p.GroupIDs != nil {
 		vals := make([]int64, len(*p.GroupIDs))
 		for i, v := range *p.GroupIDs {
-			vals[i] = int64(v)
+			vals[i] = v
 		}
 		approvalRulesOptions.GroupIDs = &vals
 	}
 	if p.ProtectedBranchIDs != nil {
 		vals := make([]int64, len(*p.ProtectedBranchIDs))
 		for i, v := range *p.ProtectedBranchIDs {
-			vals[i] = int64(v)
+			vals[i] = v
 		}
 		approvalRulesOptions.ProtectedBranchIDs = &vals
 	}

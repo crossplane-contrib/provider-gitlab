@@ -37,7 +37,7 @@ import (
 var (
 	unexpecedItem resource.Managed
 	errBoom       = errors.New("boom")
-	projectID = int64(0)
+	projectID     = int64(0)
 	username      = "username"
 	userID        = int64(123)
 	name          = "name"

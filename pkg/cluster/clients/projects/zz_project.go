@@ -356,20 +356,20 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		project.NamespaceID = &val
 	}
 	if p.BuildTimeout != nil {
-		val := int64(*p.BuildTimeout)
-		project.BuildTimeout = &val
+		val := *p.BuildTimeout
+		project.BuildTimeout = val
 	}
 	if p.ApprovalsBeforeMerge != nil {
-		val := int64(*p.ApprovalsBeforeMerge)
-		project.ApprovalsBeforeMerge = &val
+		val := p.ApprovalsBeforeMerge
+		project.ApprovalsBeforeMerge = val
 	}
 	if p.TemplateProjectID != nil {
-		val := int64(*p.TemplateProjectID)
-		project.TemplateProjectID = &val
+		val := p.TemplateProjectID
+		project.TemplateProjectID = val
 	}
 	if p.GroupWithProjectTemplatesID != nil {
-		val := int64(*p.GroupWithProjectTemplatesID)
-		project.GroupWithProjectTemplatesID = &val
+		val := p.GroupWithProjectTemplatesID
+		project.GroupWithProjectTemplatesID = val
 	}
 	return project
 }
@@ -432,7 +432,7 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		MergeRequestsTemplate:                    p.MergeRequestsTemplate,
 	}
 	if p.BuildTimeout != nil {
-		val := int64(*p.BuildTimeout)
+		val := *p.BuildTimeout
 		o.BuildTimeout = &val
 	}
 	if p.CIDefaultGitDepth != nil {
@@ -440,11 +440,11 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		o.CIDefaultGitDepth = &val
 	}
 	if p.ApprovalsBeforeMerge != nil {
-		val := int64(*p.ApprovalsBeforeMerge)
+		val := p.ApprovalsBeforeMerge
 		o.ApprovalsBeforeMerge = &val
 	}
 	if p.MirrorUserID != nil {
-		val := int64(*p.MirrorUserID)
+		val := *p.MirrorUserID
 		o.MirrorUserID = &val
 	}
 	return o

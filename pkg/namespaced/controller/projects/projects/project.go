@@ -275,9 +275,9 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	if in.AllowMergeOnSkippedPipeline == nil {
 		in.AllowMergeOnSkippedPipeline = &project.AllowMergeOnSkippedPipeline
 	}
-	if in.ApprovalsBeforeMerge == nil && project.ApprovalsBeforeMerge != 0 { //nolint:staticcheck
+	if in.ApprovalsBeforeMerge == nil && project.ApprovalsBeforeMerge != 0 {
 		val := project.ApprovalsBeforeMerge
-		in.ApprovalsBeforeMerge = &val //nolint:staticcheck
+		in.ApprovalsBeforeMerge = &val
 	}
 	if in.AutocloseReferencedIssues == nil {
 		in.AutocloseReferencedIssues = &project.AutocloseReferencedIssues

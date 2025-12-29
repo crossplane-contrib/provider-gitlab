@@ -45,7 +45,7 @@ var (
 	errorMessage           = "restult: -expected, +actual: \n%s"
 	notADeployKey          resource.Managed
 	testProjectID          = "testProjectId"
-	testKeyID = int64(123)
+	testKeyID              = int64(123)
 	testKeyTitle           = "testKeyTitle"
 	testKey                = "testKey"
 	testCreatedAt          = time.Now()

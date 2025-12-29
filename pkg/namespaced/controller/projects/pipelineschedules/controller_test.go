@@ -42,7 +42,7 @@ var (
 	f                = false
 	errorMessage     = "restult: -expected, +actual: \n%s"
 	id               = int64(1234)
-	standardID = int64(0)
+	standardID       = int64(0)
 	extName          = strconv.FormatInt(id, 10)
 	projectID        = "123456"
 	standardPsParams = v1alpha1.PipelineScheduleParameters{

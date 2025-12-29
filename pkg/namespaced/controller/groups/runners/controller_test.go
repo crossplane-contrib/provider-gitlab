@@ -43,7 +43,7 @@ var (
 	unexpecedItem resource.Managed
 
 	errBoom           = errors.New("boom")
-	groupID = int64(1234)
+	groupID           = int64(1234)
 	runnerID          = int64(1)
 	extName           = "1"
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: extName}

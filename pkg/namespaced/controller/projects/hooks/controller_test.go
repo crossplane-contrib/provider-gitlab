@@ -43,7 +43,7 @@ import (
 var (
 	errBoom       = errors.New("boom")
 	createTime    = time.Now()
-	projectID = int64(5678)
+	projectID     = int64(5678)
 	projectHookID = int64(1234)
 	tokenValue    = "test"
 	tokenSecret   = corev1.Secret{

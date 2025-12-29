@@ -42,7 +42,7 @@ var (
 
 	errBoom     = errors.New("boom")
 	name        = "Saml-example"
-	groupID = int64(1234)
+	groupID     = int64(1234)
 	accessLevel = gitlab.AccessLevelValue(10)
 )
 

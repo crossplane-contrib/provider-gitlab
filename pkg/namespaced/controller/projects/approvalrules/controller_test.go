@@ -37,7 +37,7 @@ import (
 var (
 	unexpecedItem                 resource.Managed
 	errBoom                       = errors.New("boom")
-	projectID = int64(0)
+	projectID                     = int64(0)
 	approvalsRequired             = int64(1)
 	users                         = []*gitlab.BasicUser{{ID: 123, Username: "abc"}, {ID: 456, Username: "testUser"}}
 	groups                        = []*gitlab.Group{{ID: 99}}
