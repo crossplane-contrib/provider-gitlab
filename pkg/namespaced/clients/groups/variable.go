@@ -56,7 +56,7 @@ func GenerateVariableObservation(variable *gitlab.GroupVariable) v1alpha1.Variab
 	}
 }
 
-// LateInitializeVariable fills the empty fields in the groupVariable spec with the
+// LateInitializeVariable fills the empty fields in the Variable spec with the
 // values seen in gitlab.Variable.
 func LateInitializeVariable(in *v1alpha1.VariableParameters, variable *gitlab.GroupVariable) {
 	if variable == nil {
