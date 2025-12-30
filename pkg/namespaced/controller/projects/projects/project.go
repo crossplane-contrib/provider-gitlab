@@ -275,6 +275,7 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	if in.AllowMergeOnSkippedPipeline == nil {
 		in.AllowMergeOnSkippedPipeline = &project.AllowMergeOnSkippedPipeline
 	}
+	//nolint:staticcheck // SA1019 ApprovalsBeforeMerge is deprecated by GitLab API, will migrate to Merge Request Approvals API later
 	if in.ApprovalsBeforeMerge == nil && project.ApprovalsBeforeMerge != 0 {
 		val := project.ApprovalsBeforeMerge
 		in.ApprovalsBeforeMerge = &val

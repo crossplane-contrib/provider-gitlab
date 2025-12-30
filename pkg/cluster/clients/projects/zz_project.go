@@ -361,7 +361,7 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 	}
 	if p.ApprovalsBeforeMerge != nil {
 		val := p.ApprovalsBeforeMerge
-		project.ApprovalsBeforeMerge = val
+		project.ApprovalsBeforeMerge = val //nolint:staticcheck // SA1019 ApprovalsBeforeMerge is deprecated by GitLab API, will migrate to Merge Request Approvals API later
 	}
 	if p.TemplateProjectID != nil {
 		val := p.TemplateProjectID
@@ -441,7 +441,7 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 	}
 	if p.ApprovalsBeforeMerge != nil {
 		val := p.ApprovalsBeforeMerge
-		o.ApprovalsBeforeMerge = val
+		o.ApprovalsBeforeMerge = val //nolint:staticcheck // SA1019 ApprovalsBeforeMerge is deprecated by GitLab API, will migrate to Merge Request Approvals API later
 	}
 	if p.MirrorUserID != nil {
 		val := *p.MirrorUserID
