@@ -121,6 +121,12 @@ func withDeletionTimestamp() modifier {
 	}
 }
 
+func withObservation(o v1alpha1.VariableObservation) modifier {
+	return func(cr *v1alpha1.Variable) {
+		cr.Status.AtProvider = o
+	}
+}
+
 func variable(m ...modifier) *v1alpha1.Variable {
 	cr := &v1alpha1.Variable{}
 	for _, f := range m {
@@ -286,7 +292,16 @@ func TestObserve(t *testing.T) {
 				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: &variableDescription, VariableType: &variableType, Protected: &f, Masked: &f, Raw: &f}})),
 			},
 			want: want{
-				cr:     variable(withConditions(xpv1.Available()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: &variableDescription, VariableType: &variableType, Protected: &f, Masked: &f, Raw: &f}})),
+				cr: variable(withConditions(xpv1.Available()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: &variableDescription, VariableType: &variableType, Protected: &f, Masked: &f, Raw: &f}}), withObservation(v1alpha1.VariableObservation{
+					CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
+						Key:          variableKey,
+						Description:  variableDescription,
+						VariableType: variableType,
+						Protected:    f,
+						Masked:       f,
+						Raw:          f,
+					},
+				})),
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true},
 			},
 		},
@@ -306,7 +321,16 @@ func TestObserve(t *testing.T) {
 					Protected:    gitlab.Ptr(false),
 					Raw:          gitlab.Ptr(false),
 					VariableType: varTypePtr(commonv1alpha1.VariableType("")),
-				}})),
+				}}), withObservation(v1alpha1.VariableObservation{
+					CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
+						Key:          variableKey,
+						Description:  "",
+						VariableType: "",
+						Protected:    false,
+						Masked:       false,
+						Raw:          false,
+					},
+				})),
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false, ResourceLateInitialized: true},
 			},
 		},
@@ -330,6 +354,16 @@ func TestObserve(t *testing.T) {
 				cr: variable(
 					withConditions(xpv1.Available()),
 					withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: strPtr(""), VariableType: &variableType, Masked: gitlab.Ptr(true), Raw: gitlab.Ptr(true), Protected: gitlab.Ptr(false)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}),
+					withObservation(v1alpha1.VariableObservation{
+						CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
+							Key:          variableKey,
+							Description:  "",
+							VariableType: "",
+							Protected:    false,
+							Masked:       false,
+							Raw:          false,
+						},
+					}),
 				),
 				result: managed.ExternalObservation{ResourceExists: true, ResourceLateInitialized: true, ResourceUpToDate: false},
 			},

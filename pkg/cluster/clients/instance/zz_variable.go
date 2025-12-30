@@ -110,29 +110,41 @@ func GenerateUpdateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.Updat
 
 // IsVariableUpToDate checks whether the VariableParameters is in sync with the
 // external representation.
-func IsVariableUpToDate(p *v1alpha1.VariableParameters, variable *gitlab.InstanceVariable) bool {
+func IsVariableUpToDate(p *v1alpha1.VariableParameters, g *gitlab.InstanceVariable) bool {
 	if p == nil {
 		return true
 	}
-	if variable == nil {
+	if g == nil {
 		return false
 	}
 
-	// use a slice to reduce cyclomatic complexity
-	checks := []bool{
-		p.Key == variable.Key,
-		clients.IsComparableEqualToComparablePtr(p.Value, variable.Value),
-		clients.IsComparableEqualToComparablePtr(p.Description, variable.Description),
-		clients.IsComparableEqualToComparablePtr((*string)(p.VariableType), (string)(variable.VariableType)),
-		clients.IsComparableEqualToComparablePtr(p.Protected, variable.Protected),
-		clients.IsComparableEqualToComparablePtr(p.Masked, variable.Masked),
-		clients.IsComparableEqualToComparablePtr(p.Raw, variable.Raw),
+	if p.Key != g.Key {
+		return false
 	}
 
-	for _, check := range checks {
-		if !check {
-			return false
-		}
+	if !clients.IsComparableEqualToComparablePtr(p.Value, g.Value) {
+		return false
 	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Description, g.Description) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.VariableType), (string)(g.VariableType)) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Protected, g.Protected) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Masked, g.Masked) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Raw, g.Raw) {
+		return false
+	}
+
 	return true
 }

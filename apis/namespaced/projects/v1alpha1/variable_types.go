@@ -54,10 +54,6 @@ type VariableParameters struct {
 	// that this variable is applied to.
 	// +optional
 	EnvironmentScope *string `json:"environmentScope,omitempty"`
-
-	// Hidden indicates whether the variable is observable in the UI.
-	// +optional
-	Hidden *bool `json:"hidden,omitempty"`
 }
 
 // VariableObservation represents the observed state of a Gitlab CI Variable.
@@ -86,6 +82,7 @@ type VariableStatus struct {
 // +kubebuilder:object:root=true
 
 // A Variable is a managed resource that represents a Gitlab CI variable.
+// WARNING: this does not support hidden variables as Gitlab API does not return their values.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"

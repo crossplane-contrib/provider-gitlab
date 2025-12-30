@@ -31,8 +31,9 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A Variable is a managed resource that represents a Gitlab CI
-          variable.
+        description: |-
+          A Variable is a managed resource that represents a Gitlab CI variable.
+          WARNING: this does not support hidden variables as Gitlab API does not return their values.
         properties:
           apiVersion:
             description: |-
@@ -82,10 +83,6 @@ spec:
                       EnvironmentScope indicates the environment scope
                       that this variable is applied to.
                     type: string
-                  hidden:
-                    description: Hidden indicates whether the variable is observable
-                      in the UI.
-                    type: boolean
                   key:
                     description: |-
                       Key of a variable.
