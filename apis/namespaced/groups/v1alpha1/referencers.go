@@ -301,3 +301,31 @@ func (mg *Badge) ResolveReferences(ctx context.Context, c client.Reader) error {
 
 	return nil
 }
+
+// ResolveReferences of this ServiceAccount
+func (mg *ServiceAccount) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPINamespacedResolver(c, mg)
+
+	// resolve spec.forProvider.groupIdRef
+	rsp, err := r.Resolve(ctx, reference.NamespacedResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.GroupID),
+		Reference:    mg.Spec.ForProvider.GroupIDRef,
+		Selector:     mg.Spec.ForProvider.GroupIDSelector,
+		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
+		Extract:      reference.ExternalName(),
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.groupId")
+	}
+
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.groupId")
+	}
+
+	mg.Spec.ForProvider.GroupID = resolvedID
+	mg.Spec.ForProvider.GroupIDRef = rsp.ResolvedReference
+
+	return nil
+}

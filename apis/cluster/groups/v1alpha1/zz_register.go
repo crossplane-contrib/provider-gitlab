@@ -102,6 +102,14 @@ var (
 	RunnerGroupVersionKind = SchemeGroupVersion.WithKind(RunnerKind)
 )
 
+// ServiceAccount type metadata
+var (
+	ServiceAccountKind             = reflect.TypeOf(ServiceAccount{}).Name()
+	ServiceAccountGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: ServiceAccountKind}.String()
+	ServiceAccountKindAPIVersion   = ServiceAccountKind + "." + SchemeGroupVersion.String()
+	ServiceAccountGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Group{}, &GroupList{})
 	SchemeBuilder.Register(&Member{}, &MemberList{})
@@ -111,4 +119,5 @@ func init() {
 	SchemeBuilder.Register(&SamlGroupLink{}, &SamlGroupLinkList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&Badge{}, &BadgeList{})
+	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 }

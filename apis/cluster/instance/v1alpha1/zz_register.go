@@ -63,8 +63,17 @@ var (
 	RunnerGroupVersionKind = SchemeGroupVersion.WithKind(RunnerKind)
 )
 
+// ServiceAccount type metadata
+var (
+	ServiceAccountKind             = reflect.TypeOf(ServiceAccount{}).Name()
+	ServiceAccountGroupKind        = schema.GroupKind{Group: Group, Kind: ServiceAccountKind}.String()
+	ServiceAccountKindAPIVersion   = ServiceAccountKind + "." + SchemeGroupVersion.String()
+	ServiceAccountGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&ApplicationSettings{}, &ApplicationSettingsList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&Appearance{}, &AppearanceList{})
+	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 }
