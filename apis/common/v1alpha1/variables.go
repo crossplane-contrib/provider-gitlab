@@ -40,6 +40,7 @@ type CommonVariableParameters struct {
 	Value *string `json:"value,omitempty"`
 
 	// The description of the variable. Maximum of 255 characters.
+	// This feature is available in GitLab 16.2 and above.
 	// +kubebuilder:validation:MaxLength:=255
 	// +optional
 	Description *string `json:"description,omitempty"`

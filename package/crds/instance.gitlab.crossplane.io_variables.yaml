@@ -76,7 +76,9 @@ spec:
                   https://docs.gitlab.com/api/instance_level_ci_variables/
                 properties:
                   description:
-                    description: The description of the variable. Maximum of 255 characters.
+                    description: |-
+                      The description of the variable. Maximum of 255 characters.
+                      This feature is available in GitLab 16.2 and above.
                     maxLength: 255
                     type: string
                   key:
