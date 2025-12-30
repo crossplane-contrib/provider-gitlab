@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package runners
+package variables_test
 
 import (
 	"context"
@@ -33,6 +33,7 @@ import (
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	instancev1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/common/variables"
 )
 
 func TestUpdateVariableFromSecret(t *testing.T) {
@@ -121,7 +122,7 @@ func TestUpdateVariableFromSecret(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			err := UpdateVariableFromSecret(tc.args.kube, mg, context.Background(), tc.args.selector, tc.args.params)
+			err := variables.UpdateVariableFromSecret(tc.args.kube, mg, context.Background(), tc.args.selector, tc.args.params)
 			if diff := cmp.Diff(tc.err, err, test.EquateErrors()); diff != "" {
 				t.Fatalf("UpdateVariableFromSecret(...): -want err, +got err:\n%s", diff)
 			}
