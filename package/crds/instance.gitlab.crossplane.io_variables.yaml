@@ -240,6 +240,13 @@ spec:
                   variableType:
                     description: VariableType is the type of a variable.
                     type: string
+                required:
+                - description
+                - key
+                - masked
+                - protected
+                - raw
+                - variableType
                 type: object
               conditions:
                 description: Conditions of the resource.
