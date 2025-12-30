@@ -149,6 +149,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	projects.LateInitializeVariable(&cr.Spec.ForProvider, variable)
 
 	cr.Status.SetConditions(xpv1.Available())
+	cr.Status.AtProvider = projects.GenerateVariableObservation(variable)
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,

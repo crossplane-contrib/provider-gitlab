@@ -54,6 +54,17 @@ type VariableParameters struct {
 	// that this variable is applied to.
 	// +optional
 	EnvironmentScope *string `json:"environmentScope,omitempty"`
+
+	// Hidden indicates whether the variable is observable in the UI.
+	// +optional
+	Hidden *bool `json:"hidden,omitempty"`
+}
+
+// VariableObservation represents the observed state of a Gitlab CI Variable.
+type VariableObservation struct {
+	v1alpha1.CommonVariableObservation `json:",inline"`
+	EnvironmentScope                   string `json:"environmentScope"`
+	Hidden                             bool   `json:"hidden"`
 }
 
 // A VariableSpec defines the desired state of a Gitlab Project CI
@@ -69,7 +80,7 @@ type VariableSpec struct {
 type VariableStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
 	// AtProvider reflects the observed state of a Gitlab Variable.
-	AtProvider v1alpha1.CommonVariableObservation `json:"atProvider,omitempty"`
+	AtProvider VariableObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

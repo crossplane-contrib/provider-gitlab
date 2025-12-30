@@ -82,6 +82,10 @@ spec:
                       EnvironmentScope indicates the environment scope
                       that this variable is applied to.
                     type: string
+                  hidden:
+                    description: Hidden indicates whether the variable is observable
+                      in the UI.
+                    type: boolean
                   key:
                     description: |-
                       Key of a variable.
@@ -309,6 +313,10 @@ spec:
                   description:
                     description: The description of the variable. Maximum of 255 characters.
                     type: string
+                  environmentScope:
+                    type: string
+                  hidden:
+                    type: boolean
                   key:
                     description: Key of a variable.
                     type: string
@@ -324,6 +332,15 @@ spec:
                   variableType:
                     description: VariableType is the type of a variable.
                     type: string
+                required:
+                - description
+                - environmentScope
+                - hidden
+                - key
+                - masked
+                - protected
+                - raw
+                - variableType
                 type: object
               conditions:
                 description: Conditions of the resource.

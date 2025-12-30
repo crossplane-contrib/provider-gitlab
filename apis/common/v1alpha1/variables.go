@@ -65,15 +65,15 @@ type CommonVariableParameters struct {
 // CommonVariableObservation represents the observed state of a GitLab Variable.
 type CommonVariableObservation struct {
 	// Key of a variable.
-	Key string `json:"key,omitempty"`
+	Key string `json:"key"`
 	// The description of the variable. Maximum of 255 characters.
-	Description string `json:"description,omitempty"`
+	Description string `json:"description"`
 	// Masked enables or disables variable masking.
-	Masked bool `json:"masked,omitempty"`
+	Masked bool `json:"masked"`
 	// Protected enables or disables variable protection.
-	Protected bool `json:"protected,omitempty"`
+	Protected bool `json:"protected"`
 	// Raw disables variable expansion of the variable.
-	Raw bool `json:"raw,omitempty"`
+	Raw bool `json:"raw"`
 	// VariableType is the type of a variable.
-	VariableType VariableType `json:"variableType,omitempty"`
+	VariableType VariableType `json:"variableType"`
 }

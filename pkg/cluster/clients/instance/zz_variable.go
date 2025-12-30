@@ -41,7 +41,19 @@ func NewVariableClient(cfg common.Config) VariableClient {
 	return git.InstanceVariables
 }
 
-// GenerateVariableObservation
+// GenerateVariableObservation creates VariableObservation from gitlab InstanceVariable
+func GenerateVariableObservation(variable *gitlab.InstanceVariable) v1alpha1.VariableObservation {
+	return v1alpha1.VariableObservation{
+		CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
+			Key:          variable.Key,
+			Description:  variable.Description,
+			VariableType: commonv1alpha1.VariableType(variable.VariableType),
+			Protected:    variable.Protected,
+			Masked:       variable.Masked,
+			Raw:          variable.Raw,
+		},
+	}
+}
 
 // LateInitializeVariable fills the empty fields in the variable spec with the
 // values seen in gitlab.Variable.
