@@ -14,4 +14,7 @@ cover.out
 
 .DS_Store
 
+# Local testing
 gitlab/
+docker-compose.yml
+test-resources/
