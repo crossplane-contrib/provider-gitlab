@@ -58,7 +58,7 @@ const (
 
 // SetupRunner adds a controller that reconciles runners.
 func SetupRunner(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.RunnerGroupKind) + ".cluster"
+	name := managed.ControllerName(v1alpha1.RunnerGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{

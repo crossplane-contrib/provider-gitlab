@@ -55,7 +55,7 @@ const (
 
 // SetupHook adds a controller that reconciles Hooks.
 func SetupHook(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.HookGroupKind) + ".cluster"
+	name := managed.ControllerName(v1alpha1.HookGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewHookClient}),

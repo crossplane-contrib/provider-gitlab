@@ -51,7 +51,7 @@ type connector struct {
 
 // SetupDeployKey adds a controller that reconciles ProjectDeployKey.
 func SetupDeployKey(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.DeployKeyGroupKind) + ".cluster"
+	name := managed.ControllerName(v1alpha1.DeployKeyGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: newDeployKeyClient}),

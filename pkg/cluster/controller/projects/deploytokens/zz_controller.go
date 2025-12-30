@@ -54,7 +54,7 @@ const (
 
 // SetupDeployToken adds a controller that reconciles ProjectDeployTokens.
 func SetupDeployToken(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.DeployTokenGroupKind) + ".cluster"
+	name := managed.ControllerName(v1alpha1.DeployTokenGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewDeployTokenClient}),

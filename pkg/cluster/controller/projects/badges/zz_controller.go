@@ -53,7 +53,7 @@ const (
 
 // SetupBadge adds a controller that reconciles ProjectBadges.
 func SetupBadge(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.BadgeGroupKind) + ".cluster"
+	name := managed.ControllerName(v1alpha1.BadgeGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewBadgeClient}),

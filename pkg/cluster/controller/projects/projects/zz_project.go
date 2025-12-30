@@ -61,7 +61,7 @@ const (
 
 // SetupProject adds a controller that reconciles Projects.
 func SetupProject(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.ProjectGroupKind) + ".cluster"
+	name := managed.ControllerName(v1alpha1.ProjectGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProjectClient}),

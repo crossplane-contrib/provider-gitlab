@@ -57,7 +57,7 @@ const (
 
 // SetupAccessToken adds a controller that reconciles GroupAccessTokens.
 func SetupAccessToken(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.AccessTokenGroupKind) + ".cluster"
+	name := managed.ControllerName(v1alpha1.AccessTokenGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewAccessTokenClient}),
