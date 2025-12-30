@@ -41,51 +41,6 @@ var (
 	variableTypeLocal = commonv1alpha1.VariableType(variableType)
 )
 
-func TestVariableToParameters(t *testing.T) {
-	type args struct {
-		ph gitlab.ProjectVariable
-	}
-
-	cases := map[string]struct {
-		args args
-		want v1alpha1.VariableParameters
-	}{
-		"Full": {
-			args: args{
-				ph: gitlab.ProjectVariable{
-					Key:              variableKey,
-					Value:            variableValue,
-					Description:      variableDescription,
-					VariableType:     variableType,
-					Masked:           variableMasked,
-					Protected:        variableProtected,
-					EnvironmentScope: variableEnvScope,
-					Raw:              variableRaw,
-				},
-			},
-			want: v1alpha1.VariableParameters{
-				CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
-					Key:          variableKey,
-					Value:        &variableValue,
-					Description:  &variableDescription,
-					VariableType: &variableTypeLocal,
-					Masked:       &variableMasked,
-					Protected:    &variableProtected,
-					Raw:          &variableRaw,
-				},
-				EnvironmentScope: &variableEnvScope,
-			},
-		},
-	}
-	for name, tc := range cases {
-		t.Run(name, func(t *testing.T) {
-			got := VariableToParameters(tc.args.ph)
-			if diff := cmp.Diff(tc.want, got); diff != "" {
-				t.Errorf("r: -want, +got:\n%s", diff)
-			}
-		})
-	}
-}
 func TestLateInitializeVariable(t *testing.T) {
 	cases := map[string]struct {
 		parameters *v1alpha1.VariableParameters
@@ -228,6 +183,20 @@ func TestGenerateUpdateVariableOptions(t *testing.T) {
 }
 
 func TestIsVariableUpToDate(t *testing.T) {
+	projectVariableKey := "KEY"
+	var projectVariableValue = "VALUE"
+	var projectVariableDescription = "DESCRIPTION"
+	var projectVariableEnvScope = "*"
+	projectVariableType := gitlab.EnvVariableType
+	projectVariableTypeLocal := commonv1alpha1.VariableType(projectVariableType)
+	projectVariableProtected := false
+	projectVariableMasked := false
+	projectVariableRaw := false
+
+	strPtr := func(s string) *string { return &s }
+	boolPtr := func(b bool) *bool { return &b }
+	variableTypePtr := func(vt commonv1alpha1.VariableType) *commonv1alpha1.VariableType { return &vt }
+
 	type args struct {
 		variable *gitlab.ProjectVariable
 		p        *v1alpha1.VariableParameters
@@ -237,6 +206,214 @@ func TestIsVariableUpToDate(t *testing.T) {
 		args args
 		want bool
 	}{
+		"AllFieldsMatch": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key:          projectVariableKey,
+						Value:        &projectVariableValue,
+						Description:  &projectVariableDescription,
+						VariableType: &projectVariableTypeLocal,
+						Protected:    &projectVariableProtected,
+						Masked:       &projectVariableMasked,
+						Raw:          &projectVariableRaw,
+					},
+					EnvironmentScope: &projectVariableEnvScope,
+				},
+				variable: &gitlab.ProjectVariable{
+					Key:              projectVariableKey,
+					Value:            projectVariableValue,
+					Description:      projectVariableDescription,
+					VariableType:     projectVariableType,
+					Masked:           projectVariableMasked,
+					Protected:        projectVariableProtected,
+					EnvironmentScope: projectVariableEnvScope,
+					Raw:              projectVariableRaw,
+				},
+			},
+			want: true,
+		},
+		"DifferentValue": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key:   projectVariableKey,
+						Value: strPtr("DIFFERENT_VALUE"),
+					},
+				},
+				variable: &gitlab.ProjectVariable{
+					Key:   projectVariableKey,
+					Value: projectVariableValue,
+				},
+			},
+			want: false,
+		},
+		"DifferentKey": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key: "DIFFERENT_KEY",
+					},
+				},
+				variable: &gitlab.ProjectVariable{
+					Key: projectVariableKey,
+				},
+			},
+			want: false,
+		},
+		"DifferentDescription": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key:         projectVariableKey,
+						Description: strPtr("DIFFERENT_DESCRIPTION"),
+					},
+				},
+				variable: &gitlab.ProjectVariable{
+					Key:         projectVariableKey,
+					Description: projectVariableDescription,
+				},
+			},
+			want: false,
+		},
+		"DifferentVariableType": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key:          projectVariableKey,
+						VariableType: variableTypePtr(commonv1alpha1.VariableTypeFile),
+					},
+				},
+				variable: &gitlab.ProjectVariable{
+					Key:          projectVariableKey,
+					VariableType: gitlab.EnvVariableType,
+				},
+			},
+			want: false,
+		},
+		"DifferentProtected": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key:       projectVariableKey,
+						Protected: boolPtr(true),
+					},
+				},
+				variable: &gitlab.ProjectVariable{
+					Key:       projectVariableKey,
+					Protected: false,
+				},
+			},
+			want: false,
+		},
+		"DifferentMasked": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key:    projectVariableKey,
+						Masked: boolPtr(true),
+					},
+				},
+				variable: &gitlab.ProjectVariable{
+					Key:    projectVariableKey,
+					Masked: false,
+				},
+			},
+			want: false,
+		},
+		"DifferentRaw": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key: projectVariableKey,
+						Raw: boolPtr(true),
+					},
+				},
+				variable: &gitlab.ProjectVariable{
+					Key: projectVariableKey,
+					Raw: false,
+				},
+			},
+			want: false,
+		},
+		"DifferentEnvironmentScope": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key: projectVariableKey,
+					},
+					EnvironmentScope: strPtr("production"),
+				},
+				variable: &gitlab.ProjectVariable{
+					Key:              projectVariableKey,
+					EnvironmentScope: projectVariableEnvScope,
+				},
+			},
+			want: false,
+		},
+		"NilComparablePtrsAreIgnored": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key: projectVariableKey,
+						// Value/Description/Masked/... are nil and thus treated as "don't care".
+					},
+				},
+				variable: &gitlab.ProjectVariable{
+					Key:              projectVariableKey,
+					Value:            "some_value",
+					Description:      "some_description",
+					VariableType:     gitlab.FileVariableType,
+					Protected:        true,
+					Masked:           true,
+					Raw:              true,
+					EnvironmentScope: "production",
+				},
+			},
+			want: true,
+		},
+		"PartialNilFieldsIgnored": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key:   projectVariableKey,
+						Value: &projectVariableValue,
+						// Description, VariableType, Protected, Masked, Raw are nil (don't care)
+					},
+					// EnvironmentScope is nil (don't care)
+				},
+				variable: &gitlab.ProjectVariable{
+					Key:              projectVariableKey,
+					Value:            projectVariableValue,    // This must match
+					Description:      "any_description",       // This is ignored
+					VariableType:     gitlab.FileVariableType, // This is ignored
+					Protected:        true,                    // This is ignored
+					Masked:           true,                    // This is ignored
+					Raw:              true,                    // This is ignored
+					EnvironmentScope: "any_scope",             // This is ignored
+				},
+			},
+			want: true,
+		},
+		"SpecNil": {
+			args: args{
+				p:        nil,
+				variable: &gitlab.ProjectVariable{Key: projectVariableKey},
+			},
+			want: true,
+		},
+		"ExternalNil": {
+			args: args{
+				p: &v1alpha1.VariableParameters{
+					CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+						Key: projectVariableKey,
+					},
+				},
+				variable: nil,
+			},
+			want: false,
+		},
+		// Original test cases from existing tests
 		"SameFields": {
 			args: args{
 				p: &v1alpha1.VariableParameters{
@@ -292,15 +469,15 @@ func TestIsVariableUpToDate(t *testing.T) {
 			want: false,
 		},
 	}
+
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			got := IsVariableUpToDate(tc.args.p, tc.args.variable)
-			if diff := cmp.Diff(tc.want, got); diff != "" {
-				t.Errorf("r: -want, +got:\n%s", diff)
+			if got != tc.want {
+				t.Errorf("IsVariableUpToDate(...) = %v, want %v", got, tc.want)
 			}
 		})
 	}
-
 }
 
 func TestGenerateGetVariableOptions(t *testing.T) {

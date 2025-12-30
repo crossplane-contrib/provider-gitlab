@@ -17,14 +17,12 @@ limitations under the License.
 package projects
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 )
 
 // VariableClient defines Gitlab Variable service operations
@@ -87,24 +85,6 @@ func LateInitializeVariable(in *v1alpha1.VariableParameters, variable *gitlab.Pr
 
 	if in.Raw == nil {
 		in.Raw = &variable.Raw
-	}
-}
-
-// VariableToParameters coonverts a GitLab API representation of a
-// Project Variable back into our local VariableParameters format
-func VariableToParameters(in gitlab.ProjectVariable) v1alpha1.VariableParameters {
-	return v1alpha1.VariableParameters{
-		CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
-			Key:          in.Key,
-			Value:        &in.Value,
-			Description:  &in.Description,
-			VariableType: (*commonv1alpha1.VariableType)(&in.VariableType),
-			Protected:    &in.Protected,
-			Masked:       &in.Masked,
-			Raw:          &in.Raw,
-		},
-		EnvironmentScope: &in.EnvironmentScope,
-		Hidden:           &in.Hidden,
 	}
 }
 
@@ -174,15 +154,45 @@ func GenerateVariableFilter(p *v1alpha1.VariableParameters) *gitlab.VariableFilt
 }
 
 // IsVariableUpToDate checks whether there is a change in any of the modifiable fields.
-func IsVariableUpToDate(p *v1alpha1.VariableParameters, g *gitlab.ProjectVariable) bool {
+func IsVariableUpToDate(p *v1alpha1.VariableParameters, g *gitlab.ProjectVariable) bool { //nolint:gocyclo
 	if p == nil {
 		return true
 	}
+	if g == nil {
+		return false
+	}
 
-	return cmp.Equal(*p,
-		VariableToParameters(*g),
-		cmpopts.EquateEmpty(),
-		cmpopts.IgnoreTypes(&xpv1.Reference{}, &xpv1.Selector{}, []xpv1.Reference{}, &xpv1.LocalSecretKeySelector{}),
-		cmpopts.IgnoreFields(v1alpha1.VariableParameters{}, "ProjectID"),
-	)
+	if p.Key != g.Key {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Value, g.Value) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Description, g.Description) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.VariableType), (string)(g.VariableType)) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Protected, g.Protected) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Masked, g.Masked) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Raw, g.Raw) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.EnvironmentScope, g.EnvironmentScope) {
+		return false
+	}
+
+	return true
 }

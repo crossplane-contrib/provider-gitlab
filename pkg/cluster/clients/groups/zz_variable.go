@@ -19,13 +19,11 @@ limitations under the License.
 package groups
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
@@ -92,23 +90,6 @@ func LateInitializeVariable(in *v1alpha1.VariableParameters, variable *gitlab.Gr
 	}
 }
 
-// VariableToParameters coonverts a GitLab API representation of a
-// Group Variable back into our local VariableParameters format
-func VariableToParameters(in gitlab.GroupVariable) v1alpha1.VariableParameters {
-	return v1alpha1.VariableParameters{
-		CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
-			Key:          in.Key,
-			Value:        &in.Value,
-			Description:  &in.Description,
-			VariableType: (*commonv1alpha1.VariableType)(&in.VariableType),
-			Protected:    &in.Protected,
-			Masked:       &in.Masked,
-			Raw:          &in.Raw,
-		},
-		EnvironmentScope: &in.EnvironmentScope,
-	}
-}
-
 // GenerateCreateVariableOptions generates group creation options
 func GenerateCreateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.CreateGroupVariableOptions {
 	variable := &gitlab.CreateGroupVariableOptions{
@@ -158,15 +139,45 @@ func GenerateGetVariableOptions(p *v1alpha1.VariableParameters) *gitlab.GetGroup
 }
 
 // IsVariableUpToDate checks whether there is a change in any of the modifiable fields.
-func IsVariableUpToDate(p *v1alpha1.VariableParameters, g *gitlab.GroupVariable) bool {
+func IsVariableUpToDate(p *v1alpha1.VariableParameters, g *gitlab.GroupVariable) bool { //nolint:gocyclo
 	if p == nil {
 		return true
 	}
+	if g == nil {
+		return false
+	}
 
-	return cmp.Equal(*p,
-		VariableToParameters(*g),
-		cmpopts.EquateEmpty(),
-		cmpopts.IgnoreTypes(&xpv1.Reference{}, &xpv1.Selector{}, []xpv1.Reference{}, &xpv1.SecretKeySelector{}),
-		cmpopts.IgnoreFields(v1alpha1.VariableParameters{}, "GroupID"),
-	)
+	if p.Key != g.Key {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Value, g.Value) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Description, g.Description) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.VariableType), (string)(g.VariableType)) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Protected, g.Protected) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Masked, g.Masked) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.Raw, g.Raw) {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.EnvironmentScope, g.EnvironmentScope) {
+		return false
+	}
+
+	return true
 }

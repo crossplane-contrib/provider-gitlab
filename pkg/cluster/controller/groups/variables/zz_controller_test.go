@@ -156,6 +156,12 @@ func withDeletionTimestamp() variableModifier {
 	}
 }
 
+func withObservation(o v1alpha1.VariableObservation) variableModifier {
+	return func(r *v1alpha1.Variable) {
+		r.Status.AtProvider = o
+	}
+}
+
 func variable(m ...variableModifier) *v1alpha1.Variable {
 	cr := &v1alpha1.Variable{}
 	for _, f := range m {
@@ -189,6 +195,17 @@ func TestObserve(t *testing.T) {
 					withDefaultValues(),
 					withDescription(variableDescription),
 					withConditions(xpv1.Available()),
+					withObservation(v1alpha1.VariableObservation{
+						CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
+							Key:          variableKey,
+							Description:  variableDescription,
+							VariableType: variableType,
+							Protected:    f,
+							Masked:       f,
+							Raw:          f,
+						},
+						EnvironmentScope: variableEnvScope,
+					}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:   true,
@@ -216,6 +233,17 @@ func TestObserve(t *testing.T) {
 					withValue("blah"),
 					withDescription(variableDescription),
 					withConditions(xpv1.Available()),
+					withObservation(v1alpha1.VariableObservation{
+						CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
+							Key:          variableKey,
+							Description:  variableDescription,
+							VariableType: variableType,
+							Protected:    f,
+							Masked:       f,
+							Raw:          f,
+						},
+						EnvironmentScope: variableEnvScope,
+					}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:   true,
@@ -252,6 +280,17 @@ func TestObserve(t *testing.T) {
 					withVariableType(commonv1alpha1.VariableTypeEnvVar),
 					withDescription(variableDescription),
 					withConditions(xpv1.Available()),
+					withObservation(v1alpha1.VariableObservation{
+						CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
+							Key:          variableKey,
+							Description:  variableDescription,
+							VariableType: "file",
+							Protected:    f,
+							Masked:       true,
+							Raw:          f,
+						},
+						EnvironmentScope: variableEnvScope,
+					}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists: true,
@@ -344,6 +383,17 @@ func TestObserve(t *testing.T) {
 					withDescription(variableDescription),
 					withConditions(xpv1.Available()),
 					withVariableType(commonv1alpha1.VariableTypeEnvVar),
+					withObservation(v1alpha1.VariableObservation{
+						CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
+							Key:          variableKey,
+							Description:  variableDescription,
+							VariableType: variableType,
+							Protected:    f,
+							Masked:       f,
+							Raw:          f,
+						},
+						EnvironmentScope: variableEnvScope,
+					}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
