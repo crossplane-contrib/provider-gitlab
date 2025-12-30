@@ -77,7 +77,7 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { //nolint
 		return v1alpha1.GroupObservation{}
 	}
 	group := v1alpha1.GroupObservation{
-		ID:        func() *int64 { i := int64(grp.ID); return &i }(),
+		ID:        &grp.ID,
 		AvatarURL: &grp.AvatarURL,
 		WebURL:    &grp.WebURL,
 		FullName:  &grp.FullName,
@@ -122,13 +122,11 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { //nolint
 	if len(grp.SharedWithGroups) > 0 {
 		arr := make([]v1alpha1.SharedWithGroupsObservation, 0)
 		for _, v := range grp.SharedWithGroups {
-			groupID := int64(v.GroupID)
-			groupAccessLevel := int64(v.GroupAccessLevel)
 			sg := v1alpha1.SharedWithGroupsObservation{
-				GroupID:          &groupID,
+				GroupID:          &v.GroupID,
 				GroupName:        &v.GroupName,
 				GroupFullPath:    &v.GroupFullPath,
-				GroupAccessLevel: &groupAccessLevel,
+				GroupAccessLevel: &v.GroupAccessLevel,
 			}
 			if v.ExpiresAt != nil {
 				sg.ExpiresAt = &metav1.Time{Time: time.Time(*v.ExpiresAt)}

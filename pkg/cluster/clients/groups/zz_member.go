@@ -78,8 +78,7 @@ func GenerateAddMemberOptions(p *v1alpha1.MemberParameters) *gitlab.AddGroupMemb
 		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
 	}
 	if p.UserID != nil {
-		val := int64(*p.UserID)
-		groupMember.UserID = &val
+		groupMember.UserID = p.UserID
 	}
 	if p.ExpiresAt != nil {
 		groupMember.ExpiresAt = p.ExpiresAt

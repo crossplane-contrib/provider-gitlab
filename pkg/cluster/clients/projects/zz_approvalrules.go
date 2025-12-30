@@ -55,23 +55,17 @@ func GenerateCreateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 	}
 	if p.UserIDs != nil {
 		vals := make([]int64, len(*p.UserIDs))
-		for i, v := range *p.UserIDs {
-			vals[i] = v
-		}
+		copy(vals, *p.UserIDs)
 		approvalRulesOptions.UserIDs = &vals
 	}
 	if p.GroupIDs != nil {
 		vals := make([]int64, len(*p.GroupIDs))
-		for i, v := range *p.GroupIDs {
-			vals[i] = v
-		}
+		copy(vals, *p.GroupIDs)
 		approvalRulesOptions.GroupIDs = &vals
 	}
 	if p.ProtectedBranchIDs != nil {
 		vals := make([]int64, len(*p.ProtectedBranchIDs))
-		for i, v := range *p.ProtectedBranchIDs {
-			vals[i] = v
-		}
+		copy(vals, *p.ProtectedBranchIDs)
 		approvalRulesOptions.ProtectedBranchIDs = &vals
 	}
 
@@ -91,23 +85,17 @@ func GenerateUpdateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 	}
 	if p.UserIDs != nil {
 		vals := make([]int64, len(*p.UserIDs))
-		for i, v := range *p.UserIDs {
-			vals[i] = v
-		}
+		copy(vals, *p.UserIDs)
 		approvalRulesOptions.UserIDs = &vals
 	}
 	if p.GroupIDs != nil {
 		vals := make([]int64, len(*p.GroupIDs))
-		for i, v := range *p.GroupIDs {
-			vals[i] = v
-		}
+		copy(vals, *p.GroupIDs)
 		approvalRulesOptions.GroupIDs = &vals
 	}
 	if p.ProtectedBranchIDs != nil {
 		vals := make([]int64, len(*p.ProtectedBranchIDs))
-		for i, v := range *p.ProtectedBranchIDs {
-			vals[i] = v
-		}
+		copy(vals, *p.ProtectedBranchIDs)
 		approvalRulesOptions.ProtectedBranchIDs = &vals
 	}
 

@@ -102,7 +102,7 @@ func TestGenerateObservation(t *testing.T) {
 		"Full": {
 			args: args{
 				p: &gitlab.Group{
-					ID:         int64(id),
+					ID:         id,
 					WebURL:     webURL,
 					FullName:   fullName,
 					FullPath:   fullPath,

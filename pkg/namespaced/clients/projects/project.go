@@ -169,9 +169,9 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 	if len(o.SharedWithGroups) == 0 && len(prj.SharedWithGroups) > 0 {
 		o.SharedWithGroups = make([]v1alpha1.SharedWithGroups, len(prj.SharedWithGroups))
 		for i, s := range prj.SharedWithGroups {
-			o.SharedWithGroups[i].GroupID = int64(s.GroupID)
+			o.SharedWithGroups[i].GroupID = s.GroupID
 			o.SharedWithGroups[i].GroupName = s.GroupName
-			o.SharedWithGroups[i].GroupAccessLevel = int64(s.GroupAccessLevel)
+			o.SharedWithGroups[i].GroupAccessLevel = s.GroupAccessLevel
 		}
 	}
 

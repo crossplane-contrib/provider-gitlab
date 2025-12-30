@@ -126,7 +126,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		}, nil
 	}
 
-	hookid, err := strconv.Atoi(meta.GetExternalName(cr))
+	hookid, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.New(errNotHook)
 	}
@@ -134,7 +134,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
 
-	projecthook, res, err := e.client.GetProjectHook(*cr.Spec.ForProvider.ProjectID, int64(hookid))
+	projecthook, res, err := e.client.GetProjectHook(*cr.Spec.ForProvider.ProjectID, hookid)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -182,7 +182,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotHook)
 	}
 
-	hookid, err := strconv.Atoi(meta.GetExternalName(cr))
+	hookid, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.New(errNotHook)
 	}
@@ -198,7 +198,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	editHookOptions := projects.GenerateEditHookOptions(&cr.Spec.ForProvider, token)
 
-	_, _, err = e.client.EditProjectHook(*cr.Spec.ForProvider.ProjectID, int64(hookid), editHookOptions, gitlab.WithContext(ctx))
+	_, _, err = e.client.EditProjectHook(*cr.Spec.ForProvider.ProjectID, hookid, editHookOptions, gitlab.WithContext(ctx))
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}
@@ -217,7 +217,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalDelete{}, errors.New(errProjectIDMissing)
 	}
-	_, err := e.client.DeleteProjectHook(*cr.Spec.ForProvider.ProjectID, int64(cr.Status.AtProvider.ID), gitlab.WithContext(ctx))
+	_, err := e.client.DeleteProjectHook(*cr.Spec.ForProvider.ProjectID, cr.Status.AtProvider.ID, gitlab.WithContext(ctx))
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 }
 
@@ -227,6 +227,6 @@ func (e *external) Disconnect(ctx context.Context) error {
 }
 
 func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.Hook, projecthook *gitlab.ProjectHook) error {
-	meta.SetExternalName(cr, strconv.FormatInt(int64(projecthook.ID), 10))
+	meta.SetExternalName(cr, strconv.FormatInt(projecthook.ID, 10))
 	return e.kube.Update(ctx, cr)
 }

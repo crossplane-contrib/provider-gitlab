@@ -179,7 +179,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.FormatInt(int64(dt.ID), 10))
+	meta.SetExternalName(cr, strconv.FormatInt(dt.ID, 10))
 	return managed.ExternalCreation{ConnectionDetails: connectionDetails}, nil
 }
 
