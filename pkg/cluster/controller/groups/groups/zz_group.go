@@ -62,7 +62,7 @@ const (
 
 // SetupGroup adds a controller that reconciles Groups.
 func SetupGroup(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.GroupKubernetesGroupKind)
+	name := managed.ControllerName(v1alpha1.GroupKubernetesGroupKind) + ".cluster"
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewGroupClient}),

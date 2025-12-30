@@ -59,7 +59,7 @@ const (
 
 // SetupPipelineSchedule adds a controller that reconciles PipelineSchedule.
 func SetupPipelineSchedule(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.PipelineScheduleGroupKind)
+	name := managed.ControllerName(v1alpha1.PipelineScheduleGroupKind) + ".cluster"
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: newPipelineScheduleClient}),

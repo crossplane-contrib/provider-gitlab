@@ -31,7 +31,7 @@ import (
 // Setup adds a controller that reconciles ProviderConfigs by accounting for
 // their current usage.
 func SetupNamespaced(mgr ctrl.Manager, o controller.Options) error {
-	name := providerconfig.ControllerName(v1beta1.ProviderConfigGroupKind)
+	name := providerconfig.ControllerName(v1beta1.ProviderConfigGroupKind) + ".cluster"
 
 	of := resource.ProviderConfigKinds{
 		Config:    v1beta1.ProviderConfigGroupVersionKind,

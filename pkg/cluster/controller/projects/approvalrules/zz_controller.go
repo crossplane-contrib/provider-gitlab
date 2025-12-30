@@ -51,7 +51,7 @@ const (
 
 // SetupRules adds a controller that reconciles Approval Rules.
 func SetupRules(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.ApprovalRuleKind)
+	name := managed.ControllerName(v1alpha1.ApprovalRuleKind) + ".cluster"
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{
