@@ -1,0 +1,19 @@
+# Example License for a GitLab instance
+# IMPORTANT: The writeConnectionSecretToRef is REQUIRED
+# Without this, the instance cannot keep in memory the license information.
+apiVersion: instance.gitlab.m.crossplane.io/v1alpha1
+kind: License
+metadata:
+  namespace: default
+  name: example-instance-license
+spec:
+  forProvider:
+    licenseSecretRef:
+      name: gitlab-license
+      key: license
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  # REQUIRED: This creates a Kubernetes secret containing the license information
+  writeConnectionSecretToRef:
+    name: gitlab-example-instance-license
