@@ -136,7 +136,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errMissingGroupID)
 	}
 
-	at, res, err := e.client.GetGroupAccessToken(*cr.Spec.ForProvider.GroupID, accessTokenID)
+	at, res, err := e.client.GetGroupAccessToken(*cr.Spec.ForProvider.GroupID, int64(accessTokenID))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -179,7 +179,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(at.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(at.ID, 10))
 	return managed.ExternalCreation{
 		ConnectionDetails: managed.ConnectionDetails{
 			"token": []byte(at.Token),
@@ -208,7 +208,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 	_, err = e.client.RevokeGroupAccessToken(
 		*cr.Spec.ForProvider.GroupID,
-		accessTokenID,
+		int64(accessTokenID),
 		gitlab.WithContext(ctx),
 	)
 

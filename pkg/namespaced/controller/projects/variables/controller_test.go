@@ -39,7 +39,7 @@ import (
 
 var (
 	errBoom          = errors.New("boom")
-	projectID        = 5678
+	projectID        = int64(5678)
 	variableKey      = "VARIABLE_KEY"
 	variableValue    = "1234"
 	variableType     = v1alpha1.VariableTypeEnvVar
@@ -86,7 +86,7 @@ func withDefaultValues() variableModifier {
 	}
 }
 
-func withProjectID(pid int) variableModifier {
+func withProjectID(pid int64) variableModifier {
 	return func(r *v1alpha1.Variable) {
 		r.Spec.ForProvider.ProjectID = &pid
 	}

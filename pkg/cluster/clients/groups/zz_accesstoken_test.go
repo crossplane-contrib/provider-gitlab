@@ -33,7 +33,8 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 	name := "Name"
 	var expiresAt time.Time
 	scopes := []string{"scope1", "scope2"}
-	accessLevel := 40
+	accessLevel := v1alpha1.AccessLevelValue(40)
+	gitlabAccessLevel := gitlab.AccessLevelValue(40)
 	type args struct {
 		name       string
 		parameters *v1alpha1.AccessTokenParameters
@@ -47,14 +48,14 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 				name: name,
 				parameters: &v1alpha1.AccessTokenParameters{
 					Name:        name,
-					AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+					AccessLevel: &accessLevel,
 					ExpiresAt:   &v1.Time{Time: expiresAt},
 					Scopes:      scopes,
 				},
 			},
 			want: &gitlab.CreateGroupAccessTokenOptions{
 				Name:        &name,
-				AccessLevel: (*gitlab.AccessLevelValue)(&accessLevel),
+				AccessLevel: &gitlabAccessLevel,
 				ExpiresAt:   (*gitlab.ISOTime)(&expiresAt),
 				Scopes:      &scopes,
 			},
@@ -64,14 +65,14 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 				name: name,
 				parameters: &v1alpha1.AccessTokenParameters{
 					Name:        name,
-					AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+					AccessLevel: &accessLevel,
 					ExpiresAt:   nil,
 					Scopes:      scopes,
 				},
 			},
 			want: &gitlab.CreateGroupAccessTokenOptions{
 				Name:        &name,
-				AccessLevel: (*gitlab.AccessLevelValue)(&accessLevel),
+				AccessLevel: &gitlabAccessLevel,
 				ExpiresAt:   nil,
 				Scopes:      &scopes,
 			},

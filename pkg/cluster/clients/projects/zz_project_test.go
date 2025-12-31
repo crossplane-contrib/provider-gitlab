@@ -35,7 +35,7 @@ var (
 	name                                 = "my-project"
 	overrideName                         = "My Project"
 	path                                 = "path/to/project"
-	namespaceID                          = 1
+	namespaceID                          = int64(1)
 	defaultBranch                        = "main"
 	description                          = "my awesome project"
 	issuesAccessLevel                    = "enabled"
@@ -61,7 +61,7 @@ var (
 	emailsDisabled                       = true
 	resolveOutdatedDiffDiscussions       = true
 	cadence                              = "Cadence"
-	keepN                                = 1
+	keepN                                = int64(1)
 	olderThan                            = "OlderThan"
 	nameRegexDelete                      = "NameRegexDelete"
 	nameRegexKeep                        = "NameRegexKeep"
@@ -87,7 +87,7 @@ var (
 	}
 	v1alpha1ContainerExpirationPolicyAttributes = v1alpha1.ContainerExpirationPolicyAttributes{
 		Cadence:         &cadence,
-		KeepN:           &keepN,
+		KeepN:           func() *int64 { v := keepN; return &v }(),
 		OlderThan:       &olderThan,
 		NameRegexDelete: &nameRegexDelete,
 		NameRegexKeep:   &nameRegexKeep,
@@ -117,23 +117,23 @@ var (
 	topics                                    = []string{"tag1", "tag2"}
 	printingMergeRequestLinkEnabled           = true
 	buildGitStategy                           = "strategy"
-	buildTimeout                              = 60
+	buildTimeout                              = int64(60)
 	autoCancelPendingPipelines                = "enabled"
 	buildCoverageRegex                        = "some-regex"
 	ciConfigPath                              = "path/to/ci/config"
 	ciForwardDeploymentEnabled                = false
-	ciDefaultGitDepth                         = 50
+	ciDefaultGitDepth                         = int64(50)
 	autoDevopsEnabled                         = true
 	autoDevopsDeployStrategy                  = "continuous"
 	externalAuthorizationClassificationLabel  = "authz-label"
 	mirror                                    = false
-	mirrorUserID                              = 1
+	mirrorUserID                              = int64(1)
 	mirrorTriggerBuilds                       = true
 	initializeWithReadme                      = true
 	templateName                              = "template"
-	templateProjectID                         = 1
+	templateProjectID                         = int64(1)
 	useCustomTemplate                         = true
-	groupWithProjectTemplatesID               = 1
+	groupWithProjectTemplatesID               = int64(1)
 	onlyMirrorProtectedBranches               = false
 	mirrorOverwritesDivergedBranches          = false
 	packagesEnabled                           = true
@@ -145,7 +145,8 @@ var (
 )
 
 func TestGenerateObservation(t *testing.T) {
-	id := 0
+	id := int64(0)
+	idInt64 := int64(0)
 	public := true
 	sshURLToRepo := "ssh:url"
 	httpURLToRepo := "http://url"
@@ -155,16 +156,19 @@ func TestGenerateObservation(t *testing.T) {
 	pathWithNamespace := "path/to/cool-project"
 	nameWithNamespace := "name/to/cool-project"
 	issuesAccessLevel := gitlab.EnabledAccessControl
-	openIssuesCount := 3
+	openIssuesCount := int64(3)
+	openIssuesCountInt64 := int64(3)
 	now := time.Now()
-	creatorID := 1
-	namespaceID := 3
+	creatorID := int64(1)
+	creatorIDInt64 := int64(1)
+	namespaceIDLocal := int64(3)
+	namespaceIDInt64 := int64(3)
 	importStatus := "foo"
 	importError := "none"
-	permissionsProjectAccessAccessLevel := 1
-	permissionsProjectAccessNotificationLevel := 2
-	permissionsGroupAccessAccessLevel := 3
-	permissionsGroupAccessNotificationLevel := 4
+	permissionsProjectAccessAccessLevel := int64(1)
+	permissionsProjectAccessNotificationLevel := int64(2)
+	permissionsGroupAccessAccessLevel := int64(3)
+	permissionsGroupAccessNotificationLevel := int64(4)
 	markedForDeletionOn := gitlab.ISOTime(now)
 	emptyRepo := false
 	archived := false
@@ -189,16 +193,20 @@ func TestGenerateObservation(t *testing.T) {
 		HTMLURL:   licenseHTMLURL,
 		SourceURL: licenseSourceURL,
 	}
-	forksCount := 2
-	starCount := 10000
+	forksCount := int64(2)
+	forksCountInt64 := int64(2)
+	starCount := int64(10000)
+	starCountInt64 := int64(10000)
 	forkedFromProjectHTTPURL := "http://fork.url"
 	serviceDeskAddress := "ServiceDeskAddress"
-	sharedWithGroups := []struct {
-		GroupID          int    `json:"group_id"`
-		GroupName        string `json:"group_name"`
-		GroupFullPath    string `json:"group_full_path"`
-		GroupAccessLevel int    `json:"group_access_level"`
-	}{
+	sharedWithGroups := []gitlab.ProjectSharedWithGroup{
+		{
+			GroupID:          int64(0),
+			GroupName:        "sharedgroup",
+			GroupAccessLevel: int64(1),
+		},
+	}
+	sharedWithGroupsV1 := []v1alpha1.SharedWithGroups{
 		{
 			GroupID:          0,
 			GroupName:        "sharedgroup",
@@ -216,7 +224,7 @@ func TestGenerateObservation(t *testing.T) {
 		LFSObjectsSize:   30,
 		JobArtifactsSize: 40,
 	}
-	projectStatisticsCommitCount := 0
+	projectStatisticsCommitCount := int64(0)
 	linksSelf := "selflink"
 	customAttributesKey := "customAttrKey"
 	customAttributesValue := "customAttrValue"
@@ -232,7 +240,7 @@ func TestGenerateObservation(t *testing.T) {
 		"Full": {
 			args: args{
 				p: &gitlab.Project{
-					ID:            id,
+					ID:            idInt64,
 					PublicJobs:    public,
 					SSHURLToRepo:  sshURLToRepo,
 					HTTPURLToRepo: httpURLToRepo,
@@ -245,7 +253,7 @@ func TestGenerateObservation(t *testing.T) {
 					PathWithNamespace:         pathWithNamespace,
 					NameWithNamespace:         nameWithNamespace,
 					IssuesAccessLevel:         issuesAccessLevel,
-					OpenIssuesCount:           openIssuesCount,
+					OpenIssuesCount:           openIssuesCountInt64,
 					MergeRequestsAccessLevel:  gitlab.AccessControlValue(mergeRequestsAccessLevel),
 					BuildsAccessLevel:         gitlab.AccessControlValue(buildsAccessLevel),
 					WikiAccessLevel:           gitlab.AccessControlValue(wikiAccessLevel),
@@ -253,9 +261,9 @@ func TestGenerateObservation(t *testing.T) {
 					ContainerExpirationPolicy: &gitlabContainerExpirationPolicy,
 					CreatedAt:                 &now,
 					LastActivityAt:            &now,
-					CreatorID:                 creatorID,
+					CreatorID:                 creatorIDInt64,
 					Namespace: &gitlab.ProjectNamespace{
-						ID: namespaceID,
+						ID: namespaceIDInt64,
 					},
 					ImportStatus: importStatus,
 					ImportError:  importError,
@@ -275,8 +283,8 @@ func TestGenerateObservation(t *testing.T) {
 					AvatarURL:           avatarURL,
 					LicenseURL:          licenseURL,
 					License:             &gitlabLicense,
-					ForksCount:          forksCount,
-					StarCount:           starCount,
+					ForksCount:          forksCountInt64,
+					StarCount:           starCountInt64,
 					ForkedFromProject: &gitlab.ForkParent{
 						HTTPURLToRepo: forkedFromProjectHTTPURL,
 					},
@@ -287,7 +295,7 @@ func TestGenerateObservation(t *testing.T) {
 						RepositorySize:   storageStatistics.RepositorySize,
 						LFSObjectsSize:   storageStatistics.LFSObjectsSize,
 						JobArtifactsSize: storageStatistics.JobArtifactsSize,
-						CommitCount:      int64(projectStatisticsCommitCount),
+						CommitCount:      projectStatisticsCommitCount,
 					},
 					Links: &gitlab.Links{
 						Self: linksSelf,
@@ -326,7 +334,7 @@ func TestGenerateObservation(t *testing.T) {
 				LastActivityAt:            &metav1.Time{Time: now},
 				CreatorID:                 creatorID,
 				Namespace: &v1alpha1.ProjectNamespace{
-					ID: namespaceID,
+					ID: namespaceIDLocal,
 				},
 				ImportStatus: importStatus,
 				ImportError:  importError,
@@ -352,13 +360,7 @@ func TestGenerateObservation(t *testing.T) {
 					HTTPURLToRepo: forkedFromProjectHTTPURL,
 				},
 				ServiceDeskAddress: serviceDeskAddress,
-				SharedWithGroups: []v1alpha1.SharedWithGroups{
-					{
-						GroupID:          sharedWithGroups[0].GroupID,
-						GroupName:        sharedWithGroups[0].GroupName,
-						GroupAccessLevel: sharedWithGroups[0].GroupAccessLevel,
-					},
-				},
+				SharedWithGroups:   sharedWithGroupsV1,
 				Statistics: &v1alpha1.ProjectStatistics{
 					StorageStatistics: v1alpha1.StorageStatistics{
 						StorageSize:      storageStatistics.StorageSize,
@@ -383,12 +385,12 @@ func TestGenerateObservation(t *testing.T) {
 		"NullPermissions": {
 			args: args{
 				p: &gitlab.Project{
-					ID:             id,
+					ID:             idInt64,
 					PublicJobs:     public,
 					CreatedAt:      &now,
 					LastActivityAt: &now,
 					Namespace: &gitlab.ProjectNamespace{
-						ID: namespaceID,
+						ID: namespaceIDInt64,
 					},
 					Permissions: &gitlab.Permissions{
 						ProjectAccess: nil,
@@ -405,7 +407,7 @@ func TestGenerateObservation(t *testing.T) {
 				CreatedAt:      &metav1.Time{Time: now},
 				LastActivityAt: &metav1.Time{Time: now},
 				Namespace: &v1alpha1.ProjectNamespace{
-					ID: namespaceID,
+					ID: namespaceIDLocal,
 				},
 				Permissions: &v1alpha1.Permissions{
 					GroupAccess: &v1alpha1.GroupAccess{

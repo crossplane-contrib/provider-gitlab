@@ -29,7 +29,7 @@ type BadgeParameters struct {
 	// ProjectID is the ID of the project to create the deploy token in.
 	// +optional
 	// +immutable
-	ProjectID *int `json:"projectId,omitempty"`
+	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
@@ -45,7 +45,7 @@ type BadgeParameters struct {
 	// If the badge with this ID does not exist, resource creation will fail.
 	// +optional
 	// +immutable
-	ID *int `json:"id,omitempty"`
+	ID *int64 `json:"id,omitempty"`
 	// LinkURL is the onclick redirect URL of the badge.
 	// Supports gitlab format templating using variables like %{project_name}
 	// +required
@@ -65,7 +65,7 @@ type BadgeParameters struct {
 // https://docs.gitlab.com/api/project_badges/
 type BadgeObservation struct {
 	// ID of the badge
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// LinkURL is the onclick redirect URL of the badge.
 	LinkURL string `json:"linkURL,omitempty"`
 	// RenderedLinkURL is the rendered onclick redirect URL of the badge.

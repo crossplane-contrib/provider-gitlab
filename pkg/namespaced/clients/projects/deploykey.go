@@ -23,7 +23,7 @@ import (
 // DeployKeyClient is an interface for gitlab DeployKeyClient
 type DeployKeyClient interface {
 	AddDeployKey(pid interface{}, opt *gitlab.AddDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error)
-	DeleteDeployKey(pid interface{}, deployKey int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
-	UpdateDeployKey(pid interface{}, deployKey int, opt *gitlab.UpdateDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error)
-	GetDeployKey(pid interface{}, deployKey int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error)
+	DeleteDeployKey(pid interface{}, deployKey int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	UpdateDeployKey(pid interface{}, deployKey int64, opt *gitlab.UpdateDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error)
+	GetDeployKey(pid interface{}, deployKey int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error)
 }

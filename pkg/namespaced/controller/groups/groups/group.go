@@ -202,7 +202,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(grp.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(grp.ID, 10))
 	return managed.ExternalCreation{}, nil
 }
 
@@ -229,7 +229,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			if notShared(*sh.GroupID, grp) {
 				opt := gitlab.ShareGroupWithGroupOptions{
 					GroupID:     sh.GroupID,
-					GroupAccess: (*gitlab.AccessLevelValue)(&sh.GroupAccessLevel),
+					GroupAccess: gitlab.Ptr(gitlab.AccessLevelValue(sh.GroupAccessLevel)),
 				}
 				if sh.ExpiresAt != nil {
 					opt.ExpiresAt = (*gitlab.ISOTime)(&sh.ExpiresAt.Time)
@@ -317,7 +317,7 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) (bool, error)
 	if !clients.IsBoolEqualToBoolPtr(p.RequireTwoFactorAuth, g.RequireTwoFactorAuth) {
 		return false, nil
 	}
-	if !clients.IsIntEqualToIntPtr(p.TwoFactorGracePeriod, g.TwoFactorGracePeriod) {
+	if !clients.IsInt64EqualToInt64Ptr(p.TwoFactorGracePeriod, g.TwoFactorGracePeriod) {
 		return false, nil
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.AutoDevopsEnabled, g.AutoDevopsEnabled) {
@@ -335,13 +335,13 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) (bool, error)
 	if !clients.IsBoolEqualToBoolPtr(p.RequestAccessEnabled, g.RequestAccessEnabled) {
 		return false, nil
 	}
-	if !clients.IsIntEqualToIntPtr(p.ParentID, g.ParentID) {
+	if !clients.IsInt64EqualToInt64Ptr(p.ParentID, g.ParentID) {
 		return false, nil
 	}
-	if !clients.IsIntEqualToIntPtr(p.SharedRunnersMinutesLimit, g.SharedRunnersMinutesLimit) {
+	if !clients.IsInt64EqualToInt64Ptr(p.SharedRunnersMinutesLimit, g.SharedRunnersMinutesLimit) {
 		return false, nil
 	}
-	if !clients.IsIntEqualToIntPtr(p.ExtraSharedRunnersMinutesLimit, g.ExtraSharedRunnersMinutesLimit) {
+	if !clients.IsInt64EqualToInt64Ptr(p.ExtraSharedRunnersMinutesLimit, g.ExtraSharedRunnersMinutesLimit) {
 		return false, nil
 	}
 	if ok, err := isSharedWithGroupsUpToDate(p, g); err != nil || !ok {
@@ -355,12 +355,12 @@ func isSharedWithGroupsUpToDate(cr *v1alpha1.GroupParameters, in *gitlab.Group) 
 		return false, nil
 	}
 
-	inIDs := make(map[int]any)
+	inIDs := make(map[int64]any)
 	for _, v := range in.SharedWithGroups {
 		inIDs[v.GroupID] = nil
 	}
 
-	crIDs := make(map[int]any)
+	crIDs := make(map[int64]any)
 	for _, v := range cr.SharedWithGroups {
 		if v.GroupID == nil {
 			return false, errors.Errorf(errSWGMissingGroupID, v)
@@ -414,8 +414,9 @@ func lateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) error { /
 	if in.RequireTwoFactorAuth == nil {
 		in.RequireTwoFactorAuth = &group.RequireTwoFactorAuth
 	}
-	if in.TwoFactorGracePeriod == nil {
-		in.TwoFactorGracePeriod = &group.TwoFactorGracePeriod
+	if in.TwoFactorGracePeriod == nil && group.TwoFactorGracePeriod != 0 {
+		val := group.TwoFactorGracePeriod
+		in.TwoFactorGracePeriod = &val
 	}
 	if in.AutoDevopsEnabled == nil {
 		in.AutoDevopsEnabled = &group.AutoDevopsEnabled
@@ -432,16 +433,19 @@ func lateInitialize(in *v1alpha1.GroupParameters, group *gitlab.Group) error { /
 	if in.RequestAccessEnabled == nil {
 		in.RequestAccessEnabled = &group.RequestAccessEnabled
 	}
-	if in.ParentID == nil {
-		in.ParentID = &group.ParentID
+	if in.ParentID == nil && group.ParentID != 0 {
+		val := group.ParentID
+		in.ParentID = &val
 	}
 	// Never late-initialize runner limits when API returns 0 (treat as null)
 	// to avoid sending updates with 0 value, fields that can cause 400 errors (because feature might not be available)
 	if in.SharedRunnersMinutesLimit == nil && group.SharedRunnersMinutesLimit > 0 {
-		in.SharedRunnersMinutesLimit = &group.SharedRunnersMinutesLimit
+		val := group.SharedRunnersMinutesLimit
+		in.SharedRunnersMinutesLimit = &val
 	}
 	if in.ExtraSharedRunnersMinutesLimit == nil && group.ExtraSharedRunnersMinutesLimit > 0 {
-		in.ExtraSharedRunnersMinutesLimit = &group.ExtraSharedRunnersMinutesLimit
+		val := group.ExtraSharedRunnersMinutesLimit
+		in.ExtraSharedRunnersMinutesLimit = &val
 	}
 	return nil
 }
@@ -483,14 +487,7 @@ func lateInitializeProjectCreationLevelValue(in *v1alpha1.ProjectCreationLevelVa
 }
 
 func lateInitializeSharedWithGroups(cr *v1alpha1.GroupParameters, in *gitlab.Group) error {
-	inMap := map[int]struct {
-		GroupID          int             `json:"group_id"`
-		GroupName        string          `json:"group_name"`
-		GroupFullPath    string          `json:"group_full_path"`
-		GroupAccessLevel int             `json:"group_access_level"`
-		ExpiresAt        *gitlab.ISOTime `json:"expires_at"`
-		MemberRoleID     int             `json:"member_role_id"`
-	}{}
+	inMap := map[int64]gitlab.SharedWithGroup{}
 
 	for _, inswg := range in.SharedWithGroups {
 		inMap[inswg.GroupID] = inswg
@@ -510,7 +507,7 @@ func lateInitializeSharedWithGroups(cr *v1alpha1.GroupParameters, in *gitlab.Gro
 	return nil
 }
 
-func notUnshared(groupID int, sh []v1alpha1.SharedWithGroups) (bool, error) {
+func notUnshared(groupID int64, sh []v1alpha1.SharedWithGroups) (bool, error) {
 	for _, cr := range sh {
 		if cr.GroupID == nil {
 			return false, errors.Errorf(errSWGMissingGroupID, cr)
@@ -522,7 +519,7 @@ func notUnshared(groupID int, sh []v1alpha1.SharedWithGroups) (bool, error) {
 	return true, nil
 }
 
-func notShared(groupID int, grp *gitlab.Group) bool {
+func notShared(groupID int64, grp *gitlab.Group) bool {
 	for _, in := range grp.SharedWithGroups {
 		if in.GroupID == groupID {
 			return false

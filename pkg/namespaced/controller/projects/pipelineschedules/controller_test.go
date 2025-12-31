@@ -41,9 +41,9 @@ var (
 	s                = ""
 	f                = false
 	errorMessage     = "restult: -expected, +actual: \n%s"
-	id               = 1234
-	standardID       = 0
-	extName          = strconv.Itoa(id)
+	id               = int64(1234)
+	standardID       = int64(0)
+	extName          = strconv.FormatInt(id, 10)
 	projectID        = "123456"
 	standardPsParams = v1alpha1.PipelineScheduleParameters{
 		ProjectID:    &projectID,
@@ -105,7 +105,7 @@ func withParams(p v1alpha1.PipelineScheduleParameters) psModifier {
 	return func(ps *v1alpha1.PipelineSchedule) { ps.Spec.ForProvider = p }
 }
 
-func withID(s int) psModifier {
+func withID(s int64) psModifier {
 	return func(ps *v1alpha1.PipelineSchedule) { ps.Status.AtProvider.ID = &s }
 }
 
@@ -172,7 +172,7 @@ func TestObserve(t *testing.T) {
 					withProjectID(),
 				),
 				client: &fake.MockClient{
-					MockGetPipelineSchedule: func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockGetPipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{}, nil, errors.New(errNotPipelineSchedule)
 					},
 				},
@@ -193,7 +193,7 @@ func TestObserve(t *testing.T) {
 					withProjectID(),
 				),
 				client: &fake.MockClient{
-					MockGetPipelineSchedule: func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockGetPipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{}, &gitlab.Response{
 							Response: &http.Response{StatusCode: 404},
 						}, errors.New(errNotPipelineSchedule)
@@ -212,7 +212,7 @@ func TestObserve(t *testing.T) {
 		"SuccessLateInitializedFalse": {
 			args: args{
 				client: &fake.MockClient{
-					MockGetPipelineSchedule: func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockGetPipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{Variables: gPvArr}, nil, nil
 					},
 				},
@@ -243,7 +243,7 @@ func TestObserve(t *testing.T) {
 		"SuccessLateInitializedTrue": {
 			args: args{
 				client: &fake.MockClient{
-					MockGetPipelineSchedule: func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockGetPipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{Variables: gPvArr}, nil, nil
 					},
 				},
@@ -271,7 +271,7 @@ func TestObserve(t *testing.T) {
 		"SuccessUpToDateTrue": {
 			args: args{
 				client: &fake.MockClient{
-					MockGetPipelineSchedule: func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockGetPipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{}, nil, nil
 					},
 				},
@@ -298,7 +298,7 @@ func TestObserve(t *testing.T) {
 		"SuccessUpToDateFalse": {
 			args: args{
 				client: &fake.MockClient{
-					MockGetPipelineSchedule: func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockGetPipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{Cron: "cron"}, nil, nil
 					},
 				},
@@ -373,7 +373,7 @@ func TestCreate(t *testing.T) {
 							ID: id,
 						}, nil, nil
 					},
-					MockCreatePipelineScheduleVariable: func(pid interface{}, schedule int, opt *gitlab.CreatePipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error) {
+					MockCreatePipelineScheduleVariable: func(pid interface{}, schedule int64, opt *gitlab.CreatePipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error) {
 						return nil, nil, nil
 					},
 				},
@@ -448,10 +448,10 @@ func TestUpdate(t *testing.T) {
 		"UpdateSuccess": {
 			args: args{
 				client: &fake.MockClient{
-					MockEditPipelineSchedule: func(pid interface{}, schedule int, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockEditPipelineSchedule: func(pid interface{}, schedule int64, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{}, nil, nil
 					},
-					MockGetPipelineSchedule: func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockGetPipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{}, nil, nil
 					},
 				},
@@ -472,13 +472,13 @@ func TestUpdate(t *testing.T) {
 		"VariablesCreateSuccess": {
 			args: args{
 				client: &fake.MockClient{
-					MockEditPipelineSchedule: func(pid interface{}, schedule int, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockEditPipelineSchedule: func(pid interface{}, schedule int64, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return nil, nil, nil
 					},
-					MockGetPipelineSchedule: func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockGetPipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{}, nil, nil
 					},
-					MockCreatePipelineScheduleVariable: func(pid interface{}, schedule int, opt *gitlab.CreatePipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error) {
+					MockCreatePipelineScheduleVariable: func(pid interface{}, schedule int64, opt *gitlab.CreatePipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error) {
 						return nil, nil, nil
 					},
 				},
@@ -501,13 +501,13 @@ func TestUpdate(t *testing.T) {
 		"VariablesUpdateSuccess": {
 			args: args{
 				client: &fake.MockClient{
-					MockEditPipelineSchedule: func(pid interface{}, schedule int, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockEditPipelineSchedule: func(pid interface{}, schedule int64, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return nil, nil, nil
 					},
-					MockGetPipelineSchedule: func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockGetPipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{Variables: gPvArr}, nil, nil
 					},
-					MockEditPipelineScheduleVariable: func(pid interface{}, schedule int, key string, opt *gitlab.EditPipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error) {
+					MockEditPipelineScheduleVariable: func(pid interface{}, schedule int64, key string, opt *gitlab.EditPipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error) {
 						return nil, nil, nil
 					},
 				},
@@ -530,13 +530,13 @@ func TestUpdate(t *testing.T) {
 		"VariablesDeleteSuccess": {
 			args: args{
 				client: &fake.MockClient{
-					MockEditPipelineSchedule: func(pid interface{}, schedule int, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockEditPipelineSchedule: func(pid interface{}, schedule int64, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return nil, nil, nil
 					},
-					MockGetPipelineSchedule: func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
+					MockGetPipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{Variables: gPvArr}, nil, nil
 					},
-					MockDeletePipelineScheduleVariable: func(pid interface{}, schedule int, key string, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error) {
+					MockDeletePipelineScheduleVariable: func(pid interface{}, schedule int64, key string, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error) {
 						return nil, nil, nil
 					},
 				},
@@ -598,7 +598,7 @@ func TestDelete(t *testing.T) {
 			args: args{
 				cr: buildPs(withExternalName(extName), withProjectID()),
 				client: &fake.MockClient{
-					MockDeletePipelineSchedule: func(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeletePipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return nil, nil
 					},
 				},

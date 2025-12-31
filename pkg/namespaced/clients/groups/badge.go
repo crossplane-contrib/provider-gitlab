@@ -28,10 +28,10 @@ import (
 // GroupBadgeClient defines Gitlab Group service operations
 type BadgeClient interface {
 	ListGroupBadges(gid any, opt *gitlab.ListGroupBadgesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.GroupBadge, *gitlab.Response, error)
-	GetGroupBadge(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error)
+	GetGroupBadge(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error)
 	AddGroupBadge(gid any, opt *gitlab.AddGroupBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error)
-	EditGroupBadge(gid any, badge int, opt *gitlab.EditGroupBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error)
-	DeleteGroupBadge(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	EditGroupBadge(gid any, badge int64, opt *gitlab.EditGroupBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error)
+	DeleteGroupBadge(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	PreviewGroupBadge(gid any, opt *gitlab.GroupBadgePreviewOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error)
 }
 

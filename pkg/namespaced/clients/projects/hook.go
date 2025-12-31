@@ -34,10 +34,10 @@ const (
 
 // HookClient defines Gitlab Hook service operations
 type HookClient interface {
-	GetProjectHook(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
+	GetProjectHook(pid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
 	AddProjectHook(pid interface{}, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
-	EditProjectHook(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
-	DeleteProjectHook(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	EditProjectHook(pid interface{}, hook int64, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
+	DeleteProjectHook(pid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewHookClient returns a new Gitlab Project service

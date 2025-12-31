@@ -244,6 +244,7 @@ spec:
                   https://docs.gitlab.com/ee/api/project_access_tokens.html
                 properties:
                   id:
+                    format: int64
                     type: integer
                 type: object
               conditions:

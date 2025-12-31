@@ -133,7 +133,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errGroupIDMissing)
 	}
 
-	dt, res, err := e.client.GetGroupDeployToken(*cr.Spec.ForProvider.GroupID, id)
+	dt, res, err := e.client.GetGroupDeployToken(*cr.Spec.ForProvider.GroupID, int64(id))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -177,7 +177,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(dt.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(dt.ID, 10))
 	return managed.ExternalCreation{ConnectionDetails: connectionDetails}, nil
 }
 
@@ -203,7 +203,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, deleteError := e.client.DeleteGroupDeployToken(
 		*cr.Spec.ForProvider.GroupID,
-		deployTokenID,
+		int64(deployTokenID),
 		gitlab.WithContext(ctx),
 	)
 

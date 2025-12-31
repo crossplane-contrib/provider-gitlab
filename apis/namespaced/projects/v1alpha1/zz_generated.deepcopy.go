@@ -89,7 +89,7 @@ func (in *AccessTokenObservation) DeepCopyInto(out *AccessTokenObservation) {
 	*out = *in
 	if in.TokenID != nil {
 		in, out := &in.TokenID, &out.TokenID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 }
@@ -261,7 +261,7 @@ func (in *ApprovalRuleParameters) DeepCopyInto(out *ApprovalRuleParameters) {
 	*out = *in
 	if in.ProjectID != nil {
 		in, out := &in.ProjectID, &out.ProjectID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectIDRef != nil {
@@ -276,7 +276,7 @@ func (in *ApprovalRuleParameters) DeepCopyInto(out *ApprovalRuleParameters) {
 	}
 	if in.ApprovalsRequired != nil {
 		in, out := &in.ApprovalsRequired, &out.ApprovalsRequired
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.Name != nil {
@@ -291,19 +291,19 @@ func (in *ApprovalRuleParameters) DeepCopyInto(out *ApprovalRuleParameters) {
 	}
 	if in.GroupIDs != nil {
 		in, out := &in.GroupIDs, &out.GroupIDs
-		*out = new([]int)
+		*out = new([]int64)
 		if **in != nil {
 			in, out := *in, *out
-			*out = make([]int, len(*in))
+			*out = make([]int64, len(*in))
 			copy(*out, *in)
 		}
 	}
 	if in.ProtectedBranchIDs != nil {
 		in, out := &in.ProtectedBranchIDs, &out.ProtectedBranchIDs
-		*out = new([]int)
+		*out = new([]int64)
 		if **in != nil {
 			in, out := *in, *out
-			*out = make([]int, len(*in))
+			*out = make([]int64, len(*in))
 			copy(*out, *in)
 		}
 	}
@@ -314,10 +314,10 @@ func (in *ApprovalRuleParameters) DeepCopyInto(out *ApprovalRuleParameters) {
 	}
 	if in.UserIDs != nil {
 		in, out := &in.UserIDs, &out.UserIDs
-		*out = new([]int)
+		*out = new([]int64)
 		if **in != nil {
 			in, out := *in, *out
-			*out = make([]int, len(*in))
+			*out = make([]int64, len(*in))
 			copy(*out, *in)
 		}
 	}
@@ -455,7 +455,7 @@ func (in *BadgeParameters) DeepCopyInto(out *BadgeParameters) {
 	*out = *in
 	if in.ProjectID != nil {
 		in, out := &in.ProjectID, &out.ProjectID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectIDRef != nil {
@@ -470,7 +470,7 @@ func (in *BadgeParameters) DeepCopyInto(out *BadgeParameters) {
 	}
 	if in.ID != nil {
 		in, out := &in.ID, &out.ID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.Name != nil {
@@ -539,12 +539,12 @@ func (in *BranchAccessDescription) DeepCopyInto(out *BranchAccessDescription) {
 	}
 	if in.UserID != nil {
 		in, out := &in.UserID, &out.UserID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 }
@@ -588,7 +588,7 @@ func (in *ContainerExpirationPolicyAttributes) DeepCopyInto(out *ContainerExpira
 	}
 	if in.KeepN != nil {
 		in, out := &in.KeepN, &out.KeepN
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.OlderThan != nil {
@@ -707,7 +707,7 @@ func (in *DeployKeyObservation) DeepCopyInto(out *DeployKeyObservation) {
 	*out = *in
 	if in.ID != nil {
 		in, out := &in.ID, &out.ID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.CreatedAt != nil {
@@ -879,7 +879,7 @@ func (in *DeployTokenParameters) DeepCopyInto(out *DeployTokenParameters) {
 	*out = *in
 	if in.ProjectID != nil {
 		in, out := &in.ProjectID, &out.ProjectID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectIDRef != nil {
@@ -1075,7 +1075,7 @@ func (in *HookParameters) DeepCopyInto(out *HookParameters) {
 	}
 	if in.ProjectID != nil {
 		in, out := &in.ProjectID, &out.ProjectID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectIDRef != nil {
@@ -1307,7 +1307,7 @@ func (in *MemberParameters) DeepCopyInto(out *MemberParameters) {
 	*out = *in
 	if in.ProjectID != nil {
 		in, out := &in.ProjectID, &out.ProjectID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectIDRef != nil {
@@ -1322,7 +1322,7 @@ func (in *MemberParameters) DeepCopyInto(out *MemberParameters) {
 	}
 	if in.UserID != nil {
 		in, out := &in.UserID, &out.UserID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.UserName != nil {
@@ -1470,7 +1470,7 @@ func (in *PipelineScheduleObservation) DeepCopyInto(out *PipelineScheduleObserva
 	*out = *in
 	if in.ID != nil {
 		in, out := &in.ID, &out.ID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.NextRunAt != nil {
@@ -1808,7 +1808,7 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	}
 	if in.ApprovalsBeforeMerge != nil {
 		in, out := &in.ApprovalsBeforeMerge, &out.ApprovalsBeforeMerge
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.AutoCancelPendingPipelines != nil {
@@ -1843,7 +1843,7 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	}
 	if in.BuildTimeout != nil {
 		in, out := &in.BuildTimeout, &out.BuildTimeout
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.BuildsAccessLevel != nil {
@@ -1858,7 +1858,7 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	}
 	if in.CIDefaultGitDepth != nil {
 		in, out := &in.CIDefaultGitDepth, &out.CIDefaultGitDepth
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.CIForwardDeploymentEnabled != nil {
@@ -1913,7 +1913,7 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	}
 	if in.GroupWithProjectTemplatesID != nil {
 		in, out := &in.GroupWithProjectTemplatesID, &out.GroupWithProjectTemplatesID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ImportURL != nil {
@@ -1973,12 +1973,12 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	}
 	if in.MirrorUserID != nil {
 		in, out := &in.MirrorUserID, &out.MirrorUserID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.NamespaceID != nil {
 		in, out := &in.NamespaceID, &out.NamespaceID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.NamespaceIDRef != nil {
@@ -2103,7 +2103,7 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	}
 	if in.TemplateProjectID != nil {
 		in, out := &in.TemplateProjectID, &out.TemplateProjectID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.UseCustomTemplate != nil {
@@ -2452,7 +2452,7 @@ func (in *PushRules) DeepCopyInto(out *PushRules) {
 	}
 	if in.MaxFileSize != nil {
 		in, out := &in.MaxFileSize, &out.MaxFileSize
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MemberCheck != nil {
@@ -2572,7 +2572,7 @@ func (in *RunnerParameters) DeepCopyInto(out *RunnerParameters) {
 	*out = *in
 	if in.ProjectID != nil {
 		in, out := &in.ProjectID, &out.ProjectID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectIDRef != nil {
@@ -2833,7 +2833,7 @@ func (in *VariableParameters) DeepCopyInto(out *VariableParameters) {
 	*out = *in
 	if in.ProjectID != nil {
 		in, out := &in.ProjectID, &out.ProjectID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectIDRef != nil {

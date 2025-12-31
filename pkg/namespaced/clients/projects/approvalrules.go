@@ -27,10 +27,10 @@ import (
 
 // ApprovalRulesClient Gitlab Member service operations
 type ApprovalRulesClient interface {
-	GetProjectApprovalRule(pid any, ruleID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
+	GetProjectApprovalRule(pid any, ruleID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
 	CreateProjectApprovalRule(pid any, opt *gitlab.CreateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
-	UpdateProjectApprovalRule(pid any, approvalRule int, opt *gitlab.UpdateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
-	DeleteProjectApprovalRule(pid any, approvalRule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	UpdateProjectApprovalRule(pid any, approvalRule int64, opt *gitlab.UpdateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
+	DeleteProjectApprovalRule(pid any, approvalRule int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewApprovalRulesClient returns a new Gitlab Project Member service
@@ -43,13 +43,28 @@ func NewApprovalRulesClient(cfg common.Config) ApprovalRulesClient {
 func GenerateCreateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *gitlab.CreateProjectLevelRuleOptions {
 	approvalRulesOptions := &gitlab.CreateProjectLevelRuleOptions{
 		Name:                          p.Name,
-		ApprovalsRequired:             p.ApprovalsRequired,
 		RuleType:                      (*string)(p.RuleType),
 		AppliesToAllProtectedBranches: p.AppliesToAllProtectedBranches,
-		UserIDs:                       p.UserIDs,
-		GroupIDs:                      p.GroupIDs,
-		ProtectedBranchIDs:            p.ProtectedBranchIDs,
 		Usernames:                     p.Usernames,
+	}
+	if p.ApprovalsRequired != nil {
+		val := p.ApprovalsRequired
+		approvalRulesOptions.ApprovalsRequired = val
+	}
+	if p.UserIDs != nil {
+		vals := make([]int64, len(*p.UserIDs))
+		copy(vals, *p.UserIDs)
+		approvalRulesOptions.UserIDs = &vals
+	}
+	if p.GroupIDs != nil {
+		vals := make([]int64, len(*p.GroupIDs))
+		copy(vals, *p.GroupIDs)
+		approvalRulesOptions.GroupIDs = &vals
+	}
+	if p.ProtectedBranchIDs != nil {
+		vals := make([]int64, len(*p.ProtectedBranchIDs))
+		copy(vals, *p.ProtectedBranchIDs)
+		approvalRulesOptions.ProtectedBranchIDs = &vals
 	}
 
 	return approvalRulesOptions
@@ -59,12 +74,27 @@ func GenerateCreateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 func GenerateUpdateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *gitlab.UpdateProjectLevelRuleOptions {
 	approvalRulesOptions := &gitlab.UpdateProjectLevelRuleOptions{
 		Name:                          p.Name,
-		ApprovalsRequired:             p.ApprovalsRequired,
 		AppliesToAllProtectedBranches: p.AppliesToAllProtectedBranches,
-		UserIDs:                       p.UserIDs,
-		GroupIDs:                      p.GroupIDs,
-		ProtectedBranchIDs:            p.ProtectedBranchIDs,
 		Usernames:                     p.Usernames,
+	}
+	if p.ApprovalsRequired != nil {
+		val := p.ApprovalsRequired
+		approvalRulesOptions.ApprovalsRequired = val
+	}
+	if p.UserIDs != nil {
+		vals := make([]int64, len(*p.UserIDs))
+		copy(vals, *p.UserIDs)
+		approvalRulesOptions.UserIDs = &vals
+	}
+	if p.GroupIDs != nil {
+		vals := make([]int64, len(*p.GroupIDs))
+		copy(vals, *p.GroupIDs)
+		approvalRulesOptions.GroupIDs = &vals
+	}
+	if p.ProtectedBranchIDs != nil {
+		vals := make([]int64, len(*p.ProtectedBranchIDs))
+		copy(vals, *p.ProtectedBranchIDs)
+		approvalRulesOptions.ProtectedBranchIDs = &vals
 	}
 
 	return approvalRulesOptions
@@ -80,7 +110,7 @@ func IsApprovalRuleUpToDate(p *v1alpha1.ApprovalRuleParameters, g *gitlab.Projec
 		return false
 	}
 
-	if !clients.IsIntEqualToIntPtr(p.ApprovalsRequired, g.ApprovalsRequired) {
+	if !clients.IsInt64EqualToInt64Ptr(p.ApprovalsRequired, g.ApprovalsRequired) {
 		return false
 	}
 
@@ -116,12 +146,12 @@ func isGroupIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectA
 		return false
 	}
 
-	inIDs := make(map[int]any)
+	inIDs := make(map[int64]any)
 	for _, v := range in.Groups {
 		inIDs[v.ID] = nil
 	}
 
-	crIDs := make(map[int]any)
+	crIDs := make(map[int64]any)
 	for _, v := range *cr.GroupIDs {
 		crIDs[v] = nil
 	}
@@ -152,12 +182,12 @@ func isProtectedBranchesIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *git
 		return false
 	}
 
-	inIDs := make(map[int]any)
+	inIDs := make(map[int64]any)
 	for _, v := range in.ProtectedBranches {
 		inIDs[v.ID] = nil
 	}
 
-	crIDs := make(map[int]any)
+	crIDs := make(map[int64]any)
 	for _, v := range *cr.ProtectedBranchIDs {
 		crIDs[v] = nil
 	}
@@ -188,12 +218,12 @@ func isUserIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectAp
 		return false
 	}
 
-	inIDs := make(map[int]any)
+	inIDs := make(map[int64]any)
 	for _, v := range in.Users {
 		inIDs[v.ID] = nil
 	}
 
-	crIDs := make(map[int]any)
+	crIDs := make(map[int64]any)
 	for _, v := range *cr.UserIDs {
 		crIDs[v] = nil
 	}

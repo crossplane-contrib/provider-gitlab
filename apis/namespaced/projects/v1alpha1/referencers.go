@@ -27,26 +27,26 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
 )
 
-// resolve int ptr to string value
-func fromPtrValue(v *int) string {
+// resolve int64 ptr to string value
+func fromPtrValue(v *int64) string {
 	if v == nil {
 		return ""
 	}
-	return strconv.Itoa(*v)
+	return strconv.FormatInt(*v, 10)
 }
 
-// resolve string value to int pointer
-func toPtrValue(v string) *int {
+// resolve string value to int64 pointer
+func toPtrValue(v string) (*int64, error) {
 	if v == "" {
-		return nil
+		return nil, nil
 	}
 
-	r, err := strconv.Atoi(v)
+	r, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return &r
+	return &r, nil
 }
 
 // ResolveReferences of this Hook
@@ -66,7 +66,12 @@ func (mg *Hook) ResolveReferences(ctx context.Context, c client.Reader) error {
 		return errors.Wrap(err, "spec.forProvider.projectId")
 	}
 
-	mg.Spec.ForProvider.ProjectID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider")
+	}
+
+	mg.Spec.ForProvider.ProjectID = resolvedID
 	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
 
 	return nil
@@ -89,7 +94,12 @@ func (mg *ApprovalRule) ResolveReferences(ctx context.Context, c client.Reader) 
 		return errors.Wrap(err, "spec.forProvider.projectId")
 	}
 
-	mg.Spec.ForProvider.ProjectID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider")
+	}
+
+	mg.Spec.ForProvider.ProjectID = resolvedID
 	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
 
 	return nil
@@ -112,7 +122,12 @@ func (mg *Project) ResolveReferences(ctx context.Context, c client.Reader) error
 		return errors.Wrap(err, "spec.forProvider.namespaceId")
 	}
 
-	mg.Spec.ForProvider.NamespaceID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider")
+	}
+
+	mg.Spec.ForProvider.NamespaceID = resolvedID
 	mg.Spec.ForProvider.NamespaceIDRef = rsp.ResolvedReference
 
 	return nil
@@ -135,7 +150,12 @@ func (mg *DeployToken) ResolveReferences(ctx context.Context, c client.Reader) e
 		return errors.Wrap(err, "spec.forProvider.projectId")
 	}
 
-	mg.Spec.ForProvider.ProjectID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider")
+	}
+
+	mg.Spec.ForProvider.ProjectID = resolvedID
 	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
 
 	return nil
@@ -158,7 +178,12 @@ func (mg *Member) ResolveReferences(ctx context.Context, c client.Reader) error 
 		return errors.Wrap(err, "spec.forProvider.projectId")
 	}
 
-	mg.Spec.ForProvider.ProjectID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider")
+	}
+
+	mg.Spec.ForProvider.ProjectID = resolvedID
 	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
 
 	return nil
@@ -181,7 +206,12 @@ func (mg *Variable) ResolveReferences(ctx context.Context, c client.Reader) erro
 		return errors.Wrap(err, "spec.forProvider.projectId")
 	}
 
-	mg.Spec.ForProvider.ProjectID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider")
+	}
+
+	mg.Spec.ForProvider.ProjectID = resolvedID
 	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
 
 	return nil
@@ -204,7 +234,12 @@ func (mg *Runner) ResolveReferences(ctx context.Context, c client.Reader) error 
 		return errors.Wrap(err, "spec.forProvider.projectId")
 	}
 
-	mg.Spec.ForProvider.ProjectID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider")
+	}
+
+	mg.Spec.ForProvider.ProjectID = resolvedID
 	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
 
 	return nil
@@ -227,7 +262,12 @@ func (mg *Badge) ResolveReferences(ctx context.Context, c client.Reader) error {
 		return errors.Wrap(err, "spec.forProvider.projectId")
 	}
 
-	mg.Spec.ForProvider.ProjectID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider")
+	}
+
+	mg.Spec.ForProvider.ProjectID = resolvedID
 	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
 
 	return nil

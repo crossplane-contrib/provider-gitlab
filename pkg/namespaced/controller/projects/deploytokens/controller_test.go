@@ -42,9 +42,8 @@ import (
 
 var (
 	errBoom        = errors.New("boom")
-	id             = 0
-	deployTokenID  = 1234
-	sDeployTokenID = strconv.Itoa(deployTokenID)
+	deployTokenID  = int64(1234)
+	sDeployTokenID = strconv.FormatInt(deployTokenID, 10)
 	unexpecedItem  resource.Managed
 	expiresAt      = time.Now()
 	token          = "Token"
@@ -138,7 +137,7 @@ func TestObserve(t *testing.T) {
 		"FailedGetRequest": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockGetProjectDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+					MockGetProjectDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
 						return nil, nil, errBoom
 					},
 				},
@@ -162,7 +161,7 @@ func TestObserve(t *testing.T) {
 		"ErrGet404": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockGetProjectDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+					MockGetProjectDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
@@ -195,7 +194,7 @@ func TestObserve(t *testing.T) {
 		"LateInitSuccess": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockGetProjectDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+					MockGetProjectDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
 						return &deployTokenObj, &gitlab.Response{}, nil
 					},
 				},
@@ -226,7 +225,7 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockGetProjectDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+					MockGetProjectDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
 						return &deployTokenObj, &gitlab.Response{}, nil
 					},
 				},
@@ -428,7 +427,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockDeleteDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -436,7 +435,7 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.DeployTokenParameters{
 						ProjectID: &deployTokenID,
 					}),
-					withExternalName(strconv.Itoa(id)),
+					withExternalName(strconv.FormatInt(deployTokenID, 10)),
 				),
 			},
 			want: want{
@@ -444,14 +443,14 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.DeployTokenParameters{
 						ProjectID: &deployTokenID,
 					}),
-					withExternalName(strconv.Itoa(id)),
+					withExternalName(strconv.FormatInt(deployTokenID, 10)),
 				),
 			},
 		},
 		"FailedDeletionErrNotDeployToken": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockDeleteDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -475,7 +474,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				deployToken: &fake.MockClient{
-					MockDeleteDeployToken: func(pid interface{}, deployToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
@@ -483,7 +482,7 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.DeployTokenParameters{
 						ProjectID: &deployTokenID,
 					}),
-					withExternalName(strconv.Itoa(id)),
+					withExternalName(strconv.FormatInt(deployTokenID, 10)),
 				),
 			},
 			want: want{
@@ -491,7 +490,7 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.DeployTokenParameters{
 						ProjectID: &deployTokenID,
 					}),
-					withExternalName(strconv.Itoa(id)),
+					withExternalName(strconv.FormatInt(deployTokenID, 10)),
 				),
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},

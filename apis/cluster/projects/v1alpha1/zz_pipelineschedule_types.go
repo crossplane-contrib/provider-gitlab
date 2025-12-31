@@ -76,7 +76,7 @@ type PipelineScheduleParameters struct {
 // PipelineScheduleObservation represents observed stated of Gitlab Pipeline Schedule.
 // https://docs.gitlab.com/ee/api/pipeline_schedules.htm
 type PipelineScheduleObservation struct {
-	ID           *int          `json:"id,omitempty"`
+	ID           *int64        `json:"id,omitempty"`
 	NextRunAt    *metav1.Time  `json:"nextRunAt,omitempty"`
 	CreatedAt    *metav1.Time  `json:"createdAt,omitempty"`
 	UpdatedAt    *metav1.Time  `json:"updatedAt,omitempty"`
@@ -87,7 +87,7 @@ type PipelineScheduleObservation struct {
 // LastPipeline represents the last pipeline ran by schedule
 // this will be returned only for individual schedule get operation
 type LastPipeline struct {
-	ID     int    `json:"id"`
+	ID     int64  `json:"id"`
 	SHA    string `json:"sha"`
 	Ref    string `json:"ref"`
 	Status string `json:"status"`

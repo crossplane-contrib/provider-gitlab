@@ -33,10 +33,10 @@ const (
 
 // MemberClient defines Gitlab Member service operations
 type MemberClient interface {
-	GetGroupMember(gid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
+	GetGroupMember(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
 	AddGroupMember(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
-	EditGroupMember(gid interface{}, user int, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
-	RemoveGroupMember(gid interface{}, user int, opt *gitlab.RemoveGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	EditGroupMember(gid interface{}, user int64, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error)
+	RemoveGroupMember(gid interface{}, user int64, opt *gitlab.RemoveGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewMemberClient returns a new Gitlab Group Member service
@@ -75,8 +75,10 @@ func GenerateMemberObservation(groupMember *gitlab.GroupMember) v1alpha1.MemberO
 // GenerateAddMemberOptions generates group member add options
 func GenerateAddMemberOptions(p *v1alpha1.MemberParameters) *gitlab.AddGroupMemberOptions {
 	groupMember := &gitlab.AddGroupMemberOptions{
-		UserID:      p.UserID,
 		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
+	}
+	if p.UserID != nil {
+		groupMember.UserID = p.UserID
 	}
 	if p.ExpiresAt != nil {
 		groupMember.ExpiresAt = p.ExpiresAt
@@ -100,7 +102,14 @@ func accessLevelValueV1alpha1ToGitlab(from *v1alpha1.AccessLevelValue) *gitlab.A
 	return (*gitlab.AccessLevelValue)(from)
 }
 
-// groupMemberSAMLIdentityGitlabToV1alpha1 converts *gitlab.MemberSAMLIdentity to *v1alpha1.MemberSAMLIdentity
+// groupMemberSAMLIdentityGitlabToV1alpha1 converts *gitlab.GroupMemberSAMLIdentity to *v1alpha1.MemberSAMLIdentity
 func groupMemberSAMLIdentityGitlabToV1alpha1(from *gitlab.GroupMemberSAMLIdentity) *v1alpha1.MemberSAMLIdentity {
-	return (*v1alpha1.MemberSAMLIdentity)(from)
+	if from == nil {
+		return nil
+	}
+	return &v1alpha1.MemberSAMLIdentity{
+		ExternUID:      from.ExternUID,
+		Provider:       from.Provider,
+		SAMLProviderID: from.SAMLProviderID,
+	}
 }

@@ -38,7 +38,7 @@ type Client interface {
 	UpdateGroup(gid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	DeleteGroup(gid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	ShareGroupWithGroup(gid interface{}, opt *gitlab.ShareGroupWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
-	UnshareGroupFromGroup(gid interface{}, groupID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	UnshareGroupFromGroup(gid interface{}, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewGroupClient returns a new Gitlab Group service
@@ -146,24 +146,36 @@ func GenerateCreateGroupOptions(name string, p *v1alpha1.GroupParameters) *gitla
 	}
 
 	group := &gitlab.CreateGroupOptions{
-		Name:                           &name,
-		Path:                           &p.Path,
-		Description:                    p.Description,
-		MembershipLock:                 p.MembershipLock,
-		Visibility:                     VisibilityValueV1alpha1ToGitlab(p.Visibility),
-		ShareWithGroupLock:             p.ShareWithGroupLock,
-		RequireTwoFactorAuth:           p.RequireTwoFactorAuth,
-		TwoFactorGracePeriod:           p.TwoFactorGracePeriod,
-		ProjectCreationLevel:           ProjectCreationLevelValueV1alpha1ToGitlab(p.ProjectCreationLevel),
-		AutoDevopsEnabled:              p.AutoDevopsEnabled,
-		SubGroupCreationLevel:          SubGroupCreationLevelValueV1alpha1ToGitlab(p.SubGroupCreationLevel),
-		MentionsDisabled:               p.MentionsDisabled,
-		EmailsEnabled:                  p.EmailsEnabled,
-		LFSEnabled:                     p.LFSEnabled,
-		RequestAccessEnabled:           p.RequestAccessEnabled,
-		ParentID:                       p.ParentID,
-		SharedRunnersMinutesLimit:      p.SharedRunnersMinutesLimit,
-		ExtraSharedRunnersMinutesLimit: p.ExtraSharedRunnersMinutesLimit,
+		Name:                  &name,
+		Path:                  &p.Path,
+		Description:           p.Description,
+		MembershipLock:        p.MembershipLock,
+		Visibility:            VisibilityValueV1alpha1ToGitlab(p.Visibility),
+		ShareWithGroupLock:    p.ShareWithGroupLock,
+		RequireTwoFactorAuth:  p.RequireTwoFactorAuth,
+		ProjectCreationLevel:  ProjectCreationLevelValueV1alpha1ToGitlab(p.ProjectCreationLevel),
+		AutoDevopsEnabled:     p.AutoDevopsEnabled,
+		SubGroupCreationLevel: SubGroupCreationLevelValueV1alpha1ToGitlab(p.SubGroupCreationLevel),
+		MentionsDisabled:      p.MentionsDisabled,
+		EmailsEnabled:         p.EmailsEnabled,
+		LFSEnabled:            p.LFSEnabled,
+		RequestAccessEnabled:  p.RequestAccessEnabled,
+	}
+	if p.TwoFactorGracePeriod != nil {
+		val := *p.TwoFactorGracePeriod
+		group.TwoFactorGracePeriod = &val
+	}
+	if p.ParentID != nil {
+		val := *p.ParentID
+		group.ParentID = &val
+	}
+	if p.SharedRunnersMinutesLimit != nil {
+		val := *p.SharedRunnersMinutesLimit
+		group.SharedRunnersMinutesLimit = &val
+	}
+	if p.ExtraSharedRunnersMinutesLimit != nil {
+		val := *p.ExtraSharedRunnersMinutesLimit
+		group.ExtraSharedRunnersMinutesLimit = &val
 	}
 
 	return group
@@ -177,23 +189,32 @@ func GenerateEditGroupOptions(name string, p *v1alpha1.GroupParameters) *gitlab.
 	}
 
 	group := &gitlab.UpdateGroupOptions{
-		Name:                           &name,
-		Path:                           &p.Path,
-		Description:                    p.Description,
-		MembershipLock:                 p.MembershipLock,
-		Visibility:                     VisibilityValueV1alpha1ToGitlab(p.Visibility),
-		ShareWithGroupLock:             p.ShareWithGroupLock,
-		RequireTwoFactorAuth:           p.RequireTwoFactorAuth,
-		TwoFactorGracePeriod:           p.TwoFactorGracePeriod,
-		ProjectCreationLevel:           ProjectCreationLevelValueV1alpha1ToGitlab(p.ProjectCreationLevel),
-		AutoDevopsEnabled:              p.AutoDevopsEnabled,
-		SubGroupCreationLevel:          SubGroupCreationLevelValueV1alpha1ToGitlab(p.SubGroupCreationLevel),
-		EmailsEnabled:                  p.EmailsEnabled,
-		MentionsDisabled:               p.MentionsDisabled,
-		LFSEnabled:                     p.LFSEnabled,
-		RequestAccessEnabled:           p.RequestAccessEnabled,
-		SharedRunnersMinutesLimit:      p.SharedRunnersMinutesLimit,
-		ExtraSharedRunnersMinutesLimit: p.ExtraSharedRunnersMinutesLimit,
+		Name:                  &name,
+		Path:                  &p.Path,
+		Description:           p.Description,
+		MembershipLock:        p.MembershipLock,
+		Visibility:            VisibilityValueV1alpha1ToGitlab(p.Visibility),
+		ShareWithGroupLock:    p.ShareWithGroupLock,
+		RequireTwoFactorAuth:  p.RequireTwoFactorAuth,
+		ProjectCreationLevel:  ProjectCreationLevelValueV1alpha1ToGitlab(p.ProjectCreationLevel),
+		AutoDevopsEnabled:     p.AutoDevopsEnabled,
+		SubGroupCreationLevel: SubGroupCreationLevelValueV1alpha1ToGitlab(p.SubGroupCreationLevel),
+		EmailsEnabled:         p.EmailsEnabled,
+		MentionsDisabled:      p.MentionsDisabled,
+		LFSEnabled:            p.LFSEnabled,
+		RequestAccessEnabled:  p.RequestAccessEnabled,
+	}
+	if p.TwoFactorGracePeriod != nil {
+		val := *p.TwoFactorGracePeriod
+		group.TwoFactorGracePeriod = &val
+	}
+	if p.SharedRunnersMinutesLimit != nil {
+		val := *p.SharedRunnersMinutesLimit
+		group.SharedRunnersMinutesLimit = &val
+	}
+	if p.ExtraSharedRunnersMinutesLimit != nil {
+		val := *p.ExtraSharedRunnersMinutesLimit
+		group.ExtraSharedRunnersMinutesLimit = &val
 	}
 	return group
 }

@@ -297,7 +297,6 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 	project := &gitlab.CreateProjectOptions{
 		Name:                                &name,
 		Path:                                p.Path,
-		NamespaceID:                         p.NamespaceID,
 		DefaultBranch:                       p.DefaultBranch,
 		Description:                         p.Description,
 		IssuesAccessLevel:                   clients.AccessControlValueV1alpha1ToGitlab(p.IssuesAccessLevel),
@@ -331,28 +330,44 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		Topics:                                    &p.Topics,
 		PrintingMergeRequestLinkEnabled:           p.PrintingMergeRequestLinkEnabled,
 		BuildGitStrategy:                          p.BuildGitStrategy,
-		BuildTimeout:                              p.BuildTimeout,
 		AutoCancelPendingPipelines:                p.AutoCancelPendingPipelines,
 		BuildCoverageRegex:                        p.BuildCoverageRegex,
 		CIConfigPath:                              p.CIConfigPath,
 		CIForwardDeploymentEnabled:                p.CIForwardDeploymentEnabled,
 		AutoDevopsEnabled:                         p.AutoDevopsEnabled,
 		AutoDevopsDeployStrategy:                  p.AutoDevopsDeployStrategy,
-		ApprovalsBeforeMerge:                      p.ApprovalsBeforeMerge,
 		ExternalAuthorizationClassificationLabel:  p.ExternalAuthorizationClassificationLabel,
 		Mirror:                                    p.Mirror,
 		MirrorTriggerBuilds:                       p.MirrorTriggerBuilds,
 		InitializeWithReadme:                      p.InitializeWithReadme,
 		TemplateName:                              p.TemplateName,
-		TemplateProjectID:                         p.TemplateProjectID,
 		UseCustomTemplate:                         p.UseCustomTemplate,
-		GroupWithProjectTemplatesID:               p.GroupWithProjectTemplatesID,
 		PackagesEnabled:                           p.PackagesEnabled,
 		ServiceDeskEnabled:                        p.ServiceDeskEnabled,
 		AutocloseReferencedIssues:                 p.AutocloseReferencedIssues,
 		SuggestionCommitMessage:                   p.SuggestionCommitMessage,
 		IssuesTemplate:                            p.IssuesTemplate,
 		MergeRequestsTemplate:                     p.MergeRequestsTemplate,
+	}
+	if p.NamespaceID != nil {
+		val := *p.NamespaceID
+		project.NamespaceID = &val
+	}
+	if p.BuildTimeout != nil {
+		val := *p.BuildTimeout
+		project.BuildTimeout = &val
+	}
+	if p.ApprovalsBeforeMerge != nil {
+		val := p.ApprovalsBeforeMerge
+		project.ApprovalsBeforeMerge = val //nolint:staticcheck // SA1019 ApprovalsBeforeMerge is deprecated by GitLab API, will migrate to Merge Request Approvals API later
+	}
+	if p.TemplateProjectID != nil {
+		val := p.TemplateProjectID
+		project.TemplateProjectID = val
+	}
+	if p.GroupWithProjectTemplatesID != nil {
+		val := p.GroupWithProjectTemplatesID
+		project.GroupWithProjectTemplatesID = val
 	}
 	return project
 }
@@ -396,18 +411,14 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		TagList:                                  &p.TagList, //nolint:staticcheck
 		Topics:                                   &p.Topics,
 		BuildGitStrategy:                         p.BuildGitStrategy,
-		BuildTimeout:                             p.BuildTimeout,
 		AutoCancelPendingPipelines:               p.AutoCancelPendingPipelines,
 		BuildCoverageRegex:                       p.BuildCoverageRegex,
 		CIConfigPath:                             p.CIConfigPath,
 		CIForwardDeploymentEnabled:               p.CIForwardDeploymentEnabled,
-		CIDefaultGitDepth:                        p.CIDefaultGitDepth,
 		AutoDevopsEnabled:                        p.AutoDevopsEnabled,
 		AutoDevopsDeployStrategy:                 p.AutoDevopsDeployStrategy,
-		ApprovalsBeforeMerge:                     p.ApprovalsBeforeMerge,
 		ExternalAuthorizationClassificationLabel: p.ExternalAuthorizationClassificationLabel,
 		Mirror:                                   p.Mirror,
-		MirrorUserID:                             p.MirrorUserID,
 		MirrorTriggerBuilds:                      p.MirrorTriggerBuilds,
 		OnlyMirrorProtectedBranches:              p.OnlyMirrorProtectedBranches,
 		MirrorOverwritesDivergedBranches:         p.MirrorOverwritesDivergedBranches,
@@ -417,6 +428,22 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		SuggestionCommitMessage:                  p.SuggestionCommitMessage,
 		IssuesTemplate:                           p.IssuesTemplate,
 		MergeRequestsTemplate:                    p.MergeRequestsTemplate,
+	}
+	if p.BuildTimeout != nil {
+		val := *p.BuildTimeout
+		o.BuildTimeout = &val
+	}
+	if p.CIDefaultGitDepth != nil {
+		val := *p.CIDefaultGitDepth
+		o.CIDefaultGitDepth = &val
+	}
+	if p.ApprovalsBeforeMerge != nil {
+		val := p.ApprovalsBeforeMerge
+		o.ApprovalsBeforeMerge = val //nolint:staticcheck // SA1019 ApprovalsBeforeMerge is deprecated by GitLab API, will migrate to Merge Request Approvals API later
+	}
+	if p.MirrorUserID != nil {
+		val := *p.MirrorUserID
+		o.MirrorUserID = &val
 	}
 	return o
 }
@@ -432,7 +459,10 @@ func GenerateEditPushRulesOptions(p *v1alpha1.ProjectParameters) *gitlab.EditPro
 		o.CommitMessageRegex = p.PushRules.CommitMessageRegex
 		o.DenyDeleteTag = p.PushRules.DenyDeleteTag
 		o.FileNameRegex = p.PushRules.FileNameRegex
-		o.MaxFileSize = p.PushRules.MaxFileSize
+		if p.PushRules.MaxFileSize != nil {
+			val := *p.PushRules.MaxFileSize
+			o.MaxFileSize = &val
+		}
 		o.MemberCheck = p.PushRules.MemberCheck
 		o.PreventSecrets = p.PushRules.PreventSecrets
 		o.RejectNonDCOCommits = p.PushRules.RejectNonDCOCommits
@@ -441,7 +471,7 @@ func GenerateEditPushRulesOptions(p *v1alpha1.ProjectParameters) *gitlab.EditPro
 		// When push rules are removed from spec, clear all rules by setting them to empty/false values
 		emptyString := ""
 		falseValue := false
-		zeroInt := 0
+		zeroInt := int64(0)
 
 		o.AuthorEmailRegex = &emptyString
 		o.BranchNameRegex = &emptyString

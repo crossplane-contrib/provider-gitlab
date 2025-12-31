@@ -34,10 +34,10 @@ const (
 
 // MemberClient defines Gitlab Member service operations
 type MemberClient interface {
-	GetProjectMember(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
+	GetProjectMember(pid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
 	AddProjectMember(pid interface{}, opt *gitlab.AddProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
-	EditProjectMember(pid interface{}, user int, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
-	DeleteProjectMember(pid interface{}, user int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	EditProjectMember(pid interface{}, user int64, opt *gitlab.EditProjectMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectMember, *gitlab.Response, error)
+	DeleteProjectMember(pid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewMemberClient returns a new Gitlab Project Member service
@@ -80,8 +80,10 @@ func GenerateMemberObservation(projectMember *gitlab.ProjectMember) v1alpha1.Mem
 // GenerateAddMemberOptions generates project member add options
 func GenerateAddMemberOptions(p *v1alpha1.MemberParameters) *gitlab.AddProjectMemberOptions {
 	projectMember := &gitlab.AddProjectMemberOptions{
-		UserID:      p.UserID,
 		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
+	}
+	if p.UserID != nil {
+		projectMember.UserID = p.UserID
 	}
 	if p.ExpiresAt != nil {
 		projectMember.ExpiresAt = p.ExpiresAt

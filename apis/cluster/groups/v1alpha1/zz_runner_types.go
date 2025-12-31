@@ -36,7 +36,7 @@ type RunnerParameters struct {
 	// The runner will be available to execute jobs for projects within this group.
 	// +optional
 	// +immutable
-	GroupID *int `json:"groupId,omitempty"`
+	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a Group resource to retrieve its ID.
 	// This provides a way to reference a group managed by Crossplane.
@@ -75,7 +75,7 @@ type RunnerObservation struct {
 type RunnerGroup struct {
 	// ID is the unique identifier of the group.
 	// +optional
-	ID int `json:"id"`
+	ID int64 `json:"id"`
 
 	// Name is the name of the group.
 	// +optional

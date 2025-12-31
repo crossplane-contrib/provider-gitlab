@@ -77,7 +77,7 @@ type UserIdentity struct {
 //
 // GitLab API docs: https://docs.gitlab.com/ee/api/users.html
 type User struct {
-	ID                        int                `json:"ID,omitempty"`
+	ID                        int64              `json:"ID,omitempty"`
 	Username                  string             `json:"username,omitempty"`
 	Email                     string             `json:"email,omitempty"`
 	Name                      string             `json:"name,omitempty"`
@@ -94,14 +94,14 @@ type User struct {
 	Organization              string             `json:"organization,omitempty"`
 	ExternUID                 string             `json:"externUID,omitempty"`
 	Provider                  string             `json:"provider,omitempty"`
-	ThemeID                   int                `json:"themeID,omitempty"`
+	ThemeID                   int64              `json:"themeID,omitempty"`
 	LastActivityOn            *metav1.Time       `json:"lastActivityOn,omitempty"`
-	ColorSchemeID             int                `json:"colorSchemeID,omitempty"`
+	ColorSchemeID             int64              `json:"colorSchemeID,omitempty"`
 	IsAdmin                   bool               `json:"isAdmin,omitempty"`
 	AvatarURL                 string             `json:"avatarURL,omitempty"`
 	CanCreateGroup            bool               `json:"canCreateGroup,omitempty"`
 	CanCreateProject          bool               `json:"canCreateProject,omitempty"`
-	ProjectsLimit             int                `json:"projectsLimit,omitempty"`
+	ProjectsLimit             int64              `json:"projectsLimit,omitempty"`
 	CurrentSignInAt           *metav1.Time       `json:"currentSignInAt,omitempty"`
 	LastSignInAt              *metav1.Time       `json:"lastSignInAt,omitempty"`
 	ConfirmedAt               *metav1.Time       `json:"confirmedAt,omitempty"`
@@ -109,14 +109,14 @@ type User struct {
 	Identities                []*UserIdentity    `json:"identities,omitempty"`
 	External                  bool               `json:"external,omitempty"`
 	PrivateProfile            bool               `json:"privateProfile,omitempty"`
-	SharedRunnersMinutesLimit int                `json:"sharedRunnersMinutesLimit,omitempty"`
+	SharedRunnersMinutesLimit int64              `json:"sharedRunnersMinutesLimit,omitempty"`
 	CustomAttributes          []*CustomAttribute `json:"customAttributes,omitempty"`
 }
 
 // ContainerExpirationPolicy represents the container expiration policy.
 type ContainerExpirationPolicy struct {
 	Cadence         string       `json:"cadence"`
-	KeepN           int          `json:"keepN"`
+	KeepN           int64        `json:"keepN"`
 	OlderThan       string       `json:"olderThan"`
 	NameRegexDelete string       `json:"nameRegexDelete"`
 	NameRegexKeep   string       `json:"nameRegexKeep"`
@@ -139,7 +139,7 @@ type ProjectLicense struct {
 // GitLab API docs: https://docs.gitlab.com/ee/api/projects.html#create-project
 type ContainerExpirationPolicyAttributes struct {
 	Cadence         *string `json:"cadence,omitempty"`
-	KeepN           *int    `json:"keepN,omitempty"`
+	KeepN           *int64  `json:"keepN,omitempty"`
 	OlderThan       *string `json:"olderThan,omitempty"`
 	NameRegexDelete *string `json:"nameRegexDelete,omitempty"`
 	NameRegexKeep   *string `json:"nameRegexKeep,omitempty"`
@@ -159,7 +159,7 @@ type ProjectParameters struct {
 	// To configure approval rules, see Merge request approvals API.
 	// Deprecated: use Approvals Resource instead
 	// +optional
-	ApprovalsBeforeMerge *int `json:"approvalsBeforeMerge,omitempty"`
+	ApprovalsBeforeMerge *int64 `json:"approvalsBeforeMerge,omitempty"`
 
 	// Auto-cancel pending pipelines. This isn’t a boolean, but enabled/disabled.
 	// +optional
@@ -187,7 +187,7 @@ type ProjectParameters struct {
 
 	// The maximum amount of time, in seconds, that a job can run.
 	// +optional
-	BuildTimeout *int `json:"buildTimeout,omitempty"`
+	BuildTimeout *int64 `json:"buildTimeout,omitempty"`
 
 	// One of disabled, private, or enabled.
 	// +optional
@@ -199,7 +199,7 @@ type ProjectParameters struct {
 
 	// Default number of revisions for shallow cloning.
 	// +optional
-	CIDefaultGitDepth *int `json:"ciDefaultGitDepth,omitempty"`
+	CIDefaultGitDepth *int64 `json:"ciDefaultGitDepth,omitempty"`
 
 	// When a new deployment job starts, skip older deployment jobs that are still pending
 	// +optional
@@ -251,7 +251,7 @@ type ProjectParameters struct {
 	// Leave empty for instance-level templates. Requires useCustomTemplate to be true.
 	// +optional
 	// +immutable
-	GroupWithProjectTemplatesID *int `json:"groupWithProjectTemplatesId,omitempty"`
+	GroupWithProjectTemplatesID *int64 `json:"groupWithProjectTemplatesId,omitempty"`
 
 	// URL to import repository from.
 	// +optional
@@ -302,11 +302,11 @@ type ProjectParameters struct {
 
 	// User responsible for all the activity surrounding a pull mirror event. (admins only)
 	// +optional
-	MirrorUserID *int `json:"mirrorUserId,omitempty"`
+	MirrorUserID *int64 `json:"mirrorUserId,omitempty"`
 
 	// Namespace for the new project (defaults to the current user’s namespace).
 	// +optional
-	NamespaceID *int `json:"namespaceId,omitempty"`
+	NamespaceID *int64 `json:"namespaceId,omitempty"`
 
 	// NamespaceIDRef is a reference to a project to retrieve its namespaceId
 	// +optional
@@ -423,7 +423,7 @@ type ProjectParameters struct {
 	// This is preferable to using templateName since templateName may be ambiguous.
 	// +optional
 	// +immutable
-	TemplateProjectID *int `json:"templateProjectId,omitempty"`
+	TemplateProjectID *int64 `json:"templateProjectId,omitempty"`
 
 	// Use either custom instance or group (with groupWithProjectTemplatesId) project template.
 	// +optional
@@ -477,7 +477,7 @@ type PushRules struct {
 	FileNameRegex *string `json:"fileNameRegex,omitempty"`
 
 	// Maximum file size (MB).
-	MaxFileSize *int `json:"maxFileSize,omitempty"`
+	MaxFileSize *int64 `json:"maxFileSize,omitempty"`
 
 	// Restrict commits by author (email) to existing GitLab users.
 	MemberCheck *bool `json:"memberCheck,omitempty"`
@@ -494,7 +494,7 @@ type PushRules struct {
 
 // ProjectNamespace represents a project namespace.
 type ProjectNamespace struct {
-	ID        int    `json:"ID"`
+	ID        int64  `json:"ID"`
 	Name      string `json:"name"`
 	Path      string `json:"path"`
 	Kind      string `json:"kind"`
@@ -532,7 +532,7 @@ type GroupAccess struct {
 // ForkParent represents the parent project when this is a fork.
 type ForkParent struct {
 	HTTPURLToRepo     string `json:"HTTPURLToRepo"`
-	ID                int    `json:"ID"`
+	ID                int64  `json:"ID"`
 	Name              string `json:"name"`
 	NameWithNamespace string `json:"nameWithNamespace"`
 	Path              string `json:"path"`
@@ -551,7 +551,7 @@ type StorageStatistics struct {
 // ProjectStatistics represents a statistics record for a project.
 type ProjectStatistics struct {
 	StorageStatistics `json:",inline"`
-	CommitCount       int `json:"commitCount"`
+	CommitCount       int64 `json:"commitCount"`
 }
 
 // Links represents a project web links for self, issues, mergeRequests,
@@ -576,24 +576,24 @@ type CustomAttribute struct {
 
 // SharedWithGroups struct used in gitlab project
 type SharedWithGroups struct {
-	GroupID          int    `json:"groupID,omitempty"`
+	GroupID          int64  `json:"groupID,omitempty"`
 	GroupName        string `json:"groupName,omitempty"`
-	GroupAccessLevel int    `json:"groupAccessLevel,omitempty"`
+	GroupAccessLevel int64  `json:"groupAccessLevel,omitempty"`
 }
 
 // ProjectObservation is the observed state of a Project.
 type ProjectObservation struct {
-	ID                        int                        `json:"id,omitempty"`
+	ID                        int64                      `json:"id,omitempty"`
 	Archived                  bool                       `json:"archived,omitempty"`
 	AvatarURL                 string                     `json:"avatarUrl,omitempty"`
 	ComplianceFrameworks      []string                   `json:"complianceFrameworks,omitempty"`
 	ContainerExpirationPolicy *ContainerExpirationPolicy `json:"containerExpirationPolicy,omitempty"`
 	CreatedAt                 *metav1.Time               `json:"createdAt,omitempty"`
-	CreatorID                 int                        `json:"creatorId,omitempty"`
+	CreatorID                 int64                      `json:"creatorId,omitempty"`
 	CustomAttributes          []CustomAttribute          `json:"customAttributes,omitempty"`
 	EmptyRepo                 bool                       `json:"emptyRepo,omitempty"`
 	ForkedFromProject         *ForkParent                `json:"forkedFromProject,omitempty"`
-	ForksCount                int                        `json:"forksCount,omitempty"`
+	ForksCount                int64                      `json:"forksCount,omitempty"`
 	HTTPURLToRepo             string                     `json:"httpUrlToRepo,omitempty"`
 	ImportError               string                     `json:"importError,omitempty"`
 	ImportStatus              string                     `json:"importStatus,omitempty"`
@@ -611,7 +611,7 @@ type ProjectObservation struct {
 	MergeRequestsAccessLevel  AccessControlValue         `json:"mergeRequestsAccessLevel,omitempty"`
 	NameWithNamespace         string                     `json:"nameWithNamespace,omitempty"`
 	Namespace                 *ProjectNamespace          `json:"namespace,omitempty"`
-	OpenIssuesCount           int                        `json:"openIssuesCount,omitempty"`
+	OpenIssuesCount           int64                      `json:"openIssuesCount,omitempty"`
 	Owner                     *User                      `json:"owner,omitempty"`
 	PathWithNamespace         string                     `json:"pathWithNamespace,omitempty"`
 	Permissions               *Permissions               `json:"permissions,omitempty"`
@@ -622,7 +622,7 @@ type ProjectObservation struct {
 	SharedWithGroups          []SharedWithGroups         `json:"sharedWithGroups,omitempty"`
 	SnippetsEnabled           bool                       `json:"snippetsEnabled,omitempty"`
 	SnippetsAccessLevel       AccessControlValue         `json:"snippetsAccessLevel,omitempty"`
-	StarCount                 int                        `json:"starCount,omitempty"`
+	StarCount                 int64                      `json:"starCount,omitempty"`
 	Statistics                *ProjectStatistics         `json:"statistics,omitempty"`
 	WebURL                    string                     `json:"webUrl,omitempty"`
 	WikiEnabled               bool                       `json:"wikiEnabled,omitempty"`

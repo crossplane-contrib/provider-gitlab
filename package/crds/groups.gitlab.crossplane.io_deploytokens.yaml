@@ -82,6 +82,7 @@ spec:
                   groupId:
                     description: GroupID is the ID of the group to create the deploy
                       token in.
+                    format: int64
                     type: integer
                   groupIdRef:
                     description: GroupIDRef is a reference to a group to retrieve

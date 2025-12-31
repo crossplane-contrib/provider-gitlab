@@ -61,7 +61,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ArchiveBuildsInHumanReadable *string `json:"archiveBuildsInHumanReadable,omitempty"`
 	// +optional
-	ASCIIDocMaxIncludes *int `json:"asciiDocMaxIncludes,omitempty"`
+	ASCIIDocMaxIncludes *int64 `json:"asciiDocMaxIncludes,omitempty"`
 	// +optional
 	AssetProxyAllowlist *[]string `json:"assetProxyAllowlist,omitempty"`
 	// +optional
@@ -77,9 +77,9 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	AutoBanUserOnExcessiveProjectsDownload *bool `json:"autoBanUserOnExcessiveProjectsDownload,omitempty"`
 	// +optional
-	AutocompleteUsers *int `json:"autocompleteUsers,omitempty"`
+	AutocompleteUsers *int64 `json:"autocompleteUsers,omitempty"`
 	// +optional
-	AutocompleteUsersUnauthenticated *int `json:"autocompleteUsersUnauthenticated,omitempty"`
+	AutocompleteUsersUnauthenticated *int64 `json:"autocompleteUsersUnauthenticated,omitempty"`
 	// +optional
 	AutoDevOpsDomain *string `json:"autoDevOpsDomain,omitempty"`
 	// +optional
@@ -87,11 +87,11 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	AutomaticPurchasedStorageAllocation *bool `json:"automaticPurchasedStorageAllocation,omitempty"`
 	// +optional
-	BulkImportConcurrentPipelineBatchLimit *int `json:"bulkImportConcurrentPipelineBatchLimit,omitempty"`
+	BulkImportConcurrentPipelineBatchLimit *int64 `json:"bulkImportConcurrentPipelineBatchLimit,omitempty"`
 	// +optional
 	BulkImportEnabled *bool `json:"bulkImportEnabled,omitempty"`
 	// +optional
-	BulkImportMaxDownloadFileSize *int `json:"bulkImportMaxDownloadFileSize,omitempty"`
+	BulkImportMaxDownloadFileSize *int64 `json:"bulkImportMaxDownloadFileSize,omitempty"`
 	// +optional
 	CanCreateGroup *bool `json:"canCreateGroup,omitempty"`
 	// +optional
@@ -101,55 +101,55 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	CIJobLiveTraceEnabled *bool `json:"ciJobLiveTraceEnabled,omitempty"`
 	// +optional
-	CIMaxIncludes *int `json:"ciMaxIncludes,omitempty"`
+	CIMaxIncludes *int64 `json:"ciMaxIncludes,omitempty"`
 	// +optional
-	CIMaxTotalYAMLSizeBytes *int `json:"ciMaxTotalYamlSizeBytes,omitempty"`
+	CIMaxTotalYAMLSizeBytes *int64 `json:"ciMaxTotalYamlSizeBytes,omitempty"`
 	// +optional
-	CIPartitionsSizeLimit *int `json:"ciPartitionsSizeLimit,omitempty"`
+	CIPartitionsSizeLimit *int64 `json:"ciPartitionsSizeLimit,omitempty"`
 	// +optional
 	CommitEmailHostname *string `json:"commitEmailHostname,omitempty"`
 	// +optional
-	ConcurrentBitbucketImportJobsLimit *int `json:"concurrentBitbucketImportJobsLimit,omitempty"`
+	ConcurrentBitbucketImportJobsLimit *int64 `json:"concurrentBitbucketImportJobsLimit,omitempty"`
 	// +optional
-	ConcurrentBitbucketServerImportJobsLimit *int `json:"concurrentBitbucketServerImportJobsLimit,omitempty"`
+	ConcurrentBitbucketServerImportJobsLimit *int64 `json:"concurrentBitbucketServerImportJobsLimit,omitempty"`
 	// +optional
-	ConcurrentGitHubImportJobsLimit *int `json:"concurrentGitHubImportJobsLimit,omitempty"`
+	ConcurrentGitHubImportJobsLimit *int64 `json:"concurrentGitHubImportJobsLimit,omitempty"`
 	// +optional
 	ContainerExpirationPoliciesEnableHistoricEntries *bool `json:"containerExpirationPoliciesEnableHistoricEntries,omitempty"`
 	// +optional
-	ContainerRegistryCleanupTagsServiceMaxListSize *int `json:"containerRegistryCleanupTagsServiceMaxListSize,omitempty"`
+	ContainerRegistryCleanupTagsServiceMaxListSize *int64 `json:"containerRegistryCleanupTagsServiceMaxListSize,omitempty"`
 	// +optional
-	ContainerRegistryDeleteTagsServiceTimeout *int `json:"containerRegistryDeleteTagsServiceTimeout,omitempty"`
+	ContainerRegistryDeleteTagsServiceTimeout *int64 `json:"containerRegistryDeleteTagsServiceTimeout,omitempty"`
 	// +optional
 	ContainerRegistryExpirationPoliciesCaching *bool `json:"containerRegistryExpirationPoliciesCaching,omitempty"`
 	// +optional
-	ContainerRegistryExpirationPoliciesWorkerCapacity *int `json:"containerRegistryExpirationPoliciesWorkerCapacity,omitempty"`
+	ContainerRegistryExpirationPoliciesWorkerCapacity *int64 `json:"containerRegistryExpirationPoliciesWorkerCapacity,omitempty"`
 	// +optional
 	ContainerRegistryImportCreatedBefore *metav1.Time `json:"containerRegistryImportCreatedBefore,omitempty"`
 	// +optional
-	ContainerRegistryImportMaxRetries *int `json:"containerRegistryImportMaxRetries,omitempty"`
+	ContainerRegistryImportMaxRetries *int64 `json:"containerRegistryImportMaxRetries,omitempty"`
 	// +optional
-	ContainerRegistryImportMaxStepDuration *int `json:"containerRegistryImportMaxStepDuration,omitempty"`
+	ContainerRegistryImportMaxStepDuration *int64 `json:"containerRegistryImportMaxStepDuration,omitempty"`
 	// +optional
-	ContainerRegistryImportMaxTagsCount *int `json:"containerRegistryImportMaxTagsCount,omitempty"`
+	ContainerRegistryImportMaxTagsCount *int64 `json:"containerRegistryImportMaxTagsCount,omitempty"`
 	// +optional
-	ContainerRegistryImportStartMaxRetries *int `json:"containerRegistryImportStartMaxRetries,omitempty"`
+	ContainerRegistryImportStartMaxRetries *int64 `json:"containerRegistryImportStartMaxRetries,omitempty"`
 	// +optional
 	ContainerRegistryImportTargetPlan *string `json:"containerRegistryImportTargetPlan,omitempty"`
 	// +optional
-	ContainerRegistryTokenExpireDelay *int `json:"containerRegistryTokenExpireDelay,omitempty"`
+	ContainerRegistryTokenExpireDelay *int64 `json:"containerRegistryTokenExpireDelay,omitempty"`
 	// +optional
 	CustomHTTPCloneURLRoot *string `json:"customHTTPCloneUrlRoot,omitempty"`
 	// +optional
 	DNSRebindingProtectionEnabled *bool `json:"dnsRebindingProtectionEnabled,omitempty"`
 	// +optional
-	DSAKeyRestriction *int `json:"dsaKeyRestriction,omitempty"`
+	DSAKeyRestriction *int64 `json:"dsaKeyRestriction,omitempty"`
 	// +optional
 	DeactivateDormantUsers *bool `json:"deactivateDormantUsers,omitempty"`
 	// +optional
-	DeactivateDormantUsersPeriod *int `json:"deactivateDormantUsersPeriod,omitempty"`
+	DeactivateDormantUsersPeriod *int64 `json:"deactivateDormantUsersPeriod,omitempty"`
 	// +optional
-	DecompressArchiveFileTimeout *int `json:"decompressArchiveFileTimeout,omitempty"`
+	DecompressArchiveFileTimeout *int64 `json:"decompressArchiveFileTimeout,omitempty"`
 	// +optional
 	DefaultArtifactsExpireIn *string `json:"defaultArtifactsExpireIn,omitempty"`
 	// +optional
@@ -163,17 +163,17 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	DefaultPreferredLanguage *string `json:"defaultPreferredLanguage,omitempty"`
 	// +optional
-	DefaultProjectCreation *int `json:"defaultProjectCreation,omitempty"`
+	DefaultProjectCreation *int64 `json:"defaultProjectCreation,omitempty"`
 	// +optional
 	DefaultProjectDeletionProtection *bool `json:"defaultProjectDeletionProtection,omitempty"`
 	// +optional
 	DefaultProjectVisibility *string `json:"defaultProjectVisibility,omitempty"`
 	// +optional
-	DefaultProjectsLimit *int `json:"defaultProjectsLimit,omitempty"`
+	DefaultProjectsLimit *int64 `json:"defaultProjectsLimit,omitempty"`
 	// +optional
 	DefaultSnippetVisibility *string `json:"defaultSnippetVisibility,omitempty"`
 	// +optional
-	DefaultSyntaxHighlightingTheme *int `json:"defaultSyntaxHighlightingTheme,omitempty"`
+	DefaultSyntaxHighlightingTheme *int64 `json:"defaultSyntaxHighlightingTheme,omitempty"`
 	// +optional
 	DelayedGroupDeletion *bool `json:"delayedGroupDeletion,omitempty"`
 	// +optional
@@ -183,17 +183,17 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	DeleteUnconfirmedUsers *bool `json:"deleteUnconfirmedUsers,omitempty"`
 	// +optional
-	DeletionAdjournedPeriod *int `json:"deletionAdjournedPeriod,omitempty"`
+	DeletionAdjournedPeriod *int64 `json:"deletionAdjournedPeriod,omitempty"`
 	// +optional
 	DiagramsnetEnabled *bool `json:"diagramsnetEnabled,omitempty"`
 	// +optional
 	DiagramsnetURL *string `json:"diagramsnetUrl,omitempty"`
 	// +optional
-	DiffMaxFiles *int `json:"diffMaxFiles,omitempty"`
+	DiffMaxFiles *int64 `json:"diffMaxFiles,omitempty"`
 	// +optional
-	DiffMaxLines *int `json:"diffMaxLines,omitempty"`
+	DiffMaxLines *int64 `json:"diffMaxLines,omitempty"`
 	// +optional
-	DiffMaxPatchBytes *int `json:"diffMaxPatchBytes,omitempty"`
+	DiffMaxPatchBytes *int64 `json:"diffMaxPatchBytes,omitempty"`
 	// +optional
 	DisableFeedToken *bool `json:"disableFeedToken,omitempty"`
 	// +optional
@@ -211,13 +211,13 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	DomainDenylistEnabled *bool `json:"domainDenylistEnabled,omitempty"`
 	// +optional
-	DownstreamPipelineTriggerLimitPerProjectUserSHA *int `json:"downstreamPipelineTriggerLimitPerProjectUserSHA,omitempty"`
+	DownstreamPipelineTriggerLimitPerProjectUserSHA *int64 `json:"downstreamPipelineTriggerLimitPerProjectUserSHA,omitempty"`
 	// +optional
 	DuoFeaturesEnabled *bool `json:"duoFeaturesEnabled,omitempty"`
 	// +optional
-	ECDSAKeyRestriction *int `json:"ecdsaKeyRestriction,omitempty"`
+	ECDSAKeyRestriction *int64 `json:"ecdsaKeyRestriction,omitempty"`
 	// +optional
-	ECDSASKKeyRestriction *int `json:"ecdsaskKeyRestriction,omitempty"`
+	ECDSASKKeyRestriction *int64 `json:"ecdsaskKeyRestriction,omitempty"`
 	// +optional
 	EKSAccessKeyID *string `json:"eksAccessKeyId,omitempty"`
 	// +optional
@@ -231,9 +231,9 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	EKSSecretAccessKeySecretRef *xpv1.LocalSecretKeySelector `json:"eksSecretAccessKeySecretRef,omitempty"`
 	// +optional
-	Ed25519KeyRestriction *int `json:"ed25519KeyRestriction,omitempty"`
+	Ed25519KeyRestriction *int64 `json:"ed25519KeyRestriction,omitempty"`
 	// +optional
-	Ed25519SKKeyRestriction *int `json:"ed25519SKKeyRestriction,omitempty"`
+	Ed25519SKKeyRestriction *int64 `json:"ed25519SKKeyRestriction,omitempty"`
 	// +optional
 	ElasticsearchAWS *bool `json:"elasticsearchAws,omitempty"`
 	// +optional
@@ -249,29 +249,29 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ElasticsearchAnalyzersKuromojiEnabled *bool `json:"elasticsearchAnalyzersKuromojiEnabled,omitempty"`
 	// +optional
-	ElasticsearchAnalyzersKuromojiSearch *int `json:"elasticsearchAnalyzersKuromojiSearch,omitempty"`
+	ElasticsearchAnalyzersKuromojiSearch *int64 `json:"elasticsearchAnalyzersKuromojiSearch,omitempty"`
 	// +optional
 	ElasticsearchAnalyzersSmartCNEnabled *bool `json:"elasticsearchAnalyzersSmartCnEnabled,omitempty"`
 	// +optional
-	ElasticsearchAnalyzersSmartCNSearch *int `json:"elasticsearchAnalyzersSmartCnSearch,omitempty"`
+	ElasticsearchAnalyzersSmartCNSearch *int64 `json:"elasticsearchAnalyzersSmartCnSearch,omitempty"`
 	// +optional
-	ElasticsearchClientRequestTimeout *int `json:"elasticsearchClientRequestTimeout,omitempty"`
+	ElasticsearchClientRequestTimeout *int64 `json:"elasticsearchClientRequestTimeout,omitempty"`
 	// +optional
-	ElasticsearchIndexedFieldLengthLimit *int `json:"elasticsearchIndexedFieldLengthLimit,omitempty"`
+	ElasticsearchIndexedFieldLengthLimit *int64 `json:"elasticsearchIndexedFieldLengthLimit,omitempty"`
 	// +optional
-	ElasticsearchIndexedFileSizeLimitKB *int `json:"elasticsearchIndexedFileSizeLimitKB,omitempty"`
+	ElasticsearchIndexedFileSizeLimitKB *int64 `json:"elasticsearchIndexedFileSizeLimitKB,omitempty"`
 	// +optional
 	ElasticsearchIndexing *bool `json:"elasticsearchIndexing,omitempty"`
 	// +optional
 	ElasticsearchLimitIndexing *bool `json:"elasticsearchLimitIndexing,omitempty"`
 	// +optional
-	ElasticsearchMaxBulkConcurrency *int `json:"elasticsearchMaxBulkConcurrency,omitempty"`
+	ElasticsearchMaxBulkConcurrency *int64 `json:"elasticsearchMaxBulkConcurrency,omitempty"`
 	// +optional
-	ElasticsearchMaxBulkSizeMB *int `json:"elasticsearchMaxBulkSizeMB,omitempty"`
+	ElasticsearchMaxBulkSizeMB *int64 `json:"elasticsearchMaxBulkSizeMB,omitempty"`
 	// +optional
-	ElasticsearchMaxCodeIndexingConcurrency *int `json:"elasticsearchMaxCodeIndexingConcurrency,omitempty"`
+	ElasticsearchMaxCodeIndexingConcurrency *int64 `json:"elasticsearchMaxCodeIndexingConcurrency,omitempty"`
 	// +optional
-	ElasticsearchNamespaceIDs *[]int `json:"elasticsearchNamespaceIds,omitempty"`
+	ElasticsearchNamespaceIDs *[]int64 `json:"elasticsearchNamespaceIds,omitempty"`
 	// +optional
 	ElasticsearchPassword *string `json:"elasticsearchPassword,omitempty"`
 	// +optional
@@ -279,23 +279,23 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ElasticsearchPauseIndexing *bool `json:"elasticsearchPauseIndexing,omitempty"`
 	// +optional
-	ElasticsearchProjectIDs *[]int `json:"elasticsearchProjectIds,omitempty"`
+	ElasticsearchProjectIDs *[]int64 `json:"elasticsearchProjectIds,omitempty"`
 	// +optional
-	ElasticsearchReplicas *int `json:"elasticsearchReplicas,omitempty"`
+	ElasticsearchReplicas *int64 `json:"elasticsearchReplicas,omitempty"`
 	// +optional
 	ElasticsearchRequeueWorkers *bool `json:"elasticsearchRequeueWorkers,omitempty"`
 	// +optional
-	ElasticsearchRetryOnFailure *int `json:"elasticsearchRetryOnFailure,omitempty"`
+	ElasticsearchRetryOnFailure *int64 `json:"elasticsearchRetryOnFailure,omitempty"`
 	// +optional
 	ElasticsearchSearch *bool `json:"elasticsearchSearch,omitempty"`
 	// +optional
-	ElasticsearchShards *int `json:"elasticsearchShards,omitempty"`
+	ElasticsearchShards *int64 `json:"elasticsearchShards,omitempty"`
 	// +optional
 	ElasticsearchURL *string `json:"elasticsearchUrl,omitempty"`
 	// +optional
 	ElasticsearchUsername *string `json:"elasticsearchUsername,omitempty"`
 	// +optional
-	ElasticsearchWorkerNumberOfShards *int `json:"elasticsearchWorkerNumberOfShards,omitempty"`
+	ElasticsearchWorkerNumberOfShards *int64 `json:"elasticsearchWorkerNumberOfShards,omitempty"`
 	// +optional
 	EmailAdditionalText *string `json:"emailAdditionalText,omitempty"`
 	// +optional
@@ -337,7 +337,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ExternalAuthorizationServiceURL *string `json:"externalAuthorizationServiceUrl,omitempty"`
 	// +optional
-	ExternalPipelineValidationServiceTimeout *int `json:"externalPipelineValidationServiceTimeout,omitempty"`
+	ExternalPipelineValidationServiceTimeout *int64 `json:"externalPipelineValidationServiceTimeout,omitempty"`
 	// +optional
 	ExternalPipelineValidationServiceToken *string `json:"externalPipelineValidationServiceToken,omitempty"`
 	// +optional
@@ -345,33 +345,33 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ExternalPipelineValidationServiceURL *string `json:"externalPipelineValidationServiceUrl,omitempty"`
 	// +optional
-	FailedLoginAttemptsUnlockPeriodInMinutes *int `json:"failedLoginAttemptsUnlockPeriodInMinutes,omitempty"`
+	FailedLoginAttemptsUnlockPeriodInMinutes *int64 `json:"failedLoginAttemptsUnlockPeriodInMinutes,omitempty"`
 	// +optional
-	FileTemplateProjectID *int `json:"fileTemplateProjectId,omitempty"`
+	FileTemplateProjectID *int64 `json:"fileTemplateProjectId,omitempty"`
 	// +optional
-	FirstDayOfWeek *int `json:"firstDayOfWeek,omitempty"`
+	FirstDayOfWeek *int64 `json:"firstDayOfWeek,omitempty"`
 	// +optional
 	FlocEnabled *bool `json:"flocEnabled,omitempty"`
 	// +optional
 	GeoNodeAllowedIPs *string `json:"geoNodeAllowedIps,omitempty"`
 	// +optional
-	GeoStatusTimeout *int `json:"geoStatusTimeout,omitempty"`
+	GeoStatusTimeout *int64 `json:"geoStatusTimeout,omitempty"`
 	// +optional
-	GitRateLimitUsersAlertlist *[]int `json:"gitRateLimitUsersAlertlist,omitempty"`
+	GitRateLimitUsersAlertlist *[]int64 `json:"gitRateLimitUsersAlertlist,omitempty"`
 	// +optional
-	GitTwoFactorSessionExpiry *int `json:"gitTwoFactorSessionExpiry,omitempty"`
+	GitTwoFactorSessionExpiry *int64 `json:"gitTwoFactorSessionExpiry,omitempty"`
 	// +optional
-	GitalyTimeoutDefault *int `json:"gitalyTimeoutDefault,omitempty"`
+	GitalyTimeoutDefault *int64 `json:"gitalyTimeoutDefault,omitempty"`
 	// +optional
-	GitalyTimeoutFast *int `json:"gitalyTimeoutFast,omitempty"`
+	GitalyTimeoutFast *int64 `json:"gitalyTimeoutFast,omitempty"`
 	// +optional
-	GitalyTimeoutMedium *int `json:"gitalyTimeoutMedium,omitempty"`
+	GitalyTimeoutMedium *int64 `json:"gitalyTimeoutMedium,omitempty"`
 	// +optional
 	GitlabDedicatedInstance *bool `json:"gitlabDedicatedInstance,omitempty"`
 	// +optional
 	GitlabEnvironmentToolkitInstance *bool `json:"gitlabEnvironmentToolkitInstance,omitempty"`
 	// +optional
-	GitlabShellOperationLimit *int `json:"gitlabShellOperationLimit,omitempty"`
+	GitlabShellOperationLimit *int64 `json:"gitlabShellOperationLimit,omitempty"`
 	// +optional
 	GitpodEnabled *bool `json:"gitpodEnabled,omitempty"`
 	// +optional
@@ -387,15 +387,15 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	GravatarEnabled *bool `json:"gravatarEnabled,omitempty"`
 	// +optional
-	GroupDownloadExportLimit *int `json:"groupDownloadExportLimit,omitempty"`
+	GroupDownloadExportLimit *int64 `json:"groupDownloadExportLimit,omitempty"`
 	// +optional
-	GroupExportLimit *int `json:"groupExportLimit,omitempty"`
+	GroupExportLimit *int64 `json:"groupExportLimit,omitempty"`
 	// +optional
-	GroupImportLimit *int `json:"groupImportLimit,omitempty"`
+	GroupImportLimit *int64 `json:"groupImportLimit,omitempty"`
 	// +optional
 	GroupOwnersCanManageDefaultBranchProtection *bool `json:"groupOwnersCanManageDefaultBranchProtection,omitempty"`
 	// +optional
-	GroupRunnerTokenExpirationInterval *int `json:"groupRunnerTokenExpirationInterval,omitempty"`
+	GroupRunnerTokenExpirationInterval *int64 `json:"groupRunnerTokenExpirationInterval,omitempty"`
 	// +optional
 	HTMLEmailsEnabled *bool `json:"htmlEmailsEnabled,omitempty"`
 	// +optional
@@ -417,15 +417,15 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	HousekeepingEnabled *bool `json:"housekeepingEnabled,omitempty"`
 	// +optional
-	HousekeepingOptimizeRepositoryPeriod *int `json:"housekeepingOptimizeRepositoryPeriod,omitempty"`
+	HousekeepingOptimizeRepositoryPeriod *int64 `json:"housekeepingOptimizeRepositoryPeriod,omitempty"`
 	// +optional
 	ImportSources *[]string `json:"importSources,omitempty"`
 	// +optional
-	InactiveProjectsDeleteAfterMonths *int `json:"inactiveProjectsDeleteAfterMonths,omitempty"`
+	InactiveProjectsDeleteAfterMonths *int64 `json:"inactiveProjectsDeleteAfterMonths,omitempty"`
 	// +optional
-	InactiveProjectsMinSizeMB *int `json:"inactiveProjectsMinSizeMB,omitempty"`
+	InactiveProjectsMinSizeMB *int64 `json:"inactiveProjectsMinSizeMB,omitempty"`
 	// +optional
-	InactiveProjectsSendWarningEmailAfterMonths *int `json:"inactiveProjectsSendWarningEmailAfterMonths,omitempty"`
+	InactiveProjectsSendWarningEmailAfterMonths *int64 `json:"inactiveProjectsSendWarningEmailAfterMonths,omitempty"`
 	// +optional
 	IncludeOptionalMetricsInServicePing *bool `json:"includeOptionalMetricsInServicePing,omitempty"`
 	// +optional
@@ -433,7 +433,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	InvisibleCaptchaEnabled *bool `json:"invisibleCaptchaEnabled,omitempty"`
 	// +optional
-	IssuesCreateLimit *int `json:"issuesCreateLimit,omitempty"`
+	IssuesCreateLimit *int64 `json:"issuesCreateLimit,omitempty"`
 	// +optional
 	JiraConnectApplicationKey *string `json:"jiraConnectApplicationKey,omitempty"`
 	// +optional
@@ -451,7 +451,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	KrokiURL *string `json:"krokiUrl,omitempty"`
 	// +optional
-	LocalMarkdownVersion *int `json:"localMarkdownVersion,omitempty"`
+	LocalMarkdownVersion *int64 `json:"localMarkdownVersion,omitempty"`
 	// +optional
 	LockDuoFeaturesEnabled *bool `json:"lockDuoFeaturesEnabled,omitempty"`
 	// +optional
@@ -471,51 +471,51 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	MavenPackageRequestsForwarding *bool `json:"mavenPackageRequestsForwarding,omitempty"`
 	// +optional
-	MaxArtifactsSize *int `json:"maxArtifactsSize,omitempty"`
+	MaxArtifactsSize *int64 `json:"maxArtifactsSize,omitempty"`
 	// +optional
-	MaxAttachmentSize *int `json:"maxAttachmentSize,omitempty"`
+	MaxAttachmentSize *int64 `json:"maxAttachmentSize,omitempty"`
 	// +optional
-	MaxDecompressedArchiveSize *int `json:"maxDecompressedArchiveSize,omitempty"`
+	MaxDecompressedArchiveSize *int64 `json:"maxDecompressedArchiveSize,omitempty"`
 	// +optional
-	MaxExportSize *int `json:"maxExportSize,omitempty"`
+	MaxExportSize *int64 `json:"maxExportSize,omitempty"`
 	// +optional
-	MaxImportRemoteFileSize *int `json:"maxImportRemoteFileSize,omitempty"`
+	MaxImportRemoteFileSize *int64 `json:"maxImportRemoteFileSize,omitempty"`
 	// +optional
-	MaxImportSize *int `json:"maxImportSize,omitempty"`
+	MaxImportSize *int64 `json:"maxImportSize,omitempty"`
 	// +optional
-	MaxLoginAttempts *int `json:"maxLoginAttempts,omitempty"`
+	MaxLoginAttempts *int64 `json:"maxLoginAttempts,omitempty"`
 	// +optional
-	MaxNumberOfRepositoryDownloads *int `json:"maxNumberOfRepositoryDownloads,omitempty"`
+	MaxNumberOfRepositoryDownloads *int64 `json:"maxNumberOfRepositoryDownloads,omitempty"`
 	// +optional
-	MaxNumberOfRepositoryDownloadsWithinTimePeriod *int `json:"maxNumberOfRepositoryDownloadsWithinTimePeriod,omitempty"`
+	MaxNumberOfRepositoryDownloadsWithinTimePeriod *int64 `json:"maxNumberOfRepositoryDownloadsWithinTimePeriod,omitempty"`
 	// +optional
-	MaxPagesSize *int `json:"maxPagesSize,omitempty"`
+	MaxPagesSize *int64 `json:"maxPagesSize,omitempty"`
 	// +optional
-	MaxPersonalAccessTokenLifetime *int `json:"maxPersonalAccessTokenLifetime,omitempty"`
+	MaxPersonalAccessTokenLifetime *int64 `json:"maxPersonalAccessTokenLifetime,omitempty"`
 	// +optional
-	MaxSSHKeyLifetime *int `json:"maxSshKeyLifetime,omitempty"`
+	MaxSSHKeyLifetime *int64 `json:"maxSshKeyLifetime,omitempty"`
 	// +optional
-	MaxTerraformStateSizeBytes *int `json:"maxTerraformStateSizeBytes,omitempty"`
+	MaxTerraformStateSizeBytes *int64 `json:"maxTerraformStateSizeBytes,omitempty"`
 	// +optional
-	MaxYAMLDepth *int `json:"maxYamlDepth,omitempty"`
+	MaxYAMLDepth *int64 `json:"maxYamlDepth,omitempty"`
 	// +optional
-	MaxYAMLSizeBytes *int `json:"maxYamlSizeBytes,omitempty"`
+	MaxYAMLSizeBytes *int64 `json:"maxYamlSizeBytes,omitempty"`
 	// +optional
-	MetricsMethodCallThreshold *int `json:"metricsMethodCallThreshold,omitempty"`
+	MetricsMethodCallThreshold *int64 `json:"metricsMethodCallThreshold,omitempty"`
 	// +optional
-	MinimumPasswordLength *int `json:"minimumPasswordLength,omitempty"`
+	MinimumPasswordLength *int64 `json:"minimumPasswordLength,omitempty"`
 	// +optional
 	MirrorAvailable *bool `json:"mirrorAvailable,omitempty"`
 	// +optional
-	MirrorCapacityThreshold *int `json:"mirrorCapacityThreshold,omitempty"`
+	MirrorCapacityThreshold *int64 `json:"mirrorCapacityThreshold,omitempty"`
 	// +optional
-	MirrorMaxCapacity *int `json:"mirrorMaxCapacity,omitempty"`
+	MirrorMaxCapacity *int64 `json:"mirrorMaxCapacity,omitempty"`
 	// +optional
-	MirrorMaxDelay *int `json:"mirrorMaxDelay,omitempty"`
+	MirrorMaxDelay *int64 `json:"mirrorMaxDelay,omitempty"`
 	// +optional
 	NPMPackageRequestsForwarding *bool `json:"npmPackageRequestsForwarding,omitempty"`
 	// +optional
-	NotesCreateLimit *int `json:"notesCreateLimit,omitempty"`
+	NotesCreateLimit *int64 `json:"notesCreateLimit,omitempty"`
 	// +optional
 	NotifyOnUnknownSignIn *bool `json:"notifyOnUnknownSignIn,omitempty"`
 	// +optional
@@ -525,11 +525,11 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	OutboundLocalRequestsWhitelist *[]string `json:"outboundLocalRequestsWhitelist,omitempty"`
 	// +optional
-	PackageMetadataPURLTypes *[]int `json:"packageMetadataPUrlTypes,omitempty"`
+	PackageMetadataPURLTypes *[]int64 `json:"packageMetadataPUrlTypes,omitempty"`
 	// +optional
 	PackageRegistryAllowAnyoneToPullOption *bool `json:"packageRegistryAllowAnyoneToPullOption,omitempty"`
 	// +optional
-	PackageRegistryCleanupPoliciesWorkerCapacity *int `json:"packageRegistryCleanupPoliciesWorkerCapacity,omitempty"`
+	PackageRegistryCleanupPoliciesWorkerCapacity *int64 `json:"packageRegistryCleanupPoliciesWorkerCapacity,omitempty"`
 	// +optional
 	PagesDomainVerificationEnabled *bool `json:"pagesDomainVerificationEnabled,omitempty"`
 	// +optional
@@ -553,7 +553,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	PlantumlURL *string `json:"plantumlUrl,omitempty"`
 	// +optional
-	PipelineLimitPerProjectUserSha *int `json:"pipelineLimitPerProjectUserSha,omitempty"`
+	PipelineLimitPerProjectUserSha *int64 `json:"pipelineLimitPerProjectUserSha,omitempty"`
 	// +optional
 	PollingIntervalMultiplier *float64 `json:"pollingIntervalMultiplier,omitempty"`
 	// +optional
@@ -561,19 +561,19 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	PreventMergeRequestsCommittersApproval *bool `json:"preventMergeRequestsCommittersApproval,omitempty"`
 	// +optional
-	ProjectDownloadExportLimit *int `json:"projectDownloadExportLimit,omitempty"`
+	ProjectDownloadExportLimit *int64 `json:"projectDownloadExportLimit,omitempty"`
 	// +optional
 	ProjectExportEnabled *bool `json:"projectExportEnabled,omitempty"`
 	// +optional
-	ProjectExportLimit *int `json:"projectExportLimit,omitempty"`
+	ProjectExportLimit *int64 `json:"projectExportLimit,omitempty"`
 	// +optional
-	ProjectImportLimit *int `json:"projectImportLimit,omitempty"`
+	ProjectImportLimit *int64 `json:"projectImportLimit,omitempty"`
 	// +optional
-	ProjectJobsAPIRateLimit *int `json:"projectJobsApiRateLimit,omitempty"`
+	ProjectJobsAPIRateLimit *int64 `json:"projectJobsApiRateLimit,omitempty"`
 	// +optional
-	ProjectRunnerTokenExpirationInterval *int `json:"projectRunnerTokenExpirationInterval,omitempty"`
+	ProjectRunnerTokenExpirationInterval *int64 `json:"projectRunnerTokenExpirationInterval,omitempty"`
 	// +optional
-	ProjectsAPIRateLimitUnauthenticated *int `json:"projectsApiRateLimitUnauthenticated,omitempty"`
+	ProjectsAPIRateLimitUnauthenticated *int64 `json:"projectsApiRateLimitUnauthenticated,omitempty"`
 	// +optional
 	PrometheusMetricsEnabled *bool `json:"prometheusMetricsEnabled,omitempty"`
 	// +optional
@@ -581,17 +581,17 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	PseudonymizerEnabled *bool `json:"pseudonymizerEnabled,omitempty"`
 	// +optional
-	PushEventActivitiesLimit *int `json:"pushEventActivitiesLimit,omitempty"`
+	PushEventActivitiesLimit *int64 `json:"pushEventActivitiesLimit,omitempty"`
 	// +optional
-	PushEventHooksLimit *int `json:"pushEventHooksLimit,omitempty"`
+	PushEventHooksLimit *int64 `json:"pushEventHooksLimit,omitempty"`
 	// +optional
 	PyPIPackageRequestsForwarding *bool `json:"pyPIpackageRequestsForwarding,omitempty"`
 	// +optional
-	RSAKeyRestriction *int `json:"rsaKeyRestriction,omitempty"`
+	RSAKeyRestriction *int64 `json:"rsaKeyRestriction,omitempty"`
 	// +optional
 	RateLimitingResponseText *string `json:"rateLimitingResponseText,omitempty"`
 	// +optional
-	RawBlobRequestLimit *int `json:"rawBlobRequestLimit,omitempty"`
+	RawBlobRequestLimit *int64 `json:"rawBlobRequestLimit,omitempty"`
 	// +optional
 	RecaptchaEnabled *bool `json:"recaptchaEnabled,omitempty"`
 	// +optional
@@ -603,7 +603,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	RecaptchaSiteKeySecretRef *xpv1.LocalSecretKeySelector `json:"recaptchaSiteKeySecretRef,omitempty"`
 	// +optional
-	ReceiveMaxInputSize *int `json:"receiveMaxInputSize,omitempty"`
+	ReceiveMaxInputSize *int64 `json:"receiveMaxInputSize,omitempty"`
 	// +optional
 	ReceptiveClusterAgentsEnabled *bool `json:"receptiveClusterAgentsEnabled,omitempty"`
 	// +optional
@@ -611,11 +611,11 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	RepositoryChecksEnabled *bool `json:"repositoryChecksEnabled,omitempty"`
 	// +optional
-	RepositorySizeLimit *int `json:"repositorySizeLimit,omitempty"`
+	RepositorySizeLimit *int64 `json:"repositorySizeLimit,omitempty"`
 	// +optional
 	RepositoryStorages *[]string `json:"repositoryStorages,omitempty"`
 	// +optional
-	RepositoryStoragesWeighted *map[string]int `json:"repositoryStoragesWeighted,omitempty"`
+	RepositoryStoragesWeighted *map[string]int64 `json:"repositoryStoragesWeighted,omitempty"`
 	// +optional
 	RequireAdminApprovalAfterUserSignup *bool `json:"requireAdminApprovalAfterUserSignup,omitempty"`
 	// +optional
@@ -627,11 +627,11 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	RestrictedVisibilityLevels *[]string `json:"restrictedVisibilityLevels,omitempty"`
 	// +optional
-	RunnerTokenExpirationInterval *int `json:"runnerTokenExpirationInterval,omitempty"`
+	RunnerTokenExpirationInterval *int64 `json:"runnerTokenExpirationInterval,omitempty"`
 	// +optional
-	SearchRateLimit *int `json:"searchRateLimit,omitempty"`
+	SearchRateLimit *int64 `json:"searchRateLimit,omitempty"`
 	// +optional
-	SearchRateLimitUnauthenticated *int `json:"searchRateLimitUnauthenticated,omitempty"`
+	SearchRateLimitUnauthenticated *int64 `json:"searchRateLimitUnauthenticated,omitempty"`
 	// +optional
 	SecretDetectionRevocationTokenTypesURL *string `json:"secretDetectionRevocationTokenTypesUrl,omitempty"`
 	// +optional
@@ -643,7 +643,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	SecretDetectionTokenRevocationURL *string `json:"secretDetectionTokenRevocationUrl,omitempty"`
 	// +optional
-	SecurityApprovalPoliciesLimit *int `json:"securityApprovalPoliciesLimit,omitempty"`
+	SecurityApprovalPoliciesLimit *int64 `json:"securityApprovalPoliciesLimit,omitempty"`
 	// +optional
 	SecurityPolicyGlobalGroupApproversEnabled *bool `json:"securityPolicyGlobalGroupApproversEnabled,omitempty"`
 	// +optional
@@ -661,17 +661,17 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ServiceAccessTokensExpirationEnforced *bool `json:"serviceAccessTokensExpirationEnforced,omitempty"`
 	// +optional
-	SessionExpireDelay *int `json:"sessionExpireDelay,omitempty"`
+	SessionExpireDelay *int64 `json:"sessionExpireDelay,omitempty"`
 	// +optional
 	SharedRunnersEnabled *bool `json:"sharedRunnersEnabled,omitempty"`
 	// +optional
-	SharedRunnersMinutes *int `json:"sharedRunnersMinutes,omitempty"`
+	SharedRunnersMinutes *int64 `json:"sharedRunnersMinutes,omitempty"`
 	// +optional
 	SharedRunnersText *string `json:"sharedRunnersText,omitempty"`
 	// +optional
-	SidekiqJobLimiterCompressionThresholdBytes *int `json:"sidekiqJobLimiterCompressionThresholdBytes,omitempty"`
+	SidekiqJobLimiterCompressionThresholdBytes *int64 `json:"sidekiqJobLimiterCompressionThresholdBytes,omitempty"`
 	// +optional
-	SidekiqJobLimiterLimitBytes *int `json:"sidekiqJobLimiterLimitBytes,omitempty"`
+	SidekiqJobLimiterLimitBytes *int64 `json:"sidekiqJobLimiterLimitBytes,omitempty"`
 	// +optional
 	SidekiqJobLimiterMode *string `json:"sidekiqJobLimiterMode,omitempty"`
 	// +optional
@@ -699,7 +699,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	SlackAppVerificationTokenSecretRef *xpv1.LocalSecretKeySelector `json:"slackAppVerificationTokenSecretRef,omitempty"`
 	// +optional
-	SnippetSizeLimit *int `json:"snippetSizeLimit,omitempty"`
+	SnippetSizeLimit *int64 `json:"snippetSizeLimit,omitempty"`
 	// +optional
 	SnowplowAppID *string `json:"snowplowAppId,omitempty"`
 	// +optional
@@ -733,105 +733,105 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	SuggestPipelineEnabled *bool `json:"suggestPipelineEnabled,omitempty"`
 	// +optional
-	TerminalMaxSessionTime *int `json:"terminalMaxSessionTime,omitempty"`
+	TerminalMaxSessionTime *int64 `json:"terminalMaxSessionTime,omitempty"`
 	// +optional
 	Terms *string `json:"terms,omitempty"`
 	// +optional
 	ThrottleAuthenticatedAPIEnabled *bool `json:"throttleAuthenticatedApiEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedAPIPeriodInSeconds *int `json:"throttleAuthenticatedApiPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedAPIPeriodInSeconds *int64 `json:"throttleAuthenticatedApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedAPIRequestsPerPeriod *int `json:"throttleAuthenticatedApiRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedAPIRequestsPerPeriod *int64 `json:"throttleAuthenticatedApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedDeprecatedAPIEnabled *bool `json:"throttleAuthenticatedDeprecatedApiEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds *int `json:"throttleAuthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds *int64 `json:"throttleAuthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod *int `json:"throttleAuthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod *int64 `json:"throttleAuthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedFilesAPIEnabled *bool `json:"throttleAuthenticatedFilesApiEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedFilesAPIPeriodInSeconds *int `json:"throttleAuthenticatedFilesApiPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedFilesAPIPeriodInSeconds *int64 `json:"throttleAuthenticatedFilesApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedFilesAPIRequestsPerPeriod *int `json:"throttleAuthenticatedFilesApiRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedFilesAPIRequestsPerPeriod *int64 `json:"throttleAuthenticatedFilesApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedGitLFSEnabled *bool `json:"throttleAuthenticatedGitLFSEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedGitLFSPeriodInSeconds *int `json:"throttleAuthenticatedGitLFSPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedGitLFSPeriodInSeconds *int64 `json:"throttleAuthenticatedGitLFSPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedGitLFSRequestsPerPeriod *int `json:"throttleAuthenticatedGitLFSRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedGitLFSRequestsPerPeriod *int64 `json:"throttleAuthenticatedGitLFSRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedPackagesAPIEnabled *bool `json:"throttleAuthenticatedPackagesApiEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedPackagesAPIPeriodInSeconds *int `json:"throttleAuthenticatedPackagesApiPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedPackagesAPIPeriodInSeconds *int64 `json:"throttleAuthenticatedPackagesApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedPackagesAPIRequestsPerPeriod *int `json:"throttleAuthenticatedPackagesApiRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedPackagesAPIRequestsPerPeriod *int64 `json:"throttleAuthenticatedPackagesApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedWebEnabled *bool `json:"throttleAuthenticatedWebEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedWebPeriodInSeconds *int `json:"throttleAuthenticatedWebPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedWebPeriodInSeconds *int64 `json:"throttleAuthenticatedWebPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedWebRequestsPerPeriod *int `json:"throttleAuthenticatedWebRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedWebRequestsPerPeriod *int64 `json:"throttleAuthenticatedWebRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleIncidentManagementNotificationEnabled *bool `json:"throttleIncidentManagementNotificationEnabled,omitempty"`
 	// +optional
-	ThrottleIncidentManagementNotificationPerPeriod *int `json:"throttleIncidentManagementNotificationPerPeriod,omitempty"`
+	ThrottleIncidentManagementNotificationPerPeriod *int64 `json:"throttleIncidentManagementNotificationPerPeriod,omitempty"`
 	// +optional
-	ThrottleIncidentManagementNotificationPeriodInSeconds *int `json:"throttleIncidentManagementNotificationPeriodInSeconds,omitempty"`
+	ThrottleIncidentManagementNotificationPeriodInSeconds *int64 `json:"throttleIncidentManagementNotificationPeriodInSeconds,omitempty"`
 	// +optional
 	ThrottleProtectedPathsEnabled *bool `json:"throttleProtectedPathsEnabled,omitempty"`
 	// +optional
-	ThrottleProtectedPathsPeriodInSeconds *int `json:"throttleProtectedPathsPeriodInSeconds,omitempty"`
+	ThrottleProtectedPathsPeriodInSeconds *int64 `json:"throttleProtectedPathsPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleProtectedPathsRequestsPerPeriod *int `json:"throttleProtectedPathsRequestsPerPeriod,omitempty"`
+	ThrottleProtectedPathsRequestsPerPeriod *int64 `json:"throttleProtectedPathsRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedAPIEnabled *bool `json:"throttleUnauthenticatedApiEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedAPIPeriodInSeconds *int `json:"throttleUnauthenticatedApiPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedAPIPeriodInSeconds *int64 `json:"throttleUnauthenticatedApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedAPIRequestsPerPeriod *int `json:"throttleUnauthenticatedApiRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedAPIRequestsPerPeriod *int64 `json:"throttleUnauthenticatedApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedDeprecatedAPIEnabled *bool `json:"throttleUnauthenticatedDeprecatedApiEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds *int `json:"throttleUnauthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds *int64 `json:"throttleUnauthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod *int `json:"throttleUnauthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod *int64 `json:"throttleUnauthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedFilesAPIEnabled *bool `json:"throttleUnauthenticatedFilesApiEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedFilesAPIPeriodInSeconds *int `json:"throttleUnauthenticatedFilesApiPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedFilesAPIPeriodInSeconds *int64 `json:"throttleUnauthenticatedFilesApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedFilesAPIRequestsPerPeriod *int `json:"throttleUnauthenticatedFilesApiRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedFilesAPIRequestsPerPeriod *int64 `json:"throttleUnauthenticatedFilesApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedGitLFSEnabled *bool `json:"throttleUnauthenticatedGitLFSEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedGitLFSPeriodInSeconds *int `json:"throttleUnauthenticatedGitLFSPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedGitLFSPeriodInSeconds *int64 `json:"throttleUnauthenticatedGitLFSPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedGitLFSRequestsPerPeriod *int `json:"throttleUnauthenticatedGitLFSRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedGitLFSRequestsPerPeriod *int64 `json:"throttleUnauthenticatedGitLFSRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedPackagesAPIEnabled *bool `json:"throttleUnauthenticatedPackagesApiEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedPackagesAPIPeriodInSeconds *int `json:"throttleUnauthenticatedPackagesApiPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedPackagesAPIPeriodInSeconds *int64 `json:"throttleUnauthenticatedPackagesApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod *int `json:"throttleUnauthenticatedPackagesApiRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod *int64 `json:"throttleUnauthenticatedPackagesApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedWebEnabled *bool `json:"throttleUnauthenticatedWebEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedWebPeriodInSeconds *int `json:"throttleUnauthenticatedWebPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedWebPeriodInSeconds *int64 `json:"throttleUnauthenticatedWebPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedWebRequestsPerPeriod *int `json:"throttleUnauthenticatedWebRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedWebRequestsPerPeriod *int64 `json:"throttleUnauthenticatedWebRequestsPerPeriod,omitempty"`
 	// +optional
 	TimeTrackingLimitToHours *bool `json:"timeTrackingLimitToHours,omitempty"`
 	// +optional
-	TwoFactorGracePeriod *int `json:"twoFactorGracePeriod,omitempty"`
+	TwoFactorGracePeriod *int64 `json:"twoFactorGracePeriod,omitempty"`
 	// +optional
-	UnconfirmedUsersDeleteAfterDays *int `json:"unconfirmedUsersDeleteAfterDays,omitempty"`
+	UnconfirmedUsersDeleteAfterDays *int64 `json:"unconfirmedUsersDeleteAfterDays,omitempty"`
 	// +optional
 	UniqueIPsLimitEnabled *bool `json:"uniqueIpsLimitEnabled,omitempty"`
 	// +optional
-	UniqueIPsLimitPerUser *int `json:"uniqueIpsLimitPerUser,omitempty"`
+	UniqueIPsLimitPerUser *int64 `json:"uniqueIpsLimitPerUser,omitempty"`
 	// +optional
-	UniqueIPsLimitTimeWindow *int `json:"uniqueIpsLimitTimeWindow,omitempty"`
+	UniqueIPsLimitTimeWindow *int64 `json:"uniqueIpsLimitTimeWindow,omitempty"`
 	// +optional
 	UpdateRunnerVersionsEnabled *bool `json:"updateRunnerVersionsEnabled,omitempty"`
 	// +optional
@@ -851,13 +851,13 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	UserDefaultsToPrivateProfile *bool `json:"userDefaultsToPrivateProfile,omitempty"`
 	// +optional
-	UserEmailLookupLimit *int `json:"userEmailLookupLimit,omitempty"`
+	UserEmailLookupLimit *int64 `json:"userEmailLookupLimit,omitempty"`
 	// +optional
 	UserOauthApplications *bool `json:"userOauthApplications,omitempty"`
 	// +optional
 	UserShowAddSSHKeyMessage *bool `json:"userShowAddSshKeyMessage,omitempty"`
 	// +optional
-	UsersGetByIDLimit *int `json:"usersGetByIdLimit,omitempty"`
+	UsersGetByIDLimit *int64 `json:"usersGetByIdLimit,omitempty"`
 	// +optional
 	UsersGetByIDLimitAllowlistRaw *string `json:"usersGetByIdLimitAllowlistRaw,omitempty"`
 	// +optional
@@ -869,7 +869,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	WhatsNewVariant *string `json:"whatsNewVariant,omitempty"`
 	// +optional
-	WikiPageMaxContentBytes *int `json:"wikiPageMaxContentBytes,omitempty"`
+	WikiPageMaxContentBytes *int64 `json:"wikiPageMaxContentBytes,omitempty"`
 	// +optional
 	AdminNotificationEmail *string `json:"adminNotificationEmail,omitempty"`
 	// +optional
@@ -877,32 +877,32 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	AssetProxyWhitelist *[]string `json:"assetProxyWhitelist,omitempty"`
 	// +optional
-	DefaultBranchProtection *int `json:"defaultBranchProtection,omitempty"`
+	DefaultBranchProtection *int64 `json:"defaultBranchProtection,omitempty"`
 	// +optional
 	HousekeepingBitmapsEnabled *bool `json:"housekeepingBitmapsEnabled,omitempty"`
 	// +optional
-	HousekeepingFullRepackPeriod *int `json:"housekeepingFullRepackPeriod,omitempty"`
+	HousekeepingFullRepackPeriod *int64 `json:"housekeepingFullRepackPeriod,omitempty"`
 	// +optional
-	HousekeepingGcPeriod *int `json:"housekeepingGcPeriod,omitempty"`
+	HousekeepingGcPeriod *int64 `json:"housekeepingGcPeriod,omitempty"`
 	// +optional
-	HousekeepingIncrementalRepackPeriod *int `json:"housekeepingIncrementalRepackPeriod,omitempty"`
+	HousekeepingIncrementalRepackPeriod *int64 `json:"housekeepingIncrementalRepackPeriod,omitempty"`
 	// +optional
-	PerformanceBarAllowedGroupID *int `json:"performanceBarAllowedGroupId,omitempty"`
+	PerformanceBarAllowedGroupID *int64 `json:"performanceBarAllowedGroupId,omitempty"`
 	// +optional
 	PerformanceBarEnabled *bool `json:"performanceBarEnabled,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedEnabled *bool `json:"throttleUnauthenticatedEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedPeriodInSeconds *int `json:"throttleUnauthenticatedPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedPeriodInSeconds *int64 `json:"throttleUnauthenticatedPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedRequestsPerPeriod *int `json:"throttleUnauthenticatedRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedRequestsPerPeriod *int64 `json:"throttleUnauthenticatedRequestsPerPeriod,omitempty"`
 }
 
 // ApplicationSettingsObservation defines the observed state for ApplicationSettings
 // This struct was generated from gitlab.Settings struct, with just a rework of the json tags.
 type ApplicationSettingsObservation struct {
 	// +optional
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// +optional
 	AbuseNotificationEmail string `json:"abuseNotificationEmail,omitempty"`
 	// +optional
@@ -932,7 +932,7 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	ArchiveBuildsInHumanReadable string `json:"archiveBuildsInHumanReadable,omitempty"`
 	// +optional
-	ASCIIDocMaxIncludes int `json:"asciiDocMaxIncludes,omitempty"`
+	ASCIIDocMaxIncludes int64 `json:"asciiDocMaxIncludes,omitempty"`
 	// +optional
 	AssetProxyAllowlist []string `json:"assetProxyAllowlist,omitempty"`
 	// +optional
@@ -944,9 +944,9 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	AutoBanUserOnExcessiveProjectsDownload bool `json:"autoBanUserOnExcessiveProjectsDownload,omitempty"`
 	// +optional
-	AutocompleteUsers int `json:"autocompleteUsers,omitempty"`
+	AutocompleteUsers int64 `json:"autocompleteUsers,omitempty"`
 	// +optional
-	AutocompleteUsersUnauthenticated int `json:"autocompleteUsersUnauthenticated,omitempty"`
+	AutocompleteUsersUnauthenticated int64 `json:"autocompleteUsersUnauthenticated,omitempty"`
 	// +optional
 	AutoDevOpsDomain string `json:"autoDevOpsDomain,omitempty"`
 	// +optional
@@ -954,11 +954,11 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	AutomaticPurchasedStorageAllocation bool `json:"automaticPurchasedStorageAllocation,omitempty"`
 	// +optional
-	BulkImportConcurrentPipelineBatchLimit int `json:"bulkImportConcurrentPipelineBatchLimit,omitempty"`
+	BulkImportConcurrentPipelineBatchLimit int64 `json:"bulkImportConcurrentPipelineBatchLimit,omitempty"`
 	// +optional
 	BulkImportEnabled bool `json:"bulkImportEnabled,omitempty"`
 	// +optional
-	BulkImportMaxDownloadFileSize int `json:"bulkImportMaxDownloadFileSize,omitempty"`
+	BulkImportMaxDownloadFileSize int64 `json:"bulkImportMaxDownloadFileSize,omitempty"`
 	// +optional
 	CanCreateGroup bool `json:"canCreateGroup,omitempty"`
 	// +optional
@@ -966,43 +966,43 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	CIJobLiveTraceEnabled bool `json:"ciJobLiveTraceEnabled,omitempty"`
 	// +optional
-	CIMaxIncludes int `json:"ciMaxIncludes,omitempty"`
+	CIMaxIncludes int64 `json:"ciMaxIncludes,omitempty"`
 	// +optional
-	CIMaxTotalYAMLSizeBytes int `json:"ciMaxTotalYamlSizeBytes,omitempty"`
+	CIMaxTotalYAMLSizeBytes int64 `json:"ciMaxTotalYamlSizeBytes,omitempty"`
 	// +optional
-	CIPartitionsSizeLimit int `json:"ciPartitionsSizeLimit,omitempty"`
+	CIPartitionsSizeLimit int64 `json:"ciPartitionsSizeLimit,omitempty"`
 	// +optional
 	CommitEmailHostname string `json:"commitEmailHostname,omitempty"`
 	// +optional
-	ConcurrentBitbucketImportJobsLimit int `json:"concurrentBitbucketImportJobsLimit,omitempty"`
+	ConcurrentBitbucketImportJobsLimit int64 `json:"concurrentBitbucketImportJobsLimit,omitempty"`
 	// +optional
-	ConcurrentBitbucketServerImportJobsLimit int `json:"concurrentBitbucketServerImportJobsLimit,omitempty"`
+	ConcurrentBitbucketServerImportJobsLimit int64 `json:"concurrentBitbucketServerImportJobsLimit,omitempty"`
 	// +optional
-	ConcurrentGitHubImportJobsLimit int `json:"concurrentGitHubImportJobsLimit,omitempty"`
+	ConcurrentGitHubImportJobsLimit int64 `json:"concurrentGitHubImportJobsLimit,omitempty"`
 	// +optional
 	ContainerExpirationPoliciesEnableHistoricEntries bool `json:"containerExpirationPoliciesEnableHistoricEntries,omitempty"`
 	// +optional
-	ContainerRegistryCleanupTagsServiceMaxListSize int `json:"containerRegistryCleanupTagsServiceMaxListSize,omitempty"`
+	ContainerRegistryCleanupTagsServiceMaxListSize int64 `json:"containerRegistryCleanupTagsServiceMaxListSize,omitempty"`
 	// +optional
-	ContainerRegistryDeleteTagsServiceTimeout int `json:"containerRegistryDeleteTagsServiceTimeout,omitempty"`
+	ContainerRegistryDeleteTagsServiceTimeout int64 `json:"containerRegistryDeleteTagsServiceTimeout,omitempty"`
 	// +optional
 	ContainerRegistryExpirationPoliciesCaching bool `json:"containerRegistryExpirationPoliciesCaching,omitempty"`
 	// +optional
-	ContainerRegistryExpirationPoliciesWorkerCapacity int `json:"containerRegistryExpirationPoliciesWorkerCapacity,omitempty"`
+	ContainerRegistryExpirationPoliciesWorkerCapacity int64 `json:"containerRegistryExpirationPoliciesWorkerCapacity,omitempty"`
 	// +optional
 	ContainerRegistryImportCreatedBefore *metav1.Time `json:"containerRegistryImportCreatedBefore,omitempty"`
 	// +optional
-	ContainerRegistryImportMaxRetries int `json:"containerRegistryImportMaxRetries,omitempty"`
+	ContainerRegistryImportMaxRetries int64 `json:"containerRegistryImportMaxRetries,omitempty"`
 	// +optional
-	ContainerRegistryImportMaxStepDuration int `json:"containerRegistryImportMaxStepDuration,omitempty"`
+	ContainerRegistryImportMaxStepDuration int64 `json:"containerRegistryImportMaxStepDuration,omitempty"`
 	// +optional
-	ContainerRegistryImportMaxTagsCount int `json:"containerRegistryImportMaxTagsCount,omitempty"`
+	ContainerRegistryImportMaxTagsCount int64 `json:"containerRegistryImportMaxTagsCount,omitempty"`
 	// +optional
-	ContainerRegistryImportStartMaxRetries int `json:"containerRegistryImportStartMaxRetries,omitempty"`
+	ContainerRegistryImportStartMaxRetries int64 `json:"containerRegistryImportStartMaxRetries,omitempty"`
 	// +optional
 	ContainerRegistryImportTargetPlan string `json:"containerRegistryImportTargetPlan,omitempty"`
 	// +optional
-	ContainerRegistryTokenExpireDelay int `json:"containerRegistryTokenExpireDelay,omitempty"`
+	ContainerRegistryTokenExpireDelay int64 `json:"containerRegistryTokenExpireDelay,omitempty"`
 	// +optional
 	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
 	// +optional
@@ -1010,13 +1010,13 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	DNSRebindingProtectionEnabled bool `json:"dnsRebindingProtectionEnabled,omitempty"`
 	// +optional
-	DSAKeyRestriction int `json:"dsaKeyRestriction,omitempty"`
+	DSAKeyRestriction int64 `json:"dsaKeyRestriction,omitempty"`
 	// +optional
 	DeactivateDormantUsers bool `json:"deactivateDormantUsers,omitempty"`
 	// +optional
-	DeactivateDormantUsersPeriod int `json:"deactivateDormantUsersPeriod,omitempty"`
+	DeactivateDormantUsersPeriod int64 `json:"deactivateDormantUsersPeriod,omitempty"`
 	// +optional
-	DecompressArchiveFileTimeout int `json:"decompressArchiveFileTimeout,omitempty"`
+	DecompressArchiveFileTimeout int64 `json:"decompressArchiveFileTimeout,omitempty"`
 	// +optional
 	DefaultArtifactsExpireIn string `json:"defaultArtifactsExpireIn,omitempty"`
 	// +optional
@@ -1030,17 +1030,17 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	DefaultPreferredLanguage string `json:"defaultPreferredLanguage,omitempty"`
 	// +optional
-	DefaultProjectCreation int `json:"defaultProjectCreation,omitempty"`
+	DefaultProjectCreation int64 `json:"defaultProjectCreation,omitempty"`
 	// +optional
 	DefaultProjectDeletionProtection bool `json:"defaultProjectDeletionProtection,omitempty"`
 	// +optional
 	DefaultProjectVisibility string `json:"defaultProjectVisibility,omitempty"`
 	// +optional
-	DefaultProjectsLimit int `json:"defaultProjectsLimit,omitempty"`
+	DefaultProjectsLimit int64 `json:"defaultProjectsLimit,omitempty"`
 	// +optional
 	DefaultSnippetVisibility string `json:"defaultSnippetVisibility,omitempty"`
 	// +optional
-	DefaultSyntaxHighlightingTheme int `json:"defaultSyntaxHighlightingTheme,omitempty"`
+	DefaultSyntaxHighlightingTheme int64 `json:"defaultSyntaxHighlightingTheme,omitempty"`
 	// +optional
 	DelayedGroupDeletion bool `json:"delayedGroupDeletion,omitempty"`
 	// +optional
@@ -1050,17 +1050,17 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	DeleteUnconfirmedUsers bool `json:"deleteUnconfirmedUsers,omitempty"`
 	// +optional
-	DeletionAdjournedPeriod int `json:"deletionAdjournedPeriod,omitempty"`
+	DeletionAdjournedPeriod int64 `json:"deletionAdjournedPeriod,omitempty"`
 	// +optional
 	DiagramsnetEnabled bool `json:"diagramsnetEnabled,omitempty"`
 	// +optional
 	DiagramsnetURL string `json:"diagramsnetUrl,omitempty"`
 	// +optional
-	DiffMaxFiles int `json:"diffMaxFiles,omitempty"`
+	DiffMaxFiles int64 `json:"diffMaxFiles,omitempty"`
 	// +optional
-	DiffMaxLines int `json:"diffMaxLines,omitempty"`
+	DiffMaxLines int64 `json:"diffMaxLines,omitempty"`
 	// +optional
-	DiffMaxPatchBytes int `json:"diffMaxPatchBytes,omitempty"`
+	DiffMaxPatchBytes int64 `json:"diffMaxPatchBytes,omitempty"`
 	// +optional
 	DisableAdminOAuthScopes bool `json:"disableAdminOAuthScopes,omitempty"`
 	// +optional
@@ -1078,21 +1078,21 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	DomainDenylistEnabled bool `json:"domainDenylistEnabled,omitempty"`
 	// +optional
-	DownstreamPipelineTriggerLimitPerProjectUserSHA int `json:"downstreamPipelineTriggerLimitPerProjectUserSHA,omitempty"`
+	DownstreamPipelineTriggerLimitPerProjectUserSHA int64 `json:"downstreamPipelineTriggerLimitPerProjectUserSHA,omitempty"`
 	// +optional
 	DuoFeaturesEnabled bool `json:"duoFeaturesEnabled,omitempty"`
 	// +optional
-	ECDSAKeyRestriction int `json:"ecdsaKeyRestriction,omitempty"`
+	ECDSAKeyRestriction int64 `json:"ecdsaKeyRestriction,omitempty"`
 	// +optional
-	ECDSASKKeyRestriction int `json:"ecdsaskKeyRestriction,omitempty"`
+	ECDSASKKeyRestriction int64 `json:"ecdsaskKeyRestriction,omitempty"`
 	// +optional
 	EKSAccountID string `json:"eksAccountId,omitempty"`
 	// +optional
 	EKSIntegrationEnabled bool `json:"eksIntegrationEnabled,omitempty"`
 	// +optional
-	Ed25519KeyRestriction int `json:"ed25519KeyRestriction,omitempty"`
+	Ed25519KeyRestriction int64 `json:"ed25519KeyRestriction,omitempty"`
 	// +optional
-	Ed25519SKKeyRestriction int `json:"ed25519SKKeyRestriction,omitempty"`
+	Ed25519SKKeyRestriction int64 `json:"ed25519SKKeyRestriction,omitempty"`
 	// +optional
 	ElasticsearchAWS bool `json:"elasticsearchAws,omitempty"`
 	// +optional
@@ -1106,43 +1106,43 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	ElasticsearchAnalyzersSmartCNSearch bool `json:"elasticsearchAnalyzersSmartCnSearch,omitempty"`
 	// +optional
-	ElasticsearchClientRequestTimeout int `json:"elasticsearchClientRequestTimeout,omitempty"`
+	ElasticsearchClientRequestTimeout int64 `json:"elasticsearchClientRequestTimeout,omitempty"`
 	// +optional
-	ElasticsearchIndexedFieldLengthLimit int `json:"elasticsearchIndexedFieldLengthLimit,omitempty"`
+	ElasticsearchIndexedFieldLengthLimit int64 `json:"elasticsearchIndexedFieldLengthLimit,omitempty"`
 	// +optional
-	ElasticsearchIndexedFileSizeLimitKB int `json:"elasticsearchIndexedFileSizeLimitKB,omitempty"`
+	ElasticsearchIndexedFileSizeLimitKB int64 `json:"elasticsearchIndexedFileSizeLimitKB,omitempty"`
 	// +optional
 	ElasticsearchIndexing bool `json:"elasticsearchIndexing,omitempty"`
 	// +optional
 	ElasticsearchLimitIndexing bool `json:"elasticsearchLimitIndexing,omitempty"`
 	// +optional
-	ElasticsearchMaxBulkConcurrency int `json:"elasticsearchMaxBulkConcurrency,omitempty"`
+	ElasticsearchMaxBulkConcurrency int64 `json:"elasticsearchMaxBulkConcurrency,omitempty"`
 	// +optional
-	ElasticsearchMaxBulkSizeMB int `json:"elasticsearchMaxBulkSizeMB,omitempty"`
+	ElasticsearchMaxBulkSizeMB int64 `json:"elasticsearchMaxBulkSizeMB,omitempty"`
 	// +optional
-	ElasticsearchMaxCodeIndexingConcurrency int `json:"elasticsearchMaxCodeIndexingConcurrency,omitempty"`
+	ElasticsearchMaxCodeIndexingConcurrency int64 `json:"elasticsearchMaxCodeIndexingConcurrency,omitempty"`
 	// +optional
-	ElasticsearchNamespaceIDs []int `json:"elasticsearchNamespaceIds,omitempty"`
+	ElasticsearchNamespaceIDs []int64 `json:"elasticsearchNamespaceIds,omitempty"`
 	// +optional
 	ElasticsearchPauseIndexing bool `json:"elasticsearchPauseIndexing,omitempty"`
 	// +optional
-	ElasticsearchProjectIDs []int `json:"elasticsearchProjectIds,omitempty"`
+	ElasticsearchProjectIDs []int64 `json:"elasticsearchProjectIds,omitempty"`
 	// +optional
-	ElasticsearchReplicas int `json:"elasticsearchReplicas,omitempty"`
+	ElasticsearchReplicas int64 `json:"elasticsearchReplicas,omitempty"`
 	// +optional
 	ElasticsearchRequeueWorkers bool `json:"elasticsearchRequeueWorkers,omitempty"`
 	// +optional
-	ElasticsearchRetryOnFailure int `json:"elasticsearchRetryOnFailure,omitempty"`
+	ElasticsearchRetryOnFailure int64 `json:"elasticsearchRetryOnFailure,omitempty"`
 	// +optional
 	ElasticsearchSearch bool `json:"elasticsearchSearch,omitempty"`
 	// +optional
-	ElasticsearchShards int `json:"elasticsearchShards,omitempty"`
+	ElasticsearchShards int64 `json:"elasticsearchShards,omitempty"`
 	// +optional
 	ElasticsearchURL []string `json:"elasticsearchUrl,omitempty"`
 	// +optional
 	ElasticsearchUsername string `json:"elasticsearchUsername,omitempty"`
 	// +optional
-	ElasticsearchWorkerNumberOfShards int `json:"elasticsearchWorkerNumberOfShards,omitempty"`
+	ElasticsearchWorkerNumberOfShards int64 `json:"elasticsearchWorkerNumberOfShards,omitempty"`
 	// +optional
 	EmailAdditionalText string `json:"emailAdditionalText,omitempty"`
 	// +optional
@@ -1180,37 +1180,37 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	ExternalAuthorizationServiceURL string `json:"externalAuthorizationServiceUrl,omitempty"`
 	// +optional
-	ExternalPipelineValidationServiceTimeout int `json:"externalPipelineValidationServiceTimeout,omitempty"`
+	ExternalPipelineValidationServiceTimeout int64 `json:"externalPipelineValidationServiceTimeout,omitempty"`
 	// +optional
 	ExternalPipelineValidationServiceURL string `json:"externalPipelineValidationServiceUrl,omitempty"`
 	// +optional
-	FailedLoginAttemptsUnlockPeriodInMinutes int `json:"failedLoginAttemptsUnlockPeriodInMinutes,omitempty"`
+	FailedLoginAttemptsUnlockPeriodInMinutes int64 `json:"failedLoginAttemptsUnlockPeriodInMinutes,omitempty"`
 	// +optional
-	FileTemplateProjectID int `json:"fileTemplateProjectId,omitempty"`
+	FileTemplateProjectID int64 `json:"fileTemplateProjectId,omitempty"`
 	// +optional
-	FirstDayOfWeek int `json:"firstDayOfWeek,omitempty"`
+	FirstDayOfWeek int64 `json:"firstDayOfWeek,omitempty"`
 	// +optional
 	FlocEnabled bool `json:"flocEnabled,omitempty"`
 	// +optional
 	GeoNodeAllowedIPs string `json:"geoNodeAllowedIps,omitempty"`
 	// +optional
-	GeoStatusTimeout int `json:"geoStatusTimeout,omitempty"`
+	GeoStatusTimeout int64 `json:"geoStatusTimeout,omitempty"`
 	// +optional
-	GitRateLimitUsersAlertlist []int `json:"gitRateLimitUsersAlertlist,omitempty"`
+	GitRateLimitUsersAlertlist []int64 `json:"gitRateLimitUsersAlertlist,omitempty"`
 	// +optional
-	GitTwoFactorSessionExpiry int `json:"gitTwoFactorSessionExpiry,omitempty"`
+	GitTwoFactorSessionExpiry int64 `json:"gitTwoFactorSessionExpiry,omitempty"`
 	// +optional
-	GitalyTimeoutDefault int `json:"gitalyTimeoutDefault,omitempty"`
+	GitalyTimeoutDefault int64 `json:"gitalyTimeoutDefault,omitempty"`
 	// +optional
-	GitalyTimeoutFast int `json:"gitalyTimeoutFast,omitempty"`
+	GitalyTimeoutFast int64 `json:"gitalyTimeoutFast,omitempty"`
 	// +optional
-	GitalyTimeoutMedium int `json:"gitalyTimeoutMedium,omitempty"`
+	GitalyTimeoutMedium int64 `json:"gitalyTimeoutMedium,omitempty"`
 	// +optional
 	GitlabDedicatedInstance bool `json:"gitlabDedicatedInstance,omitempty"`
 	// +optional
 	GitlabEnvironmentToolkitInstance bool `json:"gitlabEnvironmentToolkitInstance,omitempty"`
 	// +optional
-	GitlabShellOperationLimit int `json:"gitlabShellOperationLimit,omitempty"`
+	GitlabShellOperationLimit int64 `json:"gitlabShellOperationLimit,omitempty"`
 	// +optional
 	GitpodEnabled bool `json:"gitpodEnabled,omitempty"`
 	// +optional
@@ -1226,15 +1226,15 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	GravatarEnabled bool `json:"gravatarEnabled,omitempty"`
 	// +optional
-	GroupDownloadExportLimit int `json:"groupDownloadExportLimit,omitempty"`
+	GroupDownloadExportLimit int64 `json:"groupDownloadExportLimit,omitempty"`
 	// +optional
-	GroupExportLimit int `json:"groupExportLimit,omitempty"`
+	GroupExportLimit int64 `json:"groupExportLimit,omitempty"`
 	// +optional
-	GroupImportLimit int `json:"groupImportLimit,omitempty"`
+	GroupImportLimit int64 `json:"groupImportLimit,omitempty"`
 	// +optional
 	GroupOwnersCanManageDefaultBranchProtection bool `json:"groupOwnersCanManageDefaultBranchProtection,omitempty"`
 	// +optional
-	GroupRunnerTokenExpirationInterval int `json:"groupRunnerTokenExpirationInterval,omitempty"`
+	GroupRunnerTokenExpirationInterval int64 `json:"groupRunnerTokenExpirationInterval,omitempty"`
 	// +optional
 	HTMLEmailsEnabled bool `json:"htmlEmailsEnabled,omitempty"`
 	// +optional
@@ -1256,15 +1256,15 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	HousekeepingEnabled bool `json:"housekeepingEnabled,omitempty"`
 	// +optional
-	HousekeepingOptimizeRepositoryPeriod int `json:"housekeepingOptimizeRepositoryPeriod,omitempty"`
+	HousekeepingOptimizeRepositoryPeriod int64 `json:"housekeepingOptimizeRepositoryPeriod,omitempty"`
 	// +optional
 	ImportSources []string `json:"importSources,omitempty"`
 	// +optional
-	InactiveProjectsDeleteAfterMonths int `json:"inactiveProjectsDeleteAfterMonths,omitempty"`
+	InactiveProjectsDeleteAfterMonths int64 `json:"inactiveProjectsDeleteAfterMonths,omitempty"`
 	// +optional
-	InactiveProjectsMinSizeMB int `json:"inactiveProjectsMinSizeMB,omitempty"`
+	InactiveProjectsMinSizeMB int64 `json:"inactiveProjectsMinSizeMB,omitempty"`
 	// +optional
-	InactiveProjectsSendWarningEmailAfterMonths int `json:"inactiveProjectsSendWarningEmailAfterMonths,omitempty"`
+	InactiveProjectsSendWarningEmailAfterMonths int64 `json:"inactiveProjectsSendWarningEmailAfterMonths,omitempty"`
 	// +optional
 	IncludeOptionalMetricsInServicePing bool `json:"includeOptionalMetricsInServicePing,omitempty"`
 	// +optional
@@ -1272,7 +1272,7 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	InvisibleCaptchaEnabled bool `json:"invisibleCaptchaEnabled,omitempty"`
 	// +optional
-	IssuesCreateLimit int `json:"issuesCreateLimit,omitempty"`
+	IssuesCreateLimit int64 `json:"issuesCreateLimit,omitempty"`
 	// +optional
 	JiraConnectPublicKeyStorageEnabled bool `json:"jiraConnectPublicKeyStorageEnabled,omitempty"`
 	// +optional
@@ -1286,7 +1286,7 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	KrokiURL string `json:"krokiUrl,omitempty"`
 	// +optional
-	LocalMarkdownVersion int `json:"localMarkdownVersion,omitempty"`
+	LocalMarkdownVersion int64 `json:"localMarkdownVersion,omitempty"`
 	// +optional
 	LockDuoFeaturesEnabled bool `json:"lockDuoFeaturesEnabled,omitempty"`
 	// +optional
@@ -1302,51 +1302,51 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	MavenPackageRequestsForwarding bool `json:"mavenPackageRequestsForwarding,omitempty"`
 	// +optional
-	MaxArtifactsSize int `json:"maxArtifactsSize,omitempty"`
+	MaxArtifactsSize int64 `json:"maxArtifactsSize,omitempty"`
 	// +optional
-	MaxAttachmentSize int `json:"maxAttachmentSize,omitempty"`
+	MaxAttachmentSize int64 `json:"maxAttachmentSize,omitempty"`
 	// +optional
-	MaxDecompressedArchiveSize int `json:"maxDecompressedArchiveSize,omitempty"`
+	MaxDecompressedArchiveSize int64 `json:"maxDecompressedArchiveSize,omitempty"`
 	// +optional
-	MaxExportSize int `json:"maxExportSize,omitempty"`
+	MaxExportSize int64 `json:"maxExportSize,omitempty"`
 	// +optional
-	MaxImportRemoteFileSize int `json:"maxImportRemoteFileSize,omitempty"`
+	MaxImportRemoteFileSize int64 `json:"maxImportRemoteFileSize,omitempty"`
 	// +optional
-	MaxImportSize int `json:"maxImportSize,omitempty"`
+	MaxImportSize int64 `json:"maxImportSize,omitempty"`
 	// +optional
-	MaxLoginAttempts int `json:"maxLoginAttempts,omitempty"`
+	MaxLoginAttempts int64 `json:"maxLoginAttempts,omitempty"`
 	// +optional
-	MaxNumberOfRepositoryDownloads int `json:"maxNumberOfRepositoryDownloads,omitempty"`
+	MaxNumberOfRepositoryDownloads int64 `json:"maxNumberOfRepositoryDownloads,omitempty"`
 	// +optional
-	MaxNumberOfRepositoryDownloadsWithinTimePeriod int `json:"maxNumberOfRepositoryDownloadsWithinTimePeriod,omitempty"`
+	MaxNumberOfRepositoryDownloadsWithinTimePeriod int64 `json:"maxNumberOfRepositoryDownloadsWithinTimePeriod,omitempty"`
 	// +optional
-	MaxPagesSize int `json:"maxPagesSize,omitempty"`
+	MaxPagesSize int64 `json:"maxPagesSize,omitempty"`
 	// +optional
-	MaxPersonalAccessTokenLifetime int `json:"maxPersonalAccessTokenLifetime,omitempty"`
+	MaxPersonalAccessTokenLifetime int64 `json:"maxPersonalAccessTokenLifetime,omitempty"`
 	// +optional
-	MaxSSHKeyLifetime int `json:"maxSshKeyLifetime,omitempty"`
+	MaxSSHKeyLifetime int64 `json:"maxSshKeyLifetime,omitempty"`
 	// +optional
-	MaxTerraformStateSizeBytes int `json:"maxTerraformStateSizeBytes,omitempty"`
+	MaxTerraformStateSizeBytes int64 `json:"maxTerraformStateSizeBytes,omitempty"`
 	// +optional
-	MaxYAMLDepth int `json:"maxYamlDepth,omitempty"`
+	MaxYAMLDepth int64 `json:"maxYamlDepth,omitempty"`
 	// +optional
-	MaxYAMLSizeBytes int `json:"maxYamlSizeBytes,omitempty"`
+	MaxYAMLSizeBytes int64 `json:"maxYamlSizeBytes,omitempty"`
 	// +optional
-	MetricsMethodCallThreshold int `json:"metricsMethodCallThreshold,omitempty"`
+	MetricsMethodCallThreshold int64 `json:"metricsMethodCallThreshold,omitempty"`
 	// +optional
-	MinimumPasswordLength int `json:"minimumPasswordLength,omitempty"`
+	MinimumPasswordLength int64 `json:"minimumPasswordLength,omitempty"`
 	// +optional
 	MirrorAvailable bool `json:"mirrorAvailable,omitempty"`
 	// +optional
-	MirrorCapacityThreshold int `json:"mirrorCapacityThreshold,omitempty"`
+	MirrorCapacityThreshold int64 `json:"mirrorCapacityThreshold,omitempty"`
 	// +optional
-	MirrorMaxCapacity int `json:"mirrorMaxCapacity,omitempty"`
+	MirrorMaxCapacity int64 `json:"mirrorMaxCapacity,omitempty"`
 	// +optional
-	MirrorMaxDelay int `json:"mirrorMaxDelay,omitempty"`
+	MirrorMaxDelay int64 `json:"mirrorMaxDelay,omitempty"`
 	// +optional
 	NPMPackageRequestsForwarding bool `json:"npmPackageRequestsForwarding,omitempty"`
 	// +optional
-	NotesCreateLimit int `json:"notesCreateLimit,omitempty"`
+	NotesCreateLimit int64 `json:"notesCreateLimit,omitempty"`
 	// +optional
 	NotifyOnUnknownSignIn bool `json:"notifyOnUnknownSignIn,omitempty"`
 	// +optional
@@ -1356,11 +1356,11 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	OutboundLocalRequestsWhitelist []string `json:"outboundLocalRequestsWhitelist,omitempty"`
 	// +optional
-	PackageMetadataPURLTypes []int `json:"packageMetadataPUrlTypes,omitempty"`
+	PackageMetadataPURLTypes []int64 `json:"packageMetadataPUrlTypes,omitempty"`
 	// +optional
 	PackageRegistryAllowAnyoneToPullOption bool `json:"packageRegistryAllowAnyoneToPullOption,omitempty"`
 	// +optional
-	PackageRegistryCleanupPoliciesWorkerCapacity int `json:"packageRegistryCleanupPoliciesWorkerCapacity,omitempty"`
+	PackageRegistryCleanupPoliciesWorkerCapacity int64 `json:"packageRegistryCleanupPoliciesWorkerCapacity,omitempty"`
 	// +optional
 	PagesDomainVerificationEnabled bool `json:"pagesDomainVerificationEnabled,omitempty"`
 	// +optional
@@ -1380,7 +1380,7 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	PersonalAccessTokenPrefix string `json:"personalAccessTokenPrefix,omitempty"`
 	// +optional
-	PipelineLimitPerProjectUserSha int `json:"pipelineLimitPerProjectUserSha,omitempty"`
+	PipelineLimitPerProjectUserSha int64 `json:"pipelineLimitPerProjectUserSha,omitempty"`
 	// +optional
 	PlantumlEnabled bool `json:"plantumlEnabled,omitempty"`
 	// +optional
@@ -1392,19 +1392,19 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	PreventMergeRequestsCommittersApproval bool `json:"preventMergeRequestsCommittersApproval,omitempty"`
 	// +optional
-	ProjectDownloadExportLimit int `json:"projectDownloadExportLimit,omitempty"`
+	ProjectDownloadExportLimit int64 `json:"projectDownloadExportLimit,omitempty"`
 	// +optional
 	ProjectExportEnabled bool `json:"projectExportEnabled,omitempty"`
 	// +optional
-	ProjectExportLimit int `json:"projectExportLimit,omitempty"`
+	ProjectExportLimit int64 `json:"projectExportLimit,omitempty"`
 	// +optional
-	ProjectImportLimit int `json:"projectImportLimit,omitempty"`
+	ProjectImportLimit int64 `json:"projectImportLimit,omitempty"`
 	// +optional
-	ProjectJobsAPIRateLimit int `json:"projectJobsApiRateLimit,omitempty"`
+	ProjectJobsAPIRateLimit int64 `json:"projectJobsApiRateLimit,omitempty"`
 	// +optional
-	ProjectRunnerTokenExpirationInterval int `json:"projectRunnerTokenExpirationInterval,omitempty"`
+	ProjectRunnerTokenExpirationInterval int64 `json:"projectRunnerTokenExpirationInterval,omitempty"`
 	// +optional
-	ProjectsAPIRateLimitUnauthenticated int `json:"projectsApiRateLimitUnauthenticated,omitempty"`
+	ProjectsAPIRateLimitUnauthenticated int64 `json:"projectsApiRateLimitUnauthenticated,omitempty"`
 	// +optional
 	PrometheusMetricsEnabled bool `json:"prometheusMetricsEnabled,omitempty"`
 	// +optional
@@ -1412,21 +1412,21 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	PseudonymizerEnabled bool `json:"pseudonymizerEnabled,omitempty"`
 	// +optional
-	PushEventActivitiesLimit int `json:"pushEventActivitiesLimit,omitempty"`
+	PushEventActivitiesLimit int64 `json:"pushEventActivitiesLimit,omitempty"`
 	// +optional
-	PushEventHooksLimit int `json:"pushEventHooksLimit,omitempty"`
+	PushEventHooksLimit int64 `json:"pushEventHooksLimit,omitempty"`
 	// +optional
 	PyPIPackageRequestsForwarding bool `json:"pyPIpackageRequestsForwarding,omitempty"`
 	// +optional
-	RSAKeyRestriction int `json:"rsaKeyRestriction,omitempty"`
+	RSAKeyRestriction int64 `json:"rsaKeyRestriction,omitempty"`
 	// +optional
 	RateLimitingResponseText string `json:"rateLimitingResponseText,omitempty"`
 	// +optional
-	RawBlobRequestLimit int `json:"rawBlobRequestLimit,omitempty"`
+	RawBlobRequestLimit int64 `json:"rawBlobRequestLimit,omitempty"`
 	// +optional
 	RecaptchaEnabled bool `json:"recaptchaEnabled,omitempty"`
 	// +optional
-	ReceiveMaxInputSize int `json:"receiveMaxInputSize,omitempty"`
+	ReceiveMaxInputSize int64 `json:"receiveMaxInputSize,omitempty"`
 	// +optional
 	ReceptiveClusterAgentsEnabled bool `json:"receptiveClusterAgentsEnabled,omitempty"`
 	// +optional
@@ -1434,11 +1434,11 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	RepositoryChecksEnabled bool `json:"repositoryChecksEnabled,omitempty"`
 	// +optional
-	RepositorySizeLimit int `json:"repositorySizeLimit,omitempty"`
+	RepositorySizeLimit int64 `json:"repositorySizeLimit,omitempty"`
 	// +optional
 	RepositoryStorages []string `json:"repositoryStorages,omitempty"`
 	// +optional
-	RepositoryStoragesWeighted map[string]int `json:"repositoryStoragesWeighted,omitempty"`
+	RepositoryStoragesWeighted map[string]int64 `json:"repositoryStoragesWeighted,omitempty"`
 	// +optional
 	RequireAdminApprovalAfterUserSignup bool `json:"requireAdminApprovalAfterUserSignup,omitempty"`
 	// +optional
@@ -1450,11 +1450,11 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	RestrictedVisibilityLevels []string `json:"restrictedVisibilityLevels,omitempty"`
 	// +optional
-	RunnerTokenExpirationInterval int `json:"runnerTokenExpirationInterval,omitempty"`
+	RunnerTokenExpirationInterval int64 `json:"runnerTokenExpirationInterval,omitempty"`
 	// +optional
-	SearchRateLimit int `json:"searchRateLimit,omitempty"`
+	SearchRateLimit int64 `json:"searchRateLimit,omitempty"`
 	// +optional
-	SearchRateLimitUnauthenticated int `json:"searchRateLimitUnauthenticated,omitempty"`
+	SearchRateLimitUnauthenticated int64 `json:"searchRateLimitUnauthenticated,omitempty"`
 	// +optional
 	SecretDetectionRevocationTokenTypesURL string `json:"secretDetectionRevocationTokenTypesUrl,omitempty"`
 	// +optional
@@ -1462,7 +1462,7 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	SecretDetectionTokenRevocationURL string `json:"secretDetectionTokenRevocationUrl,omitempty"`
 	// +optional
-	SecurityApprovalPoliciesLimit int `json:"securityApprovalPoliciesLimit,omitempty"`
+	SecurityApprovalPoliciesLimit int64 `json:"securityApprovalPoliciesLimit,omitempty"`
 	// +optional
 	SecurityPolicyGlobalGroupApproversEnabled bool `json:"securityPolicyGlobalGroupApproversEnabled,omitempty"`
 	// +optional
@@ -1480,17 +1480,17 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	ServiceAccessTokensExpirationEnforced bool `json:"serviceAccessTokensExpirationEnforced,omitempty"`
 	// +optional
-	SessionExpireDelay int `json:"sessionExpireDelay,omitempty"`
+	SessionExpireDelay int64 `json:"sessionExpireDelay,omitempty"`
 	// +optional
 	SharedRunnersEnabled bool `json:"sharedRunnersEnabled,omitempty"`
 	// +optional
-	SharedRunnersMinutes int `json:"sharedRunnersMinutes,omitempty"`
+	SharedRunnersMinutes int64 `json:"sharedRunnersMinutes,omitempty"`
 	// +optional
 	SharedRunnersText string `json:"sharedRunnersText,omitempty"`
 	// +optional
-	SidekiqJobLimiterCompressionThresholdBytes int `json:"sidekiqJobLimiterCompressionThresholdBytes,omitempty"`
+	SidekiqJobLimiterCompressionThresholdBytes int64 `json:"sidekiqJobLimiterCompressionThresholdBytes,omitempty"`
 	// +optional
-	SidekiqJobLimiterLimitBytes int `json:"sidekiqJobLimiterLimitBytes,omitempty"`
+	SidekiqJobLimiterLimitBytes int64 `json:"sidekiqJobLimiterLimitBytes,omitempty"`
 	// +optional
 	SidekiqJobLimiterMode string `json:"sidekiqJobLimiterMode,omitempty"`
 	// +optional
@@ -1506,7 +1506,7 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	SlackAppID string `json:"slackAppId,omitempty"`
 	// +optional
-	SnippetSizeLimit int `json:"snippetSizeLimit,omitempty"`
+	SnippetSizeLimit int64 `json:"snippetSizeLimit,omitempty"`
 	// +optional
 	SnowplowAppID string `json:"snowplowAppId,omitempty"`
 	// +optional
@@ -1532,105 +1532,105 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	SuggestPipelineEnabled bool `json:"suggestPipelineEnabled,omitempty"`
 	// +optional
-	TerminalMaxSessionTime int `json:"terminalMaxSessionTime,omitempty"`
+	TerminalMaxSessionTime int64 `json:"terminalMaxSessionTime,omitempty"`
 	// +optional
 	Terms string `json:"terms,omitempty"`
 	// +optional
 	ThrottleAuthenticatedAPIEnabled bool `json:"throttleAuthenticatedApiEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedAPIPeriodInSeconds int `json:"throttleAuthenticatedApiPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedAPIPeriodInSeconds int64 `json:"throttleAuthenticatedApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedAPIRequestsPerPeriod int `json:"throttleAuthenticatedApiRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedAPIRequestsPerPeriod int64 `json:"throttleAuthenticatedApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedDeprecatedAPIEnabled bool `json:"throttleAuthenticatedDeprecatedApiEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds int `json:"throttleAuthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds int64 `json:"throttleAuthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod int `json:"throttleAuthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod int64 `json:"throttleAuthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedFilesAPIEnabled bool `json:"throttleAuthenticatedFilesApiEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedFilesAPIPeriodInSeconds int `json:"throttleAuthenticatedFilesApiPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedFilesAPIPeriodInSeconds int64 `json:"throttleAuthenticatedFilesApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedFilesAPIRequestsPerPeriod int `json:"throttleAuthenticatedFilesApiRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedFilesAPIRequestsPerPeriod int64 `json:"throttleAuthenticatedFilesApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedGitLFSEnabled bool `json:"throttleAuthenticatedGitLFSEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedGitLFSPeriodInSeconds int `json:"throttleAuthenticatedGitLFSPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedGitLFSPeriodInSeconds int64 `json:"throttleAuthenticatedGitLFSPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedGitLFSRequestsPerPeriod int `json:"throttleAuthenticatedGitLFSRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedGitLFSRequestsPerPeriod int64 `json:"throttleAuthenticatedGitLFSRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedPackagesAPIEnabled bool `json:"throttleAuthenticatedPackagesApiEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedPackagesAPIPeriodInSeconds int `json:"throttleAuthenticatedPackagesApiPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedPackagesAPIPeriodInSeconds int64 `json:"throttleAuthenticatedPackagesApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedPackagesAPIRequestsPerPeriod int `json:"throttleAuthenticatedPackagesApiRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedPackagesAPIRequestsPerPeriod int64 `json:"throttleAuthenticatedPackagesApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedWebEnabled bool `json:"throttleAuthenticatedWebEnabled,omitempty"`
 	// +optional
-	ThrottleAuthenticatedWebPeriodInSeconds int `json:"throttleAuthenticatedWebPeriodInSeconds,omitempty"`
+	ThrottleAuthenticatedWebPeriodInSeconds int64 `json:"throttleAuthenticatedWebPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleAuthenticatedWebRequestsPerPeriod int `json:"throttleAuthenticatedWebRequestsPerPeriod,omitempty"`
+	ThrottleAuthenticatedWebRequestsPerPeriod int64 `json:"throttleAuthenticatedWebRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleIncidentManagementNotificationEnabled bool `json:"throttleIncidentManagementNotificationEnabled,omitempty"`
 	// +optional
-	ThrottleIncidentManagementNotificationPerPeriod int `json:"throttleIncidentManagementNotificationPerPeriod,omitempty"`
+	ThrottleIncidentManagementNotificationPerPeriod int64 `json:"throttleIncidentManagementNotificationPerPeriod,omitempty"`
 	// +optional
-	ThrottleIncidentManagementNotificationPeriodInSeconds int `json:"throttleIncidentManagementNotificationPeriodInSeconds,omitempty"`
+	ThrottleIncidentManagementNotificationPeriodInSeconds int64 `json:"throttleIncidentManagementNotificationPeriodInSeconds,omitempty"`
 	// +optional
 	ThrottleProtectedPathsEnabled bool `json:"throttleProtectedPathsEnabled,omitempty"`
 	// +optional
-	ThrottleProtectedPathsPeriodInSeconds int `json:"throttleProtectedPathsPeriodInSeconds,omitempty"`
+	ThrottleProtectedPathsPeriodInSeconds int64 `json:"throttleProtectedPathsPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleProtectedPathsRequestsPerPeriod int `json:"throttleProtectedPathsRequestsPerPeriod,omitempty"`
+	ThrottleProtectedPathsRequestsPerPeriod int64 `json:"throttleProtectedPathsRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedAPIEnabled bool `json:"throttleUnauthenticatedApiEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedAPIPeriodInSeconds int `json:"throttleUnauthenticatedApiPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedAPIPeriodInSeconds int64 `json:"throttleUnauthenticatedApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedAPIRequestsPerPeriod int `json:"throttleUnauthenticatedApiRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedAPIRequestsPerPeriod int64 `json:"throttleUnauthenticatedApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedDeprecatedAPIEnabled bool `json:"throttleUnauthenticatedDeprecatedApiEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds int `json:"throttleUnauthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds int64 `json:"throttleUnauthenticatedDeprecatedApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod int `json:"throttleUnauthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod int64 `json:"throttleUnauthenticatedDeprecatedApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedFilesAPIEnabled bool `json:"throttleUnauthenticatedFilesApiEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedFilesAPIPeriodInSeconds int `json:"throttleUnauthenticatedFilesApiPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedFilesAPIPeriodInSeconds int64 `json:"throttleUnauthenticatedFilesApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedFilesAPIRequestsPerPeriod int `json:"throttleUnauthenticatedFilesApiRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedFilesAPIRequestsPerPeriod int64 `json:"throttleUnauthenticatedFilesApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedGitLFSEnabled bool `json:"throttleUnauthenticatedGitLFSEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedGitLFSPeriodInSeconds int `json:"throttleUnauthenticatedGitLFSPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedGitLFSPeriodInSeconds int64 `json:"throttleUnauthenticatedGitLFSPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedGitLFSRequestsPerPeriod int `json:"throttleUnauthenticatedGitLFSRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedGitLFSRequestsPerPeriod int64 `json:"throttleUnauthenticatedGitLFSRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedPackagesAPIEnabled bool `json:"throttleUnauthenticatedPackagesApiEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedPackagesAPIPeriodInSeconds int `json:"throttleUnauthenticatedPackagesApiPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedPackagesAPIPeriodInSeconds int64 `json:"throttleUnauthenticatedPackagesApiPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod int `json:"throttleUnauthenticatedPackagesApiRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod int64 `json:"throttleUnauthenticatedPackagesApiRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedWebEnabled bool `json:"throttleUnauthenticatedWebEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedWebPeriodInSeconds int `json:"throttleUnauthenticatedWebPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedWebPeriodInSeconds int64 `json:"throttleUnauthenticatedWebPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedWebRequestsPerPeriod int `json:"throttleUnauthenticatedWebRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedWebRequestsPerPeriod int64 `json:"throttleUnauthenticatedWebRequestsPerPeriod,omitempty"`
 	// +optional
 	TimeTrackingLimitToHours bool `json:"timeTrackingLimitToHours,omitempty"`
 	// +optional
-	TwoFactorGracePeriod int `json:"twoFactorGracePeriod,omitempty"`
+	TwoFactorGracePeriod int64 `json:"twoFactorGracePeriod,omitempty"`
 	// +optional
-	UnconfirmedUsersDeleteAfterDays int `json:"unconfirmedUsersDeleteAfterDays,omitempty"`
+	UnconfirmedUsersDeleteAfterDays int64 `json:"unconfirmedUsersDeleteAfterDays,omitempty"`
 	// +optional
 	UniqueIPsLimitEnabled bool `json:"uniqueIpsLimitEnabled,omitempty"`
 	// +optional
-	UniqueIPsLimitPerUser int `json:"uniqueIpsLimitPerUser,omitempty"`
+	UniqueIPsLimitPerUser int64 `json:"uniqueIpsLimitPerUser,omitempty"`
 	// +optional
-	UniqueIPsLimitTimeWindow int `json:"uniqueIpsLimitTimeWindow,omitempty"`
+	UniqueIPsLimitTimeWindow int64 `json:"uniqueIpsLimitTimeWindow,omitempty"`
 	// +optional
 	UpdateRunnerVersionsEnabled bool `json:"updateRunnerVersionsEnabled,omitempty"`
 	// +optional
@@ -1656,7 +1656,7 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	UserShowAddSSHKeyMessage bool `json:"userShowAddSshKeyMessage,omitempty"`
 	// +optional
-	UsersGetByIDLimit int `json:"usersGetByIdLimit,omitempty"`
+	UsersGetByIDLimit int64 `json:"usersGetByIdLimit,omitempty"`
 	// +optional
 	UsersGetByIDLimitAllowlistRaw string `json:"usersGetByIdLimitAllowlistRaw,omitempty"`
 	// +optional
@@ -1668,19 +1668,19 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	WhatsNewVariant string `json:"whatsNewVariant,omitempty"`
 	// +optional
-	WikiPageMaxContentBytes int `json:"wikiPageMaxContentBytes,omitempty"`
+	WikiPageMaxContentBytes int64 `json:"wikiPageMaxContentBytes,omitempty"`
 	// +optional
-	DefaultBranchProtection int `json:"defaultBranchProtection,omitempty"`
+	DefaultBranchProtection int64 `json:"defaultBranchProtection,omitempty"`
 	// +optional
 	HousekeepingBitmapsEnabled bool `json:"housekeepingBitmapsEnabled,omitempty"`
 	// +optional
-	HousekeepingFullRepackPeriod int `json:"housekeepingFullRepackPeriod,omitempty"`
+	HousekeepingFullRepackPeriod int64 `json:"housekeepingFullRepackPeriod,omitempty"`
 	// +optional
-	HousekeepingGcPeriod int `json:"housekeepingGcPeriod,omitempty"`
+	HousekeepingGcPeriod int64 `json:"housekeepingGcPeriod,omitempty"`
 	// +optional
-	HousekeepingIncrementalRepackPeriod int `json:"housekeepingIncrementalRepackPeriod,omitempty"`
+	HousekeepingIncrementalRepackPeriod int64 `json:"housekeepingIncrementalRepackPeriod,omitempty"`
 	// +optional
-	PerformanceBarAllowedGroupID int `json:"performanceBarAllowedGroupId,omitempty"`
+	PerformanceBarAllowedGroupID int64 `json:"performanceBarAllowedGroupId,omitempty"`
 	// +optional
 	PerformanceBarEnabled bool `json:"performanceBarEnabled,omitempty"`
 	// +optional
@@ -1692,10 +1692,10 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	ThrottleUnauthenticatedEnabled bool `json:"throttleUnauthenticatedEnabled,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedPeriodInSeconds int `json:"throttleUnauthenticatedPeriodInSeconds,omitempty"`
+	ThrottleUnauthenticatedPeriodInSeconds int64 `json:"throttleUnauthenticatedPeriodInSeconds,omitempty"`
 	// +optional
-	ThrottleUnauthenticatedRequestsPerPeriod int `json:"throttleUnauthenticatedRequestsPerPeriod,omitempty"`
+	ThrottleUnauthenticatedRequestsPerPeriod int64 `json:"throttleUnauthenticatedRequestsPerPeriod,omitempty"`
 	// +optional
-	UserEmailLookupLimit int `json:"userEmailLookupLimit,omitempty"`
+	UserEmailLookupLimit int64 `json:"userEmailLookupLimit,omitempty"`
 }
 

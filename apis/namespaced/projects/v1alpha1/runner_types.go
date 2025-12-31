@@ -36,7 +36,7 @@ type RunnerParameters struct {
 	// The runner will be available to execute jobs exclusively for this project.
 	// +optional
 	// +immutable
-	ProjectID *int `json:"projectId,omitempty"`
+	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a Project resource to retrieve its ID.
 	// This provides a way to reference a project managed by Crossplane.
@@ -75,7 +75,7 @@ type RunnerObservation struct {
 type RunnerProject struct {
 	// ID is the unique identifier of the project.
 	// +optional
-	ID int `json:"id"`
+	ID int64 `json:"id"`
 
 	// Name is the name of the project.
 	// +optional

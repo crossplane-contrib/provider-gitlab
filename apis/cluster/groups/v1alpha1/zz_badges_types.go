@@ -29,7 +29,7 @@ type BadgeParameters struct {
 	// GroupID is the ID of the group to create the deploy token in.
 	// +optional
 	// +immutable
-	GroupID *int `json:"groupId,omitempty"`
+	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
@@ -45,7 +45,7 @@ type BadgeParameters struct {
 	// If the badge with this ID does not exist, resource creation will fail.
 	// +optional
 	// +immutable
-	ID *int `json:"id,omitempty"`
+	ID *int64 `json:"id,omitempty"`
 	// LinkURL is the onclick redirect URL of the badge.
 	// Supports gitlab format templating using variables like %{project_name}
 	// +required
@@ -65,7 +65,7 @@ type BadgeParameters struct {
 // https://docs.gitlab.com/api/group_badges/
 type BadgeObservation struct {
 	// ID of the badge
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// LinkURL is the onclick redirect URL of the badge.
 	LinkURL string `json:"linkURL,omitempty"`
 	// RenderedLinkURL is the rendered onclick redirect URL of the badge.

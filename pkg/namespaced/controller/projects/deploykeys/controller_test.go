@@ -45,7 +45,7 @@ var (
 	errorMessage           = "restult: -expected, +actual: \n%s"
 	notADeployKey          resource.Managed
 	testProjectID          = "testProjectId"
-	testKeyID              = 123
+	testKeyID              = int64(123)
 	testKeyTitle           = "testKeyTitle"
 	testKey                = "testKey"
 	testCreatedAt          = time.Now()
@@ -167,7 +167,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				cr: buildDeployKey(withExternalName(testExternalName)),
 				deployKeyService: &fake.MockClient{
-					MockGetDeployKey: func(pid interface{}, deployKey int, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
+					MockGetDeployKey: func(pid interface{}, deployKey int64, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errors.New(testGetKeyErrorMessage)
 					},
 				},
@@ -182,7 +182,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				cr: buildDeployKey(withExternalName(testExternalName)),
 				deployKeyService: &fake.MockClient{
-					MockGetDeployKey: func(pid interface{}, deployKey int, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
+					MockGetDeployKey: func(pid interface{}, deployKey int64, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("")
 					},
 				},
@@ -199,7 +199,7 @@ func TestObserve(t *testing.T) {
 					withExternalName(testExternalName),
 				),
 				deployKeyService: &fake.MockClient{
-					MockGetDeployKey: func(pid interface{}, deployKey int, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
+					MockGetDeployKey: func(pid interface{}, deployKey int64, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
 						return &testDeployKey, &gitlab.Response{}, nil
 					},
 				},
@@ -228,7 +228,7 @@ func TestObserve(t *testing.T) {
 					withTitle(),
 				),
 				deployKeyService: &fake.MockClient{
-					MockGetDeployKey: func(pid interface{}, deployKey int, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
+					MockGetDeployKey: func(pid interface{}, deployKey int64, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
 						return &testDeployKey, &gitlab.Response{}, nil
 					},
 				},
@@ -441,7 +441,7 @@ func TestUpdate(t *testing.T) {
 					withTitle(),
 				),
 				deployKeyService: &fake.MockClient{
-					MockUpdateDeployKey: func(pid interface{}, deployKey int, opt *gitlab.UpdateDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
+					MockUpdateDeployKey: func(pid interface{}, deployKey int64, opt *gitlab.UpdateDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
 						return &gitlab.ProjectDeployKey{}, nil, testError()
 					},
 				},
@@ -466,7 +466,7 @@ func TestUpdate(t *testing.T) {
 					withTitle(),
 				),
 				deployKeyService: &fake.MockClient{
-					MockUpdateDeployKey: func(pid interface{}, deployKey int, opt *gitlab.UpdateDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
+					MockUpdateDeployKey: func(pid interface{}, deployKey int64, opt *gitlab.UpdateDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
 						return &gitlab.ProjectDeployKey{}, nil, nil
 					},
 				},
@@ -550,7 +550,7 @@ func TestDelete(t *testing.T) {
 			args: args{
 				cr: buildDeployKey(withExternalName(testExternalName)),
 				deployKeyService: &fake.MockClient{
-					MockDeleteDeployKey: func(pid interface{}, deployKey int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteDeployKey: func(pid interface{}, deployKey int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return nil, nil
 					},
 				},

@@ -133,7 +133,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
 
-	approvalRule, res, err := e.client.GetProjectApprovalRule(*cr.Spec.ForProvider.ProjectID, id)
+	approvalRule, res, err := e.client.GetProjectApprovalRule(*cr.Spec.ForProvider.ProjectID, int64(id))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{ResourceExists: false}, nil
@@ -196,7 +196,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, _, err = e.client.UpdateProjectApprovalRule(
 		*cr.Spec.ForProvider.ProjectID,
-		ruleID,
+		int64(ruleID),
 		projects.GenerateUpdateApprovalRulesOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
@@ -221,7 +221,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, err = e.client.DeleteProjectApprovalRule(
 		*cr.Spec.ForProvider.ProjectID,
-		ruleID,
+		int64(ruleID),
 		gitlab.WithContext(ctx),
 	)
 
@@ -234,6 +234,6 @@ func (e *external) Disconnect(ctx context.Context) error {
 }
 
 func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.ApprovalRule, approvalRule *gitlab.ProjectApprovalRule) error {
-	meta.SetExternalName(cr, strconv.Itoa(approvalRule.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(approvalRule.ID, 10))
 	return e.kube.Update(ctx, cr)
 }

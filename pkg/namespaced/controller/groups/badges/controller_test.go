@@ -39,22 +39,22 @@ import (
 var (
 	unexpecedItem resource.Managed
 	errBoom       = errors.New("boom")
-	groupID       = 1234
+	groupID       = int64(1234)
 )
 
 // mockBadgeClient implements groups.BadgeClient for tests
 type mockBadgeClient struct {
-	GetFn    func(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error)
+	GetFn    func(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error)
 	AddFn    func(gid any, opt *gitlab.AddGroupBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error)
-	EditFn   func(gid any, badge int, opt *gitlab.EditGroupBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error)
-	DeleteFn func(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	EditFn   func(gid any, badge int64, opt *gitlab.EditGroupBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error)
+	DeleteFn func(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 func (m *mockBadgeClient) ListGroupBadges(gid any, opt *gitlab.ListGroupBadgesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.GroupBadge, *gitlab.Response, error) {
 	return nil, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 }
 
-func (m *mockBadgeClient) GetGroupBadge(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
+func (m *mockBadgeClient) GetGroupBadge(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
 	if m.GetFn == nil {
 		return nil, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 	}
@@ -66,18 +66,21 @@ func (m *mockBadgeClient) AddGroupBadge(gid any, opt *gitlab.AddGroupBadgeOption
 	}
 	return m.AddFn(gid, opt, options...)
 }
-func (m *mockBadgeClient) EditGroupBadge(gid any, badge int, opt *gitlab.EditGroupBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
+
+func (m *mockBadgeClient) EditGroupBadge(gid any, badge int64, opt *gitlab.EditGroupBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
 	if m.EditFn == nil {
 		return nil, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 	}
 	return m.EditFn(gid, badge, opt, options...)
 }
-func (m *mockBadgeClient) DeleteGroupBadge(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+
+func (m *mockBadgeClient) DeleteGroupBadge(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	if m.DeleteFn == nil {
-		return &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+		return &gitlab.Response{Response: &http.Response{StatusCode: 204}}, nil
 	}
 	return m.DeleteFn(gid, badge, options...)
 }
+
 func (m *mockBadgeClient) PreviewGroupBadge(gid any, opt *gitlab.GroupBadgePreviewOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
 	return nil, nil, nil
 }
@@ -194,7 +197,7 @@ func TestObserve(t *testing.T) {
 		},
 		"NotFound": {
 			args: args{
-				badge: &mockBadgeClient{GetFn: func(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
+				badge: &mockBadgeClient{GetFn: func(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
 					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 				}},
 				cr: func() resource.Managed { cr := badge(withGroupID()); meta.SetExternalName(cr, "999"); return cr }(),
@@ -203,7 +206,7 @@ func TestObserve(t *testing.T) {
 		},
 		"FoundAndUpToDate": {
 			args: args{
-				badge: &mockBadgeClient{GetFn: func(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
+				badge: &mockBadgeClient{GetFn: func(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
 					return &gitlab.GroupBadge{ID: 1, Name: "b"}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 				}},
 				cr: func() resource.Managed { cr := badge(withGroupID()); meta.SetExternalName(cr, "1"); return cr }(),
@@ -262,9 +265,9 @@ func TestCreateUpdateDeleteDisconnect(t *testing.T) {
 	})
 
 	t.Run("CreateWithExistingID", func(t *testing.T) {
-		id := 5
+		id := int64(5)
 		cr := badge(withSpec(v1alpha1.BadgeParameters{ID: &id, GroupID: &groupID}))
-		e := &external{kube: &test.MockClient{MockUpdate: test.NewMockUpdateFn(nil)}, client: &mockBadgeClient{GetFn: func(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
+		e := &external{kube: &test.MockClient{MockUpdate: test.NewMockUpdateFn(nil)}, client: &mockBadgeClient{GetFn: func(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
 			return &gitlab.GroupBadge{ID: 5}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 		}}}
 		_, err := e.Create(context.Background(), cr)
@@ -322,7 +325,7 @@ func TestCreateUpdateDeleteDisconnect(t *testing.T) {
 	t.Run("UpdateSuccess", func(t *testing.T) {
 		cr := badge(withGroupID())
 		meta.SetExternalName(cr, "1")
-		e := &external{kube: nil, client: &mockBadgeClient{EditFn: func(gid any, badge int, opt *gitlab.EditGroupBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
+		e := &external{kube: nil, client: &mockBadgeClient{EditFn: func(gid any, badge int64, opt *gitlab.EditGroupBadgeOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupBadge, *gitlab.Response, error) {
 			return &gitlab.GroupBadge{}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 		}}}
 		_, err := e.Update(context.Background(), cr)
@@ -362,7 +365,7 @@ func TestCreateUpdateDeleteDisconnect(t *testing.T) {
 	t.Run("DeleteSuccess", func(t *testing.T) {
 		cr := badge(withGroupID())
 		meta.SetExternalName(cr, "1")
-		e := &external{kube: nil, client: &mockBadgeClient{DeleteFn: func(gid any, badge int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+		e := &external{kube: nil, client: &mockBadgeClient{DeleteFn: func(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 			return &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 		}}}
 		_, err := e.Delete(context.Background(), cr)

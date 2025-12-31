@@ -79,6 +79,7 @@ spec:
                   extraSharedRunnersMinutesLimit:
                     description: Extra pipeline minutes quota for this group (purchased
                       in addition to the minutes included in the plan).
+                    format: int64
                     type: integer
                   fullPathToRemove:
                     description: |-
@@ -104,6 +105,7 @@ spec:
                     type: string
                   parentId:
                     description: The parent group ID for creating nested group.
+                    format: int64
                     type: integer
                   parentIdRef:
                     description: ParentIDRef is a reference to a group to retrieve
@@ -221,6 +223,7 @@ spec:
                     description: |-
                       Pipeline minutes quota for this group (included in plan).
                       Can be nil (default; inherit system default), 0 (unlimited) or > 0.
+                    format: int64
                     type: integer
                   sharedWithGroups:
                     description: SharedWithGroups create links for sharing a group
@@ -239,9 +242,11 @@ spec:
                           description: |-
                             The role (access_level) to grant the group
                             https://docs.gitlab.com/ee/api/members.html#roles
+                          format: int64
                           type: integer
                         groupId:
                           description: The ID of the group to share with.
+                          format: int64
                           type: integer
                         groupIdRef:
                           description: GroupIDRef is a reference to a group to retrieve
@@ -336,6 +341,7 @@ spec:
                   twoFactorGracePeriod:
                     description: Time before Two-factor authentication is enforced
                       (in hours).
+                    format: int64
                     type: integer
                   visibility:
                     description: The group’s visibility. Can be private, internal,
@@ -434,6 +440,7 @@ spec:
                   fullPath:
                     type: string
                   id:
+                    format: int64
                     type: integer
                   ldapAccess:
                     description: |-
@@ -478,10 +485,12 @@ spec:
                           format: date-time
                           type: string
                         groupAccessLevel:
+                          format: int64
                           type: integer
                         groupFullPath:
                           type: string
                         groupId:
+                          format: int64
                           type: integer
                         groupName:
                           type: string
