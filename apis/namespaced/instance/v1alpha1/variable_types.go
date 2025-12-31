@@ -26,7 +26,7 @@ import (
 )
 
 // VariableParameters define the desired state of a Gitlab CI Variable
-// https://docs.gitlab.com/ee/api/group_level_variables.html
+// https://docs.gitlab.com/api/instance_level_ci_variables/
 type VariableParameters struct {
 	v1alpha1.CommonVariableParameters `json:",inline"`
 
@@ -35,31 +35,11 @@ type VariableParameters struct {
 	// +optional
 	// +nullable
 	ValueSecretRef *xpv1.LocalSecretKeySelector `json:"valueSecretRef,omitempty"`
-
-	// GroupID is the ID of the group to create the variable on.
-	// +optional
-	// +immutable
-	GroupID *int `json:"groupId,omitempty"`
-
-	// GroupIDRef is a reference to a group to retrieve its groupId.
-	// +optional
-	// +immutable
-	GroupIDRef *xpv1.NamespacedReference `json:"groupIdRef,omitempty"`
-
-	// GroupIDSelector selects reference to a group to retrieve its groupId.
-	// +optional
-	GroupIDSelector *xpv1.NamespacedSelector `json:"groupIdSelector,omitempty"`
-
-	// EnvironmentScope indicates the environment scope of a variable.
-	// +optional
-	EnvironmentScope *string `json:"environmentScope,omitempty"`
 }
 
 // VariableObservation represents the observed state of a Gitlab CI Variable.
 type VariableObservation struct {
 	v1alpha1.CommonVariableObservation `json:",inline"`
-	EnvironmentScope                   string `json:"environmentScope"`
-	Hidden                             bool   `json:"hidden"`
 }
 
 // A VariableSpec defines the desired state of a Gitlab Group CI
@@ -80,7 +60,6 @@ type VariableStatus struct {
 // +kubebuilder:object:root=true
 
 // A Variable is a managed resource that represents a Gitlab CI variable.
-// WARNING: this does not support hidden variables as Gitlab API does not return their values.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"

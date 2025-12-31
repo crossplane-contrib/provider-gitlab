@@ -21,22 +21,21 @@ package v1alpha1
 import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
 
-// VariableType indicates the type of the GitLab CI variable.
-type VariableType string
-
-// List of variable type values.
-//
-// GitLab API docs: https://docs.gitlab.com/ee/api/project_level_variables.html
-const (
-	VariableTypeEnvVar VariableType = "env_var"
-	VariableTypeFile   VariableType = "file"
+	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 )
 
 // VariableParameters define the desired state of a Gitlab CI Variable
 // https://docs.gitlab.com/ee/api/project_level_variables.html
 type VariableParameters struct {
+	v1alpha1.CommonVariableParameters `json:",inline"`
+
+	// ValueSecretRef is used to obtain the value from a secret. This will set Masked and Raw to true if they
+	// have not been set implicitly. Mutually exclusive with Value.
+	// +optional
+	// +nullable
+	ValueSecretRef *xpv1.SecretKeySelector `json:"valueSecretRef,omitempty"`
+
 	// ProjectID is the ID of the project to create the variable on.
 	// +optional
 	// +immutable
@@ -51,61 +50,39 @@ type VariableParameters struct {
 	// +optional
 	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
 
-	// Key for the variable.
-	// +kubebuilder:validation:Pattern:=^[a-zA-Z0-9\_]+$
-	// +kubebuilder:validation:MaxLength:=255
-	// +immutable
-	Key string `json:"key"`
-
-	// Value for the variable. Mutually exclusive with ValueSecretRef.
-	// +optional
-	Value *string `json:"value,omitempty"`
-
-	// ValueSecretRef is used to obtain the value from a secret. This will set Masked and Raw to true if they
-	// have not been set implicitly. Mutually exclusive with Value.
-	// +optional
-	// +nullable
-	ValueSecretRef *xpv1.SecretKeySelector `json:"valueSecretRef,omitempty"`
-
-	// Masked enables or disables variable masking.
-	// +optional
-	Masked *bool `json:"masked,omitempty"`
-
-	// Protected enables or disables variable protection.
-	// +optional
-	Protected *bool `json:"protected,omitempty"`
-
-	// Raw disables variable expansion of the variable.
-	// +optional
-	Raw *bool `json:"raw,omitempty"`
-
-	// VariableType is the type of the variable.
-	// +kubebuilder:validation:Enum:=env_var;file
-	// +optional
-	VariableType *VariableType `json:"variableType,omitempty"`
-
 	// EnvironmentScope indicates the environment scope
 	// that this variable is applied to.
 	// +optional
 	EnvironmentScope *string `json:"environmentScope,omitempty"`
 }
 
+// VariableObservation represents the observed state of a Gitlab CI Variable.
+type VariableObservation struct {
+	v1alpha1.CommonVariableObservation `json:",inline"`
+	EnvironmentScope                   string `json:"environmentScope"`
+	Hidden                             bool   `json:"hidden"`
+}
+
 // A VariableSpec defines the desired state of a Gitlab Project CI
 // Variable.
 type VariableSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       VariableParameters `json:"forProvider"`
+	// ForProvider specifies the desired state of the Variable
+	ForProvider VariableParameters `json:"forProvider"`
 }
 
 // A VariableStatus represents the observed state of a Gitlab Project CI
 // Variable.
 type VariableStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
+	// AtProvider reflects the observed state of a Gitlab Variable.
+	AtProvider VariableObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
 // A Variable is a managed resource that represents a Gitlab CI variable.
+// WARNING: this does not support hidden variables as Gitlab API does not return their values.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
