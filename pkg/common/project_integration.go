@@ -23,33 +23,37 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 )
 
+func ptrBool(v bool) *bool       { return &v }
+func ptrInt64(v int64) *int64    { return &v }
+func ptrString(v string) *string { return &v }
+
 // GenerateCommonIntegrationObservation generates a CommonIntegrationObservation from a gitlab.Service
 func GenerateCommonIntegrationObservation(integration *gitlab.Service) v1alpha1.CommonIntegrationObservation {
 	return v1alpha1.CommonIntegrationObservation{
-		ID:                             integration.ID,
-		Title:                          integration.Title,
-		Slug:                           integration.Slug,
+		ID:                             ptrInt64(integration.ID),
+		Title:                          ptrString(integration.Title),
+		Slug:                           ptrString(integration.Slug),
 		CreatedAt:                      clients.TimeToMetaTime(integration.CreatedAt),
 		UpdatedAt:                      clients.TimeToMetaTime(integration.UpdatedAt),
-		Active:                         integration.Active,
-		AlertEvents:                    integration.AlertEvents,
-		CommitEvents:                   integration.CommitEvents,
-		ConfidentialIssuesEvents:       integration.ConfidentialIssuesEvents,
-		ConfidentialNoteEvents:         integration.ConfidentialNoteEvents,
-		DeploymentEvents:               integration.DeploymentEvents,
-		GroupConfidentialMentionEvents: integration.GroupConfidentialMentionEvents,
-		GroupMentionEvents:             integration.GroupMentionEvents,
-		IncidentEvents:                 integration.IncidentEvents,
-		IssuesEvents:                   integration.IssuesEvents,
-		JobEvents:                      integration.JobEvents,
-		MergeRequestsEvents:            integration.MergeRequestsEvents,
-		NoteEvents:                     integration.NoteEvents,
-		PipelineEvents:                 integration.PipelineEvents,
-		PushEvents:                     integration.PushEvents,
-		TagPushEvents:                  integration.TagPushEvents,
-		VulnerabilityEvents:            integration.VulnerabilityEvents,
-		WikiPageEvents:                 integration.WikiPageEvents,
-		CommentOnEventEnabled:          integration.CommentOnEventEnabled,
-		Inherited:                      integration.Inherited,
+		Active:                         ptrBool(integration.Active),
+		AlertEvents:                    ptrBool(integration.AlertEvents),
+		CommitEvents:                   ptrBool(integration.CommitEvents),
+		ConfidentialIssuesEvents:       ptrBool(integration.ConfidentialIssuesEvents),
+		ConfidentialNoteEvents:         ptrBool(integration.ConfidentialNoteEvents),
+		DeploymentEvents:               ptrBool(integration.DeploymentEvents),
+		GroupConfidentialMentionEvents: ptrBool(integration.GroupConfidentialMentionEvents),
+		GroupMentionEvents:             ptrBool(integration.GroupMentionEvents),
+		IncidentEvents:                 ptrBool(integration.IncidentEvents),
+		IssuesEvents:                   ptrBool(integration.IssuesEvents),
+		JobEvents:                      ptrBool(integration.JobEvents),
+		MergeRequestsEvents:            ptrBool(integration.MergeRequestsEvents),
+		NoteEvents:                     ptrBool(integration.NoteEvents),
+		PipelineEvents:                 ptrBool(integration.PipelineEvents),
+		PushEvents:                     ptrBool(integration.PushEvents),
+		TagPushEvents:                  ptrBool(integration.TagPushEvents),
+		VulnerabilityEvents:            ptrBool(integration.VulnerabilityEvents),
+		WikiPageEvents:                 ptrBool(integration.WikiPageEvents),
+		CommentOnEventEnabled:          ptrBool(integration.CommentOnEventEnabled),
+		Inherited:                      ptrBool(integration.Inherited),
 	}
 }

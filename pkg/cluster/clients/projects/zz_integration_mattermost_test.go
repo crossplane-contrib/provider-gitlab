@@ -30,49 +30,53 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 )
 
+func ptrBool(v bool) *bool       { return &v }
+func ptrInt64(v int64) *int64    { return &v }
+func ptrString(v string) *string { return &v }
+
 var (
 	// Common test variables for Mattermost integration
-	testProjectID                 = 123
-	testWebHook                   = "https://mattermost.example.com/hooks/webhook123"
-	testUsername                  = "gitlab-bot"
-	testChannel                   = "general"
-	testNotifyOnlyBrokenPipelines = true
-	testBranchesToBeNotified      = "all"
-	testPushEvents                = true
-	testIssuesEvents              = true
-	testConfidentialIssuesEvents  = false
-	testMergeRequestsEvents       = true
-	testTagPushEvents             = true
-	testNoteEvents                = true
-	testConfidentialNoteEvents    = false
-	testPipelineEvents            = true
-	testWikiPageEvents            = false
-	testPushChannel               = "ci-cd"
-	testIssueChannel              = "issues"
-	testConfidentialIssueChannel  = "confidential-issues"
-	testMergeRequestChannel       = "merge-requests"
-	testNoteChannel               = "comments"
-	testConfidentialNoteChannel   = "confidential-comments"
-	testTagPushChannel            = "releases"
-	testPipelineChannel           = "pipelines"
-	testWikiPageChannel           = "wiki"
-	testVulnerabilityChannel      = "security"
-	testID                        = 456
-	testTitle                     = "Mattermost"
-	testSlug                      = "mattermost"
-	testActive                    = true
-	testAlertEvents               = false
-	testCommitEvents              = true
-	testGroupConfidentialMention  = false
-	testGroupMentionEvents        = false
-	testIncidentEvents            = false
-	testJobEvents                 = true
-	testDeploymentEvents          = false
-	testVulnerabilityEvents       = false
-	testCommentOnEventEnabled     = false
-	testInherited                 = false
-	testCreatedAt                 = time.Now()
-	testUpdatedAt                 = time.Now()
+	testProjectID                 int64 = 123
+	testWebHook                         = "https://mattermost.example.com/hooks/webhook123"
+	testUsername                        = "gitlab-bot"
+	testChannel                         = "general"
+	testNotifyOnlyBrokenPipelines       = true
+	testBranchesToBeNotified            = "all"
+	testPushEvents                      = true
+	testIssuesEvents                    = true
+	testConfidentialIssuesEvents        = false
+	testMergeRequestsEvents             = true
+	testTagPushEvents                   = true
+	testNoteEvents                      = true
+	testConfidentialNoteEvents          = false
+	testPipelineEvents                  = true
+	testWikiPageEvents                  = false
+	testPushChannel                     = "ci-cd"
+	testIssueChannel                    = "issues"
+	testConfidentialIssueChannel        = "confidential-issues"
+	testMergeRequestChannel             = "merge-requests"
+	testNoteChannel                     = "comments"
+	testConfidentialNoteChannel         = "confidential-comments"
+	testTagPushChannel                  = "releases"
+	testPipelineChannel                 = "pipelines"
+	testWikiPageChannel                 = "wiki"
+	testVulnerabilityChannel            = "security"
+	testID                        int64 = 456
+	testTitle                           = "Mattermost"
+	testSlug                            = "mattermost"
+	testActive                          = true
+	testAlertEvents                     = false
+	testCommitEvents                    = true
+	testGroupConfidentialMention        = false
+	testGroupMentionEvents              = false
+	testIncidentEvents                  = false
+	testJobEvents                       = true
+	testDeploymentEvents                = false
+	testVulnerabilityEvents             = false
+	testCommentOnEventEnabled           = false
+	testInherited                       = false
+	testCreatedAt                       = time.Now()
+	testUpdatedAt                       = time.Now()
 )
 
 // TestGenerateSetMattermostServiceOptions tests the conversion from
@@ -230,31 +234,31 @@ func TestGenerateIntegrationMattermostObservation(t *testing.T) {
 			},
 			want: projectsv1alpha1.IntegrationMattermostObservation{
 				CommonIntegrationObservation: v1alpha1.CommonIntegrationObservation{
-					ID:                             testID,
-					Title:                          testTitle,
-					Slug:                           testSlug,
+					ID:                             ptrInt64(testID),
+					Title:                          ptrString(testTitle),
+					Slug:                           ptrString(testSlug),
 					CreatedAt:                      clients.TimeToMetaTime(&testCreatedAt),
 					UpdatedAt:                      clients.TimeToMetaTime(&testUpdatedAt),
-					Active:                         testActive,
-					AlertEvents:                    testAlertEvents,
-					CommitEvents:                   testCommitEvents,
-					ConfidentialIssuesEvents:       testConfidentialIssuesEvents,
-					ConfidentialNoteEvents:         testConfidentialNoteEvents,
-					DeploymentEvents:               testDeploymentEvents,
-					GroupConfidentialMentionEvents: testGroupConfidentialMention,
-					GroupMentionEvents:             testGroupMentionEvents,
-					IncidentEvents:                 testIncidentEvents,
-					IssuesEvents:                   testIssuesEvents,
-					JobEvents:                      testJobEvents,
-					MergeRequestsEvents:            testMergeRequestsEvents,
-					NoteEvents:                     testNoteEvents,
-					PipelineEvents:                 testPipelineEvents,
-					PushEvents:                     testPushEvents,
-					TagPushEvents:                  testTagPushEvents,
-					VulnerabilityEvents:            testVulnerabilityEvents,
-					WikiPageEvents:                 testWikiPageEvents,
-					CommentOnEventEnabled:          testCommentOnEventEnabled,
-					Inherited:                      testInherited,
+					Active:                         ptrBool(true),
+					AlertEvents:                    ptrBool(false),
+					CommitEvents:                   ptrBool(true),
+					ConfidentialIssuesEvents:       ptrBool(false),
+					ConfidentialNoteEvents:         ptrBool(false),
+					DeploymentEvents:               ptrBool(false),
+					GroupConfidentialMentionEvents: ptrBool(false),
+					GroupMentionEvents:             ptrBool(false),
+					IncidentEvents:                 ptrBool(false),
+					IssuesEvents:                   ptrBool(true),
+					JobEvents:                      ptrBool(true),
+					MergeRequestsEvents:            ptrBool(true),
+					NoteEvents:                     ptrBool(true),
+					PipelineEvents:                 ptrBool(true),
+					PushEvents:                     ptrBool(true),
+					TagPushEvents:                  ptrBool(true),
+					VulnerabilityEvents:            ptrBool(false),
+					WikiPageEvents:                 ptrBool(false),
+					CommentOnEventEnabled:          ptrBool(false),
+					Inherited:                      ptrBool(false),
 				},
 				WebHook:                   testWebHook,
 				Username:                  testUsername,
@@ -287,8 +291,31 @@ func TestGenerateIntegrationMattermostObservation(t *testing.T) {
 			},
 			want: projectsv1alpha1.IntegrationMattermostObservation{
 				CommonIntegrationObservation: v1alpha1.CommonIntegrationObservation{
-					ID:    testID,
-					Title: testTitle,
+					ID:                             ptrInt64(testID),
+					Title:                          ptrString(testTitle),
+					Slug:                           ptrString(""),
+					CreatedAt:                      nil,
+					UpdatedAt:                      nil,
+					Active:                         ptrBool(false),
+					AlertEvents:                    ptrBool(false),
+					CommitEvents:                   ptrBool(false),
+					ConfidentialIssuesEvents:       ptrBool(false),
+					ConfidentialNoteEvents:         ptrBool(false),
+					DeploymentEvents:               ptrBool(false),
+					GroupConfidentialMentionEvents: ptrBool(false),
+					GroupMentionEvents:             ptrBool(false),
+					IncidentEvents:                 ptrBool(false),
+					IssuesEvents:                   ptrBool(false),
+					JobEvents:                      ptrBool(false),
+					MergeRequestsEvents:            ptrBool(false),
+					NoteEvents:                     ptrBool(false),
+					PipelineEvents:                 ptrBool(false),
+					PushEvents:                     ptrBool(false),
+					TagPushEvents:                  ptrBool(false),
+					VulnerabilityEvents:            ptrBool(false),
+					WikiPageEvents:                 ptrBool(false),
+					CommentOnEventEnabled:          ptrBool(false),
+					Inherited:                      ptrBool(false),
 				},
 				WebHook: testWebHook,
 			},

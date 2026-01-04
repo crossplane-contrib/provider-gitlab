@@ -290,7 +290,11 @@ func (mg *IntegrationMattermost) ResolveReferences(ctx context.Context, c client
 		return errors.Wrap(err, "spec.forProvider.projectId")
 	}
 
-	mg.Spec.ForProvider.ProjectID = toPtrValue(rsp.ResolvedValue)
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider")
+	}
+	mg.Spec.ForProvider.ProjectID = resolvedID
 	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
 
 	return nil

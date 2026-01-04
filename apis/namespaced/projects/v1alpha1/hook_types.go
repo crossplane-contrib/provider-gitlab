@@ -52,7 +52,7 @@ type HookParameters struct {
 
 	// PushEventsBranchFilter triggers hook on push events for matching branches only.
 	// +optional
-	PushEventsBranchFilter *string `json:"pushEventsBranch_filter,omitempty"`
+	PushEventsBranchFilter *string `json:"pushEventsBranchFilter,omitempty"`
 
 	// IssuesEvents triggers hook on issues events.
 	// +optional

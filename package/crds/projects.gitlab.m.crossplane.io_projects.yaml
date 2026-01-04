@@ -122,7 +122,7 @@ spec:
                       keepN:
                         format: int64
                         type: integer
-                      name_regex:
+                      nameRegex:
                         description: Deprecated members
                         type: string
                       nameRegexDelete:
