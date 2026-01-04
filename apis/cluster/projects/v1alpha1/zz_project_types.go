@@ -146,7 +146,7 @@ type ContainerExpirationPolicyAttributes struct {
 	Enabled         *bool   `json:"enabled,omitempty"`
 
 	// Deprecated members
-	NameRegex *string `url:"name_regex,omitempty" json:"name_regex,omitempty"`
+	NameRegex *string `url:"name_regex,omitempty" json:"nameRegex,omitempty"`
 }
 
 // ProjectParameters define the desired state of a Gitlab Project

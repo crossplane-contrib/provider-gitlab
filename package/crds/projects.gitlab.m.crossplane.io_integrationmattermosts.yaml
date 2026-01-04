@@ -65,7 +65,7 @@ spec:
                 description: ForProvider represents the desired state of the mattermost
                   integration
                 properties:
-                  branches_to_be_notified:
+                  branchesToBeNotified:
                     description: Branches to send notifications for. Valid options
                       are all, default, protected, and default_and_protected. The
                       default value is default.
@@ -78,53 +78,54 @@ spec:
                   channel:
                     description: Default channel to use if no other channel is configured.
                     type: string
-                  confidential_issue_channel:
+                  confidentialIssueChannel:
                     description: The name of the channel to receive notifications
                       for confidential issue events.
                     type: string
-                  confidential_issues_events:
+                  confidentialIssuesEvents:
                     description: Enable notifications for confidential issue events.
                     type: boolean
-                  confidential_note_channel:
+                  confidentialNoteChannel:
                     description: Enable notifications for confidential note events.
                     type: string
-                  confidential_note_events:
+                  confidentialNoteEvents:
                     description: The name of the channel to receive notifications
                       for confidential note events.
                     type: boolean
-                  issue_channel:
+                  issueChannel:
                     description: The name of the channel to receive notifications
                       for issue events.
                     type: string
-                  issues_events:
+                  issuesEvents:
                     description: Enable notifications for issue events.
                     type: boolean
-                  merge_request_channel:
+                  mergeRequestChannel:
                     description: The name of the channel to receive notifications
                       for merge request events.
                     type: string
-                  merge_requests_events:
+                  mergeRequestsEvents:
                     description: Enable notifications for merge request events.
                     type: boolean
-                  note_channel:
+                  noteChannel:
                     description: The name of the channel to receive notifications
                       for note events.
                     type: string
-                  note_events:
+                  noteEvents:
                     description: Enable notifications for note events.
                     type: boolean
-                  notify_only_broken_pipelines:
+                  notifyOnlyBrokenPipelines:
                     description: Send notifications for broken pipelines.
                     type: boolean
-                  pipeline_channel:
+                  pipelineChannel:
                     description: The name of the channel to receive notifications
                       for pipeline events.
                     type: string
-                  pipeline_events:
+                  pipelineEvents:
                     description: Enable notifications for pipeline events.
                     type: boolean
                   projectId:
                     description: ProjectID is the ID of the project.
+                    format: int64
                     type: integer
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
@@ -208,18 +209,18 @@ spec:
                             type: string
                         type: object
                     type: object
-                  push_channel:
+                  pushChannel:
                     description: The name of the channel to receive notifications
                       for push events.
                     type: string
-                  push_events:
+                  pushEvents:
                     description: "\tEnable notifications for push events."
                     type: boolean
-                  tag_push_channel:
+                  tagPushChannel:
                     description: The name of the channel to receive notifications
                       for tag push events.
                     type: string
-                  tag_push_events:
+                  tagPushEvents:
                     description: Enable notifications for tag push events.
                     type: boolean
                   username:
@@ -230,11 +231,11 @@ spec:
                       Mattermost notifications webhook (for example, http://mattermost.example.com/hooks/...).
                       WARNING: This field is NOT reconciled as the GitLab API does not return it as it is a write-only field.
                     type: string
-                  wiki_page_channel:
+                  wikiPageChannel:
                     description: The name of the channel to receive notifications
                       for wiki page events.
                     type: string
-                  wiki_page_events:
+                  wikiPageEvents:
                     description: Enable notifications for wiki page events.
                     type: boolean
                 required:
@@ -342,6 +343,7 @@ spec:
                   groupMentionEvents:
                     type: boolean
                   id:
+                    format: int64
                     type: integer
                   incidentEvents:
                     type: boolean
@@ -408,44 +410,21 @@ spec:
                   wikiPageEvents:
                     type: boolean
                 required:
-                - active
-                - alertEvents
                 - branchesToBeNotified
                 - channel
-                - commentOnEventEnabled
-                - commitEvents
                 - confidentialIssueChannel
-                - confidentialIssuesEvents
                 - confidentialNoteChannel
-                - confidentialNoteEvents
-                - deploymentEvents
-                - groupConfidentialMentionEvents
-                - groupMentionEvents
-                - id
-                - incidentEvents
-                - inherited
                 - issueChannel
-                - issuesEvents
-                - jobEvents
                 - mergeRequestChannel
-                - mergeRequestsEvents
                 - noteChannel
-                - noteEvents
                 - notifyOnlyBrokenPipelines
                 - pipelineChannel
-                - pipelineEvents
                 - pushChannel
-                - pushEvents
-                - slug
                 - tagPushChannel
-                - tagPushEvents
-                - title
                 - username
                 - vulnerabilityChannel
-                - vulnerabilityEvents
                 - webhook
                 - wikiPageChannel
-                - wikiPageEvents
                 type: object
               conditions:
                 description: Conditions of the resource.

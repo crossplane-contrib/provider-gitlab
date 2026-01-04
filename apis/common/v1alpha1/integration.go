@@ -24,31 +24,31 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // https://docs.gitlab.com/api/group_integrations/
 // https://docs.gitlab.com/api/project_integrations/
 type CommonIntegrationObservation struct {
-	ID                             int          `json:"id"`
-	Title                          string       `json:"title"`
-	Slug                           string       `json:"slug"`
+	ID                             *int64       `json:"id,omitempty"`
+	Title                          *string      `json:"title,omitempty"`
+	Slug                           *string      `json:"slug,omitempty"`
 	CreatedAt                      *metav1.Time `json:"createdAt,omitempty"`
 	UpdatedAt                      *metav1.Time `json:"updatedAt,omitempty"`
-	Active                         bool         `json:"active"`
-	AlertEvents                    bool         `json:"alertEvents"`
-	CommitEvents                   bool         `json:"commitEvents"`
-	ConfidentialIssuesEvents       bool         `json:"confidentialIssuesEvents"`
-	ConfidentialNoteEvents         bool         `json:"confidentialNoteEvents"`
-	DeploymentEvents               bool         `json:"deploymentEvents"`
-	GroupConfidentialMentionEvents bool         `json:"groupConfidentialMentionEvents"`
-	GroupMentionEvents             bool         `json:"groupMentionEvents"`
-	IncidentEvents                 bool         `json:"incidentEvents"`
-	IssuesEvents                   bool         `json:"issuesEvents"`
-	JobEvents                      bool         `json:"jobEvents"`
-	MergeRequestsEvents            bool         `json:"mergeRequestsEvents"`
-	NoteEvents                     bool         `json:"noteEvents"`
-	PipelineEvents                 bool         `json:"pipelineEvents"`
-	PushEvents                     bool         `json:"pushEvents"`
-	TagPushEvents                  bool         `json:"tagPushEvents"`
-	VulnerabilityEvents            bool         `json:"vulnerabilityEvents"`
-	WikiPageEvents                 bool         `json:"wikiPageEvents"`
-	CommentOnEventEnabled          bool         `json:"commentOnEventEnabled"`
-	Inherited                      bool         `json:"inherited"`
+	Active                         *bool        `json:"active,omitempty"`
+	AlertEvents                    *bool        `json:"alertEvents,omitempty"`
+	CommitEvents                   *bool        `json:"commitEvents,omitempty"`
+	ConfidentialIssuesEvents       *bool        `json:"confidentialIssuesEvents,omitempty"`
+	ConfidentialNoteEvents         *bool        `json:"confidentialNoteEvents,omitempty"`
+	DeploymentEvents               *bool        `json:"deploymentEvents,omitempty"`
+	GroupConfidentialMentionEvents *bool        `json:"groupConfidentialMentionEvents,omitempty"`
+	GroupMentionEvents             *bool        `json:"groupMentionEvents,omitempty"`
+	IncidentEvents                 *bool        `json:"incidentEvents,omitempty"`
+	IssuesEvents                   *bool        `json:"issuesEvents,omitempty"`
+	JobEvents                      *bool        `json:"jobEvents,omitempty"`
+	MergeRequestsEvents            *bool        `json:"mergeRequestsEvents,omitempty"`
+	NoteEvents                     *bool        `json:"noteEvents,omitempty"`
+	PipelineEvents                 *bool        `json:"pipelineEvents,omitempty"`
+	PushEvents                     *bool        `json:"pushEvents,omitempty"`
+	TagPushEvents                  *bool        `json:"tagPushEvents,omitempty"`
+	VulnerabilityEvents            *bool        `json:"vulnerabilityEvents,omitempty"`
+	WikiPageEvents                 *bool        `json:"wikiPageEvents,omitempty"`
+	CommentOnEventEnabled          *bool        `json:"commentOnEventEnabled,omitempty"`
+	Inherited                      *bool        `json:"inherited,omitempty"`
 }
 
 type CommonIntegrationParameters struct {

@@ -1258,7 +1258,7 @@ func (in *IntegrationMattermostParameters) DeepCopyInto(out *IntegrationMattermo
 	*out = *in
 	if in.ProjectID != nil {
 		in, out := &in.ProjectID, &out.ProjectID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectIDRef != nil {

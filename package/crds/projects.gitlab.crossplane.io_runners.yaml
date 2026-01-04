@@ -395,7 +395,7 @@ spec:
                         name:
                           description: Name is the name of the project.
                           type: string
-                        name_with_namespace:
+                        nameWithNamespace:
                           description: |-
                             NameWithNamespace is the full name of the project including its namespace.
                             This follows the format "namespace/project-name".
@@ -403,7 +403,7 @@ spec:
                         path:
                           description: Path is the URL path segment for the project.
                           type: string
-                        path_with_namespace:
+                        pathWithNamespace:
                           description: |-
                             PathWithNamespace is the full path of the project including its namespace.
                             This follows the format "namespace/project-path" and is used in URLs.
