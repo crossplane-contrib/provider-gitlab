@@ -39,7 +39,7 @@ import (
 )
 
 var (
-	unexpecedItem resource.Managed
+	unexpectedItem resource.Managed
 
 	errBoom     = errors.New("boom")
 	cn          = "cn-group-example"
@@ -100,10 +100,10 @@ func TestConnect(t *testing.T) {
 	}{
 		"InValidInput": {
 			args: args{
-				cr: unexpecedItem,
+				cr: unexpectedItem,
 			},
 			want: want{
-				cr:  unexpecedItem,
+				cr:  unexpectedItem,
 				err: errors.New(errNotLdapGroupLink),
 			},
 		},
@@ -147,10 +147,10 @@ func TestObserve(t *testing.T) {
 	}{
 		"InValidInput": {
 			args: args{
-				cr: unexpecedItem,
+				cr: unexpectedItem,
 			},
 			want: want{
-				cr:  unexpecedItem,
+				cr:  unexpectedItem,
 				err: errors.New(errNotLdapGroupLink),
 			},
 		},
@@ -291,10 +291,10 @@ func TestDelete(t *testing.T) {
 	}{
 		"InValidInput": {
 			args: args{
-				cr: unexpecedItem,
+				cr: unexpectedItem,
 			},
 			want: want{
-				cr:  unexpecedItem,
+				cr:  unexpectedItem,
 				err: errors.New(errNotLdapGroupLink),
 			},
 		},
@@ -401,10 +401,10 @@ func TestCreate(t *testing.T) {
 	}{
 		"InValidInput": {
 			args: args{
-				cr: unexpecedItem,
+				cr: unexpectedItem,
 			},
 			want: want{
-				cr:  unexpecedItem,
+				cr:  unexpectedItem,
 				err: errors.New(errNotLdapGroupLink),
 			},
 		},

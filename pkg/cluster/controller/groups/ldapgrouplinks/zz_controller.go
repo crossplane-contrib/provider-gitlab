@@ -41,13 +41,12 @@ import (
 )
 
 const (
-	errNotLdapGroupLink       = "managed resource is not a LdapGroupLink custom resource"
-	errGetFailed              = "cannot get Gitlab LdapGroupLink"
-	errCreateFailed           = "cannot create Gitlab LdapGroupLink"
-	errDeleteFailed           = "cannot delete Gitlab LdapGroupLink"
-	errLdapGroupLinktNotFound = "cannot find Gitlab LdapGroupLink"
-	errMissingGroupID         = "missing Spec.ForProvider.GroupID"
-	errMissingExternalName    = "external name annotation not found"
+	errNotLdapGroupLink    = "managed resource is not a LdapGroupLink custom resource"
+	errGetFailed           = "cannot get Gitlab LdapGroupLink"
+	errCreateFailed        = "cannot create Gitlab LdapGroupLink"
+	errDeleteFailed        = "cannot delete Gitlab LdapGroupLink"
+	errMissingGroupID      = "missing Spec.ForProvider.GroupID"
+	errMissingExternalName = "external name annotation not found"
 )
 
 // SetupLdapGroupLink adds a controller that reconciles ldapgrouplinks.
@@ -137,7 +136,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	found := false
 	groupLink := &gitlab.LDAPGroupLink{}
 	for _, gl := range groupLinks {
-		if gl.CN == ldapCN {
+		if gl.CN == cr.Spec.ForProvider.CN && gl.Provider == cr.Spec.ForProvider.LdapProvider {
 			groupLink = gl
 			found = true
 			break
@@ -183,7 +182,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	// recreate object
+	// GitLab API has no update endpoint for LDAP group links.
+	// To change group_access, we must delete and recreate the link.
 	_, errDelete := e.Delete(ctx, mg)
 	if errDelete != nil {
 		return managed.ExternalUpdate{}, errDelete
@@ -231,6 +231,10 @@ func (e *external) Disconnect(ctx context.Context) error {
 
 func isLdapGroupLinkUpToDate(p *v1alpha1.LdapGroupLinkParameters, g *gitlab.LDAPGroupLink) bool {
 	if !cmp.Equal(p.CN, g.CN) {
+		return false
+	}
+
+	if !cmp.Equal(p.LdapProvider, g.Provider) {
 		return false
 	}
 
