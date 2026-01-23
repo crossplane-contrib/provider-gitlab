@@ -50,6 +50,10 @@ type MockClient struct {
 	MockCreateGroupAccessToken func(gid interface{}, opt *gitlab.CreateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
 	MockRevokeGroupAccessToken func(gid interface{}, accessToken int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
+	MockListGroupLDAPLinks                func(pid interface{}, options ...gitlab.RequestOptionFunc) ([]*gitlab.LDAPGroupLink, *gitlab.Response, error)
+	MockAddGroupLDAPLink                  func(pid interface{}, opt *gitlab.AddGroupLDAPLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.LDAPGroupLink, *gitlab.Response, error)
+	MockDeleteGroupLDAPLinkWithCNOrFilter func(pid interface{}, opts *gitlab.DeleteGroupLDAPLinkWithCNOrFilterOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
 	MockGetGroupSAMLLink    func(pid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error)
 	MockAddGroupSAMLLink    func(pid interface{}, opt *gitlab.AddGroupSAMLLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error)
 	MockDeleteGroupSAMLLink func(pid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
@@ -171,6 +175,21 @@ func (c *MockClient) RemoveVariable(gid interface{}, key string, opt *gitlab.Rem
 // ListUsers calls the underlying MockListUsers method.
 func (c *MockClient) ListUsers(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error) {
 	return c.MockListUsers(opt)
+}
+
+// ListGroupLDAPLinks calls the underlying MockListGroupLDAPLink method.
+func (c *MockClient) ListGroupLDAPLinks(pid interface{}, options ...gitlab.RequestOptionFunc) ([]*gitlab.LDAPGroupLink, *gitlab.Response, error) {
+	return c.MockListGroupLDAPLinks(pid)
+}
+
+// AddGroupLDAPLink call the underlying MockAddGroupLDAPLink method.
+func (c *MockClient) AddGroupLDAPLink(pid interface{}, opt *gitlab.AddGroupLDAPLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.LDAPGroupLink, *gitlab.Response, error) {
+	return c.MockAddGroupLDAPLink(pid, opt)
+}
+
+// DeleteGroupLDAPLink calls the underlying MockDeleteGroupLDAPLink method.
+func (c *MockClient) DeleteGroupLDAPLinkWithCNOrFilter(pid interface{}, opts *gitlab.DeleteGroupLDAPLinkWithCNOrFilterOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteGroupLDAPLinkWithCNOrFilter(pid, opts)
 }
 
 // GetGroupSAMLLink calls the underlying MockGetGroupSAMLLink method.
