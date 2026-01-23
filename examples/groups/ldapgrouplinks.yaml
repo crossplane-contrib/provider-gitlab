@@ -1,0 +1,13 @@
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: LdapGroupLink
+metadata:
+  name: cn-example
+spec:
+  forProvider:
+    groupIdRef:
+      name: example-group
+    cn: cn-example
+    groupAccess: 10
+    ldapProdider: ldapmain
+  providerConfigRef:
+    name: gitlab-provider
