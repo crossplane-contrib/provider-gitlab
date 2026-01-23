@@ -8,6 +8,6 @@ spec:
       name: example-group
     cn: cn-example
     groupAccess: 10
-    ldapProdider: ldapmain
+    ldapProvider: ldapmain
   providerConfigRef:
     name: gitlab-provider

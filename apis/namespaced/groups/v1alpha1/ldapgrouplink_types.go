@@ -26,7 +26,7 @@ import (
 // LdapGroupLinkParameters define the desired state of a Gitlab Group Ldap Link
 // https://docs.gitlab.com/api/group_ldap_links/
 type LdapGroupLinkParameters struct {
-	// GroupID is the ID of the group to create the deploy token in.
+	// GroupID is the ID of the group to create the LDAP group link in.
 	// +optional
 	// +immutable
 	GroupID *int `json:"groupId,omitempty"`
@@ -76,7 +76,7 @@ type LdapGroupLinkStatus struct {
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".status.atProvider.name"
+// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".status.atProvider.cn"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitlab}
 type LdapGroupLink struct {
