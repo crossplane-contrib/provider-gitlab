@@ -44,8 +44,7 @@ func IsErrorLdapGroupLinkNotFound(err error) bool {
 	return strings.Contains(err.Error(), errorLdapGroupLinkNotFound)
 }
 
-// IsErrorLdapGroupLinkNotFound helper function to test for errLdapGroupLinkNotFound error.
-// NewLdapGroupLinkClient returns a new Giltab Group Service
+// NewLdapGroupLinkClient returns a new GitLab Group Service
 func NewLdapGroupLinkClient(cfg common.Config) LdapGroupLinkClient {
 	git := common.NewClient(cfg)
 	return git.Groups
@@ -75,7 +74,7 @@ func GenerateAddLdapGroupLinkObservation(ldapGroupLink *gitlab.LDAPGroupLink) v1
 	return output
 }
 
-// GenerateAddLdapGroupLinkOptions is used to produce Options for LdapGroupLink creation
+// GenerateDeleteGroupLDAPLinkWithCNOrFilterOptions is used to produce Options for LdapGroupLink deletion
 func GenerateDeleteGroupLDAPLinkWithCNOrFilterOptions(p *v1alpha1.LdapGroupLinkParameters) *gitlab.DeleteGroupLDAPLinkWithCNOrFilterOptions {
 	ldapGroupLink := &gitlab.DeleteGroupLDAPLinkWithCNOrFilterOptions{
 		CN:       &p.CN,

@@ -28,7 +28,7 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
-    - jsonPath: .status.atProvider.name
+    - jsonPath: .status.atProvider.cn
       name: EXTERNAL-NAME
       type: string
     name: v1alpha1
@@ -71,8 +71,8 @@ spec:
                       LDAP group
                     type: integer
                   groupId:
-                    description: GroupID is the ID of the group to create the deploy
-                      token in.
+                    description: GroupID is the ID of the group to create the LDAP
+                      group link in.
                     type: integer
                   groupIdRef:
                     description: GroupIDRef is a reference to a group to retrieve
