@@ -87,7 +87,7 @@ type LicenseParameters struct {
 // GitLab API docs: https://docs.gitlab.com/api/license/
 type LicenseObservation struct {
 	// ID is the unique identifier of the license.
-	ID int `json:"id"`
+	ID int64 `json:"id"`
 	// Plan is the name of the license plan.
 	Plan string `json:"plan"`
 	// CreatedAt is the timestamp when the license was created.
@@ -97,18 +97,18 @@ type LicenseObservation struct {
 	// ExpiresAt is the timestamp when the license expires.
 	ExpiresAt *metav1.Time `json:"expiresAt"`
 	// HistoricalMax represents the maximum number of users once the license has expired.
-	HistoricalMax int `json:"historicalMax"`
+	HistoricalMax int64 `json:"historicalMax"`
 	// MaximumUserCount is the maximum number of users allowed by the license.
-	MaximumUserCount int `json:"maximumUserCount"`
+	MaximumUserCount int64 `json:"maximumUserCount"`
 	// Expired indicates whether the license has expired.
 	// When true, the license is no longer valid and the resource status will be defined as not ready.
 	Expired bool `json:"expired"`
 	// Overage is the difference between the number of billable users and the licensed number of users.
-	Overage int `json:"overage"`
+	Overage int64 `json:"overage"`
 	// UserLimit is the user limit defined by the license.
-	UserLimit int `json:"userLimit"`
+	UserLimit int64 `json:"userLimit"`
 	// ActiveUsers is the current number (billable) of active users.
-	ActiveUsers int `json:"activeUsers"`
+	ActiveUsers int64 `json:"activeUsers"`
 	// Licensee contains information about the licensee.
 	Licensee Licensee `json:"licensee"`
 	// AddOns contains information about any add-ons included with the license.
@@ -129,15 +129,15 @@ type Licensee struct {
 // https://gitlab.com/gitlab-org/gitlab/-/blob/master/ee/app/models/license.rb
 type AddOns struct {
 	// GitLabAuditorUser indicates if the GitLab Auditor User add-on is included.
-	GitLabAuditorUser int `json:"gitlabAuditorUser"`
+	GitLabAuditorUser int64 `json:"gitlabAuditorUser"`
 	// GitLabDeployBoard indicates if the GitLab Deploy Board add-on is included.
-	GitLabDeployBoard int `json:"gitlabDeployBoard"`
+	GitLabDeployBoard int64 `json:"gitlabDeployBoard"`
 	// GitLabFileLocks indicates if the GitLab File Locks add-on is included.
-	GitLabFileLocks int `json:"gitlabFileLocks"`
+	GitLabFileLocks int64 `json:"gitlabFileLocks"`
 	// GitLabGeo indicates if the GitLab Geo add-on is included.
-	GitLabGeo int `json:"gitlabGeo"`
+	GitLabGeo int64 `json:"gitlabGeo"`
 	// GitLabServiceDesk indicates if the GitLab Service Desk add-on is included.
-	GitLabServiceDesk int `json:"gitlabServiceDesk"`
+	GitLabServiceDesk int64 `json:"gitlabServiceDesk"`
 }
 
 // LicenseSpec defines the desired state of a instance License.

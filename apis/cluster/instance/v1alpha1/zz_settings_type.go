@@ -28,11 +28,11 @@ import (
 // DefaultBranchProtectionDefaultsOptions defines the rules for default branch protection
 type DefaultBranchProtectionDefaultsOptions struct {
 	// List of user or group IDs allowed to push to the default branch
-	AllowedToPush *[]int `json:"allowedToPush,omitempty"`
+	AllowedToPush *[]int64 `json:"allowedToPush,omitempty"`
 	// Whether to allow force pushes to the default branch
 	AllowForcePush *bool `json:"allowForcePush,omitempty"`
 	// List of user or group IDs allowed to merge to the default branch
-	AllowedToMerge *[]int `json:"allowedToMerge,omitempty"`
+	AllowedToMerge *[]int64 `json:"allowedToMerge,omitempty"`
 	// Whether developers can push the first commit to the default branch
 	DeveloperCanInitialPush *bool `json:"developerCanInitialPush,omitempty"`
 }
@@ -40,11 +40,11 @@ type DefaultBranchProtectionDefaultsOptions struct {
 // BranchProtectionDefaults defines rules for branch branch protection
 type BranchProtectionDefaults struct {
 	// List of user or group IDs allowed to push to the default branch
-	AllowedToPush []*int `json:"allowed_to_push,omitempty"`
+	AllowedToPush []*int64 `json:"allowed_to_push,omitempty"`
 	// Whether to allow force pushes to the default branch
 	AllowForcePush bool `json:"allow_force_push,omitempty"`
 	// List of user or group IDs allowed to merge to the default branch
-	AllowedToMerge []*int `json:"allowed_to_merge,omitempty"`
+	AllowedToMerge []*int64 `json:"allowed_to_merge,omitempty"`
 	// Whether developers can push the first commit to the default branch
 	DeveloperCanInitialPush bool `json:"developer_can_initial_push,omitempty"`
 }

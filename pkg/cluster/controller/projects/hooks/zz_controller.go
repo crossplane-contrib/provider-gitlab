@@ -55,7 +55,7 @@ const (
 
 // SetupHook adds a controller that reconciles Hooks.
 func SetupHook(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.HookGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.HookGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewHookClient}),
@@ -128,7 +128,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		}, nil
 	}
 
-	hookid, err := strconv.Atoi(meta.GetExternalName(cr))
+	hookid, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.New(errNotHook)
 	}
@@ -184,7 +184,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotHook)
 	}
 
-	hookid, err := strconv.Atoi(meta.GetExternalName(cr))
+	hookid, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.New(errNotHook)
 	}
@@ -229,6 +229,6 @@ func (e *external) Disconnect(ctx context.Context) error {
 }
 
 func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.Hook, projecthook *gitlab.ProjectHook) error {
-	meta.SetExternalName(cr, strconv.Itoa(projecthook.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(projecthook.ID, 10))
 	return e.kube.Update(ctx, cr)
 }

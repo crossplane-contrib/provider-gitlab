@@ -37,7 +37,7 @@ type ApprovalRuleParameters struct {
 	// The ID of the project owned by the authenticated user.
 	// +optional
 	// +immutable
-	ProjectID *int `json:"projectId,omitempty"`
+	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
@@ -49,7 +49,7 @@ type ApprovalRuleParameters struct {
 	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
 
 	// The number of required approvals for this rule.
-	ApprovalsRequired *int `json:"approvalsRequired,omitempty"`
+	ApprovalsRequired *int64 `json:"approvalsRequired,omitempty"`
 
 	// The name of the approval rule
 	Name *string `json:"name,omitempty"`
@@ -60,11 +60,11 @@ type ApprovalRuleParameters struct {
 
 	// The IDs of groups as approvers.
 	// +optional
-	GroupIDs *[]int `json:"groupIds,omitempty"`
+	GroupIDs *[]int64 `json:"groupIds,omitempty"`
 
 	// The IDs of protected branches to scope the rule by.
 	// +optional
-	ProtectedBranchIDs *[]int `json:"protectedBranchIds,omitempty"`
+	ProtectedBranchIDs *[]int64 `json:"protectedBranchIds,omitempty"`
 
 	// The rule type. Supported values include any_approver, regular, and report_approver
 	// +optional
@@ -73,7 +73,7 @@ type ApprovalRuleParameters struct {
 
 	// The IDs of users as approvers. If used with usernames, adds both lists of users.
 	// +optional
-	UserIDs *[]int `json:"userIds,omitempty"`
+	UserIDs *[]int64 `json:"userIds,omitempty"`
 
 	// The usernames of approvers. If used with user_ids, adds both lists of users.
 	// +optional

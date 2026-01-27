@@ -128,7 +128,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	serviceAccountID, err := strconv.Atoi(externalName)
+	serviceAccountID, err := strconv.ParseInt(externalName, 10, 64)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.New(errIDNotInt)
 	}
@@ -169,7 +169,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(serviceacccount.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(serviceacccount.ID, 10))
 	cr.Status.AtProvider = instance.GenerateServiceAccountObservation(serviceacccount)
 
 	return managed.ExternalCreation{}, nil
@@ -189,7 +189,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errCreateFailed)
 	}
 
-	serviceAccountID, err := strconv.Atoi(externalName)
+	serviceAccountID, err := strconv.ParseInt(externalName, 10, 64)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
@@ -224,7 +224,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, nil
 	}
 
-	serviceAccountID, err := strconv.Atoi(externalName)
+	serviceAccountID, err := strconv.ParseInt(externalName, 10, 64)
 	if err != nil {
 		return managed.ExternalDelete{}, errors.New(errIDNotInt)
 	}

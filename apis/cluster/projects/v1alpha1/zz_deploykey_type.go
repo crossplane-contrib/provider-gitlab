@@ -66,7 +66,7 @@ type DeployKeyParameters struct {
 // DeployKeyObservation represents observed stated of Deploy Key.
 // https://docs.gitlab.com/ee/api/deploy_keys.html
 type DeployKeyObservation struct {
-	ID        *int         `json:"id,omitempty"`
+	ID        *int64       `json:"id,omitempty"`
 	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
 }
 

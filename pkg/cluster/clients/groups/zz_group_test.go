@@ -33,14 +33,14 @@ var (
 	name                           = "example-group"
 	path                           = "example/path/to/group"
 	description                    = "group description"
-	ID                             = 123456
+	ID                             = int64(123456)
 	membershipLock                 = true
 	visibility                     = "private"
 	v1alpha1Visibility             = v1alpha1.VisibilityValue(visibility)
 	gitlabVisibility               = gitlab.VisibilityValue(visibility)
 	shareWithGroupLock             = true
 	requireTwoFactorAuth           = false
-	twoFactorGracePeriod           = 48
+	twoFactorGracePeriod           = int64(48)
 	projectCreationLevel           = "developer"
 	v1alpha1ProjectCreationLevel   = v1alpha1.ProjectCreationLevelValue(projectCreationLevel)
 	gitlabProjectCreationLevel     = gitlab.ProjectCreationLevelValue(projectCreationLevel)
@@ -52,10 +52,10 @@ var (
 	mentionsDisabled               = true
 	LFSEnabled                     = true
 	requestAccessEnabled           = true
-	parentID                       = 0
-	parentIDint                    = 0
-	sharedRunnersMinutesLimit      = 0
-	extraSharedRunnersMinutesLimit = 0
+	parentID                       = int64(0)
+	parentIDint                    = int64(0)
+	sharedRunnersMinutesLimit      = int64(0)
+	extraSharedRunnersMinutesLimit = int64(0)
 	storageSize                    = int64(10)
 	repositorySize                 = int64(20)
 	lfsObjectsSize                 = int64(30)
@@ -72,20 +72,19 @@ var (
 		LFSObjectsSize:   lfsObjectsSize,
 		JobArtifactsSize: jobArtifactsSize,
 	}
-	LDAPAccess       = 0
-	groupAccessLevel = 50
+	LDAPAccess       = int64(0)
 	gitlabLDAPAccess = gitlab.AccessLevelValue(LDAPAccess)
 )
 
 func TestGenerateObservation(t *testing.T) {
-	id := 0
+	id := int64(0)
 	webURL := "web.url"
 	fullName := "Full name"
 	fullPath := "Full path"
 	now := time.Now()
 	customAttributeKey := "Key_1"
 	customAttributeValue := "Value_1"
-	i := 0
+	i64 := int64(0)
 	s := ""
 
 	v1alpha1MarkedForDeletionOn := &metav1.Time{Time: now}
@@ -94,12 +93,14 @@ func TestGenerateObservation(t *testing.T) {
 	gitlabCreatedAt := now
 	gitlabSharedWithGroupsExpireAt := gitlab.ISOTime(now)
 
-	sharedWithGroups := []v1alpha1.SharedWithGroups{
-		{
-			GroupID:          &ID,
-			GroupAccessLevel: 1,
-			ExpiresAt:        &metav1.Time{Time: now},
-		},
+	ldapGroupAccessLevel := int64(50)
+	sharedWithGroup := gitlab.SharedWithGroup{
+		GroupID:          ID,
+		GroupName:        name,
+		GroupFullPath:    path,
+		GroupAccessLevel: int64(1),
+		ExpiresAt:        &gitlabSharedWithGroupsExpireAt,
+		MemberRoleID:     int64(0),
 	}
 	type args struct {
 		p *gitlab.Group
@@ -122,21 +123,12 @@ func TestGenerateObservation(t *testing.T) {
 							Value: customAttributeValue,
 						},
 					},
-					SharedWithGroups: []gitlab.SharedWithGroup{
-						{
-							GroupID:          ID,
-							GroupName:        name,
-							GroupFullPath:    path,
-							GroupAccessLevel: sharedWithGroups[0].GroupAccessLevel,
-							ExpiresAt:        &gitlabSharedWithGroupsExpireAt,
-							MemberRoleID:     0,
-						},
-					},
-					LDAPAccess: gitlabLDAPAccess,
+					SharedWithGroups: []gitlab.SharedWithGroup{sharedWithGroup},
+					LDAPAccess:       gitlabLDAPAccess,
 					LDAPGroupLinks: []*gitlab.LDAPGroupLink{
 						{
 							CN:          "CN",
-							GroupAccess: gitlab.AccessLevelValue(groupAccessLevel),
+							GroupAccess: gitlab.AccessLevelValue(ldapGroupAccessLevel),
 							Provider:    "Provider",
 						},
 					},
@@ -162,7 +154,7 @@ func TestGenerateObservation(t *testing.T) {
 				LDAPGroupLinks: []v1alpha1.LDAPGroupLink{
 					{
 						CN:          "CN",
-						GroupAccess: v1alpha1.AccessLevelValue(groupAccessLevel),
+						GroupAccess: v1alpha1.AccessLevelValue(ldapGroupAccessLevel),
 						Provider:    "Provider",
 					},
 				},
@@ -170,10 +162,10 @@ func TestGenerateObservation(t *testing.T) {
 				CreatedAt:           v1alpha1CreatedAt,
 				SharedWithGroups: []v1alpha1.SharedWithGroupsObservation{
 					{
-						GroupID:          &ID,
-						GroupName:        &name,
-						GroupFullPath:    &path,
-						GroupAccessLevel: &sharedWithGroups[0].GroupAccessLevel,
+						GroupID:          &sharedWithGroup.GroupID,
+						GroupName:        &sharedWithGroup.GroupName,
+						GroupFullPath:    &sharedWithGroup.GroupFullPath,
+						GroupAccessLevel: &sharedWithGroup.GroupAccessLevel,
 						ExpiresAt:        &metav1.Time{Time: time.Time(gitlabSharedWithGroupsExpireAt)},
 					},
 				},
@@ -190,7 +182,7 @@ func TestGenerateObservation(t *testing.T) {
 				},
 			},
 			want: v1alpha1.GroupObservation{
-				ID:        &i,
+				ID:        &i64,
 				AvatarURL: &s,
 				WebURL:    &s,
 				FullName:  &s,
@@ -198,10 +190,10 @@ func TestGenerateObservation(t *testing.T) {
 				LDAPCN:    &s,
 
 				SharedWithGroups: []v1alpha1.SharedWithGroupsObservation{{
-					GroupID:          &i,
+					GroupID:          &i64,
 					GroupName:        &s,
 					GroupFullPath:    &s,
-					GroupAccessLevel: &i,
+					GroupAccessLevel: &i64,
 					ExpiresAt:        nil,
 				}},
 			},

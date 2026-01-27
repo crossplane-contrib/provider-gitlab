@@ -98,7 +98,7 @@ type GroupParameters struct {
 
 	// Time before Two-factor authentication is enforced (in hours).
 	// +optional
-	TwoFactorGracePeriod *int `json:"twoFactorGracePeriod,omitempty"`
+	TwoFactorGracePeriod *int64 `json:"twoFactorGracePeriod,omitempty"`
 
 	// developers can create projects in the group.
 	// Can be noone (No one), maintainer (Maintainers), or developer (Developers + Maintainers).
@@ -137,7 +137,7 @@ type GroupParameters struct {
 
 	// The parent group ID for creating nested group.
 	// +optional
-	ParentID *int `json:"parentId,omitempty"`
+	ParentID *int64 `json:"parentId,omitempty"`
 
 	// ParentIDRef is a reference to a group to retrieve its parentId
 	// +optional
@@ -151,11 +151,11 @@ type GroupParameters struct {
 	// Pipeline minutes quota for this group (included in plan).
 	// Can be nil (default; inherit system default), 0 (unlimited) or > 0.
 	// +optional
-	SharedRunnersMinutesLimit *int `json:"sharedRunnersMinutesLimit,omitempty"`
+	SharedRunnersMinutesLimit *int64 `json:"sharedRunnersMinutesLimit,omitempty"`
 
 	// Extra pipeline minutes quota for this group (purchased in addition to the minutes included in the plan).
 	// +optional
-	ExtraSharedRunnersMinutesLimit *int `json:"extraSharedRunnersMinutesLimit,omitempty"`
+	ExtraSharedRunnersMinutesLimit *int64 `json:"extraSharedRunnersMinutesLimit,omitempty"`
 
 	// SharedWithGroups create links for sharing a group with another group.
 	// +optional
@@ -229,7 +229,7 @@ type LDAPGroupLink struct {
 type SharedWithGroups struct {
 	// The ID of the group to share with.
 	// +optional
-	GroupID *int `json:"groupId,omitempty"`
+	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its ID.
 	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
@@ -241,7 +241,7 @@ type SharedWithGroups struct {
 	// https://docs.gitlab.com/ee/api/members.html#roles
 	// +required
 	// +immutable
-	GroupAccessLevel int `json:"groupAccessLevel"`
+	GroupAccessLevel int64 `json:"groupAccessLevel"`
 
 	// Share expiration date in ISO 8601 format: 2016-09-26
 	// +optional
@@ -251,7 +251,7 @@ type SharedWithGroups struct {
 
 // GroupObservation is the observed state of a Group.
 type GroupObservation struct {
-	ID                  *int                          `json:"id,omitempty"`
+	ID                  *int64                        `json:"id,omitempty"`
 	AvatarURL           *string                       `json:"avatarUrl,omitempty"`
 	WebURL              *string                       `json:"webUrl,omitempty"`
 	FullName            *string                       `json:"fullName,omitempty"`
@@ -268,10 +268,10 @@ type GroupObservation struct {
 
 // SharedWithGroupsObservation is the observed state of a SharedWithGroups.
 type SharedWithGroupsObservation struct {
-	GroupID          *int         `json:"groupId,omitempty"`
+	GroupID          *int64       `json:"groupId,omitempty"`
 	GroupName        *string      `json:"groupName,omitempty"`
 	GroupFullPath    *string      `json:"groupFullPath,omitempty"`
-	GroupAccessLevel *int         `json:"groupAccessLevel,omitempty"`
+	GroupAccessLevel *int64       `json:"groupAccessLevel,omitempty"`
 	ExpiresAt        *metav1.Time `json:"expiresAt,omitempty"`
 }
 

@@ -39,7 +39,7 @@ import (
 
 var (
 	errBoom          = errors.New("boom")
-	groupID          = 5678
+	groupID          = int64(5678)
 	variableKey      = "VARIABLE_KEY"
 	variableValue    = "1234"
 	variableType     = v1alpha1.VariableTypeEnvVar
@@ -86,7 +86,7 @@ func withDefaultValues() variableModifier {
 	}
 }
 
-func withGroupID(pid int) variableModifier {
+func withGroupID(pid int64) variableModifier {
 	return func(r *v1alpha1.Variable) {
 		r.Spec.ForProvider.GroupID = &pid
 	}

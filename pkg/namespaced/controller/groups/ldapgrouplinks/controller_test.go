@@ -41,7 +41,7 @@ var (
 
 	errBoom     = errors.New("boom")
 	cn          = "cn-group-example"
-	groupID     = 1234
+	groupID     = int64(1234)
 	groupAccess = gitlab.AccessLevelValue(10)
 )
 

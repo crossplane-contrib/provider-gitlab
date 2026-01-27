@@ -132,7 +132,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotBadge)
 	}
 
-	badge, res, err := e.client.GetGroupBadge(*cr.Spec.ForProvider.GroupID, badgeID, gitlab.WithContext(ctx))
+	badge, res, err := e.client.GetGroupBadge(*cr.Spec.ForProvider.GroupID, int64(badgeID), gitlab.WithContext(ctx))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -168,13 +168,12 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	// if ID is already set, check if it does exist, else create a new one
 	if cr.Spec.ForProvider.ID != nil {
-		id := *cr.Spec.ForProvider.ID
-		badge, res, err := e.client.GetGroupBadge(*cr.Spec.ForProvider.GroupID, id)
+		badge, res, err := e.client.GetGroupBadge(*cr.Spec.ForProvider.GroupID, *cr.Spec.ForProvider.ID)
 		if err != nil || clients.IsResponseNotFound(res) {
 			return managed.ExternalCreation{}, errors.Wrap(err, errWrongIDSet)
 		}
 		// found it, set the external name and return
-		meta.SetExternalName(cr, strconv.Itoa(badge.ID))
+		meta.SetExternalName(cr, strconv.FormatInt(badge.ID, 10))
 		return managed.ExternalCreation{}, nil
 
 	}
@@ -187,7 +186,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(badge.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(badge.ID, 10))
 
 	return managed.ExternalCreation{}, nil
 }
@@ -210,7 +209,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, _, err = e.client.EditGroupBadge(
 		*cr.Spec.ForProvider.GroupID,
-		badgeID,
+		int64(badgeID),
 		groups.GenerateEditGroupBadgeOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
@@ -238,7 +237,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, deleteError := e.client.DeleteGroupBadge(
 		*cr.Spec.ForProvider.GroupID,
-		badgeID,
+		int64(badgeID),
 		gitlab.WithContext(ctx),
 	)
 

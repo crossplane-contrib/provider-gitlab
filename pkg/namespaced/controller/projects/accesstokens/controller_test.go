@@ -44,8 +44,8 @@ var (
 	errBoom        = errors.New("boom")
 	projectID      = ""
 	wrongIDstr     = "fr"
-	accessTokenID  = 1234
-	sAccessTokenID = strconv.Itoa(accessTokenID)
+	accessTokenID  = int64(1234)
+	sAccessTokenID = strconv.FormatInt(accessTokenID, 10)
 	invalidInput   resource.Managed
 	expiresAt      = time.Now().AddDate(0, 6, 0)
 	accessLevel    = 40
@@ -151,7 +151,7 @@ func TestObserve(t *testing.T) {
 		"ErrGetAccessToken": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
-					MockGetProjectAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return nil, nil, errBoom
 					},
 				},
@@ -176,7 +176,7 @@ func TestObserve(t *testing.T) {
 		"GetErr404": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
-					MockGetProjectAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return nil, &gitlab.Response{
 							Response: &http.Response{StatusCode: http.StatusNotFound},
 						}, errBoom
@@ -199,7 +199,7 @@ func TestObserve(t *testing.T) {
 		"AccessTokenDoNotExist": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
-					MockGetProjectAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return nil, nil, errBoom
 					},
 				},
@@ -224,7 +224,7 @@ func TestObserve(t *testing.T) {
 		"ResourceLateInitializedFalse": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
-					MockGetProjectAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return &gitlab.ProjectAccessToken{}, &gitlab.Response{}, nil
 					},
 				},
@@ -257,7 +257,7 @@ func TestObserve(t *testing.T) {
 		"ResourceLateInitializedTrue": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
-					MockGetProjectAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return &gitlab.ProjectAccessToken{
 							PersonalAccessToken: gitlab.PersonalAccessToken{
 								ExpiresAt: accessTokenObj.ExpiresAt,
@@ -294,7 +294,7 @@ func TestObserve(t *testing.T) {
 		"TokenRevoked": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
-					MockGetProjectAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return &gitlab.ProjectAccessToken{
 							PersonalAccessToken: gitlab.PersonalAccessToken{
 								ID:        accessTokenObj.ID,
@@ -337,7 +337,7 @@ func TestObserve(t *testing.T) {
 		"TokenUpToDate": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
-					MockGetProjectAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return &gitlab.ProjectAccessToken{}, &gitlab.Response{}, nil
 					},
 				},
@@ -577,7 +577,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletionExternalNameNotInt": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
-					MockRevokeProjectAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRevokeProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -601,7 +601,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
-					MockRevokeProjectAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRevokeProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
@@ -609,7 +609,7 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID: &projectID,
 					}),
-					withExternalName(strconv.Itoa(0)),
+					withExternalName(strconv.FormatInt(0, 10)),
 				),
 			},
 			want: want{
@@ -617,7 +617,7 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID: &projectID,
 					}),
-					withExternalName(strconv.Itoa(0)),
+					withExternalName(strconv.FormatInt(0, 10)),
 				),
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},
@@ -625,7 +625,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
-					MockRevokeProjectAccessToken: func(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockRevokeProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -633,7 +633,7 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID: &projectID,
 					}),
-					withExternalName(strconv.Itoa(accessTokenID)),
+					withExternalName(strconv.FormatInt(accessTokenID, 10)),
 				),
 			},
 			want: want{
@@ -641,7 +641,7 @@ func TestDelete(t *testing.T) {
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID: &projectID,
 					}),
-					withExternalName(strconv.Itoa(accessTokenID)),
+					withExternalName(strconv.FormatInt(accessTokenID, 10)),
 				),
 			},
 		},

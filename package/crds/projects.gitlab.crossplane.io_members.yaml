@@ -91,6 +91,7 @@ spec:
                   projectId:
                     description: The ID of the project owned by the authenticated
                       user.
+                    format: int64
                     type: integer
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
@@ -170,6 +171,7 @@ spec:
                     type: object
                   userID:
                     description: The user ID of the member.
+                    format: int64
                     type: integer
                   userName:
                     description: The username of the member.

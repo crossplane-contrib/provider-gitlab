@@ -41,7 +41,7 @@ type CommonServiceAccountParameters struct {
 // https://docs.gitlab.com/api/service_accounts/
 type CommonServiceAccountObservation struct {
 	// ID is the unique identifier of the service account.
-	ID int `json:"id"`
+	ID int64 `json:"id"`
 	// Name represents the display name of the service account.
 	Name string `json:"name"`
 	// Username represents the user @ name of the service account.

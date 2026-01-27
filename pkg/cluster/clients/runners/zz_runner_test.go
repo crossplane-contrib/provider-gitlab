@@ -35,7 +35,7 @@ import (
 
 func stringPtr(s string) *string { return &s }
 func boolPtr(b bool) *bool       { return &b }
-func intPtr(i int) *int          { return &i }
+func int64Ptr(i int64) *int64    { return &i }
 
 // These tests validate that we correctly:
 // - detect GitLab "runner not found" errors
@@ -171,21 +171,11 @@ func TestGenerateObservationsGroupAndProject(t *testing.T) {
 		ID:          7,
 		Description: "desc",
 		ContactedAt: &contactedAt,
-		Groups: []struct {
-			ID     int    `json:"id"`
-			Name   string `json:"name"`
-			WebURL string `json:"web_url"`
-		}{
+		Groups: []gitlab.RunnerDetailsGroup{
 			{ID: 11, Name: "g1", WebURL: "https://example.com/g1"},
 			{ID: 12, Name: "g2", WebURL: "https://example.com/g2"},
 		},
-		Projects: []struct {
-			ID                int    `json:"id"`
-			Name              string `json:"name"`
-			NameWithNamespace string `json:"name_with_namespace"`
-			Path              string `json:"path"`
-			PathWithNamespace string `json:"path_with_namespace"`
-		}{
+		Projects: []gitlab.RunnerDetailsProject{
 			{ID: 21, Name: "p1", NameWithNamespace: "ns/p1", Path: "p1", PathWithNamespace: "ns/p1"},
 		},
 	}
@@ -227,11 +217,12 @@ func TestGenerateEditRunnerOptions(t *testing.T) {
 		RunUntagged:     boolPtr(false),
 		Locked:          boolPtr(true),
 		AccessLevel:     stringPtr("ref_protected"),
-		MaximumTimeout:  intPtr(3600),
+		MaximumTimeout:  int64Ptr(3600),
 		MaintenanceNote: stringPtr("note"),
 	}
 
 	got := GenerateEditRunnerOptions(params)
+	maxTimeout := int64(3600)
 	want := &gitlab.UpdateRunnerDetailsOptions{
 		Description:     params.Description,
 		Paused:          params.Paused,
@@ -239,7 +230,7 @@ func TestGenerateEditRunnerOptions(t *testing.T) {
 		RunUntagged:     params.RunUntagged,
 		Locked:          params.Locked,
 		AccessLevel:     params.AccessLevel,
-		MaximumTimeout:  params.MaximumTimeout,
+		MaximumTimeout:  &maxTimeout,
 		MaintenanceNote: params.MaintenanceNote,
 	}
 
@@ -272,7 +263,7 @@ func TestIsRunnerUpToDate(t *testing.T) {
 				RunUntagged:     boolPtr(true),
 				TagList:         &[]string{"a"},
 				AccessLevel:     stringPtr("not_protected"),
-				MaximumTimeout:  intPtr(10),
+				MaximumTimeout:  int64Ptr(10),
 				MaintenanceNote: stringPtr("note"),
 			},
 			observed: &gitlab.RunnerDetails{

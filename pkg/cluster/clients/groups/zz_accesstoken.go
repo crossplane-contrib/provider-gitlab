@@ -29,9 +29,9 @@ import (
 
 // AccessTokenClient defines Gitlab Group service operations
 type AccessTokenClient interface {
-	GetGroupAccessToken(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
+	GetGroupAccessToken(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
 	CreateGroupAccessToken(pid interface{}, opt *gitlab.CreateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
-	RevokeGroupAccessToken(pid interface{}, id int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	RevokeGroupAccessToken(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // IsErrorGroupAccessTokenNotFound helper function to test for errGroupAccessTokenNotFound error.

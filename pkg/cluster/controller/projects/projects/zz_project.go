@@ -61,7 +61,7 @@ const (
 
 // SetupProject adds a controller that reconciles Projects.
 func SetupProject(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.ProjectGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.ProjectGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProjectClient}),
@@ -202,7 +202,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(prj.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(prj.ID, 10))
 	return managed.ExternalCreation{}, errors.Wrap(err, errKubeUpdateFailed)
 }
 
@@ -277,8 +277,10 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	if in.AllowMergeOnSkippedPipeline == nil {
 		in.AllowMergeOnSkippedPipeline = &project.AllowMergeOnSkippedPipeline
 	}
-	if in.ApprovalsBeforeMerge == nil {
-		in.ApprovalsBeforeMerge = &project.ApprovalsBeforeMerge //nolint:staticcheck
+	//nolint:staticcheck // SA1019 ApprovalsBeforeMerge is deprecated by GitLab API, will migrate to Merge Request Approvals API later
+	if in.ApprovalsBeforeMerge == nil && project.ApprovalsBeforeMerge != 0 {
+		val := project.ApprovalsBeforeMerge
+		in.ApprovalsBeforeMerge = &val
 	}
 	if in.AutocloseReferencedIssues == nil {
 		in.AutocloseReferencedIssues = &project.AutocloseReferencedIssues
@@ -288,8 +290,9 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	in.BuildsAccessLevel = clients.LateInitializeAccessControlValue(in.BuildsAccessLevel, project.BuildsAccessLevel)
 	in.CIConfigPath = clients.LateInitializeStringPtr(in.CIConfigPath, project.CIConfigPath)
 
-	if in.CIDefaultGitDepth == nil {
-		in.CIDefaultGitDepth = &project.CIDefaultGitDepth
+	if in.CIDefaultGitDepth == nil && project.CIDefaultGitDepth != 0 {
+		val := project.CIDefaultGitDepth
+		in.CIDefaultGitDepth = &val
 	}
 	if in.CIForwardDeploymentEnabled == nil {
 		in.CIForwardDeploymentEnabled = &project.CIForwardDeploymentEnabled
@@ -325,7 +328,8 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 		in.MirrorTriggerBuilds = &project.MirrorTriggerBuilds
 	}
 	if in.MirrorUserID == nil && project.MirrorUserID != 0 { // since project.MirrorUserID is non-nullable, value `0` treated as `not set`
-		in.MirrorUserID = &project.MirrorUserID
+		val := project.MirrorUserID
+		in.MirrorUserID = &val
 	}
 	if in.OnlyAllowMergeIfAllDiscussionsAreResolved == nil {
 		in.OnlyAllowMergeIfAllDiscussionsAreResolved = &project.OnlyAllowMergeIfAllDiscussionsAreResolved
@@ -474,7 +478,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsBoolEqualToBoolPtr(p.AllowMergeOnSkippedPipeline, g.AllowMergeOnSkippedPipeline) {
 		return false
 	}
-	if !clients.IsIntEqualToIntPtr(p.ApprovalsBeforeMerge, g.ApprovalsBeforeMerge) { //nolint:staticcheck
+	if !clients.IsInt64EqualToInt64Ptr(p.ApprovalsBeforeMerge, g.ApprovalsBeforeMerge) { //nolint:staticcheck
 		return false
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.AutocloseReferencedIssues, g.AutocloseReferencedIssues) {
@@ -489,7 +493,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if p.CIConfigPath != nil && !cmp.Equal(*p.CIConfigPath, g.CIConfigPath) {
 		return false
 	}
-	if !clients.IsIntEqualToIntPtr(p.CIDefaultGitDepth, g.CIDefaultGitDepth) {
+	if !clients.IsInt64EqualToInt64Ptr(p.CIDefaultGitDepth, g.CIDefaultGitDepth) {
 		return false
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.CIForwardDeploymentEnabled, g.CIForwardDeploymentEnabled) {
@@ -537,7 +541,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsBoolEqualToBoolPtr(p.MirrorTriggerBuilds, g.MirrorTriggerBuilds) {
 		return false
 	}
-	if !clients.IsIntEqualToIntPtr(p.MirrorUserID, g.MirrorUserID) {
+	if !clients.IsInt64EqualToInt64Ptr(p.MirrorUserID, g.MirrorUserID) {
 		return false
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.OnlyAllowMergeIfAllDiscussionsAreResolved, g.OnlyAllowMergeIfAllDiscussionsAreResolved) {

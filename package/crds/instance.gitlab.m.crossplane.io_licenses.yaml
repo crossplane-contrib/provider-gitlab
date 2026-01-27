@@ -237,6 +237,7 @@ spec:
                   activeUsers:
                     description: ActiveUsers is the current number (billable) of active
                       users.
+                    format: int64
                     type: integer
                   addOns:
                     description: AddOns contains information about any add-ons included
@@ -245,22 +246,27 @@ spec:
                       gitlabAuditorUser:
                         description: GitLabAuditorUser indicates if the GitLab Auditor
                           User add-on is included.
+                        format: int64
                         type: integer
                       gitlabDeployBoard:
                         description: GitLabDeployBoard indicates if the GitLab Deploy
                           Board add-on is included.
+                        format: int64
                         type: integer
                       gitlabFileLocks:
                         description: GitLabFileLocks indicates if the GitLab File
                           Locks add-on is included.
+                        format: int64
                         type: integer
                       gitlabGeo:
                         description: GitLabGeo indicates if the GitLab Geo add-on
                           is included.
+                        format: int64
                         type: integer
                       gitlabServiceDesk:
                         description: GitLabServiceDesk indicates if the GitLab Service
                           Desk add-on is included.
+                        format: int64
                         type: integer
                     required:
                     - gitlabAuditorUser
@@ -285,9 +291,11 @@ spec:
                   historicalMax:
                     description: HistoricalMax represents the maximum number of users
                       once the license has expired.
+                    format: int64
                     type: integer
                   id:
                     description: ID is the unique identifier of the license.
+                    format: int64
                     type: integer
                   licensee:
                     description: Licensee contains information about the licensee.
@@ -309,10 +317,12 @@ spec:
                   maximumUserCount:
                     description: MaximumUserCount is the maximum number of users allowed
                       by the license.
+                    format: int64
                     type: integer
                   overage:
                     description: Overage is the difference between the number of billable
                       users and the licensed number of users.
+                    format: int64
                     type: integer
                   plan:
                     description: Plan is the name of the license plan.
@@ -324,6 +334,7 @@ spec:
                     type: string
                   userLimit:
                     description: UserLimit is the user limit defined by the license.
+                    format: int64
                     type: integer
                 required:
                 - activeUsers

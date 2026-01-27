@@ -52,7 +52,7 @@ const (
 
 // SetupMember adds a controller that reconciles Group Members.
 func SetupMember(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.MemberKubernetesGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.MemberKubernetesGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{

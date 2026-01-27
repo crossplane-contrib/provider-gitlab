@@ -51,7 +51,7 @@ const (
 
 // SetupMember adds a controller that reconciles Project Members.
 func SetupMember(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.MemberGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.MemberGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{

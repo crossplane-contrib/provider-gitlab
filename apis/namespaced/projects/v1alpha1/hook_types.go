@@ -35,7 +35,7 @@ type HookParameters struct {
 	// ProjectID is the ID of the project.
 	// +optional
 	// +immutable
-	ProjectID *int `json:"projectId,omitempty"`
+	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
@@ -104,7 +104,7 @@ type Token struct {
 // https://docs.gitlab.com/ce/api/projects.html#list-project-hooks
 type HookObservation struct {
 	// ID of the project hook at gitlab
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 
 	// CreatedAt specifies the time the project hook was created
 	CreatedAt *metav1.Time `json:"createdAt,omitempty"`

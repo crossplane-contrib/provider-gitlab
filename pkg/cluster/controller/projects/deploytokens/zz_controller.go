@@ -54,7 +54,7 @@ const (
 
 // SetupDeployToken adds a controller that reconciles ProjectDeployTokens.
 func SetupDeployToken(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.DeployTokenGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.DeployTokenGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewDeployTokenClient}),
@@ -135,7 +135,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
 
-	dt, res, err := e.client.GetProjectDeployToken(*cr.Spec.ForProvider.ProjectID, id)
+	dt, res, err := e.client.GetProjectDeployToken(*cr.Spec.ForProvider.ProjectID, int64(id))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -177,7 +177,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	connectionDetails := managed.ConnectionDetails{}
 	connectionDetails["token"] = []byte(dt.Token)
 
-	meta.SetExternalName(cr, strconv.Itoa(dt.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(dt.ID, 10))
 	return managed.ExternalCreation{ConnectionDetails: connectionDetails}, nil
 }
 
@@ -202,7 +202,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 	_, deleteError := e.client.DeleteProjectDeployToken(
 		*cr.Spec.ForProvider.ProjectID,
-		deployTokenID,
+		int64(deployTokenID),
 		gitlab.WithContext(ctx),
 	)
 

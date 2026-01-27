@@ -30,7 +30,7 @@ import (
 type LicenseClient interface {
 	GetLicense(options ...gitlab.RequestOptionFunc) (*gitlab.License, *gitlab.Response, error)
 	AddLicense(opt *gitlab.AddLicenseOptions, options ...gitlab.RequestOptionFunc) (*gitlab.License, *gitlab.Response, error)
-	DeleteLicense(licenseID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	DeleteLicense(licenseID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewLicenseClient returns a new Gitlab License service

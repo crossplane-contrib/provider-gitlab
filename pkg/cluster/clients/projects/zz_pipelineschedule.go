@@ -22,12 +22,12 @@ import gitlab "gitlab.com/gitlab-org/api/client-go"
 
 // PipelineScheduleClient is an interface for Gitlab PipelineScheduleService.
 type PipelineScheduleClient interface {
-	GetPipelineSchedule(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error)
+	GetPipelineSchedule(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error)
 	CreatePipelineSchedule(pid interface{}, opt *gitlab.CreatePipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error)
-	EditPipelineSchedule(pid interface{}, schedule int, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error)
-	DeletePipelineSchedule(pid interface{}, schedule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	EditPipelineSchedule(pid interface{}, schedule int64, opt *gitlab.EditPipelineScheduleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error)
+	DeletePipelineSchedule(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
-	CreatePipelineScheduleVariable(pid interface{}, schedule int, opt *gitlab.CreatePipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
-	DeletePipelineScheduleVariable(pid interface{}, schedule int, key string, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
-	EditPipelineScheduleVariable(pid interface{}, schedule int, key string, opt *gitlab.EditPipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
+	CreatePipelineScheduleVariable(pid interface{}, schedule int64, opt *gitlab.CreatePipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
+	DeletePipelineScheduleVariable(pid interface{}, schedule int64, key string, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
+	EditPipelineScheduleVariable(pid interface{}, schedule int64, key string, opt *gitlab.EditPipelineScheduleVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineVariable, *gitlab.Response, error)
 }

@@ -49,7 +49,7 @@ const (
 
 // SetupApplicationSettings adds a controller that reconciles GitLab Instance Settings.
 func SetupApplicationSettings(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.ApplicationSettingsGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.ApplicationSettingsGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: instance.NewApplicationSettingsClient}),

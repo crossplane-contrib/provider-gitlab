@@ -121,6 +121,7 @@ spec:
                     description: |-
                       MaximumTimeout is the maximum time (in seconds) that a job can run on this runner.
                       If a job exceeds this time limit, it will be terminated.
+                    format: int64
                     type: integer
                   paused:
                     description: |-
@@ -131,6 +132,7 @@ spec:
                     description: |-
                       ProjectID is the ID of the project to register the runner to.
                       The runner will be available to execute jobs exclusively for this project.
+                    format: int64
                     type: integer
                   projectIdRef:
                     description: |-
@@ -340,6 +342,7 @@ spec:
                   id:
                     description: ID is the unique identifier of the runner assigned
                       by GitLab.
+                    format: int64
                     type: integer
                   isShared:
                     description: |-
@@ -358,6 +361,7 @@ spec:
                   maximumTimeout:
                     description: MaximumTimeout is the maximum time (in seconds) that
                       jobs can run on this runner.
+                    format: int64
                     type: integer
                   name:
                     description: |-
@@ -386,6 +390,7 @@ spec:
                       properties:
                         id:
                           description: ID is the unique identifier of the project.
+                          format: int64
                           type: integer
                         name:
                           description: Name is the name of the project.

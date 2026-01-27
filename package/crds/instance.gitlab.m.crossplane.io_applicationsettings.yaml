@@ -109,6 +109,7 @@ spec:
                   archiveBuildsInHumanReadable:
                     type: string
                   asciiDocMaxIncludes:
+                    format: int64
                     type: integer
                   assetProxyAllowlist:
                     items:
@@ -147,16 +148,20 @@ spec:
                   autoDevOpsEnabled:
                     type: boolean
                   autocompleteUsers:
+                    format: int64
                     type: integer
                   autocompleteUsersUnauthenticated:
+                    format: int64
                     type: integer
                   automaticPurchasedStorageAllocation:
                     type: boolean
                   bulkImportConcurrentPipelineBatchLimit:
+                    format: int64
                     type: integer
                   bulkImportEnabled:
                     type: boolean
                   bulkImportMaxDownloadFileSize:
+                    format: int64
                     type: integer
                   canCreateGroup:
                     type: boolean
@@ -167,57 +172,74 @@ spec:
                   ciJobLiveTraceEnabled:
                     type: boolean
                   ciMaxIncludes:
+                    format: int64
                     type: integer
                   ciMaxTotalYamlSizeBytes:
+                    format: int64
                     type: integer
                   ciPartitionsSizeLimit:
+                    format: int64
                     type: integer
                   commitEmailHostname:
                     type: string
                   concurrentBitbucketImportJobsLimit:
+                    format: int64
                     type: integer
                   concurrentBitbucketServerImportJobsLimit:
+                    format: int64
                     type: integer
                   concurrentGitHubImportJobsLimit:
+                    format: int64
                     type: integer
                   containerExpirationPoliciesEnableHistoricEntries:
                     type: boolean
                   containerRegistryCleanupTagsServiceMaxListSize:
+                    format: int64
                     type: integer
                   containerRegistryDeleteTagsServiceTimeout:
+                    format: int64
                     type: integer
                   containerRegistryExpirationPoliciesCaching:
                     type: boolean
                   containerRegistryExpirationPoliciesWorkerCapacity:
+                    format: int64
                     type: integer
                   containerRegistryImportCreatedBefore:
                     format: date-time
                     type: string
                   containerRegistryImportMaxRetries:
+                    format: int64
                     type: integer
                   containerRegistryImportMaxStepDuration:
+                    format: int64
                     type: integer
                   containerRegistryImportMaxTagsCount:
+                    format: int64
                     type: integer
                   containerRegistryImportStartMaxRetries:
+                    format: int64
                     type: integer
                   containerRegistryImportTargetPlan:
                     type: string
                   containerRegistryTokenExpireDelay:
+                    format: int64
                     type: integer
                   customHTTPCloneUrlRoot:
                     type: string
                   deactivateDormantUsers:
                     type: boolean
                   deactivateDormantUsersPeriod:
+                    format: int64
                     type: integer
                   decompressArchiveFileTimeout:
+                    format: int64
                     type: integer
                   defaultArtifactsExpireIn:
                     type: string
                   defaultBranchName:
                     type: string
                   defaultBranchProtection:
+                    format: int64
                     type: integer
                   defaultBranchProtectionDefaults:
                     description: DefaultBranchProtectionDefaultsOptions defines the
@@ -231,12 +253,14 @@ spec:
                         description: List of user or group IDs allowed to merge to
                           the default branch
                         items:
+                          format: int64
                           type: integer
                         type: array
                       allowedToPush:
                         description: List of user or group IDs allowed to push to
                           the default branch
                         items:
+                          format: int64
                           type: integer
                         type: array
                       developerCanInitialPush:
@@ -251,16 +275,19 @@ spec:
                   defaultPreferredLanguage:
                     type: string
                   defaultProjectCreation:
+                    format: int64
                     type: integer
                   defaultProjectDeletionProtection:
                     type: boolean
                   defaultProjectVisibility:
                     type: string
                   defaultProjectsLimit:
+                    format: int64
                     type: integer
                   defaultSnippetVisibility:
                     type: string
                   defaultSyntaxHighlightingTheme:
+                    format: int64
                     type: integer
                   delayedGroupDeletion:
                     type: boolean
@@ -271,16 +298,20 @@ spec:
                   deleteUnconfirmedUsers:
                     type: boolean
                   deletionAdjournedPeriod:
+                    format: int64
                     type: integer
                   diagramsnetEnabled:
                     type: boolean
                   diagramsnetUrl:
                     type: string
                   diffMaxFiles:
+                    format: int64
                     type: integer
                   diffMaxLines:
+                    format: int64
                     type: integer
                   diffMaxPatchBytes:
+                    format: int64
                     type: integer
                   disableAdminOAuthScopes:
                     type: boolean
@@ -307,18 +338,24 @@ spec:
                   domainDenylistEnabled:
                     type: boolean
                   downstreamPipelineTriggerLimitPerProjectUserSHA:
+                    format: int64
                     type: integer
                   dsaKeyRestriction:
+                    format: int64
                     type: integer
                   duoFeaturesEnabled:
                     type: boolean
                   ecdsaKeyRestriction:
+                    format: int64
                     type: integer
                   ecdsaskKeyRestriction:
+                    format: int64
                     type: integer
                   ed25519KeyRestriction:
+                    format: int64
                     type: integer
                   ed25519SKKeyRestriction:
+                    format: int64
                     type: integer
                   eksAccessKeyId:
                     type: string
@@ -359,10 +396,12 @@ spec:
                   elasticsearchAnalyzersKuromojiEnabled:
                     type: boolean
                   elasticsearchAnalyzersKuromojiSearch:
+                    format: int64
                     type: integer
                   elasticsearchAnalyzersSmartCnEnabled:
                     type: boolean
                   elasticsearchAnalyzersSmartCnSearch:
+                    format: int64
                     type: integer
                   elasticsearchAws:
                     type: boolean
@@ -401,23 +440,30 @@ spec:
                     - name
                     type: object
                   elasticsearchClientRequestTimeout:
+                    format: int64
                     type: integer
                   elasticsearchIndexedFieldLengthLimit:
+                    format: int64
                     type: integer
                   elasticsearchIndexedFileSizeLimitKB:
+                    format: int64
                     type: integer
                   elasticsearchIndexing:
                     type: boolean
                   elasticsearchLimitIndexing:
                     type: boolean
                   elasticsearchMaxBulkConcurrency:
+                    format: int64
                     type: integer
                   elasticsearchMaxBulkSizeMB:
+                    format: int64
                     type: integer
                   elasticsearchMaxCodeIndexingConcurrency:
+                    format: int64
                     type: integer
                   elasticsearchNamespaceIds:
                     items:
+                      format: int64
                       type: integer
                     type: array
                   elasticsearchPassword:
@@ -440,23 +486,28 @@ spec:
                     type: boolean
                   elasticsearchProjectIds:
                     items:
+                      format: int64
                       type: integer
                     type: array
                   elasticsearchReplicas:
+                    format: int64
                     type: integer
                   elasticsearchRequeueWorkers:
                     type: boolean
                   elasticsearchRetryOnFailure:
+                    format: int64
                     type: integer
                   elasticsearchSearch:
                     type: boolean
                   elasticsearchShards:
+                    format: int64
                     type: integer
                   elasticsearchUrl:
                     type: string
                   elasticsearchUsername:
                     type: string
                   elasticsearchWorkerNumberOfShards:
+                    format: int64
                     type: integer
                   emailAdditionalText:
                     type: string
@@ -511,6 +562,7 @@ spec:
                   externalAuthorizationServiceUrl:
                     type: string
                   externalPipelineValidationServiceTimeout:
+                    format: int64
                     type: integer
                   externalPipelineValidationServiceToken:
                     type: string
@@ -531,19 +583,24 @@ spec:
                   externalPipelineValidationServiceUrl:
                     type: string
                   failedLoginAttemptsUnlockPeriodInMinutes:
+                    format: int64
                     type: integer
                   fileTemplateProjectId:
+                    format: int64
                     type: integer
                   firstDayOfWeek:
+                    format: int64
                     type: integer
                   flocEnabled:
                     type: boolean
                   geoNodeAllowedIps:
                     type: string
                   geoStatusTimeout:
+                    format: int64
                     type: integer
                   gitRateLimitUsersAlertlist:
                     items:
+                      format: int64
                       type: integer
                     type: array
                   gitRateLimitUsersAllowlist:
@@ -551,18 +608,23 @@ spec:
                       type: string
                     type: array
                   gitTwoFactorSessionExpiry:
+                    format: int64
                     type: integer
                   gitalyTimeoutDefault:
+                    format: int64
                     type: integer
                   gitalyTimeoutFast:
+                    format: int64
                     type: integer
                   gitalyTimeoutMedium:
+                    format: int64
                     type: integer
                   gitlabDedicatedInstance:
                     type: boolean
                   gitlabEnvironmentToolkitInstance:
                     type: boolean
                   gitlabShellOperationLimit:
+                    format: int64
                     type: integer
                   gitpodEnabled:
                     type: boolean
@@ -577,14 +639,18 @@ spec:
                   gravatarEnabled:
                     type: boolean
                   groupDownloadExportLimit:
+                    format: int64
                     type: integer
                   groupExportLimit:
+                    format: int64
                     type: integer
                   groupImportLimit:
+                    format: int64
                     type: integer
                   groupOwnersCanManageDefaultBranchProtection:
                     type: boolean
                   groupRunnerTokenExpirationInterval:
+                    format: int64
                     type: integer
                   hashedStorageEnabled:
                     type: boolean
@@ -607,12 +673,16 @@ spec:
                   housekeepingEnabled:
                     type: boolean
                   housekeepingFullRepackPeriod:
+                    format: int64
                     type: integer
                   housekeepingGcPeriod:
+                    format: int64
                     type: integer
                   housekeepingIncrementalRepackPeriod:
+                    format: int64
                     type: integer
                   housekeepingOptimizeRepositoryPeriod:
+                    format: int64
                     type: integer
                   htmlEmailsEnabled:
                     type: boolean
@@ -623,16 +693,20 @@ spec:
                   inProductMarketingEmailsEnabled:
                     type: boolean
                   inactiveProjectsDeleteAfterMonths:
+                    format: int64
                     type: integer
                   inactiveProjectsMinSizeMB:
+                    format: int64
                     type: integer
                   inactiveProjectsSendWarningEmailAfterMonths:
+                    format: int64
                     type: integer
                   includeOptionalMetricsInServicePing:
                     type: boolean
                   invisibleCaptchaEnabled:
                     type: boolean
                   issuesCreateLimit:
+                    format: int64
                     type: integer
                   jiraConnectApplicationKey:
                     type: string
@@ -665,6 +739,7 @@ spec:
                   krokiUrl:
                     type: string
                   localMarkdownVersion:
+                    format: int64
                     type: integer
                   lockDuoFeaturesEnabled:
                     type: boolean
@@ -697,48 +772,69 @@ spec:
                   mavenPackageRequestsForwarding:
                     type: boolean
                   maxArtifactsSize:
+                    format: int64
                     type: integer
                   maxAttachmentSize:
+                    format: int64
                     type: integer
                   maxDecompressedArchiveSize:
+                    format: int64
                     type: integer
                   maxExportSize:
+                    format: int64
                     type: integer
                   maxImportRemoteFileSize:
+                    format: int64
                     type: integer
                   maxImportSize:
+                    format: int64
                     type: integer
                   maxLoginAttempts:
+                    format: int64
                     type: integer
                   maxNumberOfRepositoryDownloads:
+                    format: int64
                     type: integer
                   maxNumberOfRepositoryDownloadsWithinTimePeriod:
+                    format: int64
                     type: integer
                   maxPagesSize:
+                    format: int64
                     type: integer
                   maxPersonalAccessTokenLifetime:
+                    format: int64
                     type: integer
                   maxSshKeyLifetime:
+                    format: int64
                     type: integer
                   maxTerraformStateSizeBytes:
+                    format: int64
                     type: integer
                   maxYamlDepth:
+                    format: int64
                     type: integer
                   maxYamlSizeBytes:
+                    format: int64
                     type: integer
                   metricsMethodCallThreshold:
+                    format: int64
                     type: integer
                   minimumPasswordLength:
+                    format: int64
                     type: integer
                   mirrorAvailable:
                     type: boolean
                   mirrorCapacityThreshold:
+                    format: int64
                     type: integer
                   mirrorMaxCapacity:
+                    format: int64
                     type: integer
                   mirrorMaxDelay:
+                    format: int64
                     type: integer
                   notesCreateLimit:
+                    format: int64
                     type: integer
                   notifyOnUnknownSignIn:
                     type: boolean
@@ -754,11 +850,13 @@ spec:
                     type: array
                   packageMetadataPUrlTypes:
                     items:
+                      format: int64
                       type: integer
                     type: array
                   packageRegistryAllowAnyoneToPullOption:
                     type: boolean
                   packageRegistryCleanupPoliciesWorkerCapacity:
+                    format: int64
                     type: integer
                   pagesDomainVerificationEnabled:
                     type: boolean
@@ -775,6 +873,7 @@ spec:
                   passwordUppercaseRequired:
                     type: boolean
                   performanceBarAllowedGroupId:
+                    format: int64
                     type: integer
                   performanceBarAllowedGroupPath:
                     type: string
@@ -783,6 +882,7 @@ spec:
                   personalAccessTokenPrefix:
                     type: string
                   pipelineLimitPerProjectUserSha:
+                    format: int64
                     type: integer
                   plantumlEnabled:
                     type: boolean
@@ -795,18 +895,24 @@ spec:
                   preventMergeRequestsCommittersApproval:
                     type: boolean
                   projectDownloadExportLimit:
+                    format: int64
                     type: integer
                   projectExportEnabled:
                     type: boolean
                   projectExportLimit:
+                    format: int64
                     type: integer
                   projectImportLimit:
+                    format: int64
                     type: integer
                   projectJobsApiRateLimit:
+                    format: int64
                     type: integer
                   projectRunnerTokenExpirationInterval:
+                    format: int64
                     type: integer
                   projectsApiRateLimitUnauthenticated:
+                    format: int64
                     type: integer
                   prometheusMetricsEnabled:
                     type: boolean
@@ -815,14 +921,17 @@ spec:
                   pseudonymizerEnabled:
                     type: boolean
                   pushEventActivitiesLimit:
+                    format: int64
                     type: integer
                   pushEventHooksLimit:
+                    format: int64
                     type: integer
                   pyPIpackageRequestsForwarding:
                     type: boolean
                   rateLimitingResponseText:
                     type: string
                   rawBlobRequestLimit:
+                    format: int64
                     type: integer
                   recaptchaEnabled:
                     type: boolean
@@ -859,6 +968,7 @@ spec:
                     - name
                     type: object
                   receiveMaxInputSize:
+                    format: int64
                     type: integer
                   receptiveClusterAgentsEnabled:
                     type: boolean
@@ -867,6 +977,7 @@ spec:
                   repositoryChecksEnabled:
                     type: boolean
                   repositorySizeLimit:
+                    format: int64
                     type: integer
                   repositoryStorages:
                     items:
@@ -874,6 +985,7 @@ spec:
                     type: array
                   repositoryStoragesWeighted:
                     additionalProperties:
+                      format: int64
                       type: integer
                     type: object
                   requireAdminApprovalAfterUserSignup:
@@ -889,12 +1001,16 @@ spec:
                       type: string
                     type: array
                   rsaKeyRestriction:
+                    format: int64
                     type: integer
                   runnerTokenExpirationInterval:
+                    format: int64
                     type: integer
                   searchRateLimit:
+                    format: int64
                     type: integer
                   searchRateLimitUnauthenticated:
+                    format: int64
                     type: integer
                   secretDetectionRevocationTokenTypesUrl:
                     type: string
@@ -919,6 +1035,7 @@ spec:
                   secretDetectionTokenRevocationUrl:
                     type: string
                   securityApprovalPoliciesLimit:
+                    format: int64
                     type: integer
                   securityPolicyGlobalGroupApproversEnabled:
                     type: boolean
@@ -937,16 +1054,20 @@ spec:
                   serviceAccessTokensExpirationEnforced:
                     type: boolean
                   sessionExpireDelay:
+                    format: int64
                     type: integer
                   sharedRunnersEnabled:
                     type: boolean
                   sharedRunnersMinutes:
+                    format: int64
                     type: integer
                   sharedRunnersText:
                     type: string
                   sidekiqJobLimiterCompressionThresholdBytes:
+                    format: int64
                     type: integer
                   sidekiqJobLimiterLimitBytes:
+                    format: int64
                     type: integer
                   sidekiqJobLimiterMode:
                     type: string
@@ -1011,6 +1132,7 @@ spec:
                     - name
                     type: object
                   snippetSizeLimit:
+                    format: int64
                     type: integer
                   snowplowAppId:
                     type: string
@@ -1069,110 +1191,145 @@ spec:
                   suggestPipelineEnabled:
                     type: boolean
                   terminalMaxSessionTime:
+                    format: int64
                     type: integer
                   terms:
                     type: string
                   throttleAuthenticatedApiEnabled:
                     type: boolean
                   throttleAuthenticatedApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleAuthenticatedDeprecatedApiEnabled:
                     type: boolean
                   throttleAuthenticatedDeprecatedApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedDeprecatedApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleAuthenticatedFilesApiEnabled:
                     type: boolean
                   throttleAuthenticatedFilesApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedFilesApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleAuthenticatedGitLFSEnabled:
                     type: boolean
                   throttleAuthenticatedGitLFSPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedGitLFSRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleAuthenticatedPackagesApiEnabled:
                     type: boolean
                   throttleAuthenticatedPackagesApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedPackagesApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleAuthenticatedWebEnabled:
                     type: boolean
                   throttleAuthenticatedWebPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedWebRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleIncidentManagementNotificationEnabled:
                     type: boolean
                   throttleIncidentManagementNotificationPerPeriod:
+                    format: int64
                     type: integer
                   throttleIncidentManagementNotificationPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleProtectedPathsEnabled:
                     type: boolean
                   throttleProtectedPathsPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleProtectedPathsRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedApiEnabled:
                     type: boolean
                   throttleUnauthenticatedApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedDeprecatedApiEnabled:
                     type: boolean
                   throttleUnauthenticatedDeprecatedApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedDeprecatedApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedEnabled:
                     type: boolean
                   throttleUnauthenticatedFilesApiEnabled:
                     type: boolean
                   throttleUnauthenticatedFilesApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedFilesApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedGitLFSEnabled:
                     type: boolean
                   throttleUnauthenticatedGitLFSPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedGitLFSRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedPackagesApiEnabled:
                     type: boolean
                   throttleUnauthenticatedPackagesApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedPackagesApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedWebEnabled:
                     type: boolean
                   throttleUnauthenticatedWebPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedWebRequestsPerPeriod:
+                    format: int64
                     type: integer
                   timeTrackingLimitToHours:
                     type: boolean
                   twoFactorGracePeriod:
+                    format: int64
                     type: integer
                   unconfirmedUsersDeleteAfterDays:
+                    format: int64
                     type: integer
                   uniqueIpsLimitEnabled:
                     type: boolean
                   uniqueIpsLimitPerUser:
+                    format: int64
                     type: integer
                   uniqueIpsLimitTimeWindow:
+                    format: int64
                     type: integer
                   updateRunnerVersionsEnabled:
                     type: boolean
@@ -1193,12 +1350,14 @@ spec:
                   userDefaultsToPrivateProfile:
                     type: boolean
                   userEmailLookupLimit:
+                    format: int64
                     type: integer
                   userOauthApplications:
                     type: boolean
                   userShowAddSshKeyMessage:
                     type: boolean
                   usersGetByIdLimit:
+                    format: int64
                     type: integer
                   usersGetByIdLimitAllowlistRaw:
                     type: string
@@ -1213,6 +1372,7 @@ spec:
                   whatsNewVariant:
                     type: string
                   wikiPageMaxContentBytes:
+                    format: int64
                     type: integer
                 type: object
               managementPolicies:
@@ -1315,6 +1475,7 @@ spec:
                   archiveBuildsInHumanReadable:
                     type: string
                   asciiDocMaxIncludes:
+                    format: int64
                     type: integer
                   assetProxyAllowlist:
                     items:
@@ -1337,16 +1498,20 @@ spec:
                   autoDevOpsEnabled:
                     type: boolean
                   autocompleteUsers:
+                    format: int64
                     type: integer
                   autocompleteUsersUnauthenticated:
+                    format: int64
                     type: integer
                   automaticPurchasedStorageAllocation:
                     type: boolean
                   bulkImportConcurrentPipelineBatchLimit:
+                    format: int64
                     type: integer
                   bulkImportEnabled:
                     type: boolean
                   bulkImportMaxDownloadFileSize:
+                    format: int64
                     type: integer
                   canCreateGroup:
                     type: boolean
@@ -1355,43 +1520,57 @@ spec:
                   ciJobLiveTraceEnabled:
                     type: boolean
                   ciMaxIncludes:
+                    format: int64
                     type: integer
                   ciMaxTotalYamlSizeBytes:
+                    format: int64
                     type: integer
                   ciPartitionsSizeLimit:
+                    format: int64
                     type: integer
                   commitEmailHostname:
                     type: string
                   concurrentBitbucketImportJobsLimit:
+                    format: int64
                     type: integer
                   concurrentBitbucketServerImportJobsLimit:
+                    format: int64
                     type: integer
                   concurrentGitHubImportJobsLimit:
+                    format: int64
                     type: integer
                   containerExpirationPoliciesEnableHistoricEntries:
                     type: boolean
                   containerRegistryCleanupTagsServiceMaxListSize:
+                    format: int64
                     type: integer
                   containerRegistryDeleteTagsServiceTimeout:
+                    format: int64
                     type: integer
                   containerRegistryExpirationPoliciesCaching:
                     type: boolean
                   containerRegistryExpirationPoliciesWorkerCapacity:
+                    format: int64
                     type: integer
                   containerRegistryImportCreatedBefore:
                     format: date-time
                     type: string
                   containerRegistryImportMaxRetries:
+                    format: int64
                     type: integer
                   containerRegistryImportMaxStepDuration:
+                    format: int64
                     type: integer
                   containerRegistryImportMaxTagsCount:
+                    format: int64
                     type: integer
                   containerRegistryImportStartMaxRetries:
+                    format: int64
                     type: integer
                   containerRegistryImportTargetPlan:
                     type: string
                   containerRegistryTokenExpireDelay:
+                    format: int64
                     type: integer
                   createdAt:
                     format: date-time
@@ -1401,14 +1580,17 @@ spec:
                   deactivateDormantUsers:
                     type: boolean
                   deactivateDormantUsersPeriod:
+                    format: int64
                     type: integer
                   decompressArchiveFileTimeout:
+                    format: int64
                     type: integer
                   defaultArtifactsExpireIn:
                     type: string
                   defaultBranchName:
                     type: string
                   defaultBranchProtection:
+                    format: int64
                     type: integer
                   defaultBranchProtectionDefaults:
                     description: BranchProtectionDefaults defines rules for branch
@@ -1422,12 +1604,14 @@ spec:
                         description: List of user or group IDs allowed to merge to
                           the default branch
                         items:
+                          format: int64
                           type: integer
                         type: array
                       allowed_to_push:
                         description: List of user or group IDs allowed to push to
                           the default branch
                         items:
+                          format: int64
                           type: integer
                         type: array
                       developer_can_initial_push:
@@ -1442,16 +1626,19 @@ spec:
                   defaultPreferredLanguage:
                     type: string
                   defaultProjectCreation:
+                    format: int64
                     type: integer
                   defaultProjectDeletionProtection:
                     type: boolean
                   defaultProjectVisibility:
                     type: string
                   defaultProjectsLimit:
+                    format: int64
                     type: integer
                   defaultSnippetVisibility:
                     type: string
                   defaultSyntaxHighlightingTheme:
+                    format: int64
                     type: integer
                   delayedGroupDeletion:
                     type: boolean
@@ -1462,16 +1649,20 @@ spec:
                   deleteUnconfirmedUsers:
                     type: boolean
                   deletionAdjournedPeriod:
+                    format: int64
                     type: integer
                   diagramsnetEnabled:
                     type: boolean
                   diagramsnetUrl:
                     type: string
                   diffMaxFiles:
+                    format: int64
                     type: integer
                   diffMaxLines:
+                    format: int64
                     type: integer
                   diffMaxPatchBytes:
+                    format: int64
                     type: integer
                   disableAdminOAuthScopes:
                     type: boolean
@@ -1498,18 +1689,24 @@ spec:
                   domainDenylistEnabled:
                     type: boolean
                   downstreamPipelineTriggerLimitPerProjectUserSHA:
+                    format: int64
                     type: integer
                   dsaKeyRestriction:
+                    format: int64
                     type: integer
                   duoFeaturesEnabled:
                     type: boolean
                   ecdsaKeyRestriction:
+                    format: int64
                     type: integer
                   ecdsaskKeyRestriction:
+                    format: int64
                     type: integer
                   ed25519KeyRestriction:
+                    format: int64
                     type: integer
                   ed25519SKKeyRestriction:
+                    format: int64
                     type: integer
                   eksAccountId:
                     type: string
@@ -1528,40 +1725,51 @@ spec:
                   elasticsearchAwsRegion:
                     type: string
                   elasticsearchClientRequestTimeout:
+                    format: int64
                     type: integer
                   elasticsearchIndexedFieldLengthLimit:
+                    format: int64
                     type: integer
                   elasticsearchIndexedFileSizeLimitKB:
+                    format: int64
                     type: integer
                   elasticsearchIndexing:
                     type: boolean
                   elasticsearchLimitIndexing:
                     type: boolean
                   elasticsearchMaxBulkConcurrency:
+                    format: int64
                     type: integer
                   elasticsearchMaxBulkSizeMB:
+                    format: int64
                     type: integer
                   elasticsearchMaxCodeIndexingConcurrency:
+                    format: int64
                     type: integer
                   elasticsearchNamespaceIds:
                     items:
+                      format: int64
                       type: integer
                     type: array
                   elasticsearchPauseIndexing:
                     type: boolean
                   elasticsearchProjectIds:
                     items:
+                      format: int64
                       type: integer
                     type: array
                   elasticsearchReplicas:
+                    format: int64
                     type: integer
                   elasticsearchRequeueWorkers:
                     type: boolean
                   elasticsearchRetryOnFailure:
+                    format: int64
                     type: integer
                   elasticsearchSearch:
                     type: boolean
                   elasticsearchShards:
+                    format: int64
                     type: integer
                   elasticsearchUrl:
                     items:
@@ -1570,6 +1778,7 @@ spec:
                   elasticsearchUsername:
                     type: string
                   elasticsearchWorkerNumberOfShards:
+                    format: int64
                     type: integer
                   emailAdditionalText:
                     type: string
@@ -1608,23 +1817,29 @@ spec:
                   externalAuthorizationServiceUrl:
                     type: string
                   externalPipelineValidationServiceTimeout:
+                    format: int64
                     type: integer
                   externalPipelineValidationServiceUrl:
                     type: string
                   failedLoginAttemptsUnlockPeriodInMinutes:
+                    format: int64
                     type: integer
                   fileTemplateProjectId:
+                    format: int64
                     type: integer
                   firstDayOfWeek:
+                    format: int64
                     type: integer
                   flocEnabled:
                     type: boolean
                   geoNodeAllowedIps:
                     type: string
                   geoStatusTimeout:
+                    format: int64
                     type: integer
                   gitRateLimitUsersAlertlist:
                     items:
+                      format: int64
                       type: integer
                     type: array
                   gitRateLimitUsersAllowlist:
@@ -1632,18 +1847,23 @@ spec:
                       type: string
                     type: array
                   gitTwoFactorSessionExpiry:
+                    format: int64
                     type: integer
                   gitalyTimeoutDefault:
+                    format: int64
                     type: integer
                   gitalyTimeoutFast:
+                    format: int64
                     type: integer
                   gitalyTimeoutMedium:
+                    format: int64
                     type: integer
                   gitlabDedicatedInstance:
                     type: boolean
                   gitlabEnvironmentToolkitInstance:
                     type: boolean
                   gitlabShellOperationLimit:
+                    format: int64
                     type: integer
                   gitpodEnabled:
                     type: boolean
@@ -1658,14 +1878,18 @@ spec:
                   gravatarEnabled:
                     type: boolean
                   groupDownloadExportLimit:
+                    format: int64
                     type: integer
                   groupExportLimit:
+                    format: int64
                     type: integer
                   groupImportLimit:
+                    format: int64
                     type: integer
                   groupOwnersCanManageDefaultBranchProtection:
                     type: boolean
                   groupRunnerTokenExpirationInterval:
+                    format: int64
                     type: integer
                   hashedStorageEnabled:
                     type: boolean
@@ -1688,16 +1912,21 @@ spec:
                   housekeepingEnabled:
                     type: boolean
                   housekeepingFullRepackPeriod:
+                    format: int64
                     type: integer
                   housekeepingGcPeriod:
+                    format: int64
                     type: integer
                   housekeepingIncrementalRepackPeriod:
+                    format: int64
                     type: integer
                   housekeepingOptimizeRepositoryPeriod:
+                    format: int64
                     type: integer
                   htmlEmailsEnabled:
                     type: boolean
                   id:
+                    format: int64
                     type: integer
                   importSources:
                     items:
@@ -1706,16 +1935,20 @@ spec:
                   inProductMarketingEmailsEnabled:
                     type: boolean
                   inactiveProjectsDeleteAfterMonths:
+                    format: int64
                     type: integer
                   inactiveProjectsMinSizeMB:
+                    format: int64
                     type: integer
                   inactiveProjectsSendWarningEmailAfterMonths:
+                    format: int64
                     type: integer
                   includeOptionalMetricsInServicePing:
                     type: boolean
                   invisibleCaptchaEnabled:
                     type: boolean
                   issuesCreateLimit:
+                    format: int64
                     type: integer
                   jiraConnectProxyUrl:
                     type: string
@@ -1732,6 +1965,7 @@ spec:
                   krokiUrl:
                     type: string
                   localMarkdownVersion:
+                    format: int64
                     type: integer
                   lockDuoFeaturesEnabled:
                     type: boolean
@@ -1748,48 +1982,69 @@ spec:
                   mavenPackageRequestsForwarding:
                     type: boolean
                   maxArtifactsSize:
+                    format: int64
                     type: integer
                   maxAttachmentSize:
+                    format: int64
                     type: integer
                   maxDecompressedArchiveSize:
+                    format: int64
                     type: integer
                   maxExportSize:
+                    format: int64
                     type: integer
                   maxImportRemoteFileSize:
+                    format: int64
                     type: integer
                   maxImportSize:
+                    format: int64
                     type: integer
                   maxLoginAttempts:
+                    format: int64
                     type: integer
                   maxNumberOfRepositoryDownloads:
+                    format: int64
                     type: integer
                   maxNumberOfRepositoryDownloadsWithinTimePeriod:
+                    format: int64
                     type: integer
                   maxPagesSize:
+                    format: int64
                     type: integer
                   maxPersonalAccessTokenLifetime:
+                    format: int64
                     type: integer
                   maxSshKeyLifetime:
+                    format: int64
                     type: integer
                   maxTerraformStateSizeBytes:
+                    format: int64
                     type: integer
                   maxYamlDepth:
+                    format: int64
                     type: integer
                   maxYamlSizeBytes:
+                    format: int64
                     type: integer
                   metricsMethodCallThreshold:
+                    format: int64
                     type: integer
                   minimumPasswordLength:
+                    format: int64
                     type: integer
                   mirrorAvailable:
                     type: boolean
                   mirrorCapacityThreshold:
+                    format: int64
                     type: integer
                   mirrorMaxCapacity:
+                    format: int64
                     type: integer
                   mirrorMaxDelay:
+                    format: int64
                     type: integer
                   notesCreateLimit:
+                    format: int64
                     type: integer
                   notifyOnUnknownSignIn:
                     type: boolean
@@ -1805,11 +2060,13 @@ spec:
                     type: array
                   packageMetadataPUrlTypes:
                     items:
+                      format: int64
                       type: integer
                     type: array
                   packageRegistryAllowAnyoneToPullOption:
                     type: boolean
                   packageRegistryCleanupPoliciesWorkerCapacity:
+                    format: int64
                     type: integer
                   pagesDomainVerificationEnabled:
                     type: boolean
@@ -1826,6 +2083,7 @@ spec:
                   passwordUppercaseRequired:
                     type: boolean
                   performanceBarAllowedGroupId:
+                    format: int64
                     type: integer
                   performanceBarAllowedGroupPath:
                     type: string
@@ -1834,6 +2092,7 @@ spec:
                   personalAccessTokenPrefix:
                     type: string
                   pipelineLimitPerProjectUserSha:
+                    format: int64
                     type: integer
                   plantumlEnabled:
                     type: boolean
@@ -1846,18 +2105,24 @@ spec:
                   preventMergeRequestsCommittersApproval:
                     type: boolean
                   projectDownloadExportLimit:
+                    format: int64
                     type: integer
                   projectExportEnabled:
                     type: boolean
                   projectExportLimit:
+                    format: int64
                     type: integer
                   projectImportLimit:
+                    format: int64
                     type: integer
                   projectJobsApiRateLimit:
+                    format: int64
                     type: integer
                   projectRunnerTokenExpirationInterval:
+                    format: int64
                     type: integer
                   projectsApiRateLimitUnauthenticated:
+                    format: int64
                     type: integer
                   prometheusMetricsEnabled:
                     type: boolean
@@ -1866,18 +2131,22 @@ spec:
                   pseudonymizerEnabled:
                     type: boolean
                   pushEventActivitiesLimit:
+                    format: int64
                     type: integer
                   pushEventHooksLimit:
+                    format: int64
                     type: integer
                   pyPIpackageRequestsForwarding:
                     type: boolean
                   rateLimitingResponseText:
                     type: string
                   rawBlobRequestLimit:
+                    format: int64
                     type: integer
                   recaptchaEnabled:
                     type: boolean
                   receiveMaxInputSize:
+                    format: int64
                     type: integer
                   receptiveClusterAgentsEnabled:
                     type: boolean
@@ -1886,6 +2155,7 @@ spec:
                   repositoryChecksEnabled:
                     type: boolean
                   repositorySizeLimit:
+                    format: int64
                     type: integer
                   repositoryStorages:
                     items:
@@ -1893,6 +2163,7 @@ spec:
                     type: array
                   repositoryStoragesWeighted:
                     additionalProperties:
+                      format: int64
                       type: integer
                     type: object
                   requireAdminApprovalAfterUserSignup:
@@ -1908,12 +2179,16 @@ spec:
                       type: string
                     type: array
                   rsaKeyRestriction:
+                    format: int64
                     type: integer
                   runnerTokenExpirationInterval:
+                    format: int64
                     type: integer
                   searchRateLimit:
+                    format: int64
                     type: integer
                   searchRateLimitUnauthenticated:
+                    format: int64
                     type: integer
                   secretDetectionRevocationTokenTypesUrl:
                     type: string
@@ -1922,6 +2197,7 @@ spec:
                   secretDetectionTokenRevocationUrl:
                     type: string
                   securityApprovalPoliciesLimit:
+                    format: int64
                     type: integer
                   securityPolicyGlobalGroupApproversEnabled:
                     type: boolean
@@ -1940,16 +2216,20 @@ spec:
                   serviceAccessTokensExpirationEnforced:
                     type: boolean
                   sessionExpireDelay:
+                    format: int64
                     type: integer
                   sharedRunnersEnabled:
                     type: boolean
                   sharedRunnersMinutes:
+                    format: int64
                     type: integer
                   sharedRunnersText:
                     type: string
                   sidekiqJobLimiterCompressionThresholdBytes:
+                    format: int64
                     type: integer
                   sidekiqJobLimiterLimitBytes:
+                    format: int64
                     type: integer
                   sidekiqJobLimiterMode:
                     type: string
@@ -1966,6 +2246,7 @@ spec:
                   slackAppId:
                     type: string
                   snippetSizeLimit:
+                    format: int64
                     type: integer
                   snowplowAppId:
                     type: string
@@ -1992,110 +2273,145 @@ spec:
                   suggestPipelineEnabled:
                     type: boolean
                   terminalMaxSessionTime:
+                    format: int64
                     type: integer
                   terms:
                     type: string
                   throttleAuthenticatedApiEnabled:
                     type: boolean
                   throttleAuthenticatedApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleAuthenticatedDeprecatedApiEnabled:
                     type: boolean
                   throttleAuthenticatedDeprecatedApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedDeprecatedApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleAuthenticatedFilesApiEnabled:
                     type: boolean
                   throttleAuthenticatedFilesApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedFilesApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleAuthenticatedGitLFSEnabled:
                     type: boolean
                   throttleAuthenticatedGitLFSPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedGitLFSRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleAuthenticatedPackagesApiEnabled:
                     type: boolean
                   throttleAuthenticatedPackagesApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedPackagesApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleAuthenticatedWebEnabled:
                     type: boolean
                   throttleAuthenticatedWebPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleAuthenticatedWebRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleIncidentManagementNotificationEnabled:
                     type: boolean
                   throttleIncidentManagementNotificationPerPeriod:
+                    format: int64
                     type: integer
                   throttleIncidentManagementNotificationPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleProtectedPathsEnabled:
                     type: boolean
                   throttleProtectedPathsPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleProtectedPathsRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedApiEnabled:
                     type: boolean
                   throttleUnauthenticatedApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedDeprecatedApiEnabled:
                     type: boolean
                   throttleUnauthenticatedDeprecatedApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedDeprecatedApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedEnabled:
                     type: boolean
                   throttleUnauthenticatedFilesApiEnabled:
                     type: boolean
                   throttleUnauthenticatedFilesApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedFilesApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedGitLFSEnabled:
                     type: boolean
                   throttleUnauthenticatedGitLFSPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedGitLFSRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedPackagesApiEnabled:
                     type: boolean
                   throttleUnauthenticatedPackagesApiPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedPackagesApiRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedRequestsPerPeriod:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedWebEnabled:
                     type: boolean
                   throttleUnauthenticatedWebPeriodInSeconds:
+                    format: int64
                     type: integer
                   throttleUnauthenticatedWebRequestsPerPeriod:
+                    format: int64
                     type: integer
                   timeTrackingLimitToHours:
                     type: boolean
                   twoFactorGracePeriod:
+                    format: int64
                     type: integer
                   unconfirmedUsersDeleteAfterDays:
+                    format: int64
                     type: integer
                   uniqueIpsLimitEnabled:
                     type: boolean
                   uniqueIpsLimitPerUser:
+                    format: int64
                     type: integer
                   uniqueIpsLimitTimeWindow:
+                    format: int64
                     type: integer
                   updateRunnerVersionsEnabled:
                     type: boolean
@@ -2119,12 +2435,14 @@ spec:
                   userDefaultsToPrivateProfile:
                     type: boolean
                   userEmailLookupLimit:
+                    format: int64
                     type: integer
                   userOauthApplications:
                     type: boolean
                   userShowAddSshKeyMessage:
                     type: boolean
                   usersGetByIdLimit:
+                    format: int64
                     type: integer
                   usersGetByIdLimitAllowlistRaw:
                     type: string
@@ -2139,6 +2457,7 @@ spec:
                   whatsNewVariant:
                     type: string
                   wikiPageMaxContentBytes:
+                    format: int64
                     type: integer
                 type: object
               conditions:

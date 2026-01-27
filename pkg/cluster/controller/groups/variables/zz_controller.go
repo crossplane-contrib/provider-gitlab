@@ -51,7 +51,7 @@ const (
 
 // SetupVariable adds a controller that reconciles Variables.
 func SetupVariable(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.VariableGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.VariableGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewVariableClient}),

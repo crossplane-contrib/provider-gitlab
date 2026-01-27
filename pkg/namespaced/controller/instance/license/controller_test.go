@@ -62,7 +62,7 @@ var (
 type mockClient struct {
 	MockGetLicense    func(options ...gitlab.RequestOptionFunc) (*gitlab.License, *gitlab.Response, error)
 	MockAddLicense    func(opt *gitlab.AddLicenseOptions, options ...gitlab.RequestOptionFunc) (*gitlab.License, *gitlab.Response, error)
-	MockDeleteLicense func(licenseID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockDeleteLicense func(licenseID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 func (m *mockClient) GetLicense(options ...gitlab.RequestOptionFunc) (*gitlab.License, *gitlab.Response, error) {
@@ -73,7 +73,7 @@ func (m *mockClient) AddLicense(opt *gitlab.AddLicenseOptions, options ...gitlab
 	return m.MockAddLicense(opt, options...)
 }
 
-func (m *mockClient) DeleteLicense(licenseID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+func (m *mockClient) DeleteLicense(licenseID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return m.MockDeleteLicense(licenseID, options...)
 }
 
@@ -314,7 +314,7 @@ func TestObserve(t *testing.T) {
 		"DeletingLicenseGone": {
 			args: args{
 				client: &mockClient{
-					MockDeleteLicense: func(licenseID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteLicense: func(licenseID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
 					},
 				},
@@ -340,7 +340,7 @@ func TestObserve(t *testing.T) {
 		"DeletingLicenseDeleted": {
 			args: args{
 				client: &mockClient{
-					MockDeleteLicense: func(licenseID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteLicense: func(licenseID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{Response: &http.Response{StatusCode: 204}}, nil
 					},
 				},
@@ -366,7 +366,7 @@ func TestObserve(t *testing.T) {
 		"DeletingError": {
 			args: args{
 				client: &mockClient{
-					MockDeleteLicense: func(licenseID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteLicense: func(licenseID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{Response: &http.Response{StatusCode: 500}}, errBoom
 					},
 				},
@@ -597,7 +597,7 @@ func TestDelete(t *testing.T) {
 		},
 		"ErrDelete": {
 			args: args{
-				client: &mockClient{MockDeleteLicense: func(licenseID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				client: &mockClient{MockDeleteLicense: func(licenseID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 					return &gitlab.Response{Response: &http.Response{StatusCode: 500}}, errBoom
 				}},
 				cr: license(withNamespace("default"), withExternalName("1")),
@@ -606,7 +606,7 @@ func TestDelete(t *testing.T) {
 		},
 		"ErrDelete404": {
 			args: args{
-				client: &mockClient{MockDeleteLicense: func(licenseID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				client: &mockClient{MockDeleteLicense: func(licenseID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 					return &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
 				}},
 				cr: license(withNamespace("default"), withExternalName("1")),
@@ -615,7 +615,7 @@ func TestDelete(t *testing.T) {
 		},
 		"Successful": {
 			args: args{
-				client: &mockClient{MockDeleteLicense: func(licenseID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				client: &mockClient{MockDeleteLicense: func(licenseID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 					if licenseID != 1 {
 						return &gitlab.Response{Response: &http.Response{StatusCode: 400}}, errors.New("wrong id")
 					}

@@ -123,7 +123,19 @@ func AccessControlValueV1alpha1ToGitlab(from *v1alpha1.AccessControlValue) *gitl
 
 // ContainerExpirationPolicyAttributesV1alpha1ToGitlab converts *v1alpha1.ContainerExpirationPolicyAttributes to *gitlab.ContainerExpirationPolicyAttributes
 func ContainerExpirationPolicyAttributesV1alpha1ToGitlab(from *v1alpha1.ContainerExpirationPolicyAttributes) *gitlab.ContainerExpirationPolicyAttributes {
-	return (*gitlab.ContainerExpirationPolicyAttributes)(from)
+	if from == nil {
+		return nil
+	}
+	result := &gitlab.ContainerExpirationPolicyAttributes{
+		Cadence:         from.Cadence,
+		OlderThan:       from.OlderThan,
+		NameRegexDelete: from.NameRegexDelete,
+		NameRegexKeep:   from.NameRegexKeep,
+		Enabled:         from.Enabled,
+		NameRegex:       from.NameRegex,
+		KeepN:           from.KeepN,
+	}
+	return result
 }
 
 // AccessControlValueStringToGitlab converts string to *gitlab.AccessControlValue
@@ -185,7 +197,18 @@ func IsBoolEqualToBoolPtr(bp *bool, b bool) bool {
 	return true
 }
 
-// IsIntEqualToIntPtr compares an *int with int
+// IsInt64EqualToInt64Ptr compares an *int64 with int64
+func IsInt64EqualToInt64Ptr(ip *int64, i int64) bool {
+	if ip != nil {
+		if !cmp.Equal(*ip, i) {
+			return false
+		}
+	}
+	return true
+}
+
+// IsIntEqualToIntPtr compares an *int with int (deprecated, use IsInt64EqualToInt64Ptr)
+// Kept for backwards compatibility with old code
 func IsIntEqualToIntPtr(ip *int, i int) bool {
 	if ip != nil {
 		if !cmp.Equal(*ip, i) {
