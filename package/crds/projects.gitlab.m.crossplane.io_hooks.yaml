@@ -89,6 +89,7 @@ spec:
                     type: boolean
                   projectId:
                     description: ProjectID is the ID of the project.
+                    format: int64
                     type: integer
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
@@ -288,6 +289,7 @@ spec:
                     type: string
                   id:
                     description: ID of the project hook at gitlab
+                    format: int64
                     type: integer
                 type: object
               conditions:

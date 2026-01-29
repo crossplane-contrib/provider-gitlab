@@ -30,8 +30,8 @@ import (
 // ServiceAccountClient defines Gitlab Service Account service operations
 type ServiceAccountClient interface {
 	CreateServiceAccount(gid any, opt *gitlab.CreateServiceAccountOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupServiceAccount, *gitlab.Response, error)
-	UpdateServiceAccount(gid any, serviceAccount int, opt *gitlab.UpdateServiceAccountOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupServiceAccount, *gitlab.Response, error)
-	DeleteServiceAccount(gid any, serviceAccount int, opt *gitlab.DeleteServiceAccountOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	UpdateServiceAccount(gid any, serviceAccount int64, opt *gitlab.UpdateServiceAccountOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupServiceAccount, *gitlab.Response, error)
+	DeleteServiceAccount(gid any, serviceAccount int64, opt *gitlab.DeleteServiceAccountOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewServiceAccountClient returns a new Gitlab Service Account service

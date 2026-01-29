@@ -76,6 +76,7 @@ spec:
                     type: string
                   groupId:
                     description: The ID of the group owned by the authenticated user.
+                    format: int64
                     type: integer
                   groupIdRef:
                     description: GroupIDRef is a reference to a group to retrieve
@@ -161,6 +162,7 @@ spec:
                     type: object
                   userID:
                     description: The user ID of the member.
+                    format: int64
                     type: integer
                   userName:
                     description: The userName of the member.
@@ -252,6 +254,7 @@ spec:
                       provider:
                         type: string
                       samlProviderID:
+                        format: int64
                         type: integer
                     required:
                     - externUID

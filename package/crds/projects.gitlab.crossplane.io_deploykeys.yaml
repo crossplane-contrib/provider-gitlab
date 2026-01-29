@@ -290,6 +290,7 @@ spec:
                     format: date-time
                     type: string
                   id:
+                    format: int64
                     type: integer
                 type: object
               conditions:

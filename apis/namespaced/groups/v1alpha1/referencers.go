@@ -26,22 +26,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// resolve int ptr to string value
-func fromPtrValue(v *int) string {
+// resolve int64 ptr to string value
+func fromPtrValue(v *int64) string {
 	if v == nil {
 		return ""
 	}
-	return strconv.Itoa(*v)
+	return strconv.FormatInt(*v, 10)
 }
 
-// resolve string value to int pointer
-func toPtrValue(v string) (*int, error) {
+// resolve string value to int64 pointer
+func toPtrValue(v string) (*int64, error) {
 	if v == "" {
 		return nil, nil
 	}
 
-	r, err := strconv.Atoi(v)
-	return &r, err
+	r, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
 }
 
 // ResolveReferences of this Variable
@@ -165,7 +168,7 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 
 	var idstrp *string
 	if mg.Spec.ForProvider.ParentID != nil {
-		str := strconv.Itoa(*mg.Spec.ForProvider.ParentID)
+		str := strconv.FormatInt(*mg.Spec.ForProvider.ParentID, 10)
 		idstrp = &str
 	}
 

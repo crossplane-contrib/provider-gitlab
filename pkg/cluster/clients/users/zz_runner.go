@@ -58,10 +58,7 @@ func GenerateInstanceRunnerOptions(p *instancev1alpha1.RunnerParameters) *gitlab
 func GenerateGroupRunnerOptions(p *groupsv1alpha1.RunnerParameters) *gitlab.CreateUserRunnerOptions {
 	opts := generateCommonRunnerOptions(&p.CommonRunnerParameters)
 
-	if p.GroupID != nil {
-		opts.GroupID = p.GroupID
-	}
-
+	opts.GroupID = p.GroupID
 	opts.RunnerType = &groupRunnerType
 
 	return opts
@@ -71,10 +68,7 @@ func GenerateGroupRunnerOptions(p *groupsv1alpha1.RunnerParameters) *gitlab.Crea
 func GenerateProjectRunnerOptions(p *projectsv1alpha1.RunnerParameters) *gitlab.CreateUserRunnerOptions {
 	opts := generateCommonRunnerOptions(&p.CommonRunnerParameters)
 
-	if p.ProjectID != nil {
-		opts.ProjectID = p.ProjectID
-	}
-
+	opts.ProjectID = p.ProjectID
 	opts.RunnerType = &projectRunnerType
 
 	return opts
@@ -89,7 +83,7 @@ func generateCommonRunnerOptions(p *commonv1alpha1.CommonRunnerParameters) *gitl
 		RunUntagged:     p.RunUntagged,
 		TagList:         p.TagList,
 		AccessLevel:     p.AccessLevel,
-		MaximumTimeout:  p.MaximumTimeout,
 		MaintenanceNote: p.MaintenanceNote,
+		MaximumTimeout:  p.MaximumTimeout,
 	}
 }

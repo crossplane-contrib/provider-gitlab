@@ -53,7 +53,7 @@ const (
 
 // SetupBadge adds a controller that reconciles ProjectBadges.
 func SetupBadge(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.BadgeGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.BadgeGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewBadgeClient}),
@@ -138,7 +138,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotBadge)
 	}
 
-	badge, res, err := e.client.GetProjectBadge(*cr.Spec.ForProvider.ProjectID, badgeID, gitlab.WithContext(ctx))
+	badge, res, err := e.client.GetProjectBadge(*cr.Spec.ForProvider.ProjectID, int64(badgeID), gitlab.WithContext(ctx))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -180,7 +180,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 			return managed.ExternalCreation{}, errors.Wrap(err, errWrongIDSet)
 		}
 		// found it, set the external name and return
-		meta.SetExternalName(cr, strconv.Itoa(badge.ID))
+		meta.SetExternalName(cr, strconv.FormatInt(badge.ID, 10))
 		return managed.ExternalCreation{}, nil
 	}
 
@@ -193,7 +193,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(badge.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(badge.ID, 10))
 
 	return managed.ExternalCreation{}, nil
 }
@@ -216,7 +216,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, _, err = e.client.EditProjectBadge(
 		*cr.Spec.ForProvider.ProjectID,
-		badgeID,
+		int64(badgeID),
 		projects.GenerateEditProjectBadgeOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
@@ -244,7 +244,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, deleteError := e.client.DeleteProjectBadge(
 		*cr.Spec.ForProvider.ProjectID,
-		badgeID,
+		int64(badgeID),
 		gitlab.WithContext(ctx),
 	)
 

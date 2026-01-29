@@ -93,9 +93,11 @@ spec:
                           type: string
                         groupId:
                           description: GroupID is the ID of the group with access.
+                          format: int64
                           type: integer
                         userId:
                           description: UserID is the ID of the user with access.
+                          format: int64
                           type: integer
                       type: object
                     type: array
@@ -201,9 +203,11 @@ spec:
                           type: string
                         groupId:
                           description: GroupID is the ID of the group with access.
+                          format: int64
                           type: integer
                         userId:
                           description: UserID is the ID of the user with access.
+                          format: int64
                           type: integer
                       type: object
                     type: array
@@ -224,9 +228,11 @@ spec:
                           type: string
                         groupId:
                           description: GroupID is the ID of the group with access.
+                          format: int64
                           type: integer
                         userId:
                           description: UserID is the ID of the user with access.
+                          format: int64
                           type: integer
                       type: object
                     type: array
@@ -309,6 +315,7 @@ spec:
                     type: boolean
                   id:
                     description: ID is the ID of the protected branch.
+                    format: int64
                     type: integer
                   mergeAccessLevels:
                     description: MergeAccessLevels represents the merge access levels
@@ -327,9 +334,11 @@ spec:
                           type: string
                         groupId:
                           description: GroupID is the ID of the group with access.
+                          format: int64
                           type: integer
                         userId:
                           description: UserID is the ID of the user with access.
+                          format: int64
                           type: integer
                       type: object
                     type: array
@@ -350,9 +359,11 @@ spec:
                           type: string
                         groupId:
                           description: GroupID is the ID of the group with access.
+                          format: int64
                           type: integer
                         userId:
                           description: UserID is the ID of the user with access.
+                          format: int64
                           type: integer
                       type: object
                     type: array
@@ -373,9 +384,11 @@ spec:
                           type: string
                         groupId:
                           description: GroupID is the ID of the group with access.
+                          format: int64
                           type: integer
                         userId:
                           description: UserID is the ID of the user with access.
+                          format: int64
                           type: integer
                       type: object
                     type: array

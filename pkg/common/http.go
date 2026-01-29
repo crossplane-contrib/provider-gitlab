@@ -48,7 +48,7 @@ type RequestParameters struct {
 	Auth        *AuthParameters
 	EndpointURL string
 	Timeout     *time.Duration
-	MaxSize     *int
+	MaxSize     *int64
 	Retries     *int
 }
 
@@ -72,7 +72,7 @@ func FetchFromEndpoint(ctx context.Context, params RequestParameters) (string, e
 	// Determine max size
 	maxSize := int64(maxResponseSize)
 	if params.MaxSize != nil {
-		maxSize = int64(*params.MaxSize)
+		maxSize = *params.MaxSize
 	}
 
 	// Create a context with timeout

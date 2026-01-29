@@ -68,10 +68,12 @@ spec:
                     type: boolean
                   approvalsRequired:
                     description: The number of required approvals for this rule.
+                    format: int64
                     type: integer
                   groupIds:
                     description: The IDs of groups as approvers.
                     items:
+                      format: int64
                       type: integer
                     type: array
                   name:
@@ -80,6 +82,7 @@ spec:
                   projectId:
                     description: The ID of the project owned by the authenticated
                       user.
+                    format: int64
                     type: integer
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
@@ -166,6 +169,7 @@ spec:
                   protectedBranchIds:
                     description: The IDs of protected branches to scope the rule by.
                     items:
+                      format: int64
                       type: integer
                     type: array
                   ruleType:
@@ -176,6 +180,7 @@ spec:
                     description: The IDs of users as approvers. If used with usernames,
                       adds both lists of users.
                     items:
+                      format: int64
                       type: integer
                     type: array
                   usernames:

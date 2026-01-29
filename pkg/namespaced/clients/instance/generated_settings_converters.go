@@ -1188,11 +1188,11 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.ElasticsearchAnalyzersKuromojiEnabled, g.ElasticsearchAnalyzersKuromojiEnabled) {
 		return false
 	}
-	// TODO: Handle field ElasticsearchAnalyzersKuromojiSearch (*int -> bool) - Type mismatch
+	// TODO: Handle field ElasticsearchAnalyzersKuromojiSearch (*int64 -> bool) - Type mismatch
 	if !clients.IsComparableEqualToComparablePtr(p.ElasticsearchAnalyzersSmartCNEnabled, g.ElasticsearchAnalyzersSmartCNEnabled) {
 		return false
 	}
-	// TODO: Handle field ElasticsearchAnalyzersSmartCNSearch (*int -> bool) - Type mismatch
+	// TODO: Handle field ElasticsearchAnalyzersSmartCNSearch (*int64 -> bool) - Type mismatch
 	if !clients.IsComparableEqualToComparablePtr(p.ElasticsearchClientRequestTimeout, g.ElasticsearchClientRequestTimeout) {
 		return false
 	}

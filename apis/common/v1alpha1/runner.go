@@ -61,7 +61,7 @@ type CommonRunnerParameters struct {
 	// MaximumTimeout is the maximum time (in seconds) that a job can run on this runner.
 	// If a job exceeds this time limit, it will be terminated.
 	// +optional
-	MaximumTimeout *int `json:"maximumTimeout,omitempty"`
+	MaximumTimeout *int64 `json:"maximumTimeout,omitempty"`
 
 	// MaintenanceNote is a note that can be set when the runner is in maintenance mode.
 	// This is displayed in the GitLab UI when the runner is offline or paused.
@@ -85,7 +85,7 @@ type CommonRunnerObservation struct {
 	Description string `json:"description"`
 
 	// ID is the unique identifier of the runner assigned by GitLab.
-	ID int `json:"id"`
+	ID int64 `json:"id"`
 
 	// IsShared indicates whether this is a shared runner available to all projects.
 	// User runners are never shared, so this is typically false.
@@ -142,7 +142,7 @@ type CommonRunnerObservation struct {
 
 	// MaximumTimeout is the maximum time (in seconds) that jobs can run on this runner.
 	// +optional
-	MaximumTimeout int `json:"maximumTimeout"`
+	MaximumTimeout int64 `json:"maximumTimeout"`
 
 	// TokenExpiresAt is the timestamp when the runner token expires.
 	// Currently GitLab does not provide an expiration for user runner tokens,

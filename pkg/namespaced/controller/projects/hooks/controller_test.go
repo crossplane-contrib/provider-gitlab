@@ -43,8 +43,8 @@ import (
 var (
 	errBoom       = errors.New("boom")
 	createTime    = time.Now()
-	projectID     = 5678
-	projectHookID = 1234
+	projectID     = int64(5678)
+	projectHookID = int64(1234)
 	tokenValue    = "test"
 	tokenSecret   = corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
@@ -91,7 +91,7 @@ func withDefaultValues() projectHookModifier {
 	}
 }
 
-func withProjectID(pid int) projectHookModifier {
+func withProjectID(pid int64) projectHookModifier {
 	return func(r *v1alpha1.Hook) {
 		r.Spec.ForProvider.ProjectID = &pid
 	}
@@ -109,7 +109,7 @@ func withStatus(s v1alpha1.HookObservation) projectHookModifier {
 	return func(r *v1alpha1.Hook) { r.Status.AtProvider = s }
 }
 
-func withExternalName(projectHookID int) projectHookModifier {
+func withExternalName(projectHookID int64) projectHookModifier {
 	return func(r *v1alpha1.Hook) { meta.SetExternalName(r, fmt.Sprint(projectHookID)) }
 }
 
@@ -135,7 +135,7 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockGetHook: func(pid interface{}, projectHookID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockGetHook: func(pid interface{}, projectHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
 					},
 				},
@@ -163,7 +163,7 @@ func TestObserve(t *testing.T) {
 		"NotUpToDate": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockGetHook: func(pid interface{}, projectHookID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockGetHook: func(pid interface{}, projectHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{
 							MergeRequestsEvents: true,
 						}, &gitlab.Response{}, nil
@@ -193,7 +193,7 @@ func TestObserve(t *testing.T) {
 		"LateInitSuccess": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockGetHook: func(pid interface{}, projectHookID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockGetHook: func(pid interface{}, projectHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
 					},
 				},
@@ -223,7 +223,7 @@ func TestObserve(t *testing.T) {
 		"ErrGet404": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockGetHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockGetHook: func(pid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
@@ -363,7 +363,7 @@ func TestUpdate(t *testing.T) {
 					}),
 				},
 				projecthook: &fake.MockClient{
-					MockEditHook: func(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockEditHook: func(pid interface{}, hook int64, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
 					},
 				},
@@ -393,7 +393,7 @@ func TestUpdate(t *testing.T) {
 					}),
 				},
 				projecthook: &fake.MockClient{
-					MockEditHook: func(pid interface{}, hook int, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+					MockEditHook: func(pid interface{}, hook int64, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -446,7 +446,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockDeleteHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteHook: func(pid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -471,7 +471,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockDeleteHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteHook: func(pid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},
@@ -497,7 +497,7 @@ func TestDelete(t *testing.T) {
 		"InvalidHookID": {
 			args: args{
 				projecthook: &fake.MockClient{
-					MockDeleteHook: func(pid interface{}, hook int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteHook: func(pid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},

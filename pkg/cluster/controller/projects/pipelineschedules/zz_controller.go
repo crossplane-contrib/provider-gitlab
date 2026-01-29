@@ -59,7 +59,7 @@ const (
 
 // SetupPipelineSchedule adds a controller that reconciles PipelineSchedule.
 func SetupPipelineSchedule(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.PipelineScheduleGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.PipelineScheduleGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: newPipelineScheduleClient}),
@@ -147,7 +147,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNoProjectID)
 	}
 
-	ps, res, err := e.client.GetPipelineSchedule(*cr.Spec.ForProvider.ProjectID, id)
+	ps, res, err := e.client.GetPipelineSchedule(*cr.Spec.ForProvider.ProjectID, int64(id))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -191,7 +191,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreatePipelineSchedule)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(ps.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(ps.ID, 10))
 
 	for _, v := range cr.Spec.ForProvider.Variables {
 		opt := &gitlab.CreatePipelineScheduleVariableOptions{
@@ -240,7 +240,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	ps, _, err := e.client.EditPipelineSchedule(
 		*cr.Spec.ForProvider.ProjectID,
-		id,
+		int64(id),
 		opt,
 	)
 	if err != nil {
@@ -248,7 +248,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	if hasVariables(cr, ps) {
-		ps, _, err := e.client.GetPipelineSchedule(*cr.Spec.ForProvider.ProjectID, id)
+		ps, _, err := e.client.GetPipelineSchedule(*cr.Spec.ForProvider.ProjectID, int64(id))
 		if err != nil {
 			return managed.ExternalUpdate{}, errors.Wrap(err, errGetPipelineSchedule)
 		}
@@ -319,7 +319,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, err = e.client.DeletePipelineSchedule(
 		*cr.Spec.ForProvider.ProjectID,
-		id,
+		int64(id),
 	)
 
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeletePipelineSchedule)
@@ -434,7 +434,7 @@ func notUpdated(crv v1alpha1.PipelineVariable, invArr []*gitlab.PipelineVariable
 func generateObservation(cr *v1alpha1.PipelineSchedule, ps *gitlab.PipelineSchedule) {
 	o := v1alpha1.PipelineScheduleObservation{
 		ID:           &ps.ID,
-		LastPipeline: (*v1alpha1.LastPipeline)(ps.LastPipeline),
+		LastPipeline: convertLastPipeline(ps.LastPipeline),
 	}
 	if ps.Owner != nil {
 		o.Owner = projects.GenerateOwnerObservation(ps.Owner)
@@ -453,4 +453,17 @@ func generateObservation(cr *v1alpha1.PipelineSchedule, ps *gitlab.PipelineSched
 
 func hasVariables(cr *v1alpha1.PipelineSchedule, ps *gitlab.PipelineSchedule) bool {
 	return cr.Spec.ForProvider.Variables != nil || ps.Variables != nil
+}
+
+func convertLastPipeline(lp *gitlab.LastPipeline) *v1alpha1.LastPipeline {
+	if lp == nil {
+		return nil
+	}
+	return &v1alpha1.LastPipeline{
+		ID:     lp.ID,
+		SHA:    lp.SHA,
+		Ref:    lp.Ref,
+		Status: lp.Status,
+		WebURL: lp.WebURL,
+	}
 }

@@ -367,12 +367,12 @@ func (in *ApplicationSettingsObservation) DeepCopyInto(out *ApplicationSettingsO
 	}
 	if in.ElasticsearchNamespaceIDs != nil {
 		in, out := &in.ElasticsearchNamespaceIDs, &out.ElasticsearchNamespaceIDs
-		*out = make([]int, len(*in))
+		*out = make([]int64, len(*in))
 		copy(*out, *in)
 	}
 	if in.ElasticsearchProjectIDs != nil {
 		in, out := &in.ElasticsearchProjectIDs, &out.ElasticsearchProjectIDs
-		*out = make([]int, len(*in))
+		*out = make([]int64, len(*in))
 		copy(*out, *in)
 	}
 	if in.ElasticsearchURL != nil {
@@ -382,7 +382,7 @@ func (in *ApplicationSettingsObservation) DeepCopyInto(out *ApplicationSettingsO
 	}
 	if in.GitRateLimitUsersAlertlist != nil {
 		in, out := &in.GitRateLimitUsersAlertlist, &out.GitRateLimitUsersAlertlist
-		*out = make([]int, len(*in))
+		*out = make([]int64, len(*in))
 		copy(*out, *in)
 	}
 	if in.GitRateLimitUsersAllowlist != nil {
@@ -409,7 +409,7 @@ func (in *ApplicationSettingsObservation) DeepCopyInto(out *ApplicationSettingsO
 	}
 	if in.PackageMetadataPURLTypes != nil {
 		in, out := &in.PackageMetadataPURLTypes, &out.PackageMetadataPURLTypes
-		*out = make([]int, len(*in))
+		*out = make([]int64, len(*in))
 		copy(*out, *in)
 	}
 	if in.RepositoryStorages != nil {
@@ -419,7 +419,7 @@ func (in *ApplicationSettingsObservation) DeepCopyInto(out *ApplicationSettingsO
 	}
 	if in.RepositoryStoragesWeighted != nil {
 		in, out := &in.RepositoryStoragesWeighted, &out.RepositoryStoragesWeighted
-		*out = make(map[string]int, len(*in))
+		*out = make(map[string]int64, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}
@@ -544,7 +544,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ASCIIDocMaxIncludes != nil {
 		in, out := &in.ASCIIDocMaxIncludes, &out.ASCIIDocMaxIncludes
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.AssetProxyAllowlist != nil {
@@ -588,12 +588,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.AutocompleteUsers != nil {
 		in, out := &in.AutocompleteUsers, &out.AutocompleteUsers
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.AutocompleteUsersUnauthenticated != nil {
 		in, out := &in.AutocompleteUsersUnauthenticated, &out.AutocompleteUsersUnauthenticated
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.AutoDevOpsDomain != nil {
@@ -613,7 +613,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.BulkImportConcurrentPipelineBatchLimit != nil {
 		in, out := &in.BulkImportConcurrentPipelineBatchLimit, &out.BulkImportConcurrentPipelineBatchLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.BulkImportEnabled != nil {
@@ -623,7 +623,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.BulkImportMaxDownloadFileSize != nil {
 		in, out := &in.BulkImportMaxDownloadFileSize, &out.BulkImportMaxDownloadFileSize
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.CanCreateGroup != nil {
@@ -648,17 +648,17 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.CIMaxIncludes != nil {
 		in, out := &in.CIMaxIncludes, &out.CIMaxIncludes
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.CIMaxTotalYAMLSizeBytes != nil {
 		in, out := &in.CIMaxTotalYAMLSizeBytes, &out.CIMaxTotalYAMLSizeBytes
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.CIPartitionsSizeLimit != nil {
 		in, out := &in.CIPartitionsSizeLimit, &out.CIPartitionsSizeLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.CommitEmailHostname != nil {
@@ -668,17 +668,17 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ConcurrentBitbucketImportJobsLimit != nil {
 		in, out := &in.ConcurrentBitbucketImportJobsLimit, &out.ConcurrentBitbucketImportJobsLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ConcurrentBitbucketServerImportJobsLimit != nil {
 		in, out := &in.ConcurrentBitbucketServerImportJobsLimit, &out.ConcurrentBitbucketServerImportJobsLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ConcurrentGitHubImportJobsLimit != nil {
 		in, out := &in.ConcurrentGitHubImportJobsLimit, &out.ConcurrentGitHubImportJobsLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ContainerExpirationPoliciesEnableHistoricEntries != nil {
@@ -688,12 +688,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ContainerRegistryCleanupTagsServiceMaxListSize != nil {
 		in, out := &in.ContainerRegistryCleanupTagsServiceMaxListSize, &out.ContainerRegistryCleanupTagsServiceMaxListSize
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ContainerRegistryDeleteTagsServiceTimeout != nil {
 		in, out := &in.ContainerRegistryDeleteTagsServiceTimeout, &out.ContainerRegistryDeleteTagsServiceTimeout
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ContainerRegistryExpirationPoliciesCaching != nil {
@@ -703,7 +703,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ContainerRegistryExpirationPoliciesWorkerCapacity != nil {
 		in, out := &in.ContainerRegistryExpirationPoliciesWorkerCapacity, &out.ContainerRegistryExpirationPoliciesWorkerCapacity
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ContainerRegistryImportCreatedBefore != nil {
@@ -712,22 +712,22 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ContainerRegistryImportMaxRetries != nil {
 		in, out := &in.ContainerRegistryImportMaxRetries, &out.ContainerRegistryImportMaxRetries
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ContainerRegistryImportMaxStepDuration != nil {
 		in, out := &in.ContainerRegistryImportMaxStepDuration, &out.ContainerRegistryImportMaxStepDuration
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ContainerRegistryImportMaxTagsCount != nil {
 		in, out := &in.ContainerRegistryImportMaxTagsCount, &out.ContainerRegistryImportMaxTagsCount
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ContainerRegistryImportStartMaxRetries != nil {
 		in, out := &in.ContainerRegistryImportStartMaxRetries, &out.ContainerRegistryImportStartMaxRetries
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ContainerRegistryImportTargetPlan != nil {
@@ -737,7 +737,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ContainerRegistryTokenExpireDelay != nil {
 		in, out := &in.ContainerRegistryTokenExpireDelay, &out.ContainerRegistryTokenExpireDelay
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.CustomHTTPCloneURLRoot != nil {
@@ -752,7 +752,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.DSAKeyRestriction != nil {
 		in, out := &in.DSAKeyRestriction, &out.DSAKeyRestriction
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DeactivateDormantUsers != nil {
@@ -762,12 +762,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.DeactivateDormantUsersPeriod != nil {
 		in, out := &in.DeactivateDormantUsersPeriod, &out.DeactivateDormantUsersPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DecompressArchiveFileTimeout != nil {
 		in, out := &in.DecompressArchiveFileTimeout, &out.DecompressArchiveFileTimeout
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DefaultArtifactsExpireIn != nil {
@@ -802,7 +802,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.DefaultProjectCreation != nil {
 		in, out := &in.DefaultProjectCreation, &out.DefaultProjectCreation
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DefaultProjectDeletionProtection != nil {
@@ -817,7 +817,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.DefaultProjectsLimit != nil {
 		in, out := &in.DefaultProjectsLimit, &out.DefaultProjectsLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DefaultSnippetVisibility != nil {
@@ -827,7 +827,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.DefaultSyntaxHighlightingTheme != nil {
 		in, out := &in.DefaultSyntaxHighlightingTheme, &out.DefaultSyntaxHighlightingTheme
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DelayedGroupDeletion != nil {
@@ -852,7 +852,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.DeletionAdjournedPeriod != nil {
 		in, out := &in.DeletionAdjournedPeriod, &out.DeletionAdjournedPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DiagramsnetEnabled != nil {
@@ -867,17 +867,17 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.DiffMaxFiles != nil {
 		in, out := &in.DiffMaxFiles, &out.DiffMaxFiles
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DiffMaxLines != nil {
 		in, out := &in.DiffMaxLines, &out.DiffMaxLines
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DiffMaxPatchBytes != nil {
 		in, out := &in.DiffMaxPatchBytes, &out.DiffMaxPatchBytes
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DisableFeedToken != nil {
@@ -934,7 +934,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.DownstreamPipelineTriggerLimitPerProjectUserSHA != nil {
 		in, out := &in.DownstreamPipelineTriggerLimitPerProjectUserSHA, &out.DownstreamPipelineTriggerLimitPerProjectUserSHA
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DuoFeaturesEnabled != nil {
@@ -944,12 +944,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ECDSAKeyRestriction != nil {
 		in, out := &in.ECDSAKeyRestriction, &out.ECDSAKeyRestriction
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ECDSASKKeyRestriction != nil {
 		in, out := &in.ECDSASKKeyRestriction, &out.ECDSASKKeyRestriction
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.EKSAccessKeyID != nil {
@@ -984,12 +984,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.Ed25519KeyRestriction != nil {
 		in, out := &in.Ed25519KeyRestriction, &out.Ed25519KeyRestriction
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.Ed25519SKKeyRestriction != nil {
 		in, out := &in.Ed25519SKKeyRestriction, &out.Ed25519SKKeyRestriction
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchAWS != nil {
@@ -1029,7 +1029,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ElasticsearchAnalyzersKuromojiSearch != nil {
 		in, out := &in.ElasticsearchAnalyzersKuromojiSearch, &out.ElasticsearchAnalyzersKuromojiSearch
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchAnalyzersSmartCNEnabled != nil {
@@ -1039,22 +1039,22 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ElasticsearchAnalyzersSmartCNSearch != nil {
 		in, out := &in.ElasticsearchAnalyzersSmartCNSearch, &out.ElasticsearchAnalyzersSmartCNSearch
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchClientRequestTimeout != nil {
 		in, out := &in.ElasticsearchClientRequestTimeout, &out.ElasticsearchClientRequestTimeout
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchIndexedFieldLengthLimit != nil {
 		in, out := &in.ElasticsearchIndexedFieldLengthLimit, &out.ElasticsearchIndexedFieldLengthLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchIndexedFileSizeLimitKB != nil {
 		in, out := &in.ElasticsearchIndexedFileSizeLimitKB, &out.ElasticsearchIndexedFileSizeLimitKB
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchIndexing != nil {
@@ -1069,25 +1069,25 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ElasticsearchMaxBulkConcurrency != nil {
 		in, out := &in.ElasticsearchMaxBulkConcurrency, &out.ElasticsearchMaxBulkConcurrency
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchMaxBulkSizeMB != nil {
 		in, out := &in.ElasticsearchMaxBulkSizeMB, &out.ElasticsearchMaxBulkSizeMB
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchMaxCodeIndexingConcurrency != nil {
 		in, out := &in.ElasticsearchMaxCodeIndexingConcurrency, &out.ElasticsearchMaxCodeIndexingConcurrency
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchNamespaceIDs != nil {
 		in, out := &in.ElasticsearchNamespaceIDs, &out.ElasticsearchNamespaceIDs
-		*out = new([]int)
+		*out = new([]int64)
 		if **in != nil {
 			in, out := *in, *out
-			*out = make([]int, len(*in))
+			*out = make([]int64, len(*in))
 			copy(*out, *in)
 		}
 	}
@@ -1108,16 +1108,16 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ElasticsearchProjectIDs != nil {
 		in, out := &in.ElasticsearchProjectIDs, &out.ElasticsearchProjectIDs
-		*out = new([]int)
+		*out = new([]int64)
 		if **in != nil {
 			in, out := *in, *out
-			*out = make([]int, len(*in))
+			*out = make([]int64, len(*in))
 			copy(*out, *in)
 		}
 	}
 	if in.ElasticsearchReplicas != nil {
 		in, out := &in.ElasticsearchReplicas, &out.ElasticsearchReplicas
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchRequeueWorkers != nil {
@@ -1127,7 +1127,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ElasticsearchRetryOnFailure != nil {
 		in, out := &in.ElasticsearchRetryOnFailure, &out.ElasticsearchRetryOnFailure
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchSearch != nil {
@@ -1137,7 +1137,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ElasticsearchShards != nil {
 		in, out := &in.ElasticsearchShards, &out.ElasticsearchShards
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ElasticsearchURL != nil {
@@ -1152,7 +1152,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ElasticsearchWorkerNumberOfShards != nil {
 		in, out := &in.ElasticsearchWorkerNumberOfShards, &out.ElasticsearchWorkerNumberOfShards
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.EmailAdditionalText != nil {
@@ -1257,7 +1257,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ExternalPipelineValidationServiceTimeout != nil {
 		in, out := &in.ExternalPipelineValidationServiceTimeout, &out.ExternalPipelineValidationServiceTimeout
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ExternalPipelineValidationServiceToken != nil {
@@ -1277,17 +1277,17 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.FailedLoginAttemptsUnlockPeriodInMinutes != nil {
 		in, out := &in.FailedLoginAttemptsUnlockPeriodInMinutes, &out.FailedLoginAttemptsUnlockPeriodInMinutes
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.FileTemplateProjectID != nil {
 		in, out := &in.FileTemplateProjectID, &out.FileTemplateProjectID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.FirstDayOfWeek != nil {
 		in, out := &in.FirstDayOfWeek, &out.FirstDayOfWeek
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.FlocEnabled != nil {
@@ -1302,36 +1302,36 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.GeoStatusTimeout != nil {
 		in, out := &in.GeoStatusTimeout, &out.GeoStatusTimeout
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GitRateLimitUsersAlertlist != nil {
 		in, out := &in.GitRateLimitUsersAlertlist, &out.GitRateLimitUsersAlertlist
-		*out = new([]int)
+		*out = new([]int64)
 		if **in != nil {
 			in, out := *in, *out
-			*out = make([]int, len(*in))
+			*out = make([]int64, len(*in))
 			copy(*out, *in)
 		}
 	}
 	if in.GitTwoFactorSessionExpiry != nil {
 		in, out := &in.GitTwoFactorSessionExpiry, &out.GitTwoFactorSessionExpiry
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GitalyTimeoutDefault != nil {
 		in, out := &in.GitalyTimeoutDefault, &out.GitalyTimeoutDefault
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GitalyTimeoutFast != nil {
 		in, out := &in.GitalyTimeoutFast, &out.GitalyTimeoutFast
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GitalyTimeoutMedium != nil {
 		in, out := &in.GitalyTimeoutMedium, &out.GitalyTimeoutMedium
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GitlabDedicatedInstance != nil {
@@ -1346,7 +1346,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.GitlabShellOperationLimit != nil {
 		in, out := &in.GitlabShellOperationLimit, &out.GitlabShellOperationLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GitpodEnabled != nil {
@@ -1390,17 +1390,17 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.GroupDownloadExportLimit != nil {
 		in, out := &in.GroupDownloadExportLimit, &out.GroupDownloadExportLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupExportLimit != nil {
 		in, out := &in.GroupExportLimit, &out.GroupExportLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupImportLimit != nil {
 		in, out := &in.GroupImportLimit, &out.GroupImportLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupOwnersCanManageDefaultBranchProtection != nil {
@@ -1410,7 +1410,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.GroupRunnerTokenExpirationInterval != nil {
 		in, out := &in.GroupRunnerTokenExpirationInterval, &out.GroupRunnerTokenExpirationInterval
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.HTMLEmailsEnabled != nil {
@@ -1465,7 +1465,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.HousekeepingOptimizeRepositoryPeriod != nil {
 		in, out := &in.HousekeepingOptimizeRepositoryPeriod, &out.HousekeepingOptimizeRepositoryPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ImportSources != nil {
@@ -1479,17 +1479,17 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.InactiveProjectsDeleteAfterMonths != nil {
 		in, out := &in.InactiveProjectsDeleteAfterMonths, &out.InactiveProjectsDeleteAfterMonths
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.InactiveProjectsMinSizeMB != nil {
 		in, out := &in.InactiveProjectsMinSizeMB, &out.InactiveProjectsMinSizeMB
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.InactiveProjectsSendWarningEmailAfterMonths != nil {
 		in, out := &in.InactiveProjectsSendWarningEmailAfterMonths, &out.InactiveProjectsSendWarningEmailAfterMonths
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.IncludeOptionalMetricsInServicePing != nil {
@@ -1509,7 +1509,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.IssuesCreateLimit != nil {
 		in, out := &in.IssuesCreateLimit, &out.IssuesCreateLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.JiraConnectApplicationKey != nil {
@@ -1560,7 +1560,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.LocalMarkdownVersion != nil {
 		in, out := &in.LocalMarkdownVersion, &out.LocalMarkdownVersion
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.LockDuoFeaturesEnabled != nil {
@@ -1610,87 +1610,87 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.MaxArtifactsSize != nil {
 		in, out := &in.MaxArtifactsSize, &out.MaxArtifactsSize
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxAttachmentSize != nil {
 		in, out := &in.MaxAttachmentSize, &out.MaxAttachmentSize
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxDecompressedArchiveSize != nil {
 		in, out := &in.MaxDecompressedArchiveSize, &out.MaxDecompressedArchiveSize
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxExportSize != nil {
 		in, out := &in.MaxExportSize, &out.MaxExportSize
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxImportRemoteFileSize != nil {
 		in, out := &in.MaxImportRemoteFileSize, &out.MaxImportRemoteFileSize
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxImportSize != nil {
 		in, out := &in.MaxImportSize, &out.MaxImportSize
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxLoginAttempts != nil {
 		in, out := &in.MaxLoginAttempts, &out.MaxLoginAttempts
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxNumberOfRepositoryDownloads != nil {
 		in, out := &in.MaxNumberOfRepositoryDownloads, &out.MaxNumberOfRepositoryDownloads
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxNumberOfRepositoryDownloadsWithinTimePeriod != nil {
 		in, out := &in.MaxNumberOfRepositoryDownloadsWithinTimePeriod, &out.MaxNumberOfRepositoryDownloadsWithinTimePeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxPagesSize != nil {
 		in, out := &in.MaxPagesSize, &out.MaxPagesSize
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxPersonalAccessTokenLifetime != nil {
 		in, out := &in.MaxPersonalAccessTokenLifetime, &out.MaxPersonalAccessTokenLifetime
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxSSHKeyLifetime != nil {
 		in, out := &in.MaxSSHKeyLifetime, &out.MaxSSHKeyLifetime
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxTerraformStateSizeBytes != nil {
 		in, out := &in.MaxTerraformStateSizeBytes, &out.MaxTerraformStateSizeBytes
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxYAMLDepth != nil {
 		in, out := &in.MaxYAMLDepth, &out.MaxYAMLDepth
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MaxYAMLSizeBytes != nil {
 		in, out := &in.MaxYAMLSizeBytes, &out.MaxYAMLSizeBytes
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MetricsMethodCallThreshold != nil {
 		in, out := &in.MetricsMethodCallThreshold, &out.MetricsMethodCallThreshold
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MinimumPasswordLength != nil {
 		in, out := &in.MinimumPasswordLength, &out.MinimumPasswordLength
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MirrorAvailable != nil {
@@ -1700,17 +1700,17 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.MirrorCapacityThreshold != nil {
 		in, out := &in.MirrorCapacityThreshold, &out.MirrorCapacityThreshold
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MirrorMaxCapacity != nil {
 		in, out := &in.MirrorMaxCapacity, &out.MirrorMaxCapacity
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.MirrorMaxDelay != nil {
 		in, out := &in.MirrorMaxDelay, &out.MirrorMaxDelay
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.NPMPackageRequestsForwarding != nil {
@@ -1720,7 +1720,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.NotesCreateLimit != nil {
 		in, out := &in.NotesCreateLimit, &out.NotesCreateLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.NotifyOnUnknownSignIn != nil {
@@ -1749,10 +1749,10 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.PackageMetadataPURLTypes != nil {
 		in, out := &in.PackageMetadataPURLTypes, &out.PackageMetadataPURLTypes
-		*out = new([]int)
+		*out = new([]int64)
 		if **in != nil {
 			in, out := *in, *out
-			*out = make([]int, len(*in))
+			*out = make([]int64, len(*in))
 			copy(*out, *in)
 		}
 	}
@@ -1763,7 +1763,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.PackageRegistryCleanupPoliciesWorkerCapacity != nil {
 		in, out := &in.PackageRegistryCleanupPoliciesWorkerCapacity, &out.PackageRegistryCleanupPoliciesWorkerCapacity
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.PagesDomainVerificationEnabled != nil {
@@ -1823,7 +1823,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.PipelineLimitPerProjectUserSha != nil {
 		in, out := &in.PipelineLimitPerProjectUserSha, &out.PipelineLimitPerProjectUserSha
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.PollingIntervalMultiplier != nil {
@@ -1843,7 +1843,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ProjectDownloadExportLimit != nil {
 		in, out := &in.ProjectDownloadExportLimit, &out.ProjectDownloadExportLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectExportEnabled != nil {
@@ -1853,27 +1853,27 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ProjectExportLimit != nil {
 		in, out := &in.ProjectExportLimit, &out.ProjectExportLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectImportLimit != nil {
 		in, out := &in.ProjectImportLimit, &out.ProjectImportLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectJobsAPIRateLimit != nil {
 		in, out := &in.ProjectJobsAPIRateLimit, &out.ProjectJobsAPIRateLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectRunnerTokenExpirationInterval != nil {
 		in, out := &in.ProjectRunnerTokenExpirationInterval, &out.ProjectRunnerTokenExpirationInterval
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectsAPIRateLimitUnauthenticated != nil {
 		in, out := &in.ProjectsAPIRateLimitUnauthenticated, &out.ProjectsAPIRateLimitUnauthenticated
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.PrometheusMetricsEnabled != nil {
@@ -1893,12 +1893,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.PushEventActivitiesLimit != nil {
 		in, out := &in.PushEventActivitiesLimit, &out.PushEventActivitiesLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.PushEventHooksLimit != nil {
 		in, out := &in.PushEventHooksLimit, &out.PushEventHooksLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.PyPIPackageRequestsForwarding != nil {
@@ -1908,7 +1908,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.RSAKeyRestriction != nil {
 		in, out := &in.RSAKeyRestriction, &out.RSAKeyRestriction
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.RateLimitingResponseText != nil {
@@ -1918,7 +1918,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.RawBlobRequestLimit != nil {
 		in, out := &in.RawBlobRequestLimit, &out.RawBlobRequestLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.RecaptchaEnabled != nil {
@@ -1948,7 +1948,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ReceiveMaxInputSize != nil {
 		in, out := &in.ReceiveMaxInputSize, &out.ReceiveMaxInputSize
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ReceptiveClusterAgentsEnabled != nil {
@@ -1968,7 +1968,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.RepositorySizeLimit != nil {
 		in, out := &in.RepositorySizeLimit, &out.RepositorySizeLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.RepositoryStorages != nil {
@@ -1982,10 +1982,10 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.RepositoryStoragesWeighted != nil {
 		in, out := &in.RepositoryStoragesWeighted, &out.RepositoryStoragesWeighted
-		*out = new(map[string]int)
+		*out = new(map[string]int64)
 		if **in != nil {
 			in, out := *in, *out
-			*out = make(map[string]int, len(*in))
+			*out = make(map[string]int64, len(*in))
 			for key, val := range *in {
 				(*out)[key] = val
 			}
@@ -2022,17 +2022,17 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.RunnerTokenExpirationInterval != nil {
 		in, out := &in.RunnerTokenExpirationInterval, &out.RunnerTokenExpirationInterval
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.SearchRateLimit != nil {
 		in, out := &in.SearchRateLimit, &out.SearchRateLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.SearchRateLimitUnauthenticated != nil {
 		in, out := &in.SearchRateLimitUnauthenticated, &out.SearchRateLimitUnauthenticated
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.SecretDetectionRevocationTokenTypesURL != nil {
@@ -2062,7 +2062,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.SecurityApprovalPoliciesLimit != nil {
 		in, out := &in.SecurityApprovalPoliciesLimit, &out.SecurityApprovalPoliciesLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.SecurityPolicyGlobalGroupApproversEnabled != nil {
@@ -2107,7 +2107,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.SessionExpireDelay != nil {
 		in, out := &in.SessionExpireDelay, &out.SessionExpireDelay
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.SharedRunnersEnabled != nil {
@@ -2117,7 +2117,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.SharedRunnersMinutes != nil {
 		in, out := &in.SharedRunnersMinutes, &out.SharedRunnersMinutes
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.SharedRunnersText != nil {
@@ -2127,12 +2127,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.SidekiqJobLimiterCompressionThresholdBytes != nil {
 		in, out := &in.SidekiqJobLimiterCompressionThresholdBytes, &out.SidekiqJobLimiterCompressionThresholdBytes
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.SidekiqJobLimiterLimitBytes != nil {
 		in, out := &in.SidekiqJobLimiterLimitBytes, &out.SidekiqJobLimiterLimitBytes
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.SidekiqJobLimiterMode != nil {
@@ -2202,7 +2202,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.SnippetSizeLimit != nil {
 		in, out := &in.SnippetSizeLimit, &out.SnippetSizeLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.SnowplowAppID != nil {
@@ -2287,7 +2287,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.TerminalMaxSessionTime != nil {
 		in, out := &in.TerminalMaxSessionTime, &out.TerminalMaxSessionTime
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.Terms != nil {
@@ -2302,12 +2302,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleAuthenticatedAPIPeriodInSeconds != nil {
 		in, out := &in.ThrottleAuthenticatedAPIPeriodInSeconds, &out.ThrottleAuthenticatedAPIPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleAuthenticatedAPIRequestsPerPeriod != nil {
 		in, out := &in.ThrottleAuthenticatedAPIRequestsPerPeriod, &out.ThrottleAuthenticatedAPIRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleAuthenticatedDeprecatedAPIEnabled != nil {
@@ -2317,12 +2317,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds != nil {
 		in, out := &in.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds, &out.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod != nil {
 		in, out := &in.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod, &out.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleAuthenticatedFilesAPIEnabled != nil {
@@ -2332,12 +2332,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleAuthenticatedFilesAPIPeriodInSeconds != nil {
 		in, out := &in.ThrottleAuthenticatedFilesAPIPeriodInSeconds, &out.ThrottleAuthenticatedFilesAPIPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleAuthenticatedFilesAPIRequestsPerPeriod != nil {
 		in, out := &in.ThrottleAuthenticatedFilesAPIRequestsPerPeriod, &out.ThrottleAuthenticatedFilesAPIRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleAuthenticatedGitLFSEnabled != nil {
@@ -2347,12 +2347,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleAuthenticatedGitLFSPeriodInSeconds != nil {
 		in, out := &in.ThrottleAuthenticatedGitLFSPeriodInSeconds, &out.ThrottleAuthenticatedGitLFSPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleAuthenticatedGitLFSRequestsPerPeriod != nil {
 		in, out := &in.ThrottleAuthenticatedGitLFSRequestsPerPeriod, &out.ThrottleAuthenticatedGitLFSRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleAuthenticatedPackagesAPIEnabled != nil {
@@ -2362,12 +2362,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleAuthenticatedPackagesAPIPeriodInSeconds != nil {
 		in, out := &in.ThrottleAuthenticatedPackagesAPIPeriodInSeconds, &out.ThrottleAuthenticatedPackagesAPIPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod != nil {
 		in, out := &in.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod, &out.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleAuthenticatedWebEnabled != nil {
@@ -2377,12 +2377,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleAuthenticatedWebPeriodInSeconds != nil {
 		in, out := &in.ThrottleAuthenticatedWebPeriodInSeconds, &out.ThrottleAuthenticatedWebPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleAuthenticatedWebRequestsPerPeriod != nil {
 		in, out := &in.ThrottleAuthenticatedWebRequestsPerPeriod, &out.ThrottleAuthenticatedWebRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleIncidentManagementNotificationEnabled != nil {
@@ -2392,12 +2392,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleIncidentManagementNotificationPerPeriod != nil {
 		in, out := &in.ThrottleIncidentManagementNotificationPerPeriod, &out.ThrottleIncidentManagementNotificationPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleIncidentManagementNotificationPeriodInSeconds != nil {
 		in, out := &in.ThrottleIncidentManagementNotificationPeriodInSeconds, &out.ThrottleIncidentManagementNotificationPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleProtectedPathsEnabled != nil {
@@ -2407,12 +2407,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleProtectedPathsPeriodInSeconds != nil {
 		in, out := &in.ThrottleProtectedPathsPeriodInSeconds, &out.ThrottleProtectedPathsPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleProtectedPathsRequestsPerPeriod != nil {
 		in, out := &in.ThrottleProtectedPathsRequestsPerPeriod, &out.ThrottleProtectedPathsRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedAPIEnabled != nil {
@@ -2422,12 +2422,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleUnauthenticatedAPIPeriodInSeconds != nil {
 		in, out := &in.ThrottleUnauthenticatedAPIPeriodInSeconds, &out.ThrottleUnauthenticatedAPIPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedAPIRequestsPerPeriod != nil {
 		in, out := &in.ThrottleUnauthenticatedAPIRequestsPerPeriod, &out.ThrottleUnauthenticatedAPIRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedDeprecatedAPIEnabled != nil {
@@ -2437,12 +2437,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds != nil {
 		in, out := &in.ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds, &out.ThrottleUnauthenticatedDeprecatedAPIPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod != nil {
 		in, out := &in.ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod, &out.ThrottleUnauthenticatedDeprecatedAPIRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedFilesAPIEnabled != nil {
@@ -2452,12 +2452,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleUnauthenticatedFilesAPIPeriodInSeconds != nil {
 		in, out := &in.ThrottleUnauthenticatedFilesAPIPeriodInSeconds, &out.ThrottleUnauthenticatedFilesAPIPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod != nil {
 		in, out := &in.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod, &out.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedGitLFSEnabled != nil {
@@ -2467,12 +2467,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleUnauthenticatedGitLFSPeriodInSeconds != nil {
 		in, out := &in.ThrottleUnauthenticatedGitLFSPeriodInSeconds, &out.ThrottleUnauthenticatedGitLFSPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedGitLFSRequestsPerPeriod != nil {
 		in, out := &in.ThrottleUnauthenticatedGitLFSRequestsPerPeriod, &out.ThrottleUnauthenticatedGitLFSRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedPackagesAPIEnabled != nil {
@@ -2482,12 +2482,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleUnauthenticatedPackagesAPIPeriodInSeconds != nil {
 		in, out := &in.ThrottleUnauthenticatedPackagesAPIPeriodInSeconds, &out.ThrottleUnauthenticatedPackagesAPIPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod != nil {
 		in, out := &in.ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod, &out.ThrottleUnauthenticatedPackagesAPIRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedWebEnabled != nil {
@@ -2497,12 +2497,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleUnauthenticatedWebPeriodInSeconds != nil {
 		in, out := &in.ThrottleUnauthenticatedWebPeriodInSeconds, &out.ThrottleUnauthenticatedWebPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedWebRequestsPerPeriod != nil {
 		in, out := &in.ThrottleUnauthenticatedWebRequestsPerPeriod, &out.ThrottleUnauthenticatedWebRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.TimeTrackingLimitToHours != nil {
@@ -2512,12 +2512,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.TwoFactorGracePeriod != nil {
 		in, out := &in.TwoFactorGracePeriod, &out.TwoFactorGracePeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.UnconfirmedUsersDeleteAfterDays != nil {
 		in, out := &in.UnconfirmedUsersDeleteAfterDays, &out.UnconfirmedUsersDeleteAfterDays
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.UniqueIPsLimitEnabled != nil {
@@ -2527,12 +2527,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.UniqueIPsLimitPerUser != nil {
 		in, out := &in.UniqueIPsLimitPerUser, &out.UniqueIPsLimitPerUser
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.UniqueIPsLimitTimeWindow != nil {
 		in, out := &in.UniqueIPsLimitTimeWindow, &out.UniqueIPsLimitTimeWindow
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.UpdateRunnerVersionsEnabled != nil {
@@ -2582,7 +2582,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.UserEmailLookupLimit != nil {
 		in, out := &in.UserEmailLookupLimit, &out.UserEmailLookupLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.UserOauthApplications != nil {
@@ -2597,7 +2597,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.UsersGetByIDLimit != nil {
 		in, out := &in.UsersGetByIDLimit, &out.UsersGetByIDLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.UsersGetByIDLimitAllowlistRaw != nil {
@@ -2631,7 +2631,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.WikiPageMaxContentBytes != nil {
 		in, out := &in.WikiPageMaxContentBytes, &out.WikiPageMaxContentBytes
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.AdminNotificationEmail != nil {
@@ -2655,7 +2655,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.DefaultBranchProtection != nil {
 		in, out := &in.DefaultBranchProtection, &out.DefaultBranchProtection
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.HousekeepingBitmapsEnabled != nil {
@@ -2665,22 +2665,22 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.HousekeepingFullRepackPeriod != nil {
 		in, out := &in.HousekeepingFullRepackPeriod, &out.HousekeepingFullRepackPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.HousekeepingGcPeriod != nil {
 		in, out := &in.HousekeepingGcPeriod, &out.HousekeepingGcPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.HousekeepingIncrementalRepackPeriod != nil {
 		in, out := &in.HousekeepingIncrementalRepackPeriod, &out.HousekeepingIncrementalRepackPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.PerformanceBarAllowedGroupID != nil {
 		in, out := &in.PerformanceBarAllowedGroupID, &out.PerformanceBarAllowedGroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.PerformanceBarEnabled != nil {
@@ -2695,12 +2695,12 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleUnauthenticatedPeriodInSeconds != nil {
 		in, out := &in.ThrottleUnauthenticatedPeriodInSeconds, &out.ThrottleUnauthenticatedPeriodInSeconds
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ThrottleUnauthenticatedRequestsPerPeriod != nil {
 		in, out := &in.ThrottleUnauthenticatedRequestsPerPeriod, &out.ThrottleUnauthenticatedRequestsPerPeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 }
@@ -2737,22 +2737,22 @@ func (in *BranchProtectionDefaults) DeepCopyInto(out *BranchProtectionDefaults) 
 	*out = *in
 	if in.AllowedToPush != nil {
 		in, out := &in.AllowedToPush, &out.AllowedToPush
-		*out = make([]*int, len(*in))
+		*out = make([]*int64, len(*in))
 		for i := range *in {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
-				*out = new(int)
+				*out = new(int64)
 				**out = **in
 			}
 		}
 	}
 	if in.AllowedToMerge != nil {
 		in, out := &in.AllowedToMerge, &out.AllowedToMerge
-		*out = make([]*int, len(*in))
+		*out = make([]*int64, len(*in))
 		for i := range *in {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
-				*out = new(int)
+				*out = new(int64)
 				**out = **in
 			}
 		}
@@ -2774,10 +2774,10 @@ func (in *DefaultBranchProtectionDefaultsOptions) DeepCopyInto(out *DefaultBranc
 	*out = *in
 	if in.AllowedToPush != nil {
 		in, out := &in.AllowedToPush, &out.AllowedToPush
-		*out = new([]int)
+		*out = new([]int64)
 		if **in != nil {
 			in, out := *in, *out
-			*out = make([]int, len(*in))
+			*out = make([]int64, len(*in))
 			copy(*out, *in)
 		}
 	}
@@ -2788,10 +2788,10 @@ func (in *DefaultBranchProtectionDefaultsOptions) DeepCopyInto(out *DefaultBranc
 	}
 	if in.AllowedToMerge != nil {
 		in, out := &in.AllowedToMerge, &out.AllowedToMerge
-		*out = new([]int)
+		*out = new([]int64)
 		if **in != nil {
 			in, out := *in, *out
-			*out = make([]int, len(*in))
+			*out = make([]int64, len(*in))
 			copy(*out, *in)
 		}
 	}

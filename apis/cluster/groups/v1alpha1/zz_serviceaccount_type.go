@@ -32,7 +32,7 @@ type ServiceAccountParameters struct {
 	// GroupID is the ID of the group to create the deploy token in.
 	// +optional
 	// +immutable
-	GroupID *int `json:"groupId,omitempty"`
+	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional

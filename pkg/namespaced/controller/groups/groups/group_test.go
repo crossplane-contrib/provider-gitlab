@@ -45,9 +45,9 @@ var (
 	path               = "path/to/group"
 	name               = "example-group"
 	displayName        = "Example Group"
-	groupAccessLevel   = 40
-	groupID            = 1234
-	groupIDtwo         = 123456
+	groupAccessLevel   = int64(40)
+	groupID            = int64(1234)
+	groupIDtwo         = int64(123456)
 	extName            = "1234"
 	errBoom            = errors.New("boom")
 	expiresAt          = time.Now()
@@ -117,24 +117,24 @@ func withExternalName(n string) groupModifier {
 func withClientDefaultValues() groupModifier {
 	return func(p *v1alpha1.Group) {
 		f := false
-		i := 0
+		i64 := int64(0)
 		s := ""
 		p.Spec.ForProvider = v1alpha1.GroupParameters{
 			MembershipLock:                 &f,
 			ShareWithGroupLock:             &f,
 			RequireTwoFactorAuth:           &f,
-			TwoFactorGracePeriod:           &i,
+			TwoFactorGracePeriod:           nil,
 			AutoDevopsEnabled:              &f,
 			EmailsEnabled:                  &f,
 			MentionsDisabled:               &f,
 			LFSEnabled:                     &f,
 			RequestAccessEnabled:           &f,
-			ParentID:                       &i,
+			ParentID:                       nil,
 			SharedRunnersMinutesLimit:      nil,
 			ExtraSharedRunnersMinutesLimit: nil,
 		}
 		p.Status.AtProvider = v1alpha1.GroupObservation{
-			ID:        &i,
+			ID:        &i64,
 			AvatarURL: &s,
 			WebURL:    &s,
 			FullName:  &s,
@@ -496,15 +496,15 @@ func TestObserve(t *testing.T) {
 		"Visibility":                     gitlabVisibilityNew,
 		"ShareWithGroupLock":             true,
 		"RequireTwoFactorAuth":           true,
-		"TwoFactorGracePeriod":           1,
+		"TwoFactorGracePeriod":           int64(1),
 		"AutoDevopsEnabled":              true,
 		"EmailsEnabled":                  true,
 		"MentionsDisabled":               true,
 		"LFSEnabled":                     true,
 		"RequestAccessEnabled":           true,
-		"ParentID":                       1,
-		"SharedRunnersMinutesLimit":      1,
-		"ExtraSharedRunnersMinutesLimit": 1,
+		"ParentID":                       int64(1),
+		"SharedRunnersMinutesLimit":      int64(1),
+		"ExtraSharedRunnersMinutesLimit": int64(1),
 	}
 
 	for name, value := range isGroupUpToDateCases {
@@ -554,19 +554,36 @@ func TestObserve(t *testing.T) {
 		// Special handling for runner minute limit fields - they get late-initialized when > 0
 		expectedUpToDate := false
 		expectedLateInitialized := false
-		if (name == "SharedRunnersMinutesLimit" || name == "ExtraSharedRunnersMinutesLimit") && value.(int) > 0 {
+		if (name == "SharedRunnersMinutesLimit" || name == "ExtraSharedRunnersMinutesLimit") && value.(int64) > 0 {
 			expectedUpToDate = true
 			expectedLateInitialized = true
 			// Add the expected value to wantGroupModifier
 			if name == "SharedRunnersMinutesLimit" {
 				wantGroupModifier = append(wantGroupModifier, func(p *v1alpha1.Group) {
-					v := value.(int)
+					v := value.(int64)
 					p.Spec.ForProvider.SharedRunnersMinutesLimit = &v
 				})
 			} else {
 				wantGroupModifier = append(wantGroupModifier, func(p *v1alpha1.Group) {
-					v := value.(int)
+					v := value.(int64)
 					p.Spec.ForProvider.ExtraSharedRunnersMinutesLimit = &v
+				})
+			}
+		}
+
+		// TwoFactorGracePeriod and ParentID also get late-initialized when > 0
+		if (name == "TwoFactorGracePeriod" || name == "ParentID") && value.(int64) > 0 {
+			expectedUpToDate = true
+			expectedLateInitialized = true
+			if name == "TwoFactorGracePeriod" {
+				wantGroupModifier = append(wantGroupModifier, func(p *v1alpha1.Group) {
+					v := value.(int64)
+					p.Spec.ForProvider.TwoFactorGracePeriod = &v
+				})
+			} else {
+				wantGroupModifier = append(wantGroupModifier, func(p *v1alpha1.Group) {
+					v := value.(int64)
+					p.Spec.ForProvider.ParentID = &v
 				})
 			}
 		}
@@ -779,7 +796,7 @@ func TestUpdate(t *testing.T) {
 							},
 						}, nil, nil
 					},
-					MockUnshareGroupFromGroup: func(gid interface{}, groupID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockUnshareGroupFromGroup: func(gid interface{}, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return nil, nil
 					},
 				},
@@ -844,7 +861,7 @@ func TestUpdate(t *testing.T) {
 							},
 						}, nil, nil
 					},
-					MockUnshareGroupFromGroup: func(gid interface{}, groupID int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockUnshareGroupFromGroup: func(gid interface{}, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return nil, errBoom
 					},
 				},

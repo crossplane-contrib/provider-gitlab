@@ -42,7 +42,7 @@ func NewUserClient(cfg common.Config) UserClient {
 }
 
 // GetUserID gets Gitlab userID by Gitlab username
-func GetUserID(git UserClient, username string) (*int, error) {
+func GetUserID(git UserClient, username string) (*int64, error) {
 	userOptions := gitlab.ListUsersOptions{Username: &username}
 	userArr, _, err := git.ListUsers(&userOptions)
 	if err != nil {

@@ -228,7 +228,7 @@ func isAccessLevelsUpToDate(specLevels []*v1alpha1.BranchAccessDescription, gitl
 	for _, specLevel := range specLevels {
 		found := false
 		for _, gitlabLevel := range gitlabLevels {
-			if specLevel.AccessLevel != nil && int(*specLevel.AccessLevel) == int(gitlabLevel.AccessLevel) {
+			if specLevel.AccessLevel != nil && int64(*specLevel.AccessLevel) == int64(gitlabLevel.AccessLevel) {
 				// Check if user and group IDs also match
 				userMatch := (specLevel.UserID == nil && gitlabLevel.UserID == 0) || (specLevel.UserID != nil && *specLevel.UserID == gitlabLevel.UserID)
 				groupMatch := (specLevel.GroupID == nil && gitlabLevel.GroupID == 0) || (specLevel.GroupID != nil && *specLevel.GroupID == gitlabLevel.GroupID)

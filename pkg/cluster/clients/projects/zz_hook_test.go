@@ -50,7 +50,7 @@ var (
 )
 
 func TestGenerateHookObservation(t *testing.T) {
-	id := 0
+	id := int64(0)
 	createdAt := time.Now()
 
 	type args struct {

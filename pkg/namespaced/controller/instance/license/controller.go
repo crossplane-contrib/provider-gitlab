@@ -127,7 +127,7 @@ type external struct {
 // It attempts to delete the license - if the delete returns 404, the license is already gone.
 // This is necessary because GetLicense() returns the "current" license which may
 // still show our license due to eventual consistency after deletion.
-func (e *external) observeDeletion(ctx context.Context, licenseID int) (managed.ExternalObservation, error) {
+func (e *external) observeDeletion(ctx context.Context, licenseID int64) (managed.ExternalObservation, error) {
 	res, err := e.client.DeleteLicense(licenseID, gitlab.WithContext(ctx))
 	if err != nil && clients.IsResponseNotFound(res) {
 		// License no longer exists - we can proceed with finalization
@@ -152,7 +152,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	licenseID, err := strconv.Atoi(externalName)
+	licenseID, err := strconv.ParseInt(externalName, 10, 64)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.New(errIDNotInt)
 	}
@@ -232,7 +232,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	cr.SetConditions(xpv1.Creating())
-	meta.SetExternalName(cr, strconv.Itoa(license.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(license.ID, 10))
 
 	return managed.ExternalCreation{
 		ConnectionDetails: connectionDetails,
@@ -294,7 +294,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.Itoa(license.ID))
+	meta.SetExternalName(cr, strconv.FormatInt(license.ID, 10))
 
 	return managed.ExternalUpdate{
 		ConnectionDetails: connectionDetails,
@@ -313,7 +313,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errMissingExternalName)
 	}
 
-	licenseID, err := strconv.Atoi(externalName)
+	licenseID, err := strconv.ParseInt(externalName, 10, 64)
 	if err != nil {
 		return managed.ExternalDelete{}, errors.New(errIDNotInt)
 	}

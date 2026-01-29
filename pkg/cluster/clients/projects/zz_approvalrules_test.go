@@ -126,7 +126,7 @@ func TestIsUserIDsUpToDate(t *testing.T) {
 		},
 		"EmptyUserIDsEmptyUsers": {
 			cr: &v1alpha1.ApprovalRuleParameters{
-				UserIDs: &[]int{},
+				UserIDs: &[]int64{},
 			},
 			in: &gitlab.ProjectApprovalRule{
 				Users: []*gitlab.BasicUser{},
@@ -135,7 +135,7 @@ func TestIsUserIDsUpToDate(t *testing.T) {
 		},
 		"MatchingUserIDs": {
 			cr: &v1alpha1.ApprovalRuleParameters{
-				UserIDs: &[]int{1, 2},
+				UserIDs: &[]int64{1, 2},
 			},
 			in: &gitlab.ProjectApprovalRule{
 				Users: []*gitlab.BasicUser{
@@ -147,7 +147,7 @@ func TestIsUserIDsUpToDate(t *testing.T) {
 		},
 		"DifferentUserIDs": {
 			cr: &v1alpha1.ApprovalRuleParameters{
-				UserIDs: &[]int{1, 2},
+				UserIDs: &[]int64{1, 2},
 			},
 			in: &gitlab.ProjectApprovalRule{
 				Users: []*gitlab.BasicUser{
@@ -159,7 +159,7 @@ func TestIsUserIDsUpToDate(t *testing.T) {
 		},
 		"DifferentLengths": {
 			cr: &v1alpha1.ApprovalRuleParameters{
-				UserIDs: &[]int{1},
+				UserIDs: &[]int64{1},
 			},
 			in: &gitlab.ProjectApprovalRule{
 				Users: []*gitlab.BasicUser{

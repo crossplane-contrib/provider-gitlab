@@ -264,6 +264,7 @@ spec:
                     format: date-time
                     type: string
                   id:
+                    format: int64
                     type: integer
                   lastPipeline:
                     description: |-
@@ -271,6 +272,7 @@ spec:
                       this will be returned only for individual schedule get operation
                     properties:
                       id:
+                        format: int64
                         type: integer
                       ref:
                         type: string
@@ -297,6 +299,7 @@ spec:
                       GitLab API docs: https://docs.gitlab.com/ee/api/users.html
                     properties:
                       ID:
+                        format: int64
                         type: integer
                       avatarURL:
                         type: string
@@ -307,6 +310,7 @@ spec:
                       canCreateProject:
                         type: boolean
                       colorSchemeID:
+                        format: int64
                         type: integer
                       confirmedAt:
                         format: date-time
@@ -371,18 +375,21 @@ spec:
                       privateProfile:
                         type: boolean
                       projectsLimit:
+                        format: int64
                         type: integer
                       provider:
                         type: string
                       publicEmail:
                         type: string
                       sharedRunnersMinutesLimit:
+                        format: int64
                         type: integer
                       skype:
                         type: string
                       state:
                         type: string
                       themeID:
+                        format: int64
                         type: integer
                       twitter:
                         type: string

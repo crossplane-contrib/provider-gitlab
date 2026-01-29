@@ -52,7 +52,7 @@ const (
 
 // SetupSamlGroupLink adds a controller that reconciles samlgrouplinks.
 func SetupSamlGroupLink(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.SamlGroupLinkGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.SamlGroupLinkGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewSamlGroupLinkClient}),

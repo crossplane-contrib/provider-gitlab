@@ -70,7 +70,7 @@ type AccessTokenParameters struct {
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/project_access_tokens.html
 type AccessTokenObservation struct {
-	TokenID *int `json:"id,omitempty"`
+	TokenID *int64 `json:"id,omitempty"`
 }
 
 // A AccessTokenSpec defines the desired state of a Gitlab Project.

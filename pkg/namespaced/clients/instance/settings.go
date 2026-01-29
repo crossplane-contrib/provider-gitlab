@@ -63,19 +63,19 @@ func gitlabBranchProtectionDefaultsTov1Alpha1BranchProtectionDefaults(input *git
 	result.AllowForcePush = input.AllowForcePush
 	result.DeveloperCanInitialPush = input.DeveloperCanInitialPush
 	if input.AllowedToMerge != nil {
-		result.AllowedToMerge = make([]*int, len(input.AllowedToMerge))
+		result.AllowedToMerge = make([]*int64, len(input.AllowedToMerge))
 		for i, v := range input.AllowedToMerge {
 			if v != nil && v.AccessLevel != nil {
-				buf := int(*v.AccessLevel)
+				buf := int64(*v.AccessLevel)
 				result.AllowedToMerge[i] = &buf
 			}
 		}
 	}
 	if input.AllowedToPush != nil {
-		result.AllowedToPush = make([]*int, len(input.AllowedToPush))
+		result.AllowedToPush = make([]*int64, len(input.AllowedToPush))
 		for i, v := range input.AllowedToPush {
 			if v != nil && v.AccessLevel != nil {
-				buf := int(*v.AccessLevel)
+				buf := int64(*v.AccessLevel)
 				result.AllowedToPush[i] = &buf
 			}
 		}
@@ -92,19 +92,19 @@ func gitlabBranchProtectionDefaultsTov1Alpha1BranchProtectionDefaultsOptions(inp
 	result.AllowForcePush = &input.AllowForcePush
 	result.DeveloperCanInitialPush = &input.DeveloperCanInitialPush
 	if input.AllowedToMerge != nil {
-		allowedToMerge := make([]int, len(input.AllowedToMerge))
+		allowedToMerge := make([]int64, len(input.AllowedToMerge))
 		for i, v := range input.AllowedToMerge {
 			if v != nil && v.AccessLevel != nil {
-				allowedToMerge[i] = int(*v.AccessLevel)
+				allowedToMerge[i] = int64(*v.AccessLevel)
 			}
 		}
 		result.AllowedToMerge = &allowedToMerge
 	}
 	if input.AllowedToPush != nil {
-		allowedToPush := make([]int, len(input.AllowedToPush))
+		allowedToPush := make([]int64, len(input.AllowedToPush))
 		for i, v := range input.AllowedToPush {
 			if v != nil && v.AccessLevel != nil {
-				allowedToPush[i] = int(*v.AccessLevel)
+				allowedToPush[i] = int64(*v.AccessLevel)
 			}
 		}
 		result.AllowedToPush = &allowedToPush
@@ -148,11 +148,11 @@ func v1Alpha1DefaultBranchProtectionDefaultsOptionsPtrToGitlabBranchProtectionDe
 }
 
 // groupAccessSliceToIntSlice converts a slice of gitlab.GroupAccessLevel pointers to a slice of ints
-func groupAccessSliceToIntSlice(input []*gitlab.GroupAccessLevel) []int {
-	result := make([]int, len(input))
+func groupAccessSliceToIntSlice(input []*gitlab.GroupAccessLevel) []int64 {
+	result := make([]int64, len(input))
 	for i, v := range input {
 		if v.AccessLevel != nil {
-			result[i] = int(*v.AccessLevel)
+			result[i] = int64(*v.AccessLevel)
 		}
 	}
 	return result

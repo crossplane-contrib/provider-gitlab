@@ -65,6 +65,7 @@ spec:
                       ID is the ID of an existing badge to import and manage.
                       If set, the controller will adopt the existing badge instead of creating a new one.
                       If the badge with this ID does not exist, resource creation will fail.
+                    format: int64
                     type: integer
                   imageURL:
                     description: |-
@@ -83,6 +84,7 @@ spec:
                   projectId:
                     description: ProjectID is the ID of the project to create the
                       deploy token in.
+                    format: int64
                     type: integer
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
@@ -241,6 +243,7 @@ spec:
                 properties:
                   id:
                     description: ID of the badge
+                    format: int64
                     type: integer
                   imageURL:
                     description: ImageURL is the display image URL of the badge.

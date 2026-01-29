@@ -89,7 +89,7 @@ func (in *AccessTokenObservation) DeepCopyInto(out *AccessTokenObservation) {
 	*out = *in
 	if in.TokenID != nil {
 		in, out := &in.TokenID, &out.TokenID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 }
@@ -109,7 +109,7 @@ func (in *AccessTokenParameters) DeepCopyInto(out *AccessTokenParameters) {
 	*out = *in
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupIDRef != nil {
@@ -261,7 +261,7 @@ func (in *BadgeParameters) DeepCopyInto(out *BadgeParameters) {
 	*out = *in
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupIDRef != nil {
@@ -276,7 +276,7 @@ func (in *BadgeParameters) DeepCopyInto(out *BadgeParameters) {
 	}
 	if in.ID != nil {
 		in, out := &in.ID, &out.ID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.Name != nil {
@@ -424,7 +424,7 @@ func (in *DeployTokenParameters) DeepCopyInto(out *DeployTokenParameters) {
 	*out = *in
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupIDRef != nil {
@@ -561,7 +561,7 @@ func (in *GroupObservation) DeepCopyInto(out *GroupObservation) {
 	*out = *in
 	if in.ID != nil {
 		in, out := &in.ID, &out.ID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.AvatarURL != nil {
@@ -671,7 +671,7 @@ func (in *GroupParameters) DeepCopyInto(out *GroupParameters) {
 	}
 	if in.TwoFactorGracePeriod != nil {
 		in, out := &in.TwoFactorGracePeriod, &out.TwoFactorGracePeriod
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectCreationLevel != nil {
@@ -716,7 +716,7 @@ func (in *GroupParameters) DeepCopyInto(out *GroupParameters) {
 	}
 	if in.ParentID != nil {
 		in, out := &in.ParentID, &out.ParentID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ParentIDRef != nil {
@@ -731,12 +731,12 @@ func (in *GroupParameters) DeepCopyInto(out *GroupParameters) {
 	}
 	if in.SharedRunnersMinutesLimit != nil {
 		in, out := &in.SharedRunnersMinutesLimit, &out.SharedRunnersMinutesLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ExtraSharedRunnersMinutesLimit != nil {
 		in, out := &in.ExtraSharedRunnersMinutesLimit, &out.ExtraSharedRunnersMinutesLimit
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.SharedWithGroups != nil {
@@ -901,7 +901,7 @@ func (in *LdapGroupLinkParameters) DeepCopyInto(out *LdapGroupLinkParameters) {
 	*out = *in
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupIDRef != nil {
@@ -1044,7 +1044,7 @@ func (in *MemberParameters) DeepCopyInto(out *MemberParameters) {
 	*out = *in
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupIDRef != nil {
@@ -1059,7 +1059,7 @@ func (in *MemberParameters) DeepCopyInto(out *MemberParameters) {
 	}
 	if in.UserID != nil {
 		in, out := &in.UserID, &out.UserID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.UserName != nil {
@@ -1233,7 +1233,7 @@ func (in *RunnerParameters) DeepCopyInto(out *RunnerParameters) {
 	*out = *in
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupIDRef != nil {
@@ -1372,7 +1372,7 @@ func (in *SamlGroupLinkParameters) DeepCopyInto(out *SamlGroupLinkParameters) {
 	*out = *in
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupIDRef != nil {
@@ -1392,7 +1392,7 @@ func (in *SamlGroupLinkParameters) DeepCopyInto(out *SamlGroupLinkParameters) {
 	}
 	if in.MemberRoleID != nil {
 		in, out := &in.MemberRoleID, &out.MemberRoleID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 }
@@ -1521,7 +1521,7 @@ func (in *ServiceAccountParameters) DeepCopyInto(out *ServiceAccountParameters) 
 	*out = *in
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupIDRef != nil {
@@ -1586,7 +1586,7 @@ func (in *SharedWithGroups) DeepCopyInto(out *SharedWithGroups) {
 	*out = *in
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupIDRef != nil {
@@ -1620,7 +1620,7 @@ func (in *SharedWithGroupsObservation) DeepCopyInto(out *SharedWithGroupsObserva
 	*out = *in
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupName != nil {
@@ -1635,7 +1635,7 @@ func (in *SharedWithGroupsObservation) DeepCopyInto(out *SharedWithGroupsObserva
 	}
 	if in.GroupAccessLevel != nil {
 		in, out := &in.GroupAccessLevel, &out.GroupAccessLevel
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.ExpiresAt != nil {
@@ -1733,7 +1733,7 @@ func (in *VariableParameters) DeepCopyInto(out *VariableParameters) {
 	*out = *in
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupIDRef != nil {

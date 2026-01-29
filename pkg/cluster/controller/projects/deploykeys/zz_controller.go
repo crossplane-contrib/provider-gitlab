@@ -51,7 +51,7 @@ type connector struct {
 
 // SetupDeployKey adds a controller that reconciles ProjectDeployKey.
 func SetupDeployKey(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.DeployKeyGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.DeployKeyGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: newDeployKeyClient}),
@@ -129,7 +129,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	dk, res, err := e.client.GetDeployKey(
 		*cr.Spec.ForProvider.ProjectID,
-		id,
+		int64(id),
 	)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
@@ -143,7 +143,13 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	isLateInitialized := !cmp.Equal(currentState, &cr.Spec.ForProvider)
 
 	cr.Status.AtProvider = v1alpha1.DeployKeyObservation{
-		ID:        &dk.ID,
+		ID: func() *int64 {
+			if dk.ID != 0 {
+				v := dk.ID
+				return &v
+			}
+			return nil
+		}(),
 		CreatedAt: clients.TimeToMetaTime(dk.CreatedAt),
 	}
 
@@ -182,7 +188,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFail)
 	}
 
-	id := strconv.Itoa(keyResponse.ID)
+	id := strconv.FormatInt(keyResponse.ID, 10)
 	meta.SetExternalName(cr, id)
 
 	return managed.ExternalCreation{}, nil
@@ -207,7 +213,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, _, er := e.client.UpdateDeployKey(
 		*cr.Spec.ForProvider.ProjectID,
-		id,
+		int64(id),
 		generateUpdateOptions(cr),
 	)
 
@@ -233,7 +239,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, err = e.client.DeleteDeployKey(
 		*cr.Spec.ForProvider.ProjectID,
-		keyID,
+		int64(keyID),
 	)
 
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFail)

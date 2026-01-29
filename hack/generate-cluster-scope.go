@@ -245,6 +245,8 @@ type replacement struct {
 // This is important to keep a list structure to ensure priority of replacements.
 func getReplacements() []replacement {
 	return []replacement{
+		// Add .cluster suffix to controller names to avoid conflicts with namespaced controllers
+		{"managed.ControllerName(", "managed.ControllerName(\"cluster.\" + "},
 		{"m.crossplane.io", "crossplane.io"},
 		{"xpv2.ManagedResourceSpec", "xpv1.ResourceSpec"},
 		{"xpv1.NamespacedReference", "xpv1.Reference"},

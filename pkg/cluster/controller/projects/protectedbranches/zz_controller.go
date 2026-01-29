@@ -51,7 +51,7 @@ const (
 
 // SetupProtectedBranch adds a controller that reconciles ProtectedBranches.
 func SetupProtectedBranch(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.ProtectedBranchGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.ProtectedBranchGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProtectedBranchClient}),

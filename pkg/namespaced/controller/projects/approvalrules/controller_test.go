@@ -37,8 +37,8 @@ import (
 var (
 	unexpecedItem                 resource.Managed
 	errBoom                       = errors.New("boom")
-	projectID                     = 0
-	approvalsRequired             = 1
+	projectID                     = int64(0)
+	approvalsRequired             = int64(1)
 	users                         = []*gitlab.BasicUser{{ID: 123, Username: "abc"}, {ID: 456, Username: "testUser"}}
 	groups                        = []*gitlab.Group{{ID: 99}}
 	protectedBranches             = []*gitlab.ProtectedBranch{{ID: 1}, {ID: 2}}
@@ -182,7 +182,7 @@ func TestObserve(t *testing.T) {
 		"ErrGet404": {
 			args: args{
 				projectApprovalRule: &fake.MockClient{
-					MockGetProjectApprovalRule: func(pid any, ruleID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {
+					MockGetProjectApprovalRule: func(pid any, ruleID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
@@ -209,7 +209,7 @@ func TestObserve(t *testing.T) {
 		"ErrGet": {
 			args: args{
 				projectApprovalRule: &fake.MockClient{
-					MockGetProjectApprovalRule: func(pid any, ruleID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {
+					MockGetProjectApprovalRule: func(pid any, ruleID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {
 						return nil, nil, errBoom
 					},
 				},
@@ -224,7 +224,7 @@ func TestObserve(t *testing.T) {
 		"SuccessfulAvailable": {
 			args: args{
 				projectApprovalRule: &fake.MockClient{
-					MockGetProjectApprovalRule: func(pid any, ruleID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {
+					MockGetProjectApprovalRule: func(pid any, ruleID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {
 						return &gitlab.ProjectApprovalRule{
 							ApprovalsRequired: approvalsRequired,
 							Name:              name,
@@ -394,7 +394,7 @@ func TestUpdate(t *testing.T) {
 		"SuccessfulUpdate": {
 			args: args{
 				projectApprovalRule: &fake.MockClient{
-					MockUpdateProjectApprovalRule: func(pid any, approvalRule int, opt *gitlab.UpdateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {
+					MockUpdateProjectApprovalRule: func(pid any, approvalRule int64, opt *gitlab.UpdateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {
 						return &gitlab.ProjectApprovalRule{
 							ID:                            projectID,
 							Name:                          name,
@@ -432,7 +432,7 @@ func TestUpdate(t *testing.T) {
 		"FailedUpdate": {
 			args: args{
 				projectApprovalRule: &fake.MockClient{
-					MockUpdateProjectApprovalRule: func(pid any, approvalRule int, opt *gitlab.UpdateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {
+					MockUpdateProjectApprovalRule: func(pid any, approvalRule int64, opt *gitlab.UpdateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {
 						return &gitlab.ProjectApprovalRule{}, &gitlab.Response{}, errBoom
 					},
 				},
@@ -488,7 +488,7 @@ func TestDelete(t *testing.T) {
 		"SuccessfulDeletion": {
 			args: args{
 				projectApprovalRule: &fake.MockClient{
-					MockDeleteProjectApprovalRule: func(pid any, approvalRule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteProjectApprovalRule: func(pid any, approvalRule int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
 				},
@@ -515,7 +515,7 @@ func TestDelete(t *testing.T) {
 		"FailedDeletion": {
 			args: args{
 				projectApprovalRule: &fake.MockClient{
-					MockDeleteProjectApprovalRule: func(pid any, approvalRule int, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+					MockDeleteProjectApprovalRule: func(pid any, approvalRule int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, errBoom
 					},
 				},

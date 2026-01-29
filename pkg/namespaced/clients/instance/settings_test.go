@@ -60,8 +60,8 @@ func TestIsDefaultBranchProtectionDefaultsPtrEqualToDefaultsPtr(t *testing.T) {
 				dbpdv: &v1alpha1.DefaultBranchProtectionDefaultsOptions{
 					AllowForcePush:          boolPtr(true),
 					DeveloperCanInitialPush: boolPtr(false),
-					AllowedToMerge:          &[]int{30, 40},
-					AllowedToPush:           &[]int{30},
+					AllowedToMerge:          &[]int64{30, 40},
+					AllowedToPush:           &[]int64{30},
 				},
 				dbpdg: &gitlab.BranchProtectionDefaults{
 					AllowForcePush:          true,
@@ -97,7 +97,7 @@ func TestIsDefaultBranchProtectionDefaultsPtrEqualToDefaultsPtr(t *testing.T) {
 		"NotEqualAllowedToMerge": {
 			args: args{
 				dbpdv: &v1alpha1.DefaultBranchProtectionDefaultsOptions{
-					AllowedToMerge: &[]int{30},
+					AllowedToMerge: &[]int64{30},
 				},
 				dbpdg: &gitlab.BranchProtectionDefaults{
 					AllowedToMerge: []*gitlab.GroupAccessLevel{{AccessLevel: accessLevelPtr(40)}},
@@ -108,7 +108,7 @@ func TestIsDefaultBranchProtectionDefaultsPtrEqualToDefaultsPtr(t *testing.T) {
 		"NotEqualAllowedToPush": {
 			args: args{
 				dbpdv: &v1alpha1.DefaultBranchProtectionDefaultsOptions{
-					AllowedToPush: &[]int{30},
+					AllowedToPush: &[]int64{30},
 				},
 				dbpdg: &gitlab.BranchProtectionDefaults{
 					AllowedToPush: []*gitlab.GroupAccessLevel{{AccessLevel: accessLevelPtr(40)}},
@@ -154,8 +154,8 @@ func TestGitlabBranchProtectionDefaultsTov1Alpha1BranchProtectionDefaults(t *tes
 			want: v1alpha1.BranchProtectionDefaults{
 				AllowForcePush:          true,
 				DeveloperCanInitialPush: false,
-				AllowedToMerge:          []*int{intPtr(30)},
-				AllowedToPush:           []*int{intPtr(40)},
+				AllowedToMerge:          []*int64{int64Ptr(30)},
+				AllowedToPush:           []*int64{int64Ptr(40)},
 			},
 		},
 		"InputWithNilAccessLevel": {
@@ -165,7 +165,7 @@ func TestGitlabBranchProtectionDefaultsTov1Alpha1BranchProtectionDefaults(t *tes
 				},
 			},
 			want: v1alpha1.BranchProtectionDefaults{
-				AllowedToMerge: []*int{nil},
+				AllowedToMerge: []*int64{nil},
 			},
 		},
 	}
@@ -206,8 +206,8 @@ func TestGitlabBranchProtectionDefaultsTov1Alpha1BranchProtectionDefaultsOptions
 			want: v1alpha1.DefaultBranchProtectionDefaultsOptions{
 				AllowForcePush:          boolPtr(true),
 				DeveloperCanInitialPush: boolPtr(false),
-				AllowedToMerge:          &[]int{30},
-				AllowedToPush:           &[]int{40},
+				AllowedToMerge:          &[]int64{30},
+				AllowedToPush:           &[]int64{40},
 			},
 		},
 	}
@@ -241,8 +241,8 @@ func TestV1Alpha1DefaultBranchProtectionDefaultsOptionsPtrToGitlabBranchProtecti
 				input: &v1alpha1.DefaultBranchProtectionDefaultsOptions{
 					AllowForcePush:          boolPtr(true),
 					DeveloperCanInitialPush: boolPtr(false),
-					AllowedToMerge:          &[]int{30},
-					AllowedToPush:           &[]int{40},
+					AllowedToMerge:          &[]int64{30},
+					AllowedToPush:           &[]int64{40},
 				},
 			},
 			want: &gitlab.DefaultBranchProtectionDefaultsOptions{
@@ -270,19 +270,19 @@ func TestGroupAccessSliceToIntSlice(t *testing.T) {
 	}
 	cases := map[string]struct {
 		args args
-		want []int
+		want []int64
 	}{
 		"NilInput": {
 			args: args{
 				input: nil,
 			},
-			want: []int{},
+			want: []int64{},
 		},
 		"EmptyInput": {
 			args: args{
 				input: []*gitlab.GroupAccessLevel{},
 			},
-			want: []int{},
+			want: []int64{},
 		},
 		"FullInput": {
 			args: args{
@@ -291,7 +291,7 @@ func TestGroupAccessSliceToIntSlice(t *testing.T) {
 					{AccessLevel: accessLevelPtr(40)},
 				},
 			},
-			want: []int{30, 40},
+			want: []int64{30, 40},
 		},
 		"InputWithNilAccessLevel": {
 			args: args{
@@ -299,7 +299,7 @@ func TestGroupAccessSliceToIntSlice(t *testing.T) {
 					{AccessLevel: nil},
 				},
 			},
-			want: []int{0},
+			want: []int64{0},
 		},
 	}
 
@@ -313,10 +313,10 @@ func TestGroupAccessSliceToIntSlice(t *testing.T) {
 	}
 }
 
-func boolPtr(b bool) *bool { return &b }
-func intPtr(i int) *int    { return &i }
+func boolPtr(b bool) *bool    { return &b }
+func int64Ptr(i int64) *int64 { return &i }
 
-func accessLevelPtr(i int) *gitlab.AccessLevelValue {
+func accessLevelPtr(i int64) *gitlab.AccessLevelValue {
 	v := gitlab.AccessLevelValue(i)
 	return &v
 }

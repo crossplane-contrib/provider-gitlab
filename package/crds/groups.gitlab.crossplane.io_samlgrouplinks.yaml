@@ -84,6 +84,7 @@ spec:
                   groupId:
                     description: GroupID is the ID of the group to create the deploy
                       token in.
+                    format: int64
                     type: integer
                   groupIdRef:
                     description: GroupIDRef is a reference to a group to retrieve
@@ -164,6 +165,7 @@ spec:
                   memberRoleId:
                     description: memberRoleID is the defined member role assigned
                       to members of the group
+                    format: int64
                     type: integer
                   name:
                     description: name is the name of the saml group to attach to the
