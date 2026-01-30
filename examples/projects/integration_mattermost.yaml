@@ -1,0 +1,15 @@
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: IntegrationMattermost
+metadata:
+  name: mattermost-p7
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    projectId: 14
+    webhook: "https://mattermost.example.com/hooks/abc123"
+    username: "gitlab-bot"
+    channel: "gitlab-notifications"
