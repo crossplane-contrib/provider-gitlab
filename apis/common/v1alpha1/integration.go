@@ -54,46 +54,46 @@ type CommonIntegrationObservation struct {
 type CommonIntegrationParameters struct {
 	// Send notifications for broken pipelines.
 	// +optional
-	NotifyOnlyBrokenPipelines *bool `json:"notify_only_broken_pipelines,omitempty"`
+	NotifyOnlyBrokenPipelines *bool `json:"notifyOnlyBrokenPipelines,omitempty"`
 
 	// Branches to send notifications for. Valid options are all, default, protected, and default_and_protected. The default value is default.
 	// +kubebuilder:validation:Enum:=all;default;protected;default_and_protected
 	// +optional
-	BranchesToBeNotified *string `json:"branches_to_be_notified,omitempty"`
+	BranchesToBeNotified *string `json:"branchesToBeNotified,omitempty"`
 
 	// 	Enable notifications for push events.
 	// +optional
-	PushEvents *bool `json:"push_events,omitempty"`
+	PushEvents *bool `json:"pushEvents,omitempty"`
 
 	// Enable notifications for issue events.
 	// +optional
-	IssuesEvents *bool `json:"issues_events,omitempty"`
+	IssuesEvents *bool `json:"issuesEvents,omitempty"`
 
 	// Enable notifications for confidential issue events.
 	// +optional
-	ConfidentialIssuesEvents *bool `json:"confidential_issues_events,omitempty"`
+	ConfidentialIssuesEvents *bool `json:"confidentialIssuesEvents,omitempty"`
 
 	// Enable notifications for merge request events.
 	// +optional
-	MergeRequestsEvents *bool `json:"merge_requests_events,omitempty"`
+	MergeRequestsEvents *bool `json:"mergeRequestsEvents,omitempty"`
 
 	// Enable notifications for tag push events.
 	// +optional
-	TagPushEvents *bool `json:"tag_push_events,omitempty"`
+	TagPushEvents *bool `json:"tagPushEvents,omitempty"`
 
 	// Enable notifications for note events.
 	// +optional
-	NoteEvents *bool `json:"note_events,omitempty"`
+	NoteEvents *bool `json:"noteEvents,omitempty"`
 
 	// Enable notifications for confidential note events.
 	// +optional
-	ConfidentialNoteChannel *string `json:"confidential_note_channel,omitempty"`
+	ConfidentialNoteChannel *string `json:"confidentialNoteChannel,omitempty"`
 
 	// Enable notifications for pipeline events.
 	// +optional
-	PipelineEvents *bool `json:"pipeline_events,omitempty"`
+	PipelineEvents *bool `json:"pipelineEvents,omitempty"`
 
 	// Enable notifications for wiki page events.
 	// +optional
-	WikiPageEvents *bool `json:"wiki_page_events,omitempty"`
+	WikiPageEvents *bool `json:"wikiPageEvents,omitempty"`
 }

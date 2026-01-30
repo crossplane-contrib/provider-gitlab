@@ -53,7 +53,7 @@ const (
 
 // SetupBadge adds a controller that reconciles GroupBadges.
 func SetupBadge(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.BadgeGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.BadgeGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewBadgeClient}),
@@ -170,8 +170,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	// if ID is already set, check if it does exist, else create a new one
 	if cr.Spec.ForProvider.ID != nil {
-		id := *cr.Spec.ForProvider.ID
-		badge, res, err := e.client.GetGroupBadge(*cr.Spec.ForProvider.GroupID, int64(id))
+		badge, res, err := e.client.GetGroupBadge(*cr.Spec.ForProvider.GroupID, *cr.Spec.ForProvider.ID)
 		if err != nil || clients.IsResponseNotFound(res) {
 			return managed.ExternalCreation{}, errors.Wrap(err, errWrongIDSet)
 		}

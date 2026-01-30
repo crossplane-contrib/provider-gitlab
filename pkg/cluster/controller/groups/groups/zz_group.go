@@ -62,7 +62,7 @@ const (
 
 // SetupGroup adds a controller that reconciles Groups.
 func SetupGroup(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.GroupKubernetesGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.GroupKubernetesGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewGroupClient}),
@@ -204,7 +204,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.FormatInt(int64(grp.ID), 10))
+	meta.SetExternalName(cr, strconv.FormatInt(grp.ID, 10))
 	return managed.ExternalCreation{}, nil
 }
 
@@ -231,7 +231,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			if notShared(*sh.GroupID, grp) {
 				opt := gitlab.ShareGroupWithGroupOptions{
 					GroupID:     sh.GroupID,
-					GroupAccess: (*gitlab.AccessLevelValue)(&sh.GroupAccessLevel),
+					GroupAccess: gitlab.Ptr(gitlab.AccessLevelValue(sh.GroupAccessLevel)),
 				}
 				if sh.ExpiresAt != nil {
 					opt.ExpiresAt = (*gitlab.ISOTime)(&sh.ExpiresAt.Time)
@@ -367,7 +367,7 @@ func isSharedWithGroupsUpToDate(cr *v1alpha1.GroupParameters, in *gitlab.Group) 
 		if v.GroupID == nil {
 			return false, errors.Errorf(errSWGMissingGroupID, v)
 		}
-		crIDs[int64(*v.GroupID)] = nil
+		crIDs[*v.GroupID] = nil
 	}
 
 	for ID := range inIDs {

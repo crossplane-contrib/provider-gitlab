@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,42 +18,39 @@ package common
 
 import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 )
 
-func ptrBool(v bool) *bool       { return &v }
-func ptrInt64(v int64) *int64    { return &v }
-func ptrString(v string) *string { return &v }
-
 // GenerateCommonIntegrationObservation generates a CommonIntegrationObservation from a gitlab.Service
 func GenerateCommonIntegrationObservation(integration *gitlab.Service) v1alpha1.CommonIntegrationObservation {
 	return v1alpha1.CommonIntegrationObservation{
-		ID:                             ptrInt64(integration.ID),
-		Title:                          ptrString(integration.Title),
-		Slug:                           ptrString(integration.Slug),
+		ID:                             ptr.To(integration.ID),
+		Title:                          ptr.To(integration.Title),
+		Slug:                           ptr.To(integration.Slug),
 		CreatedAt:                      clients.TimeToMetaTime(integration.CreatedAt),
 		UpdatedAt:                      clients.TimeToMetaTime(integration.UpdatedAt),
-		Active:                         ptrBool(integration.Active),
-		AlertEvents:                    ptrBool(integration.AlertEvents),
-		CommitEvents:                   ptrBool(integration.CommitEvents),
-		ConfidentialIssuesEvents:       ptrBool(integration.ConfidentialIssuesEvents),
-		ConfidentialNoteEvents:         ptrBool(integration.ConfidentialNoteEvents),
-		DeploymentEvents:               ptrBool(integration.DeploymentEvents),
-		GroupConfidentialMentionEvents: ptrBool(integration.GroupConfidentialMentionEvents),
-		GroupMentionEvents:             ptrBool(integration.GroupMentionEvents),
-		IncidentEvents:                 ptrBool(integration.IncidentEvents),
-		IssuesEvents:                   ptrBool(integration.IssuesEvents),
-		JobEvents:                      ptrBool(integration.JobEvents),
-		MergeRequestsEvents:            ptrBool(integration.MergeRequestsEvents),
-		NoteEvents:                     ptrBool(integration.NoteEvents),
-		PipelineEvents:                 ptrBool(integration.PipelineEvents),
-		PushEvents:                     ptrBool(integration.PushEvents),
-		TagPushEvents:                  ptrBool(integration.TagPushEvents),
-		VulnerabilityEvents:            ptrBool(integration.VulnerabilityEvents),
-		WikiPageEvents:                 ptrBool(integration.WikiPageEvents),
-		CommentOnEventEnabled:          ptrBool(integration.CommentOnEventEnabled),
-		Inherited:                      ptrBool(integration.Inherited),
+		Active:                         ptr.To(integration.Active),
+		AlertEvents:                    ptr.To(integration.AlertEvents),
+		CommitEvents:                   ptr.To(integration.CommitEvents),
+		ConfidentialIssuesEvents:       ptr.To(integration.ConfidentialIssuesEvents),
+		ConfidentialNoteEvents:         ptr.To(integration.ConfidentialNoteEvents),
+		DeploymentEvents:               ptr.To(integration.DeploymentEvents),
+		GroupConfidentialMentionEvents: ptr.To(integration.GroupConfidentialMentionEvents),
+		GroupMentionEvents:             ptr.To(integration.GroupMentionEvents),
+		IncidentEvents:                 ptr.To(integration.IncidentEvents),
+		IssuesEvents:                   ptr.To(integration.IssuesEvents),
+		JobEvents:                      ptr.To(integration.JobEvents),
+		MergeRequestsEvents:            ptr.To(integration.MergeRequestsEvents),
+		NoteEvents:                     ptr.To(integration.NoteEvents),
+		PipelineEvents:                 ptr.To(integration.PipelineEvents),
+		PushEvents:                     ptr.To(integration.PushEvents),
+		TagPushEvents:                  ptr.To(integration.TagPushEvents),
+		VulnerabilityEvents:            ptr.To(integration.VulnerabilityEvents),
+		WikiPageEvents:                 ptr.To(integration.WikiPageEvents),
+		CommentOnEventEnabled:          ptr.To(integration.CommentOnEventEnabled),
+		Inherited:                      ptr.To(integration.Inherited),
 	}
 }

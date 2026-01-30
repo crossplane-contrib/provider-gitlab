@@ -189,11 +189,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreatePipelineSchedule)
 	}
 
-<<<<<<< HEAD
 	meta.SetExternalName(cr, strconv.FormatInt(ps.ID, 10))
-=======
-	meta.SetExternalName(cr, strconv.FormatInt(int64(ps.ID), 10))
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 
 	for _, v := range cr.Spec.ForProvider.Variables {
 		opt := &gitlab.CreatePipelineScheduleVariableOptions{
@@ -203,7 +199,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		}
 		_, _, err := e.client.CreatePipelineScheduleVariable(
 			*cr.Spec.ForProvider.ProjectID,
-			int64(ps.ID),
+			ps.ID,
 			opt,
 		)
 		if err != nil {
@@ -263,7 +259,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 				}
 				_, _, err := e.client.CreatePipelineScheduleVariable(
 					*cr.Spec.ForProvider.ProjectID,
-					int64(ps.ID),
+					ps.ID,
 					opt,
 				)
 				if err != nil {
@@ -277,7 +273,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 				}
 				_, _, err := e.client.EditPipelineScheduleVariable(
 					*cr.Spec.ForProvider.ProjectID,
-					int64(ps.ID),
+					ps.ID,
 					v.Key,
 					opt,
 				)
@@ -290,7 +286,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			if notDeleted(v, cr.Spec.ForProvider.Variables) {
 				_, _, err := e.client.DeletePipelineScheduleVariable(
 					*cr.Spec.ForProvider.ProjectID,
-					int64(ps.ID),
+					ps.ID,
 					v.Key,
 				)
 				if err != nil {
@@ -434,13 +430,8 @@ func notUpdated(crv v1alpha1.PipelineVariable, invArr []*gitlab.PipelineVariable
 }
 
 func generateObservation(cr *v1alpha1.PipelineSchedule, ps *gitlab.PipelineSchedule) {
-	id64 := int64(ps.ID)
 	o := v1alpha1.PipelineScheduleObservation{
-<<<<<<< HEAD
 		ID:           &ps.ID,
-=======
-		ID:           common.Int64ToIntPtr(&id64),
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 		LastPipeline: convertLastPipeline(ps.LastPipeline),
 	}
 	if ps.Owner != nil {
@@ -467,11 +458,7 @@ func convertLastPipeline(lp *gitlab.LastPipeline) *v1alpha1.LastPipeline {
 		return nil
 	}
 	return &v1alpha1.LastPipeline{
-<<<<<<< HEAD
 		ID:     lp.ID,
-=======
-		ID:     int(lp.ID),
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 		SHA:    lp.SHA,
 		Ref:    lp.Ref,
 		Status: lp.Status,

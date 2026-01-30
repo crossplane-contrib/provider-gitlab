@@ -48,45 +48,22 @@ func GenerateCreateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 		Usernames:                     p.Usernames,
 	}
 	if p.ApprovalsRequired != nil {
-<<<<<<< HEAD
 		val := p.ApprovalsRequired
 		approvalRulesOptions.ApprovalsRequired = val
 	}
 	if p.UserIDs != nil {
 		vals := make([]int64, len(*p.UserIDs))
 		copy(vals, *p.UserIDs)
-=======
-		val := int64(*p.ApprovalsRequired)
-		approvalRulesOptions.ApprovalsRequired = &val
-	}
-	if p.UserIDs != nil {
-		vals := make([]int64, len(*p.UserIDs))
-		for i, v := range *p.UserIDs {
-			vals[i] = int64(v)
-		}
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 		approvalRulesOptions.UserIDs = &vals
 	}
 	if p.GroupIDs != nil {
 		vals := make([]int64, len(*p.GroupIDs))
-<<<<<<< HEAD
 		copy(vals, *p.GroupIDs)
-=======
-		for i, v := range *p.GroupIDs {
-			vals[i] = int64(v)
-		}
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 		approvalRulesOptions.GroupIDs = &vals
 	}
 	if p.ProtectedBranchIDs != nil {
 		vals := make([]int64, len(*p.ProtectedBranchIDs))
-<<<<<<< HEAD
 		copy(vals, *p.ProtectedBranchIDs)
-=======
-		for i, v := range *p.ProtectedBranchIDs {
-			vals[i] = int64(v)
-		}
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 		approvalRulesOptions.ProtectedBranchIDs = &vals
 	}
 
@@ -101,45 +78,22 @@ func GenerateUpdateApprovalRulesOptions(p *v1alpha1.ApprovalRuleParameters) *git
 		Usernames:                     p.Usernames,
 	}
 	if p.ApprovalsRequired != nil {
-<<<<<<< HEAD
 		val := p.ApprovalsRequired
 		approvalRulesOptions.ApprovalsRequired = val
 	}
 	if p.UserIDs != nil {
 		vals := make([]int64, len(*p.UserIDs))
 		copy(vals, *p.UserIDs)
-=======
-		val := int64(*p.ApprovalsRequired)
-		approvalRulesOptions.ApprovalsRequired = &val
-	}
-	if p.UserIDs != nil {
-		vals := make([]int64, len(*p.UserIDs))
-		for i, v := range *p.UserIDs {
-			vals[i] = int64(v)
-		}
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 		approvalRulesOptions.UserIDs = &vals
 	}
 	if p.GroupIDs != nil {
 		vals := make([]int64, len(*p.GroupIDs))
-<<<<<<< HEAD
 		copy(vals, *p.GroupIDs)
-=======
-		for i, v := range *p.GroupIDs {
-			vals[i] = int64(v)
-		}
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 		approvalRulesOptions.GroupIDs = &vals
 	}
 	if p.ProtectedBranchIDs != nil {
 		vals := make([]int64, len(*p.ProtectedBranchIDs))
-<<<<<<< HEAD
 		copy(vals, *p.ProtectedBranchIDs)
-=======
-		for i, v := range *p.ProtectedBranchIDs {
-			vals[i] = int64(v)
-		}
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 		approvalRulesOptions.ProtectedBranchIDs = &vals
 	}
 
@@ -194,7 +148,7 @@ func isGroupIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectA
 
 	inIDs := make(map[int64]any)
 	for _, v := range in.Groups {
-		inIDs[int(v.ID)] = nil
+		inIDs[v.ID] = nil
 	}
 
 	crIDs := make(map[int64]any)
@@ -230,7 +184,7 @@ func isProtectedBranchesIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *git
 
 	inIDs := make(map[int64]any)
 	for _, v := range in.ProtectedBranches {
-		inIDs[int(v.ID)] = nil
+		inIDs[v.ID] = nil
 	}
 
 	crIDs := make(map[int64]any)
@@ -266,7 +220,7 @@ func isUserIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectAp
 
 	inIDs := make(map[int64]any)
 	for _, v := range in.Users {
-		inIDs[int(v.ID)] = nil
+		inIDs[v.ID] = nil
 	}
 
 	crIDs := make(map[int64]any)

@@ -51,7 +51,7 @@ const (
 
 // SetupRules adds a controller that reconciles Approval Rules.
 func SetupRules(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.ApprovalRuleKind)
+	name := managed.ControllerName("cluster." + v1alpha1.ApprovalRuleKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{
@@ -236,6 +236,6 @@ func (e *external) Disconnect(ctx context.Context) error {
 }
 
 func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.ApprovalRule, approvalRule *gitlab.ProjectApprovalRule) error {
-	meta.SetExternalName(cr, strconv.FormatInt(int64(approvalRule.ID), 10))
+	meta.SetExternalName(cr, strconv.FormatInt(approvalRule.ID, 10))
 	return e.kube.Update(ctx, cr)
 }

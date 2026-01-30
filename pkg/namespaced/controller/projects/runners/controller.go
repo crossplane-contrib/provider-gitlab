@@ -188,11 +188,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-<<<<<<< HEAD
 	meta.SetExternalName(cr, strconv.FormatInt(runner.ID, 10))
-=======
-	meta.SetExternalName(cr, strconv.FormatInt(int64(runner.ID), 10))
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 
 	if runner.TokenExpiresAt != nil {
 		t := metav1.NewTime(*runner.TokenExpiresAt)
@@ -292,7 +288,7 @@ func isRunnerUpToDate(p *v1alpha1.RunnerParameters, r *gitlab.RunnerDetails) boo
 	if p.AccessLevel != nil && *p.AccessLevel != r.AccessLevel {
 		return false
 	}
-	if p.MaximumTimeout != nil && *p.MaximumTimeout != int(r.MaximumTimeout) {
+	if p.MaximumTimeout != nil && *p.MaximumTimeout != r.MaximumTimeout {
 		return false
 	}
 	if p.MaintenanceNote != nil && *p.MaintenanceNote != r.MaintenanceNote {

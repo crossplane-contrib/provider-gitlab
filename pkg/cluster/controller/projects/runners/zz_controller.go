@@ -59,7 +59,7 @@ const (
 
 // SetupRunner adds a controller that reconciles projects runners.
 func SetupRunner(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.RunnerGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.RunnerGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{
@@ -190,7 +190,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, strconv.FormatInt(int64(runner.ID), 10))
+	meta.SetExternalName(cr, strconv.FormatInt(runner.ID, 10))
 
 	if runner.TokenExpiresAt != nil {
 		t := metav1.NewTime(*runner.TokenExpiresAt)
@@ -290,7 +290,7 @@ func isRunnerUpToDate(p *v1alpha1.RunnerParameters, r *gitlab.RunnerDetails) boo
 	if p.AccessLevel != nil && *p.AccessLevel != r.AccessLevel {
 		return false
 	}
-	if p.MaximumTimeout != nil && *p.MaximumTimeout != int(r.MaximumTimeout) {
+	if p.MaximumTimeout != nil && *p.MaximumTimeout != r.MaximumTimeout {
 		return false
 	}
 	if p.MaintenanceNote != nil && *p.MaintenanceNote != r.MaintenanceNote {

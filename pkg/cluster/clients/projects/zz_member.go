@@ -83,8 +83,7 @@ func GenerateAddMemberOptions(p *v1alpha1.MemberParameters) *gitlab.AddProjectMe
 		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
 	}
 	if p.UserID != nil {
-		val := int64(*p.UserID)
-		projectMember.UserID = &val
+		projectMember.UserID = p.UserID
 	}
 	if p.ExpiresAt != nil {
 		projectMember.ExpiresAt = p.ExpiresAt

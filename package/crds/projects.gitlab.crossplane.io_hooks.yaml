@@ -184,7 +184,7 @@ spec:
                   pushEvents:
                     description: PushEvents triggers hook on push events.
                     type: boolean
-                  pushEventsBranchFilter:
+                  pushEventsBranch_filter:
                     description: PushEventsBranchFilter triggers hook on push events
                       for matching branches only.
                     type: string

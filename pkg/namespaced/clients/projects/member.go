@@ -81,12 +81,7 @@ func GenerateAddMemberOptions(p *v1alpha1.MemberParameters) *gitlab.AddProjectMe
 		AccessLevel: accessLevelValueV1alpha1ToGitlab(&p.AccessLevel),
 	}
 	if p.UserID != nil {
-<<<<<<< HEAD
 		projectMember.UserID = p.UserID
-=======
-		val := int64(*p.UserID)
-		projectMember.UserID = &val
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 	}
 	if p.ExpiresAt != nil {
 		projectMember.ExpiresAt = p.ExpiresAt

@@ -24,6 +24,7 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/accesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/approvalrules"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/badges"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/hooks"
@@ -50,6 +51,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		approvalrules.SetupRules,
 		runners.SetupRunner,
 		protectedbranches.SetupProtectedBranch,
+		badges.SetupBadge,
 		integrationmattermost.SetupIntegrationMattermost,
 	} {
 		if err := setup(mgr, o); err != nil {
@@ -74,6 +76,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		approvalrules.SetupRulesGated,
 		runners.SetupRunnerGated,
 		protectedbranches.SetupProtectedBranchGated,
+		badges.SetupBadgeGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
 	} {
 		if err := setup(mgr, o); err != nil {
