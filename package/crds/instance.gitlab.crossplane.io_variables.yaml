@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: variables.groups.gitlab.crossplane.io
+  name: variables.instance.gitlab.crossplane.io
 spec:
-  group: groups.gitlab.crossplane.io
+  group: instance.gitlab.crossplane.io
   names:
     categories:
     - crossplane
@@ -31,9 +31,8 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: |-
-          A Variable is a managed resource that represents a Gitlab CI variable.
-          WARNING: this does not support hidden variables as Gitlab API does not return their values.
+        description: A Variable is a managed resource that represents a Gitlab CI
+          variable.
         properties:
           apiVersion:
             description: |-
@@ -74,7 +73,7 @@ spec:
               forProvider:
                 description: |-
                   VariableParameters define the desired state of a Gitlab CI Variable
-                  https://docs.gitlab.com/ee/api/group_level_variables.html
+                  https://docs.gitlab.com/api/instance_level_ci_variables/
                 properties:
                   description:
                     description: |-
@@ -82,91 +81,6 @@ spec:
                       This feature is available in GitLab 16.2 and above.
                     maxLength: 255
                     type: string
-                  environmentScope:
-                    description: EnvironmentScope indicates the environment scope
-                      of a variable.
-                    type: string
-                  groupId:
-                    description: GroupID is the ID of the group to create the variable
-                      on.
-                    format: int64
-                    type: integer
-                  groupIdRef:
-                    description: GroupIDRef is a reference to a group to retrieve
-                      its groupId.
-                    properties:
-                      name:
-                        description: Name of the referenced object.
-                        type: string
-                      policy:
-                        description: Policies for referencing.
-                        properties:
-                          resolution:
-                            default: Required
-                            description: |-
-                              Resolution specifies whether resolution of this reference is required.
-                              The default is 'Required', which means the reconcile will fail if the
-                              reference cannot be resolved. 'Optional' means this reference will be
-                              a no-op if it cannot be resolved.
-                            enum:
-                            - Required
-                            - Optional
-                            type: string
-                          resolve:
-                            description: |-
-                              Resolve specifies when this reference should be resolved. The default
-                              is 'IfNotPresent', which will attempt to resolve the reference only when
-                              the corresponding field is not present. Use 'Always' to resolve the
-                              reference on every reconcile.
-                            enum:
-                            - Always
-                            - IfNotPresent
-                            type: string
-                        type: object
-                    required:
-                    - name
-                    type: object
-                  groupIdSelector:
-                    description: GroupIDSelector selects reference to a group to retrieve
-                      its groupId.
-                    properties:
-                      matchControllerRef:
-                        description: |-
-                          MatchControllerRef ensures an object with the same controller reference
-                          as the selecting object is selected.
-                        type: boolean
-                      matchLabels:
-                        additionalProperties:
-                          type: string
-                        description: MatchLabels ensures an object with matching labels
-                          is selected.
-                        type: object
-                      policy:
-                        description: Policies for selection.
-                        properties:
-                          resolution:
-                            default: Required
-                            description: |-
-                              Resolution specifies whether resolution of this reference is required.
-                              The default is 'Required', which means the reconcile will fail if the
-                              reference cannot be resolved. 'Optional' means this reference will be
-                              a no-op if it cannot be resolved.
-                            enum:
-                            - Required
-                            - Optional
-                            type: string
-                          resolve:
-                            description: |-
-                              Resolve specifies when this reference should be resolved. The default
-                              is 'IfNotPresent', which will attempt to resolve the reference only when
-                              the corresponding field is not present. Use 'Always' to resolve the
-                              reference on every reconcile.
-                            enum:
-                            - Always
-                            - IfNotPresent
-                            type: string
-                        type: object
-                    type: object
                   key:
                     description: |-
                       Key of a variable.
@@ -313,10 +227,6 @@ spec:
                   description:
                     description: The description of the variable. Maximum of 255 characters.
                     type: string
-                  environmentScope:
-                    type: string
-                  hidden:
-                    type: boolean
                   key:
                     description: Key of a variable.
                     type: string
@@ -334,8 +244,6 @@ spec:
                     type: string
                 required:
                 - description
-                - environmentScope
-                - hidden
                 - key
                 - masked
                 - protected

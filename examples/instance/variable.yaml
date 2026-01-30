@@ -1,0 +1,17 @@
+apiVersion: instance.gitlab.m.crossplane.io/v1alpha1
+kind: Variable
+metadata:
+  name: custom-ssl-cert
+  namespace: default
+spec:
+  forProvider:
+    variableType: file
+    key: SSL_CERT_FILE
+    description: "Path to my self signed SSL certificate file"
+    masked: false
+    protected: false
+    raw: false
+    value: /path/to/certfile.pem
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig

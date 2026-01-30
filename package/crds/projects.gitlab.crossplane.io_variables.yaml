@@ -31,8 +31,9 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A Variable is a managed resource that represents a Gitlab CI
-          variable.
+        description: |-
+          A Variable is a managed resource that represents a Gitlab CI variable.
+          WARNING: this does not support hidden variables as Gitlab API does not return their values.
         properties:
           apiVersion:
             description: |-
@@ -71,17 +72,23 @@ spec:
                 - Delete
                 type: string
               forProvider:
-                description: |-
-                  VariableParameters define the desired state of a Gitlab CI Variable
-                  https://docs.gitlab.com/ee/api/project_level_variables.html
+                description: ForProvider specifies the desired state of the Variable
                 properties:
+                  description:
+                    description: |-
+                      The description of the variable. Maximum of 255 characters.
+                      This feature is available in GitLab 16.2 and above.
+                    maxLength: 255
+                    type: string
                   environmentScope:
                     description: |-
                       EnvironmentScope indicates the environment scope
                       that this variable is applied to.
                     type: string
                   key:
-                    description: Key for the variable.
+                    description: |-
+                      Key of a variable.
+                      If the key already exists, the existing variable will be updated instead of creating a new one.
                     maxLength: 255
                     pattern: ^[a-zA-Z0-9\_]+$
                     type: string
@@ -176,7 +183,8 @@ spec:
                     description: Raw disables variable expansion of the variable.
                     type: boolean
                   value:
-                    description: Value for the variable. Mutually exclusive with ValueSecretRef.
+                    description: Value of a variable. Mutually exclusive with ValueSecretRef.
+                    maxLength: 10000
                     type: string
                   valueSecretRef:
                     description: |-
@@ -199,7 +207,7 @@ spec:
                     - namespace
                     type: object
                   variableType:
-                    description: VariableType is the type of the variable.
+                    description: VariableType is the type of a variable.
                     enum:
                     - env_var
                     - file
@@ -298,6 +306,41 @@ spec:
               A VariableStatus represents the observed state of a Gitlab Project CI
               Variable.
             properties:
+              atProvider:
+                description: AtProvider reflects the observed state of a Gitlab Variable.
+                properties:
+                  description:
+                    description: The description of the variable. Maximum of 255 characters.
+                    type: string
+                  environmentScope:
+                    type: string
+                  hidden:
+                    type: boolean
+                  key:
+                    description: Key of a variable.
+                    type: string
+                  masked:
+                    description: Masked enables or disables variable masking.
+                    type: boolean
+                  protected:
+                    description: Protected enables or disables variable protection.
+                    type: boolean
+                  raw:
+                    description: Raw disables variable expansion of the variable.
+                    type: boolean
+                  variableType:
+                    description: VariableType is the type of a variable.
+                    type: string
+                required:
+                - description
+                - environmentScope
+                - hidden
+                - key
+                - masked
+                - protected
+                - raw
+                - variableType
+                type: object
               conditions:
                 description: Conditions of the resource.
                 items:

@@ -26,7 +26,7 @@ import (
 )
 
 // VariableParameters define the desired state of a Gitlab CI Variable
-// https://docs.gitlab.com/ee/api/project_level_variables.html
+// https://docs.gitlab.com/api/instance_level_ci_variables/
 type VariableParameters struct {
 	v1alpha1.CommonVariableParameters `json:",inline"`
 
@@ -35,43 +35,21 @@ type VariableParameters struct {
 	// +optional
 	// +nullable
 	ValueSecretRef *xpv1.LocalSecretKeySelector `json:"valueSecretRef,omitempty"`
-
-	// ProjectID is the ID of the project to create the variable on.
-	// +optional
-	// +immutable
-	ProjectID *int64 `json:"projectId,omitempty"`
-
-	// ProjectIDRef is a reference to a project to retrieve its projectId.
-	// +optional
-	// +immutable
-	ProjectIDRef *xpv1.NamespacedReference `json:"projectIdRef,omitempty"`
-
-	// ProjectIDSelector selects reference to a project to retrieve its projectId.
-	// +optional
-	ProjectIDSelector *xpv1.NamespacedSelector `json:"projectIdSelector,omitempty"`
-
-	// EnvironmentScope indicates the environment scope
-	// that this variable is applied to.
-	// +optional
-	EnvironmentScope *string `json:"environmentScope,omitempty"`
 }
 
 // VariableObservation represents the observed state of a Gitlab CI Variable.
 type VariableObservation struct {
 	v1alpha1.CommonVariableObservation `json:",inline"`
-	EnvironmentScope                   string `json:"environmentScope"`
-	Hidden                             bool   `json:"hidden"`
 }
 
-// A VariableSpec defines the desired state of a Gitlab Project CI
+// A VariableSpec defines the desired state of a Gitlab Group CI
 // Variable.
 type VariableSpec struct {
 	xpv2.ManagedResourceSpec `json:",inline"`
-	// ForProvider specifies the desired state of the Variable
-	ForProvider VariableParameters `json:"forProvider"`
+	ForProvider              VariableParameters `json:"forProvider"`
 }
 
-// A VariableStatus represents the observed state of a Gitlab Project CI
+// A VariableStatus represents the observed state of a Gitlab Group CI
 // Variable.
 type VariableStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
@@ -82,7 +60,6 @@ type VariableStatus struct {
 // +kubebuilder:object:root=true
 
 // A Variable is a managed resource that represents a Gitlab CI variable.
-// WARNING: this does not support hidden variables as Gitlab API does not return their values.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
