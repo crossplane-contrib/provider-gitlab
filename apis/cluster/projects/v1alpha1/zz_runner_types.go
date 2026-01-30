@@ -84,7 +84,7 @@ type RunnerProject struct {
 	// NameWithNamespace is the full name of the project including its namespace.
 	// This follows the format "namespace/project-name".
 	// +optional
-	NameWithNamespace string `json:"name_with_namespace"`
+	NameWithNamespace string `json:"nameWithNamespace"`
 
 	// Path is the URL path segment for the project.
 	// +optional
@@ -93,7 +93,7 @@ type RunnerProject struct {
 	// PathWithNamespace is the full path of the project including its namespace.
 	// This follows the format "namespace/project-path" and is used in URLs.
 	// +optional
-	PathWithNamespace string `json:"path_with_namespace"`
+	PathWithNamespace string `json:"pathWithNamespace"`
 }
 
 // RunnerSpec defines the desired state of a project Runner.

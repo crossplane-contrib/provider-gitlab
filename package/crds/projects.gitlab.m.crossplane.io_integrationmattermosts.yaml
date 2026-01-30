@@ -4,7 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: hooks.projects.gitlab.m.crossplane.io
+  name: integrationmattermosts.projects.gitlab.m.crossplane.io
 spec:
   group: projects.gitlab.m.crossplane.io
   names:
@@ -12,10 +12,10 @@ spec:
     - crossplane
     - managed
     - gitlab
-    kind: Hook
-    listKind: HookList
-    plural: hooks
-    singular: hook
+    kind: IntegrationMattermost
+    listKind: IntegrationMattermostList
+    plural: integrationmattermosts
+    singular: integrationmattermost
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -28,11 +28,17 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
+    - jsonPath: .spec.forProvider.branchName
+      name: BRANCH
+      type: string
+    - jsonPath: .spec.forProvider.projectId
+      name: PROJECT
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A Hook is a managed resource that represents a Gitlab Project
-          Hook
+        description: A IntegrationMattermost is a managed resource that represents
+          a GitLab Project Mattermost Integration
         properties:
           apiVersion:
             description: |-
@@ -52,40 +58,70 @@ spec:
           metadata:
             type: object
           spec:
-            description: A HookSpec defines the desired state of a Gitlab Project
-              Hook.
+            description: A IntegrationMattermostSpec defines the desired state of
+              a GitLab Project Mattermost Integration.
             properties:
               forProvider:
-                description: HookParameters defines the desired state of a Gitlab
-                  Project Hook.
+                description: ForProvider represents the desired state of the mattermost
+                  integration
                 properties:
+                  branchesToBeNotified:
+                    description: Branches to send notifications for. Valid options
+                      are all, default, protected, and default_and_protected. The
+                      default value is default.
+                    enum:
+                    - all
+                    - default
+                    - protected
+                    - default_and_protected
+                    type: string
+                  channel:
+                    description: Default channel to use if no other channel is configured.
+                    type: string
+                  confidentialIssueChannel:
+                    description: The name of the channel to receive notifications
+                      for confidential issue events.
+                    type: string
                   confidentialIssuesEvents:
-                    description: ConfidentialIssuesEvents triggers hook on confidential
-                      issues events.
+                    description: Enable notifications for confidential issue events.
                     type: boolean
+                  confidentialNoteChannel:
+                    description: Enable notifications for confidential note events.
+                    type: string
                   confidentialNoteEvents:
-                    description: ConfidentialNoteEvents triggers hook on confidential
-                      issues events.
+                    description: The name of the channel to receive notifications
+                      for confidential note events.
                     type: boolean
-                  enableSslVerification:
-                    description: EnableSSLVerification enables SSL verification when
-                      triggering the hook.
-                    type: boolean
+                  issueChannel:
+                    description: The name of the channel to receive notifications
+                      for issue events.
+                    type: string
                   issuesEvents:
-                    description: IssuesEvents triggers hook on issues events.
+                    description: Enable notifications for issue events.
                     type: boolean
-                  jobEvents:
-                    description: JobEvents triggers hook on job events.
-                    type: boolean
+                  mergeRequestChannel:
+                    description: The name of the channel to receive notifications
+                      for merge request events.
+                    type: string
                   mergeRequestsEvents:
-                    description: MergeRequestsEvents triggers hook on merge requests
-                      events.
+                    description: Enable notifications for merge request events.
                     type: boolean
+                  noteChannel:
+                    description: The name of the channel to receive notifications
+                      for note events.
+                    type: string
                   noteEvents:
-                    description: NoteEvents triggers hook on note events.
+                    description: Enable notifications for note events.
                     type: boolean
+                  notifyOnlyBrokenPipelines:
+                    description: Send notifications for broken pipelines.
+                    type: boolean
+                  pipelineChannel:
+                    description: The name of the channel to receive notifications
+                      for pipeline events.
+                    type: string
                   pipelineEvents:
-                    description: PipelineEvents triggers hook on pipeline events.
+                    description: Enable notifications for pipeline events.
                     type: boolean
                   projectId:
                     description: ProjectID is the ID of the project.
@@ -173,45 +209,37 @@ spec:
                             type: string
                         type: object
                     type: object
+                  pushChannel:
+                    description: The name of the channel to receive notifications
+                      for push events.
+                    type: string
                   pushEvents:
-                    description: PushEvents triggers hook on push events.
+                    description: "\tEnable notifications for push events."
                     type: boolean
-                  pushEventsBranchFilter:
-                    description: PushEventsBranchFilter triggers hook on push events
-                      for matching branches only.
+                  tagPushChannel:
+                    description: The name of the channel to receive notifications
+                      for tag push events.
                     type: string
                   tagPushEvents:
-                    description: TagPushEvents triggers hook on tag push events.
+                    description: Enable notifications for tag push events.
                     type: boolean
-                  token:
-                    description: Token is the secret token to validate received payloads.
-                    properties:
-                      secretRef:
-                        description: |-
-                          A LocalSecretKeySelector is a reference to a secret key
-                          in the same namespace with the referencing object.
-                        properties:
-                          key:
-                            type: string
-                          name:
-                            description: Name of the secret.
-                            type: string
-                        required:
-                        - key
-                        - name
-                        type: object
-                    required:
-                    - secretRef
-                    type: object
-                  url:
-                    description: URL is the hook URL.
+                  username:
+                    description: Mattermost notifications username.
+                    type: string
+                  webhook:
+                    description: |-
+                      Mattermost notifications webhook (for example, http://mattermost.example.com/hooks/...).
+                      WARNING: This field is NOT reconciled as the GitLab API does not return it as it is a write-only field.
+                    type: string
+                  wikiPageChannel:
+                    description: The name of the channel to receive notifications
+                      for wiki page events.
                     type: string
                   wikiPageEvents:
-                    description: WikiPageEvents triggers hook on wiki events.
+                    description: Enable notifications for wiki page events.
                     type: boolean
                 required:
-                - token
-                - url
+                - webhook
                 type: object
               managementPolicies:
                 default:
@@ -272,25 +300,131 @@ spec:
             - forProvider
             type: object
           status:
-            description: A HookStatus represents the observed state of a Gitlab Project
-              Hook.
+            description: A IntegrationMattermostStatus represents the observed state
+              of a GitLab Project Mattermost Integration.
             properties:
               atProvider:
-                description: |-
-                  HookObservation represents a project hook.
-
-                  GitLab API docs:
-                  https://docs.gitlab.com/ce/api/projects.html#list-project-hooks
+                description: AtProvider represents the observed state of the mattermost
+                  integration
                 properties:
+                  active:
+                    type: boolean
+                  alertEvents:
+                    type: boolean
+                  branchesToBeNotified:
+                    description: Branches to send notifications for. Valid options
+                      are all, default, protected, and default_and_protected. The
+                      default value is default.
+                    type: string
+                  channel:
+                    description: Default channel to use if no other channel is configured.
+                    type: string
+                  commentOnEventEnabled:
+                    type: boolean
+                  commitEvents:
+                    type: boolean
+                  confidentialIssueChannel:
+                    description: Channel to use for confidential issues events.
+                    type: string
+                  confidentialIssuesEvents:
+                    type: boolean
+                  confidentialNoteChannel:
+                    description: Channel to use for confidential notes events.
+                    type: string
+                  confidentialNoteEvents:
+                    type: boolean
                   createdAt:
-                    description: CreatedAt specifies the time the project hook was
-                      created
                     format: date-time
                     type: string
+                  deploymentEvents:
+                    type: boolean
+                  groupConfidentialMentionEvents:
+                    type: boolean
+                  groupMentionEvents:
+                    type: boolean
                   id:
-                    description: ID of the project hook at gitlab
                     format: int64
                     type: integer
+                  incidentEvents:
+                    type: boolean
+                  inherited:
+                    type: boolean
+                  issueChannel:
+                    description: Channel to use for issue events.
+                    type: string
+                  issuesEvents:
+                    type: boolean
+                  jobEvents:
+                    type: boolean
+                  mergeRequestChannel:
+                    description: Channel to use for merge request events.
+                    type: string
+                  mergeRequestsEvents:
+                    type: boolean
+                  noteChannel:
+                    description: Channel to use for note events.
+                    type: string
+                  noteEvents:
+                    type: boolean
+                  notifyOnlyBrokenPipelines:
+                    description: Send notifications for broken pipelines.
+                    type: boolean
+                  pipelineChannel:
+                    description: Channel to use for pipeline events.
+                    type: string
+                  pipelineEvents:
+                    type: boolean
+                  pushChannel:
+                    description: Channel to use for push events.
+                    type: string
+                  pushEvents:
+                    type: boolean
+                  slug:
+                    type: string
+                  tagPushChannel:
+                    description: Channel to use for tag push events.
+                    type: string
+                  tagPushEvents:
+                    type: boolean
+                  title:
+                    type: string
+                  updatedAt:
+                    format: date-time
+                    type: string
+                  username:
+                    description: Mattermost notifications username.
+                    type: string
+                  vulnerabilityChannel:
+                    description: Channel to use for vulnerability events.
+                    type: string
+                  vulnerabilityEvents:
+                    type: boolean
+                  webhook:
+                    description: |-
+                      Mattermost notifications webhook (for example, http://mattermost.example.com/hooks/...).
+                      This field is not returned by GitLab API for security reasons. So it will always be empty in the observation.
+                    type: string
+                  wikiPageChannel:
+                    description: Channel to use for wiki page events.
+                    type: string
+                  wikiPageEvents:
+                    type: boolean
+                required:
+                - branchesToBeNotified
+                - channel
+                - confidentialIssueChannel
+                - confidentialNoteChannel
+                - issueChannel
+                - mergeRequestChannel
+                - noteChannel
+                - notifyOnlyBrokenPipelines
+                - pipelineChannel
+                - pushChannel
+                - tagPushChannel
+                - username
+                - vulnerabilityChannel
+                - webhook
+                - wikiPageChannel
                 type: object
               conditions:
                 description: Conditions of the resource.

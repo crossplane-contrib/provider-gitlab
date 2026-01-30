@@ -1,0 +1,126 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package projects
+
+import (
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+// MattermostClient is the interface for Gitlab Mattermost service (interface for mattermost integration)
+type MattermostClient interface {
+	GetMattermostService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
+	SetMattermostService(pid any, opt *gitlab.SetMattermostServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
+	DeleteMattermostService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// NewMattermostClient returns a new Gitlab Mattermost service
+func NewMattermostClient(cfg common.Config) MattermostClient {
+	git := common.NewClient(cfg)
+	return git.Services
+}
+
+// GenerateSetMattermostServiceOptions generates gitlab.SetMattermostServiceOptions from a IntegrationMattermostParameters
+func GenerateSetMattermostServiceOptions(in *v1alpha1.IntegrationMattermostParameters) *gitlab.SetMattermostServiceOptions {
+	if in == nil {
+		return &gitlab.SetMattermostServiceOptions{}
+	}
+
+	options := gitlab.SetMattermostServiceOptions{
+		WebHook:                   &in.WebHook,
+		Username:                  in.Username,
+		Channel:                   in.Channel,
+		NotifyOnlyBrokenPipelines: in.NotifyOnlyBrokenPipelines,
+		BranchesToBeNotified:      in.BranchesToBeNotified,
+		PushEvents:                in.PushEvents,
+		IssuesEvents:              in.IssuesEvents,
+		ConfidentialIssuesEvents:  in.ConfidentialIssuesEvents,
+		MergeRequestsEvents:       in.MergeRequestsEvents,
+		TagPushEvents:             in.TagPushEvents,
+		NoteEvents:                in.NoteEvents,
+		ConfidentialNoteEvents:    in.ConfidentialNoteEvents,
+		PipelineEvents:            in.PipelineEvents,
+		WikiPageEvents:            in.WikiPageEvents,
+		PushChannel:               in.PushChannel,
+		IssueChannel:              in.IssueChannel,
+		ConfidentialIssueChannel:  in.ConfidentialIssueChannel,
+		MergeRequestChannel:       in.MergeRequestChannel,
+		NoteChannel:               in.NoteChannel,
+		ConfidentialNoteChannel:   in.ConfidentialNoteChannel,
+		TagPushChannel:            in.TagPushChannel,
+		PipelineChannel:           in.PipelineChannel,
+		WikiPageChannel:           in.WikiPageChannel,
+	}
+
+	return &options
+}
+
+// GenerateIntegrationMattermostObservation generates a IntegrationMattermostObservation from a gitlab.MattermostService
+func GenerateIntegrationMattermostObservation(observation *gitlab.MattermostService) v1alpha1.IntegrationMattermostObservation {
+	commonObservation := common.GenerateCommonIntegrationObservation(&observation.Service)
+
+	return v1alpha1.IntegrationMattermostObservation{
+		CommonIntegrationObservation: commonObservation,
+		WebHook:                      observation.Properties.WebHook,
+		Username:                     observation.Properties.Username,
+		Channel:                      observation.Properties.Channel,
+		NotifyOnlyBrokenPipelines:    bool(observation.Properties.NotifyOnlyBrokenPipelines),
+		BranchesToBeNotified:         observation.Properties.BranchesToBeNotified,
+		ConfidentialIssueChannel:     observation.Properties.ConfidentialIssueChannel,
+		ConfidentialNoteChannel:      observation.Properties.ConfidentialNoteChannel,
+		IssueChannel:                 observation.Properties.IssueChannel,
+		MergeRequestChannel:          observation.Properties.MergeRequestChannel,
+		NoteChannel:                  observation.Properties.NoteChannel,
+		TagPushChannel:               observation.Properties.TagPushChannel,
+		PipelineChannel:              observation.Properties.PipelineChannel,
+		PushChannel:                  observation.Properties.PushChannel,
+		VulnerabilityChannel:         observation.Properties.VulnerabilityChannel,
+		WikiPageChannel:              observation.Properties.WikiPageChannel,
+	}
+}
+
+// IsIntegrationMattermostUpToDate checks whether the IntegrationMattermostParameters is up to date with IntegrationMattermostObservation
+// Note: WebHook field is intentionally excluded from comparison because GitLab API does not
+// return webhook URLs for security reasons (they are write-only). Comparing WebHook would
+// cause infinite reconciliation loops.
+func IsIntegrationMattermostUpToDate(spec *v1alpha1.IntegrationMattermostParameters, observation *gitlab.MattermostService) bool { //nolint:gocyclo
+	return clients.IsComparableEqualToComparablePtr(spec.Username, observation.Properties.Username) &&
+		clients.IsComparableEqualToComparablePtr(spec.Channel, observation.Properties.Channel) &&
+		clients.IsComparableEqualToComparablePtr(spec.NotifyOnlyBrokenPipelines, bool(observation.Properties.NotifyOnlyBrokenPipelines)) &&
+		clients.IsComparableEqualToComparablePtr(spec.BranchesToBeNotified, observation.Properties.BranchesToBeNotified) &&
+		clients.IsComparableEqualToComparablePtr(spec.PushEvents, observation.PushEvents) &&
+		clients.IsComparableEqualToComparablePtr(spec.IssuesEvents, observation.IssuesEvents) &&
+		clients.IsComparableEqualToComparablePtr(spec.ConfidentialIssuesEvents, observation.ConfidentialIssuesEvents) &&
+		clients.IsComparableEqualToComparablePtr(spec.MergeRequestsEvents, observation.MergeRequestsEvents) &&
+		clients.IsComparableEqualToComparablePtr(spec.TagPushEvents, observation.TagPushEvents) &&
+		clients.IsComparableEqualToComparablePtr(spec.NoteEvents, observation.NoteEvents) &&
+		clients.IsComparableEqualToComparablePtr(spec.ConfidentialNoteEvents, observation.ConfidentialNoteEvents) &&
+		clients.IsComparableEqualToComparablePtr(spec.PipelineEvents, observation.PipelineEvents) &&
+		clients.IsComparableEqualToComparablePtr(spec.WikiPageEvents, observation.WikiPageEvents) &&
+		clients.IsComparableEqualToComparablePtr(spec.PushChannel, observation.Properties.PushChannel) &&
+		clients.IsComparableEqualToComparablePtr(spec.IssueChannel, observation.Properties.IssueChannel) &&
+		clients.IsComparableEqualToComparablePtr(spec.ConfidentialIssueChannel, observation.Properties.ConfidentialIssueChannel) &&
+		clients.IsComparableEqualToComparablePtr(spec.MergeRequestChannel, observation.Properties.MergeRequestChannel) &&
+		clients.IsComparableEqualToComparablePtr(spec.NoteChannel, observation.Properties.NoteChannel) &&
+		clients.IsComparableEqualToComparablePtr(spec.ConfidentialNoteChannel, observation.Properties.ConfidentialNoteChannel) &&
+		clients.IsComparableEqualToComparablePtr(spec.TagPushChannel, observation.Properties.TagPushChannel) &&
+		clients.IsComparableEqualToComparablePtr(spec.PipelineChannel, observation.Properties.PipelineChannel) &&
+		clients.IsComparableEqualToComparablePtr(spec.WikiPageChannel, observation.Properties.WikiPageChannel)
+}

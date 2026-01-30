@@ -1,0 +1,214 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package integrationmattermost
+
+import (
+	"context"
+
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects"
+)
+
+const (
+	errNotIntegrationMattermost = "managed resource is not a Gitlab integration mattermost custom resource"
+	errGetFailed                = "cannot get Gitlab integration mattermost"
+	errCreateFailed             = "cannot create Gitlab integration mattermost"
+	errUpdateFailed             = "cannot update Gitlab integration mattermost"
+	errDeleteFailed             = "cannot delete Gitlab integration mattermost"
+)
+
+// SetupIntegrationMattermost adds a controller that reconciles GitLab Integration Mattermost.
+func SetupIntegrationMattermost(mgr ctrl.Manager, o controller.Options) error {
+	name := managed.ControllerName(v1alpha1.IntegrationMattermostGroupKind)
+
+	reconcilerOpts := []managed.ReconcilerOption{
+		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewMattermostClient}),
+		managed.WithInitializers(),
+		managed.WithPollInterval(o.PollInterval),
+		managed.WithLogger(o.Logger.WithValues("controller", name)),
+		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
+	}
+
+	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
+		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
+	}
+
+	r := managed.NewReconciler(mgr,
+		resource.ManagedKind(v1alpha1.IntegrationMattermostGroupVersionKind),
+		reconcilerOpts...)
+
+	if err := mgr.Add(statemetrics.NewMRStateRecorder(
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.IntegrationMattermostList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		return err
+	}
+
+	return ctrl.NewControllerManagedBy(mgr).
+		Named(name).
+		For(&v1alpha1.IntegrationMattermost{}).
+		Complete(r)
+}
+
+// SetupIntegrationMattermostGated adds a controller with CRD gate support.
+func SetupIntegrationMattermostGated(mgr ctrl.Manager, o controller.Options) error {
+	o.Gate.Register(func() {
+		if err := SetupIntegrationMattermost(mgr, o); err != nil {
+			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.IntegrationMattermostGroupVersionKind.String())
+		}
+	}, v1alpha1.IntegrationMattermostGroupVersionKind)
+	return nil
+}
+
+// connector is responsible for producing an ExternalClient for Gitlab Integration Mattermost.
+type connector struct {
+	kube              client.Client
+	newGitlabClientFn func(cfg common.Config) projects.MattermostClient
+}
+
+// Connect creates a new Gitlab client for the given managed resource.
+// It fetches the provider configuration and uses it to instantiate the client.
+func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
+	cr, ok := mg.(*v1alpha1.IntegrationMattermost)
+	if !ok {
+		return nil, errors.New(errNotIntegrationMattermost)
+	}
+	cfg, err := common.GetConfig(ctx, c.kube, cr)
+	if err != nil {
+		return nil, err
+	}
+	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
+}
+
+// external represents the external client for Gitlab Integration Mattermost.
+type external struct {
+	kube   client.Client
+	client projects.MattermostClient
+}
+
+// applies desired configuration of Mattermost to the project
+func (e *external) applyMattermost(ctx context.Context, cr *v1alpha1.IntegrationMattermost) error {
+	_, _, err := e.client.SetMattermostService(
+		*cr.Spec.ForProvider.ProjectID,
+		projects.GenerateSetMattermostServiceOptions(&cr.Spec.ForProvider),
+		gitlab.WithContext(ctx),
+	)
+	return err
+}
+
+// Observe checks if the Gitlab Integration Mattermost external resource exists and
+// if it is up to date.
+func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+	cr, ok := mg.(*v1alpha1.IntegrationMattermost)
+	if !ok {
+		return managed.ExternalObservation{}, errors.New(errNotIntegrationMattermost)
+	}
+
+	// If the resource is being deleted, return early to avoid updating status
+	if meta.WasDeleted(cr) {
+		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
+
+	mattermost, res, err := e.client.GetMattermostService(
+		*cr.Spec.ForProvider.ProjectID,
+		gitlab.WithContext(ctx),
+	)
+	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
+	}
+
+	cr.Status.AtProvider = projects.GenerateIntegrationMattermostObservation(mattermost)
+	cr.Status.SetConditions(xpv1.Available())
+
+	return managed.ExternalObservation{
+		ResourceExists:          true,
+		ResourceUpToDate:        projects.IsIntegrationMattermostUpToDate(&cr.Spec.ForProvider, mattermost),
+		ResourceLateInitialized: false,
+	}, nil
+}
+
+// Create creates the external resource for Gitlab Integration Mattermost.
+// Upon creation, Gitlab Integration Mattermost cannot be uniquely identified,
+// so we simply call SetMattermostService with the desired parameters.
+func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
+	cr, ok := mg.(*v1alpha1.IntegrationMattermost)
+	if !ok {
+		return managed.ExternalCreation{}, errors.New(errNotIntegrationMattermost)
+	}
+	cr.Status.SetConditions(xpv1.Creating())
+
+	if err := e.applyMattermost(ctx, cr); err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
+	}
+	return managed.ExternalCreation{}, nil
+}
+
+// Update updates the external resource to match the desired state.
+// As Gitlab Integration Mattermost cannot be uniquely identified, we simply call
+// SetMattermostService with the desired parameters.
+func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
+	cr, ok := mg.(*v1alpha1.IntegrationMattermost)
+	if !ok {
+		return managed.ExternalUpdate{}, errors.New(errNotIntegrationMattermost)
+	}
+
+	cr.Status.SetConditions(xpv1.Creating())
+
+	if err := e.applyMattermost(ctx, cr); err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	}
+
+	return managed.ExternalUpdate{}, nil
+}
+
+// Delete removes the integration mattermost resource.
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+	cr, ok := mg.(*v1alpha1.IntegrationMattermost)
+	if !ok {
+		return managed.ExternalDelete{}, errors.New(errNotIntegrationMattermost)
+	}
+
+	_, err := e.client.DeleteMattermostService(
+		*cr.Spec.ForProvider.ProjectID,
+		gitlab.WithContext(ctx))
+	if err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+	}
+
+	return managed.ExternalDelete{}, nil
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
+}
