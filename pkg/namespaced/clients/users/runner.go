@@ -56,15 +56,7 @@ func GenerateInstanceRunnerOptions(p *instancev1alpha1.RunnerParameters) *gitlab
 func GenerateGroupRunnerOptions(p *groupsv1alpha1.RunnerParameters) *gitlab.CreateUserRunnerOptions {
 	opts := generateCommonRunnerOptions(&p.CommonRunnerParameters)
 
-<<<<<<< HEAD
 	opts.GroupID = p.GroupID
-=======
-	if p.GroupID != nil {
-		groupID := int64(*p.GroupID)
-		opts.GroupID = &groupID
-	}
-
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 	opts.RunnerType = &groupRunnerType
 
 	return opts
@@ -74,15 +66,7 @@ func GenerateGroupRunnerOptions(p *groupsv1alpha1.RunnerParameters) *gitlab.Crea
 func GenerateProjectRunnerOptions(p *projectsv1alpha1.RunnerParameters) *gitlab.CreateUserRunnerOptions {
 	opts := generateCommonRunnerOptions(&p.CommonRunnerParameters)
 
-<<<<<<< HEAD
 	opts.ProjectID = p.ProjectID
-=======
-	if p.ProjectID != nil {
-		projectID := int64(*p.ProjectID)
-		opts.ProjectID = &projectID
-	}
-
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 	opts.RunnerType = &projectRunnerType
 
 	return opts
@@ -90,7 +74,7 @@ func GenerateProjectRunnerOptions(p *projectsv1alpha1.RunnerParameters) *gitlab.
 
 // generateCommonRunnerOptions generates user runner creation options common to all runner types
 func generateCommonRunnerOptions(p *commonv1alpha1.CommonRunnerParameters) *gitlab.CreateUserRunnerOptions {
-	opts := &gitlab.CreateUserRunnerOptions{
+	return &gitlab.CreateUserRunnerOptions{
 		Description:     p.Description,
 		Paused:          p.Paused,
 		Locked:          p.Locked,
@@ -100,9 +84,4 @@ func generateCommonRunnerOptions(p *commonv1alpha1.CommonRunnerParameters) *gitl
 		MaintenanceNote: p.MaintenanceNote,
 		MaximumTimeout:  p.MaximumTimeout,
 	}
-	if p.MaximumTimeout != nil {
-		maxTimeout := int64(*p.MaximumTimeout)
-		opts.MaximumTimeout = &maxTimeout
-	}
-	return opts
 }

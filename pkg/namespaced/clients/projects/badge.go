@@ -74,7 +74,7 @@ func GenerateEditProjectBadgeOptions(p *v1alpha1.BadgeParameters) *gitlab.EditPr
 // GenerateBadgeObservation generates v1alpha1 observation from Gitlab ProjectBadge
 func GenerateBadgeObservation(b *gitlab.ProjectBadge) v1alpha1.BadgeObservation {
 	return v1alpha1.BadgeObservation{
-		ID:               int(b.ID),
+		ID:               b.ID,
 		LinkURL:          b.LinkURL,
 		RenderedLinkURL:  b.RenderedLinkURL,
 		ImageURL:         b.ImageURL,

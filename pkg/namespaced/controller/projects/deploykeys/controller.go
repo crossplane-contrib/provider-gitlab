@@ -141,15 +141,9 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	isLateInitialized := !cmp.Equal(currentState, &cr.Spec.ForProvider)
 
 	cr.Status.AtProvider = v1alpha1.DeployKeyObservation{
-<<<<<<< HEAD
 		ID: func() *int64 {
 			if dk.ID != 0 {
 				v := dk.ID
-=======
-		ID: func() *int {
-			if dk.ID != 0 {
-				v := int(dk.ID)
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 				return &v
 			}
 			return nil
@@ -192,11 +186,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFail)
 	}
 
-<<<<<<< HEAD
 	id := strconv.FormatInt(keyResponse.ID, 10)
-=======
-	id := strconv.FormatInt(int64(keyResponse.ID), 10)
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 	meta.SetExternalName(cr, id)
 
 	return managed.ExternalCreation{}, nil

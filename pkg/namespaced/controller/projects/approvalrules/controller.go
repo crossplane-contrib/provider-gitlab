@@ -234,10 +234,6 @@ func (e *external) Disconnect(ctx context.Context) error {
 }
 
 func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.ApprovalRule, approvalRule *gitlab.ProjectApprovalRule) error {
-<<<<<<< HEAD
 	meta.SetExternalName(cr, strconv.FormatInt(approvalRule.ID, 10))
-=======
-	meta.SetExternalName(cr, strconv.FormatInt(int64(approvalRule.ID), 10))
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 	return e.kube.Update(ctx, cr)
 }

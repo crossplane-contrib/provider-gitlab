@@ -65,7 +65,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 	}
 
 	o := v1alpha1.ProjectObservation{
-		ID:                       int(prj.ID),
+		ID:                       prj.ID,
 		Public:                   prj.PublicJobs,
 		SSHURLToRepo:             prj.SSHURLToRepo,
 		HTTPURLToRepo:            prj.HTTPURLToRepo,
@@ -75,7 +75,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 		PathWithNamespace:        prj.PathWithNamespace,
 		IssuesEnabled:            prj.IssuesEnabled, //nolint:staticcheck
 		IssuesAccessLevel:        v1alpha1.AccessControlValue(prj.IssuesAccessLevel),
-		OpenIssuesCount:          int(prj.OpenIssuesCount),
+		OpenIssuesCount:          prj.OpenIssuesCount,
 		MergeRequestsEnabled:     prj.MergeRequestsEnabled, //nolint:staticcheck
 		MergeRequestsAccessLevel: v1alpha1.AccessControlValue(prj.MergeRequestsAccessLevel),
 		JobsEnabled:              prj.JobsEnabled, //nolint:staticcheck
@@ -84,12 +84,12 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 		WikiAccessLevel:          v1alpha1.AccessControlValue(prj.WikiAccessLevel),
 		SnippetsEnabled:          prj.SnippetsEnabled, //nolint:staticcheck
 		SnippetsAccessLevel:      v1alpha1.AccessControlValue(prj.SnippetsAccessLevel),
-		CreatorID:                int(prj.CreatorID),
+		CreatorID:                prj.CreatorID,
 		ImportStatus:             prj.ImportStatus,
 		ImportError:              prj.ImportError,
 		Archived:                 prj.Archived,
-		ForksCount:               int(prj.ForksCount),
-		StarCount:                int(prj.StarCount),
+		ForksCount:               prj.ForksCount,
+		StarCount:                prj.StarCount,
 		EmptyRepo:                prj.EmptyRepo,
 		AvatarURL:                prj.AvatarURL,
 		LicenseURL:               prj.LicenseURL,
@@ -99,7 +99,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 	if prj.ContainerExpirationPolicy != nil {
 		o.ContainerExpirationPolicy = &v1alpha1.ContainerExpirationPolicy{
 			Cadence:         prj.ContainerExpirationPolicy.Cadence,
-			KeepN:           int(prj.ContainerExpirationPolicy.KeepN),
+			KeepN:           prj.ContainerExpirationPolicy.KeepN,
 			OlderThan:       prj.ContainerExpirationPolicy.OlderThan,
 			NameRegexDelete: prj.ContainerExpirationPolicy.NameRegexDelete,
 			NameRegexKeep:   prj.ContainerExpirationPolicy.NameRegexKeep,
@@ -169,16 +169,16 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 	if len(o.SharedWithGroups) == 0 && len(prj.SharedWithGroups) > 0 {
 		o.SharedWithGroups = make([]v1alpha1.SharedWithGroups, len(prj.SharedWithGroups))
 		for i, s := range prj.SharedWithGroups {
-			o.SharedWithGroups[i].GroupID = int(s.GroupID)
+			o.SharedWithGroups[i].GroupID = s.GroupID
 			o.SharedWithGroups[i].GroupName = s.GroupName
-			o.SharedWithGroups[i].GroupAccessLevel = int(s.GroupAccessLevel)
+			o.SharedWithGroups[i].GroupAccessLevel = s.GroupAccessLevel
 		}
 	}
 
 	if prj.ForkedFromProject != nil {
 		o.ForkedFromProject = &v1alpha1.ForkParent{
 			HTTPURLToRepo:     prj.ForkedFromProject.HTTPURLToRepo,
-			ID:                int(prj.ForkedFromProject.ID),
+			ID:                prj.ForkedFromProject.ID,
 			Name:              prj.ForkedFromProject.Name,
 			NameWithNamespace: prj.ForkedFromProject.NameWithNamespace,
 			Path:              prj.ForkedFromProject.Path,
@@ -205,7 +205,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 
 	if prj.Namespace != nil {
 		o.Namespace = &v1alpha1.ProjectNamespace{
-			ID:        int(prj.Namespace.ID),
+			ID:        prj.Namespace.ID,
 			Name:      prj.Namespace.Name,
 			Path:      prj.Namespace.Path,
 			Kind:      prj.Namespace.Kind,
@@ -225,7 +225,7 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 // GenerateOwnerObservation generates v1alpha.User from gitlab.User.
 func GenerateOwnerObservation(usr *gitlab.User) *v1alpha1.User {
 	o := &v1alpha1.User{
-		ID:                        int(usr.ID),
+		ID:                        usr.ID,
 		Username:                  usr.Username,
 		Email:                     usr.Email,
 		Name:                      usr.Name,
@@ -241,17 +241,17 @@ func GenerateOwnerObservation(usr *gitlab.User) *v1alpha1.User {
 		Organization:              usr.Organization,
 		ExternUID:                 usr.ExternUID,
 		Provider:                  usr.Provider,
-		ThemeID:                   int(usr.ThemeID),
-		ColorSchemeID:             int(usr.ColorSchemeID),
+		ThemeID:                   usr.ThemeID,
+		ColorSchemeID:             usr.ColorSchemeID,
 		IsAdmin:                   usr.IsAdmin,
 		AvatarURL:                 usr.AvatarURL,
 		CanCreateGroup:            usr.CanCreateGroup,
 		CanCreateProject:          usr.CanCreateProject,
-		ProjectsLimit:             int(usr.ProjectsLimit),
+		ProjectsLimit:             usr.ProjectsLimit,
 		TwoFactorEnabled:          usr.TwoFactorEnabled,
 		External:                  usr.External,
 		PrivateProfile:            usr.PrivateProfile,
-		SharedRunnersMinutesLimit: int(usr.SharedRunnersMinutesLimit),
+		SharedRunnersMinutesLimit: usr.SharedRunnersMinutesLimit,
 	}
 	if usr.CreatedAt != nil {
 		o.CreatedAt = &metav1.Time{Time: *usr.CreatedAt}
@@ -343,26 +343,11 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		TemplateName:                              p.TemplateName,
 		UseCustomTemplate:                         p.UseCustomTemplate,
 		PackagesEnabled:                           p.PackagesEnabled,
-	}
-	if p.NamespaceID != nil {
-		val := int64(*p.NamespaceID)
-		project.NamespaceID = &val
-	}
-	if p.BuildTimeout != nil {
-		val := int64(*p.BuildTimeout)
-		project.BuildTimeout = &val
-	}
-	if p.ApprovalsBeforeMerge != nil {
-		val := int64(*p.ApprovalsBeforeMerge)
-		project.ApprovalsBeforeMerge = &val
-	}
-	if p.TemplateProjectID != nil {
-		val := int64(*p.TemplateProjectID)
-		project.TemplateProjectID = &val
-	}
-	if p.GroupWithProjectTemplatesID != nil {
-		val := int64(*p.GroupWithProjectTemplatesID)
-		project.GroupWithProjectTemplatesID = &val
+		ServiceDeskEnabled:                        p.ServiceDeskEnabled,
+		AutocloseReferencedIssues:                 p.AutocloseReferencedIssues,
+		SuggestionCommitMessage:                   p.SuggestionCommitMessage,
+		IssuesTemplate:                            p.IssuesTemplate,
+		MergeRequestsTemplate:                     p.MergeRequestsTemplate,
 	}
 	project.NamespaceID = p.NamespaceID
 	project.BuildTimeout = p.BuildTimeout
@@ -432,7 +417,6 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		IssuesTemplate:                           p.IssuesTemplate,
 		MergeRequestsTemplate:                    p.MergeRequestsTemplate,
 	}
-<<<<<<< HEAD
 	o.BuildTimeout = p.BuildTimeout
 	o.CIDefaultGitDepth = p.CIDefaultGitDepth
 	if p.ApprovalsBeforeMerge != nil {
@@ -440,24 +424,6 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		o.ApprovalsBeforeMerge = val //nolint:staticcheck // SA1019 ApprovalsBeforeMerge is deprecated by GitLab API, will migrate to Merge Request Approvals API later
 	}
 	o.MirrorUserID = p.MirrorUserID
-=======
-	if p.BuildTimeout != nil {
-		val := int64(*p.BuildTimeout)
-		o.BuildTimeout = &val
-	}
-	if p.CIDefaultGitDepth != nil {
-		val := int64(*p.CIDefaultGitDepth)
-		o.CIDefaultGitDepth = &val
-	}
-	if p.ApprovalsBeforeMerge != nil {
-		val := int64(*p.ApprovalsBeforeMerge)
-		o.ApprovalsBeforeMerge = &val
-	}
-	if p.MirrorUserID != nil {
-		val := int64(*p.MirrorUserID)
-		o.MirrorUserID = &val
-	}
->>>>>>> 77c306d (feat: migrate CRD types from *int to *int64)
 	return o
 }
 
@@ -472,10 +438,7 @@ func GenerateEditPushRulesOptions(p *v1alpha1.ProjectParameters) *gitlab.EditPro
 		o.CommitMessageRegex = p.PushRules.CommitMessageRegex
 		o.DenyDeleteTag = p.PushRules.DenyDeleteTag
 		o.FileNameRegex = p.PushRules.FileNameRegex
-		if p.PushRules.MaxFileSize != nil {
-			val := int64(*p.PushRules.MaxFileSize)
-			o.MaxFileSize = &val
-		}
+		o.MaxFileSize = p.PushRules.MaxFileSize
 		o.MemberCheck = p.PushRules.MemberCheck
 		o.PreventSecrets = p.PushRules.PreventSecrets
 		o.RejectNonDCOCommits = p.PushRules.RejectNonDCOCommits

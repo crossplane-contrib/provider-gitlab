@@ -82,7 +82,7 @@ func ResolvePublicJobsSetting(publicBuilds, publicJobs *bool) (*bool, bool) {
 }
 
 // Int64ToIntPtr converts *int64 to *int for backwards compatibility
-// DEPRECATED: CRDs now use int64, this is only needed for legacy code
+// Deprecated: CRDs now use int64, this is only needed for legacy code
 func Int64ToIntPtr(v *int64) *int {
 	if v == nil {
 		return nil
@@ -92,7 +92,7 @@ func Int64ToIntPtr(v *int64) *int {
 }
 
 // IntPtrToInt64 converts *int to *int64 for GitLab SDK compatibility
-// DEPRECATED: CRDs now use int64 directly, no conversion needed
+// Deprecated: CRDs now use int64 directly, no conversion needed
 func IntPtrToInt64(v *int) *int64 {
 	if v == nil {
 		return nil

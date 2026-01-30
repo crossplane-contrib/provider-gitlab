@@ -126,7 +126,15 @@ var (
 	ProtectedBranchGroupVersionKind = SchemeGroupVersion.WithKind(ProtectedBranchKind)
 )
 
-// Integration Mattermost type metadata
+// Badge type metadata
+var (
+	BadgeKind             = reflect.TypeOf(Badge{}).Name()
+	BadgeGroupKind        = schema.GroupKind{Group: Group, Kind: BadgeKind}.String()
+	BadgeKindAPIVersion   = BadgeKind + "." + SchemeGroupVersion.String()
+	BadgeGroupVersionKind = SchemeGroupVersion.WithKind(BadgeKind)
+)
+
+// IntegrationMattermost type metadata
 var (
 	IntegrationMattermostKind             = reflect.TypeOf(IntegrationMattermost{}).Name()
 	IntegrationMattermostGroupKind        = schema.GroupKind{Group: Group, Kind: IntegrationMattermostKind}.String()
@@ -146,5 +154,8 @@ func init() {
 	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&ProtectedBranch{}, &ProtectedBranchList{})
+	SchemeBuilder.Register(&Badge{}, &BadgeList{})
+
+	// Mattermost
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
 }
