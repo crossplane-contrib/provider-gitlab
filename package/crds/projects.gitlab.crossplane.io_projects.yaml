@@ -139,7 +139,7 @@ spec:
                       keepN:
                         format: int64
                         type: integer
-                      nameRegex:
+                      name_regex:
                         description: Deprecated members
                         type: string
                       nameRegexDelete:
