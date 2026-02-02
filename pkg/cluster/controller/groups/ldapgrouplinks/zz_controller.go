@@ -134,31 +134,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(groups.IsErrorLdapGroupLinkNotFound, err), errGetFailed)
 	}
 
-	found := false
-	groupLink := &gitlab.LDAPGroupLink{}
-	for _, gl := range groupLinks {
-		// Match by provider AND (CN or Filter)
-		if gl.Provider != cr.Spec.ForProvider.LdapProvider {
-			continue
-		}
-		if cr.Spec.ForProvider.Filter != "" {
-			// Filter-based matching
-			if gl.Filter == cr.Spec.ForProvider.Filter {
-				groupLink = gl
-				found = true
-				break
-			}
-		} else {
-			// CN-based matching
-			if gl.CN == cr.Spec.ForProvider.CN {
-				groupLink = gl
-				found = true
-				break
-			}
-		}
-	}
-
-	if !found {
+	groupLink := findMatchingLdapGroupLink(groupLinks, &cr.Spec.ForProvider)
+	if groupLink == nil {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
@@ -170,6 +147,27 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		ResourceUpToDate:        isLdapGroupLinkUpToDate(&cr.Spec.ForProvider, groupLink),
 		ResourceLateInitialized: false,
 	}, nil
+}
+
+// findMatchingLdapGroupLink finds a matching LDAP group link by provider AND (CN or Filter).
+func findMatchingLdapGroupLink(groupLinks []*gitlab.LDAPGroupLink, p *v1alpha1.LdapGroupLinkParameters) *gitlab.LDAPGroupLink {
+	for _, gl := range groupLinks {
+		if gl.Provider != p.LdapProvider {
+			continue
+		}
+		if p.Filter != "" {
+			// Filter-based matching
+			if gl.Filter == p.Filter {
+				return gl
+			}
+		} else {
+			// CN-based matching
+			if gl.CN == p.CN {
+				return gl
+			}
+		}
+	}
+	return nil
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
