@@ -41,6 +41,7 @@ var (
 
 	errBoom      = errors.New("boom")
 	cn           = "cn-group-example"
+	filter       = "(memberOf=cn=developers,ou=groups,dc=example,dc=com)"
 	ldapProvider = "ldapmain"
 	groupID      = int64(1234)
 	groupAccess  = gitlab.AccessLevelValue(10)
@@ -258,6 +259,36 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
+		"SuccessfulAvailableWithFilter": {
+			args: args{
+				ldapGroupLink: &fake.MockClient{
+					MockListGroupLDAPLinks: func(gid interface{}, options ...gitlab.RequestOptionFunc) ([]*gitlab.LDAPGroupLink, *gitlab.Response, error) {
+						return []*gitlab.LDAPGroupLink{{Filter: filter, Provider: ldapProvider, GroupAccess: groupAccess}}, &gitlab.Response{}, nil
+					},
+				},
+				cr: ldapGroupLink(
+					withGroupID(),
+					withExternalName(ldapProvider+"/filter:"+filter),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider, GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),
+					withGroupAccess(10),
+				),
+			},
+			want: want{
+				cr: ldapGroupLink(
+					withConditions(xpv1.Available()),
+					withGroupID(),
+					withExternalName(ldapProvider+"/filter:"+filter),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider, GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),
+					withGroupAccess(10),
+					withStatus(v1alpha1.LdapGroupLinkObservation{Filter: filter}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -366,6 +397,30 @@ func TestDelete(t *testing.T) {
 					withGroupID(),
 					withExternalName(cn),
 					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withGroupAccess(10),
+				),
+				err: nil,
+			},
+		},
+		"SuccessfulDeletionWithFilter": {
+			args: args{
+				ldapGroupLink: &fake.MockClient{
+					MockDeleteGroupLDAPLinkWithCNOrFilter: func(pid interface{}, opts *gitlab.DeleteGroupLDAPLinkWithCNOrFilterOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, nil
+					},
+				},
+				cr: ldapGroupLink(
+					withGroupID(),
+					withExternalName(ldapProvider+"/filter:"+filter),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider}),
+					withGroupAccess(10),
+				),
+			},
+			want: want{
+				cr: ldapGroupLink(
+					withGroupID(),
+					withExternalName(ldapProvider+"/filter:"+filter),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 				err: nil,
@@ -485,6 +540,30 @@ func TestCreate(t *testing.T) {
 					withGroupID(),
 					withExternalName(ldapProvider+"/"+cn),
 					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn, LdapProvider: ldapProvider}),
+					withGroupAccess(10),
+				),
+				err:    nil,
+				result: managed.ExternalCreation{},
+			},
+		},
+		"SuccessfulCreationWithFilter": {
+			args: args{
+				ldapGroupLink: &fake.MockClient{
+					MockAddGroupLDAPLink: func(pid interface{}, opt *gitlab.AddGroupLDAPLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.LDAPGroupLink, *gitlab.Response, error) {
+						return &gitlab.LDAPGroupLink{Filter: filter, Provider: ldapProvider}, &gitlab.Response{}, nil
+					},
+				},
+				cr: ldapGroupLink(
+					withGroupID(),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider}),
+					withGroupAccess(10),
+				),
+			},
+			want: want{
+				cr: ldapGroupLink(
+					withGroupID(),
+					withExternalName(ldapProvider+"/filter:"+filter),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 				err:    nil,

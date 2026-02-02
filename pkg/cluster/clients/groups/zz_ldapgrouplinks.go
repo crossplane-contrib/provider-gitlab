@@ -55,9 +55,15 @@ func NewLdapGroupLinkClient(cfg common.Config) LdapGroupLinkClient {
 // GenerateAddLdapGroupLinkOptions is used to produce Options for LdapGroupLink creation
 func GenerateAddLdapGroupLinkOptions(p *v1alpha1.LdapGroupLinkParameters) *gitlab.AddGroupLDAPLinkOptions {
 	ldapGroupLink := &gitlab.AddGroupLDAPLinkOptions{
-		CN:          &p.CN,
 		GroupAccess: (*gitlab.AccessLevelValue)(&p.GroupAccess),
 		Provider:    &p.LdapProvider,
+	}
+
+	// Use either CN or Filter (mutually exclusive per GitLab API)
+	if p.Filter != "" {
+		ldapGroupLink.Filter = &p.Filter
+	} else {
+		ldapGroupLink.CN = &p.CN
 	}
 
 	return ldapGroupLink
@@ -70,7 +76,8 @@ func GenerateAddLdapGroupLinkObservation(ldapGroupLink *gitlab.LDAPGroupLink) v1
 	}
 
 	output := v1alpha1.LdapGroupLinkObservation{
-		CN: ldapGroupLink.CN,
+		CN:     ldapGroupLink.CN,
+		Filter: ldapGroupLink.Filter,
 	}
 
 	return output
@@ -79,8 +86,14 @@ func GenerateAddLdapGroupLinkObservation(ldapGroupLink *gitlab.LDAPGroupLink) v1
 // GenerateDeleteGroupLDAPLinkWithCNOrFilterOptions is used to produce Options for LdapGroupLink deletion
 func GenerateDeleteGroupLDAPLinkWithCNOrFilterOptions(p *v1alpha1.LdapGroupLinkParameters) *gitlab.DeleteGroupLDAPLinkWithCNOrFilterOptions {
 	ldapGroupLink := &gitlab.DeleteGroupLDAPLinkWithCNOrFilterOptions{
-		CN:       &p.CN,
 		Provider: &p.LdapProvider,
+	}
+
+	// Use either CN or Filter (mutually exclusive per GitLab API)
+	if p.Filter != "" {
+		ldapGroupLink.Filter = &p.Filter
+	} else {
+		ldapGroupLink.CN = &p.CN
 	}
 
 	return ldapGroupLink

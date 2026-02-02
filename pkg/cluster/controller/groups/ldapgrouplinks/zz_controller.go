@@ -119,9 +119,9 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotLdapGroupLink)
 	}
 
-	ldapCN := meta.GetExternalName(cr)
+	externalName := meta.GetExternalName(cr)
 
-	if ldapCN == "" {
+	if externalName == "" {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
@@ -137,10 +137,24 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	found := false
 	groupLink := &gitlab.LDAPGroupLink{}
 	for _, gl := range groupLinks {
-		if gl.CN == cr.Spec.ForProvider.CN && gl.Provider == cr.Spec.ForProvider.LdapProvider {
-			groupLink = gl
-			found = true
-			break
+		// Match by provider AND (CN or Filter)
+		if gl.Provider != cr.Spec.ForProvider.LdapProvider {
+			continue
+		}
+		if cr.Spec.ForProvider.Filter != "" {
+			// Filter-based matching
+			if gl.Filter == cr.Spec.ForProvider.Filter {
+				groupLink = gl
+				found = true
+				break
+			}
+		} else {
+			// CN-based matching
+			if gl.CN == cr.Spec.ForProvider.CN {
+				groupLink = gl
+				found = true
+				break
+			}
 		}
 	}
 
@@ -177,7 +191,13 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, fmt.Sprintf("%s/%s", ldapGroupLink.Provider, ldapGroupLink.CN))
+	// Set external name: provider/cn or provider/filter:<filter>
+	// Filter-based links use "filter:" prefix to distinguish from CN
+	if ldapGroupLink.Filter != "" {
+		meta.SetExternalName(cr, fmt.Sprintf("%s/filter:%s", ldapGroupLink.Provider, ldapGroupLink.Filter))
+	} else {
+		meta.SetExternalName(cr, fmt.Sprintf("%s/%s", ldapGroupLink.Provider, ldapGroupLink.CN))
+	}
 
 	return managed.ExternalCreation{}, nil
 }
@@ -231,6 +251,12 @@ func (e *external) Disconnect(ctx context.Context) error {
 }
 
 func isLdapGroupLinkUpToDate(p *v1alpha1.LdapGroupLinkParameters, g *gitlab.LDAPGroupLink) bool {
+	// Check Filter (for filter-based links)
+	if !cmp.Equal(p.Filter, g.Filter) {
+		return false
+	}
+
+	// Check CN (for CN-based links)
 	if !cmp.Equal(p.CN, g.CN) {
 		return false
 	}

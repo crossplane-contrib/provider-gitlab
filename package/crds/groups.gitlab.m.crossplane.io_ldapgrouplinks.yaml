@@ -64,7 +64,12 @@ spec:
                   https://docs.gitlab.com/api/group_ldap_links/
                 properties:
                   cn:
-                    description: The CN of an LDAP group
+                    description: CN is the CN of an LDAP group. Provide either cn
+                      or filter, but not both.
+                    type: string
+                  filter:
+                    description: Filter is the LDAP filter for the group. Provide
+                      either cn or filter, but not both.
                     type: string
                   groupAccess:
                     description: GroupAccess is the defined role for members of the
@@ -161,7 +166,6 @@ spec:
                     description: LdapProvider provider ID for the LDAP group link
                     type: string
                 required:
-                - cn
                 - groupAccess
                 - ldapProvider
                 type: object
@@ -231,6 +235,10 @@ spec:
                 description: LdapGroupLinkObservation represents a Group Ldap Link.
                 properties:
                   cn:
+                    description: CN is the CN of the LDAP group (if cn-based link)
+                    type: string
+                  filter:
+                    description: Filter is the LDAP filter (if filter-based link)
                     type: string
                 type: object
               conditions:
