@@ -41,10 +41,11 @@ import (
 var (
 	unexpectedItem resource.Managed
 
-	errBoom     = errors.New("boom")
-	cn          = "cn-group-example"
-	groupID     = int64(1234)
-	groupAccess = gitlab.AccessLevelValue(10)
+	errBoom      = errors.New("boom")
+	cn           = "cn-group-example"
+	ldapProvider = "ldapmain"
+	groupID      = int64(1234)
+	groupAccess  = gitlab.AccessLevelValue(10)
 )
 
 type LdapGroupLinkModifier func(*v1alpha1.LdapGroupLink)
@@ -448,20 +449,20 @@ func TestCreate(t *testing.T) {
 			args: args{
 				ldapGroupLink: &fake.MockClient{
 					MockAddGroupLDAPLink: func(pid interface{}, opt *gitlab.AddGroupLDAPLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.LDAPGroupLink, *gitlab.Response, error) {
-						return &gitlab.LDAPGroupLink{CN: cn}, &gitlab.Response{}, nil
+						return &gitlab.LDAPGroupLink{CN: cn, Provider: ldapProvider}, &gitlab.Response{}, nil
 					},
 				},
 				cr: ldapGroupLink(
 					withGroupID(),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn, LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 			},
 			want: want{
 				cr: ldapGroupLink(
 					withGroupID(),
-					withExternalName(cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withExternalName(ldapProvider+"/"+cn),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn, LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 				err:    nil,
@@ -472,20 +473,20 @@ func TestCreate(t *testing.T) {
 			args: args{
 				ldapGroupLink: &fake.MockClient{
 					MockAddGroupLDAPLink: func(pid interface{}, opt *gitlab.AddGroupLDAPLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.LDAPGroupLink, *gitlab.Response, error) {
-						return &gitlab.LDAPGroupLink{CN: cn}, &gitlab.Response{}, nil
+						return &gitlab.LDAPGroupLink{CN: cn, Provider: ldapProvider}, &gitlab.Response{}, nil
 					},
 				},
 				cr: ldapGroupLink(
 					withGroupID(),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn, LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 			},
 			want: want{
 				cr: ldapGroupLink(
 					withGroupID(),
-					withExternalName(cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withExternalName(ldapProvider+"/"+cn),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn, LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 				err:    nil,

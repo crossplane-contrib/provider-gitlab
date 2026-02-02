@@ -18,6 +18,7 @@ package ldapgrouplinks
 
 import (
 	"context"
+	"fmt"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -174,7 +175,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	meta.SetExternalName(cr, ldapGroupLink.CN)
+	meta.SetExternalName(cr, fmt.Sprintf("%s/%s", ldapGroupLink.Provider, ldapGroupLink.CN))
 
 	return managed.ExternalCreation{}, nil
 }
