@@ -142,6 +142,14 @@ var (
 	IntegrationMattermostGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationMattermostKind)
 )
 
+// ProjectShareGroup type metadata
+var (
+	ProjectShareGroupKind             = reflect.TypeOf(ProjectShareGroup{}).Name()
+	ProjectShareGroupGroupKind        = schema.GroupKind{Group: Group, Kind: ProjectShareGroupKind}.String()
+	ProjectShareGroupKindAPIVersion   = ProjectShareGroupKind + "." + SchemeGroupVersion.String()
+	ProjectShareGroupGroupVersionKind = SchemeGroupVersion.WithKind(ProjectShareGroupKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
@@ -158,4 +166,5 @@ func init() {
 
 	// Mattermost
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
+	SchemeBuilder.Register(&ProjectShareGroup{}, &ProjectShareGroupList{})
 }
