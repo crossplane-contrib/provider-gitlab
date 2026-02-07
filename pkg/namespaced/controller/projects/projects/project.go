@@ -168,6 +168,13 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		cr.Status.SetConditions(xpv1.Available())
 	}
 
+	if cr.Spec.ForProvider.ImportURLSecretRef != nil {
+		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, cr.Spec.ForProvider.ImportURLSecretRef, &cr.Spec.ForProvider.ImportURL)
+		if err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, "failed to retrieve ImportURL from secret")
+		}
+	}
+
 	current := cr.Spec.ForProvider.DeepCopy()
 	if err := e.lateInitialize(ctx, cr, prj); err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(err, errLateInitialize)
@@ -196,7 +203,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	if cr.Spec.ForProvider.ImportURLSecretRef != nil {
 		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, cr.Spec.ForProvider.ImportURLSecretRef, &cr.Spec.ForProvider.ImportURL)
 		if err != nil {
-			return managed.ExternalCreation{}, errors.Wrap(err, "failed to update ImportURL from secret")
+			return managed.ExternalCreation{}, errors.Wrap(err, "failed to retrieve ImportURL from secret")
 		}
 	}
 
@@ -221,7 +228,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if cr.Spec.ForProvider.ImportURLSecretRef != nil {
 		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, cr.Spec.ForProvider.ImportURLSecretRef, &cr.Spec.ForProvider.ImportURL)
 		if err != nil {
-			return managed.ExternalUpdate{}, errors.Wrap(err, "failed to update ImportURL from secret")
+			return managed.ExternalUpdate{}, errors.Wrap(err, "failed to retrieve ImportURL from secret")
 		}
 	}
 
@@ -640,6 +647,9 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.BuildGitStrategy, g.BuildGitStrategy) {
+		return false
+	}
+	if clients.IsComparableEqualToComparablePtr(p.ImportURL, g.ImportURL) {
 		return false
 	}
 	return true
