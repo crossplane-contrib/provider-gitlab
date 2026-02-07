@@ -2340,6 +2340,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ImportURLSecretRef != nil {
+		in, out := &in.ImportURLSecretRef, &out.ImportURLSecretRef
+		*out = new(v1.SecretKeySelector)
+		**out = **in
+	}
 	if in.InitializeWithReadme != nil {
 		in, out := &in.InitializeWithReadme, &out.InitializeWithReadme
 		*out = new(bool)

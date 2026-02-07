@@ -224,14 +224,3 @@ func (e *external) Disconnect(ctx context.Context) error {
 	// Disconnect is not implemented as it is a new method required by the SDK
 	return nil
 }
-
-// updateParameterFromSecret fetches a sensitive setting value from a Kubernetes Secret
-// and assigns it to the provided parameter pointer.
-func (e *external) updateParameterFromSecret(mg resource.Managed, ctx context.Context, selector *xpv1.SecretKeySelector, param **string) error {
-	value, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, selector)
-	if err != nil {
-		return err
-	}
-	*param = value
-	return nil
-}

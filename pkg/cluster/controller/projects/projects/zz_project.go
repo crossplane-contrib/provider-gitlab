@@ -42,6 +42,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects"
+	commonController "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
@@ -194,6 +195,13 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotProject)
 	}
 
+	if cr.Spec.ForProvider.ImportURLSecretRef != nil {
+		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, cr.Spec.ForProvider.ImportURLSecretRef, &cr.Spec.ForProvider.ImportURL)
+		if err != nil {
+			return managed.ExternalCreation{}, errors.Wrap(err, "failed to update ImportURL from secret")
+		}
+	}
+
 	prj, _, err := e.client.CreateProject(
 		projects.GenerateCreateProjectOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
@@ -210,6 +218,13 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	cr, ok := mg.(*v1alpha1.Project)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotProject)
+	}
+
+	if cr.Spec.ForProvider.ImportURLSecretRef != nil {
+		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, cr.Spec.ForProvider.ImportURLSecretRef, &cr.Spec.ForProvider.ImportURL)
+		if err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, "failed to update ImportURL from secret")
+		}
 	}
 
 	_, _, err := e.client.EditProject(

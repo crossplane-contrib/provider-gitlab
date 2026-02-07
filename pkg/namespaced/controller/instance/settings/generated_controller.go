@@ -24,119 +24,121 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/common"
 )
 
 func (e *external) updateSettingsFromSecrets(mg resource.Managed, ctx context.Context, params *v1alpha1.ApplicationSettingsParameters) error {
 	if params.AkismetAPIKeySecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.AkismetAPIKeySecretRef, &params.AkismetAPIKey); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.AkismetAPIKeySecretRef, &params.AkismetAPIKey); err != nil {
 			return errors.Wrap(err, "failed to get AkismetAPIKey from secret reference")
 		}
 	}
 
 	if params.AssetProxySecretKeySecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.AssetProxySecretKeySecretRef, &params.AssetProxySecretKey); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.AssetProxySecretKeySecretRef, &params.AssetProxySecretKey); err != nil {
 			return errors.Wrap(err, "failed to get AssetProxySecretKey from secret reference")
 		}
 	}
 
 	if params.EKSAccessKeyIDSecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.EKSAccessKeyIDSecretRef, &params.EKSAccessKeyID); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.EKSAccessKeyIDSecretRef, &params.EKSAccessKeyID); err != nil {
 			return errors.Wrap(err, "failed to get EKSAccessKeyID from secret reference")
 		}
 	}
 
 	if params.EKSSecretAccessKeySecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.EKSSecretAccessKeySecretRef, &params.EKSSecretAccessKey); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.EKSSecretAccessKeySecretRef, &params.EKSSecretAccessKey); err != nil {
 			return errors.Wrap(err, "failed to get EKSSecretAccessKey from secret reference")
 		}
 	}
 
 	if params.ElasticsearchAWSAccessKeySecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.ElasticsearchAWSAccessKeySecretRef, &params.ElasticsearchAWSAccessKey); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.ElasticsearchAWSAccessKeySecretRef, &params.ElasticsearchAWSAccessKey); err != nil {
 			return errors.Wrap(err, "failed to get ElasticsearchAWSAccessKey from secret reference")
 		}
 	}
 
 	if params.ElasticsearchAWSSecretAccessKeySecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.ElasticsearchAWSSecretAccessKeySecretRef, &params.ElasticsearchAWSSecretAccessKey); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.ElasticsearchAWSSecretAccessKeySecretRef, &params.ElasticsearchAWSSecretAccessKey); err != nil {
 			return errors.Wrap(err, "failed to get ElasticsearchAWSSecretAccessKey from secret reference")
 		}
 	}
 
 	if params.ElasticsearchPasswordSecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.ElasticsearchPasswordSecretRef, &params.ElasticsearchPassword); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.ElasticsearchPasswordSecretRef, &params.ElasticsearchPassword); err != nil {
 			return errors.Wrap(err, "failed to get ElasticsearchPassword from secret reference")
 		}
 	}
 
 	if params.ExternalAuthClientKeySecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.ExternalAuthClientKeySecretRef, &params.ExternalAuthClientKey); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.ExternalAuthClientKeySecretRef, &params.ExternalAuthClientKey); err != nil {
 			return errors.Wrap(err, "failed to get ExternalAuthClientKey from secret reference")
 		}
 	}
 
 	if params.ExternalPipelineValidationServiceTokenSecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.ExternalPipelineValidationServiceTokenSecretRef, &params.ExternalPipelineValidationServiceToken); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.ExternalPipelineValidationServiceTokenSecretRef, &params.ExternalPipelineValidationServiceToken); err != nil {
 			return errors.Wrap(err, "failed to get ExternalPipelineValidationServiceToken from secret reference")
 		}
 	}
 
 	if params.JiraConnectApplicationKeySecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.JiraConnectApplicationKeySecretRef, &params.JiraConnectApplicationKey); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.JiraConnectApplicationKeySecretRef, &params.JiraConnectApplicationKey); err != nil {
 			return errors.Wrap(err, "failed to get JiraConnectApplicationKey from secret reference")
 		}
 	}
 
 	if params.MailgunSigningKeySecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.MailgunSigningKeySecretRef, &params.MailgunSigningKey); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.MailgunSigningKeySecretRef, &params.MailgunSigningKey); err != nil {
 			return errors.Wrap(err, "failed to get MailgunSigningKey from secret reference")
 		}
 	}
 
 	if params.RecaptchaPrivateKeySecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.RecaptchaPrivateKeySecretRef, &params.RecaptchaPrivateKey); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.RecaptchaPrivateKeySecretRef, &params.RecaptchaPrivateKey); err != nil {
 			return errors.Wrap(err, "failed to get RecaptchaPrivateKey from secret reference")
 		}
 	}
 
 	if params.RecaptchaSiteKeySecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.RecaptchaSiteKeySecretRef, &params.RecaptchaSiteKey); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.RecaptchaSiteKeySecretRef, &params.RecaptchaSiteKey); err != nil {
 			return errors.Wrap(err, "failed to get RecaptchaSiteKey from secret reference")
 		}
 	}
 
 	if params.SecretDetectionTokenRevocationTokenSecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.SecretDetectionTokenRevocationTokenSecretRef, &params.SecretDetectionTokenRevocationToken); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.SecretDetectionTokenRevocationTokenSecretRef, &params.SecretDetectionTokenRevocationToken); err != nil {
 			return errors.Wrap(err, "failed to get SecretDetectionTokenRevocationToken from secret reference")
 		}
 	}
 
 	if params.SlackAppSecretSecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.SlackAppSecretSecretRef, &params.SlackAppSecret); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.SlackAppSecretSecretRef, &params.SlackAppSecret); err != nil {
 			return errors.Wrap(err, "failed to get SlackAppSecret from secret reference")
 		}
 	}
 
 	if params.SlackAppSigningSecretSecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.SlackAppSigningSecretSecretRef, &params.SlackAppSigningSecret); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.SlackAppSigningSecretSecretRef, &params.SlackAppSigningSecret); err != nil {
 			return errors.Wrap(err, "failed to get SlackAppSigningSecret from secret reference")
 		}
 	}
 
 	if params.SlackAppVerificationTokenSecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.SlackAppVerificationTokenSecretRef, &params.SlackAppVerificationToken); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.SlackAppVerificationTokenSecretRef, &params.SlackAppVerificationToken); err != nil {
 			return errors.Wrap(err, "failed to get SlackAppVerificationToken from secret reference")
 		}
 	}
 
 	if params.SpamCheckAPIKeySecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.SpamCheckAPIKeySecretRef, &params.SpamCheckAPIKey); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.SpamCheckAPIKeySecretRef, &params.SpamCheckAPIKey); err != nil {
 			return errors.Wrap(err, "failed to get SpamCheckAPIKey from secret reference")
 		}
 	}
 
 	if params.StaticObjectsExternalStorageAuthTokenSecretRef != nil {
-		if err := e.updateParameterFromSecret(mg, ctx, params.StaticObjectsExternalStorageAuthTokenSecretRef, &params.StaticObjectsExternalStorageAuthToken); err != nil {
+		if err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.StaticObjectsExternalStorageAuthTokenSecretRef, &params.StaticObjectsExternalStorageAuthToken); err != nil {
 			return errors.Wrap(err, "failed to get StaticObjectsExternalStorageAuthToken from secret reference")
 		}
 	}
