@@ -651,7 +651,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.BuildGitStrategy, g.BuildGitStrategy) {
 		return false
 	}
-	if clients.IsComparableEqualToComparablePtr(p.ImportURL, g.ImportURL) {
+	if !clients.IsComparableEqualToComparablePtr(p.ImportURL, g.ImportURL) {
 		return false
 	}
 	return true
