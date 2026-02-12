@@ -51,12 +51,12 @@ type LdapGroupLinkParameters struct {
 	// CN is the CN of an LDAP group. Provide either cn or filter, but not both.
 	// +optional
 	// +immutable
-	CN string `json:"cn,omitempty"`
+	CN *string `json:"cn,omitempty"`
 
 	// Filter is the LDAP filter for the group. Provide either cn or filter, but not both.
 	// +optional
 	// +immutable
-	Filter string `json:"filter,omitempty"`
+	Filter *string `json:"filter,omitempty"`
 }
 
 // LdapGroupLinkObservation represents a Group Ldap Link.

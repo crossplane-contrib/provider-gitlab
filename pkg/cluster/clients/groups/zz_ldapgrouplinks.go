@@ -60,10 +60,10 @@ func GenerateAddLdapGroupLinkOptions(p *v1alpha1.LdapGroupLinkParameters) *gitla
 	}
 
 	// Use either CN or Filter (mutually exclusive per GitLab API)
-	if p.Filter != "" {
-		ldapGroupLink.Filter = &p.Filter
-	} else {
-		ldapGroupLink.CN = &p.CN
+	if p.Filter != nil && *p.Filter != "" {
+		ldapGroupLink.Filter = p.Filter
+	} else if p.CN != nil {
+		ldapGroupLink.CN = p.CN
 	}
 
 	return ldapGroupLink
@@ -90,10 +90,10 @@ func GenerateDeleteGroupLDAPLinkWithCNOrFilterOptions(p *v1alpha1.LdapGroupLinkP
 	}
 
 	// Use either CN or Filter (mutually exclusive per GitLab API)
-	if p.Filter != "" {
-		ldapGroupLink.Filter = &p.Filter
-	} else {
-		ldapGroupLink.CN = &p.CN
+	if p.Filter != nil && *p.Filter != "" {
+		ldapGroupLink.Filter = p.Filter
+	} else if p.CN != nil {
+		ldapGroupLink.CN = p.CN
 	}
 
 	return ldapGroupLink

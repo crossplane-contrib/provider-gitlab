@@ -24,7 +24,7 @@ func TestGenerateAddLdapGroupLinkOptions(t *testing.T) {
 		"AllFields": {
 			args: args{
 				parameters: &v1alpha1.LdapGroupLinkParameters{
-					CN:           cn,
+					CN:           &cn,
 					GroupAccess:  v1alpha1.AccessLevelValue(groupAccess),
 					LdapProvider: ldapProvider,
 				},

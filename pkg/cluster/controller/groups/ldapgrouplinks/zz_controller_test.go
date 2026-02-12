@@ -49,6 +49,11 @@ var (
 	groupAccess  = gitlab.AccessLevelValue(10)
 )
 
+// Helper functions to create pointers
+func strPtr(s string) *string {
+	return &s
+}
+
 type LdapGroupLinkModifier func(*v1alpha1.LdapGroupLink)
 
 func withConditions(c ...xpv1.Condition) LdapGroupLinkModifier {
@@ -191,7 +196,7 @@ func TestObserve(t *testing.T) {
 					withGroupID(),
 					withGroupAccess(10),
 					withExternalName(cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
 				),
 			},
 			want: want{
@@ -199,7 +204,7 @@ func TestObserve(t *testing.T) {
 					withGroupID(),
 					withGroupAccess(10),
 					withExternalName(cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
 				),
 				result: managed.ExternalObservation{ResourceExists: false},
 				err:    errors.Wrap(errBoom, errGetFailed),
@@ -217,7 +222,7 @@ func TestObserve(t *testing.T) {
 					withExternalName(cn),
 					withGroupAccess(10),
 
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
 				),
 			},
 			want: want{
@@ -225,7 +230,7 @@ func TestObserve(t *testing.T) {
 					withGroupID(),
 					withExternalName(cn),
 					withGroupAccess(10),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
 				),
 				result: managed.ExternalObservation{ResourceExists: false},
 				err:    nil,
@@ -241,7 +246,7 @@ func TestObserve(t *testing.T) {
 				cr: ldapGroupLink(
 					withGroupID(),
 					withExternalName(cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn, GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn), GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),
 					withGroupAccess(10),
 				),
 			},
@@ -250,7 +255,7 @@ func TestObserve(t *testing.T) {
 					withConditions(xpv1.Available()),
 					withGroupID(),
 					withExternalName(cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn, GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn), GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),
 					withGroupAccess(10),
 					withStatus(v1alpha1.LdapGroupLinkObservation{CN: cn}),
 				),
@@ -271,7 +276,7 @@ func TestObserve(t *testing.T) {
 				cr: ldapGroupLink(
 					withGroupID(),
 					withExternalName(ldapProvider+"/filter:"+filter),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider, GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: strPtr(filter), LdapProvider: ldapProvider, GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),
 					withGroupAccess(10),
 				),
 			},
@@ -280,7 +285,7 @@ func TestObserve(t *testing.T) {
 					withConditions(xpv1.Available()),
 					withGroupID(),
 					withExternalName(ldapProvider+"/filter:"+filter),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider, GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: strPtr(filter), LdapProvider: ldapProvider, GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),
 					withGroupAccess(10),
 					withStatus(v1alpha1.LdapGroupLinkObservation{Filter: filter}),
 				),
@@ -366,7 +371,7 @@ func TestDelete(t *testing.T) {
 				cr: ldapGroupLink(
 					withGroupID(),
 					withExternalName(cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
 					withGroupAccess(10),
 				),
 			},
@@ -374,7 +379,7 @@ func TestDelete(t *testing.T) {
 				cr: ldapGroupLink(
 					withGroupID(),
 					withExternalName(cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
 					withGroupAccess(10),
 				),
 				err: errors.Wrap(errBoom, errDeleteFailed),
@@ -390,7 +395,7 @@ func TestDelete(t *testing.T) {
 				cr: ldapGroupLink(
 					withGroupID(),
 					withExternalName(cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
 					withGroupAccess(10),
 				),
 			},
@@ -398,7 +403,7 @@ func TestDelete(t *testing.T) {
 				cr: ldapGroupLink(
 					withGroupID(),
 					withExternalName(cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
 					withGroupAccess(10),
 				),
 				err: nil,
@@ -414,7 +419,7 @@ func TestDelete(t *testing.T) {
 				cr: ldapGroupLink(
 					withGroupID(),
 					withExternalName(ldapProvider+"/filter:"+filter),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: strPtr(filter), LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 			},
@@ -422,7 +427,7 @@ func TestDelete(t *testing.T) {
 				cr: ldapGroupLink(
 					withGroupID(),
 					withExternalName(ldapProvider+"/filter:"+filter),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: strPtr(filter), LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 				err: nil,
@@ -487,14 +492,14 @@ func TestCreate(t *testing.T) {
 				},
 				cr: ldapGroupLink(
 					withGroupID(),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
 					withGroupAccess(10),
 				),
 			},
 			want: want{
 				cr: ldapGroupLink(
 					withGroupID(),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
 					withGroupAccess(10),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
@@ -509,7 +514,7 @@ func TestCreate(t *testing.T) {
 				},
 				cr: ldapGroupLink(
 					withGroupID(),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn, LdapProvider: ldapProvider}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn), LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 			},
@@ -517,7 +522,7 @@ func TestCreate(t *testing.T) {
 				cr: ldapGroupLink(
 					withGroupID(),
 					withExternalName(ldapProvider+"/"+cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn, LdapProvider: ldapProvider}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn), LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 				err:    nil,
@@ -533,7 +538,7 @@ func TestCreate(t *testing.T) {
 				},
 				cr: ldapGroupLink(
 					withGroupID(),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn, LdapProvider: ldapProvider}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn), LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 			},
@@ -541,7 +546,7 @@ func TestCreate(t *testing.T) {
 				cr: ldapGroupLink(
 					withGroupID(),
 					withExternalName(ldapProvider+"/"+cn),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: cn, LdapProvider: ldapProvider}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn), LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 				err:    nil,
@@ -557,7 +562,7 @@ func TestCreate(t *testing.T) {
 				},
 				cr: ldapGroupLink(
 					withGroupID(),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: strPtr(filter), LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 			},
@@ -565,7 +570,7 @@ func TestCreate(t *testing.T) {
 				cr: ldapGroupLink(
 					withGroupID(),
 					withExternalName(ldapProvider+"/filter:"+filter),
-					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: filter, LdapProvider: ldapProvider}),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: strPtr(filter), LdapProvider: ldapProvider}),
 					withGroupAccess(10),
 				),
 				err:    nil,
