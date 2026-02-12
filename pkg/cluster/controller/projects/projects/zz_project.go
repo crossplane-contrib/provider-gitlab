@@ -170,14 +170,17 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		cr.Status.SetConditions(xpv1.Available())
 	}
 
-	if cr.Spec.ForProvider.ImportURLSecretRef != nil {
-		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, cr.Spec.ForProvider.ImportURLSecretRef, &cr.Spec.ForProvider.ImportURL)
+	current := cr.Spec.ForProvider.DeepCopy()
+
+	// Replace the secret in the copied spec to avoid putting sensitive information in the CR spec
+	// This is only required for observation, as this is the only method where spec can be updated.
+	if current.ImportURLSecretRef != nil {
+		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, current.ImportURLSecretRef, &current.ImportURL)
 		if err != nil {
 			return managed.ExternalObservation{}, errors.Wrap(err, "failed to retrieve ImportURL from secret")
 		}
 	}
 
-	current := cr.Spec.ForProvider.DeepCopy()
 	if err := e.lateInitialize(ctx, cr, prj); err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(err, errLateInitialize)
 	}
