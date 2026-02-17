@@ -12,7 +12,7 @@ env:
   # Common versions
   GO_VERSION: "1.25.2"
   GOLANGCI_VERSION: "v2.5.0"
-  DOCKER_BUILDX_VERSION: "v0.10.0"
+  DOCKER_BUILDX_VERSION: "v0.21.2"
 
   # Common users. We can't run a step 'if secrets.AWS_USR != ""' but we can run
   # a step 'if env.AWS_USR' != ""', so we copy these to succinctly test whether
@@ -195,12 +195,12 @@ jobs:
     if: needs.detect-noop.outputs.noop != 'true'
     steps:
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a # v3.3.0
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
         with:
           platforms: all
 
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@04eaa7c789c15c7207d36583e7d86cd37d837034 # v3.8.0
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
         with:
           version: ${{ env.DOCKER_BUILDX_VERSION }}
           install: true
@@ -267,12 +267,12 @@ jobs:
           swap-storage: false
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a # v3.3.0
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
         with:
           platforms: all
 
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@04eaa7c789c15c7207d36583e7d86cd37d837034 # v3.8.0
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
         with:
           version: ${{ env.DOCKER_BUILDX_VERSION }}
           install: true
@@ -325,14 +325,14 @@ jobs:
           path: _output/**
 
       - name: Login to DockerHub
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         if: env.CONTRIB_DOCKER_USR != ''
         with:
           username: ${{ secrets.CONTRIB_DOCKER_USR }}
           password: ${{ secrets.CONTRIB_DOCKER_PSW }}
 
       - name: Login to Upbound
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         if: env.XPKG_ACCESS_ID != ''
         with:
           registry: xpkg.upbound.io
@@ -340,7 +340,7 @@ jobs:
           password: ${{ secrets.XPKG_TOKEN }}
 
       - name: Login to GHCR
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
