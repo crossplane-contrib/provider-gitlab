@@ -223,13 +223,26 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		// Only attempt to update push rules if the feature is supported
 		// (either we have cached rules or push rules are specified in spec)
 		if e.cache.externalPushRules != nil || cr.Spec.ForProvider.PushRules != nil {
-			_, _, err := e.client.EditProjectPushRule(
-				meta.GetExternalName(cr),
-				projects.GenerateEditPushRulesOptions(&cr.Spec.ForProvider),
-				gitlab.WithContext(ctx),
-			)
-			if err != nil {
-				return managed.ExternalUpdate{}, errors.Wrap(err, errUpdatePushRulesFailed)
+			if e.cache.externalPushRules != nil {
+				// Push rules exist in GitLab → Edit (PUT)
+				_, _, err := e.client.EditProjectPushRule(
+					meta.GetExternalName(cr),
+					projects.GenerateEditPushRulesOptions(&cr.Spec.ForProvider),
+					gitlab.WithContext(ctx),
+				)
+				if err != nil {
+					return managed.ExternalUpdate{}, errors.Wrap(err, errUpdatePushRulesFailed)
+				}
+			} else {
+				// Push rules don't exist yet in GitLab → Add (POST)
+				_, _, err := e.client.AddProjectPushRule(
+					meta.GetExternalName(cr),
+					projects.GenerateAddPushRulesOptions(&cr.Spec.ForProvider),
+					gitlab.WithContext(ctx),
+				)
+				if err != nil {
+					return managed.ExternalUpdate{}, errors.Wrap(err, errUpdatePushRulesFailed)
+				}
 			}
 		}
 		// If push rules are not supported (e.g., GitLab Community Edition) and
@@ -445,6 +458,12 @@ func (e *external) getProjectPushRules(ctx context.Context, cr *v1alpha1.Project
 			return nil, nil
 		}
 		return nil, errors.Wrap(err, errGetPushRulesFailed)
+	}
+	// GitLab Premium/Enterprise may return 200 with null body when no push rules
+	// are configured for the project. In that case res is nil — treat it the same
+	// as "no push rules exist yet".
+	if res == nil {
+		return nil, nil
 	}
 	e.cache.externalPushRules = &v1alpha1.PushRules{
 		AuthorEmailRegex:           &res.AuthorEmailRegex,

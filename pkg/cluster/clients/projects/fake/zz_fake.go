@@ -75,6 +75,7 @@ type MockClient struct {
 	MockListUsers func(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error)
 
 	MockGetProjectPushRules func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
+	MockAddProjectPushRule  func(pid any, opt *gitlab.AddProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 	MockEditProjectPushRule func(pid any, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 
 	MockGetProjectApprovalRule    func(pid any, ruleID int, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
@@ -270,6 +271,11 @@ func (c *MockClient) ListUsers(opt *gitlab.ListUsersOptions, options ...gitlab.R
 // GetProjectPushRules calls the underlying MockGetProjectPushRules method.
 func (c *MockClient) GetProjectPushRules(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
 	return c.MockGetProjectPushRules(pid, options...)
+}
+
+// AddProjectPushRule calls the underlying MockAddProjectPushRule method.
+func (c *MockClient) AddProjectPushRule(pid any, opt *gitlab.AddProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+	return c.MockAddProjectPushRule(pid, opt, options...)
 }
 
 // EditProjectPushRule calls the underlying MockEditProjectPushRule method.

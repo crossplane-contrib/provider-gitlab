@@ -40,6 +40,7 @@ type Client interface {
 	DeleteProject(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
 	GetProjectPushRules(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
+	AddProjectPushRule(pid interface{}, opt *gitlab.AddProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 	EditProjectPushRule(pid interface{}, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 }
 
@@ -417,6 +418,26 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		SuggestionCommitMessage:                  p.SuggestionCommitMessage,
 		IssuesTemplate:                           p.IssuesTemplate,
 		MergeRequestsTemplate:                    p.MergeRequestsTemplate,
+	}
+	return o
+}
+
+func GenerateAddPushRulesOptions(p *v1alpha1.ProjectParameters) *gitlab.AddProjectPushRuleOptions {
+	o := &gitlab.AddProjectPushRuleOptions{}
+	if p.PushRules != nil {
+		o.AuthorEmailRegex = p.PushRules.AuthorEmailRegex
+		o.BranchNameRegex = p.PushRules.BranchNameRegex
+		o.CommitCommitterCheck = p.PushRules.CommitCommitterCheck
+		o.CommitCommitterNameCheck = p.PushRules.CommitCommitterNameCheck
+		o.CommitMessageNegativeRegex = p.PushRules.CommitMessageNegativeRegex
+		o.CommitMessageRegex = p.PushRules.CommitMessageRegex
+		o.DenyDeleteTag = p.PushRules.DenyDeleteTag
+		o.FileNameRegex = p.PushRules.FileNameRegex
+		o.MaxFileSize = p.PushRules.MaxFileSize
+		o.MemberCheck = p.PushRules.MemberCheck
+		o.PreventSecrets = p.PushRules.PreventSecrets
+		o.RejectNonDCOCommits = p.PushRules.RejectNonDCOCommits
+		o.RejectUnsignedCommits = p.PushRules.RejectUnsignedCommits
 	}
 	return o
 }
