@@ -350,6 +350,7 @@ func TestObserve(t *testing.T) {
 					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
 						// Simulate GitLab where push rules are configured but removed from spec
 						return &gitlab.ProjectPushRules{
+							ID:                         1,
 							AuthorEmailRegex:           ".*@company.com",
 							BranchNameRegex:            "^(feature|hotfix)/.*",
 							CommitCommitterCheck:       true,
@@ -394,7 +395,7 @@ func TestObserve(t *testing.T) {
 						return &gitlab.Project{Name: "example-project"}, &gitlab.Response{}, nil
 					},
 					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
-						return &gitlab.ProjectPushRules{}, nil, nil
+						return &gitlab.ProjectPushRules{ID: 1}, nil, nil
 					},
 				},
 				cr: project(
@@ -491,7 +492,7 @@ func TestObserve(t *testing.T) {
 						return &gitlab.Project{MirrorUserID: 0}, &gitlab.Response{}, nil
 					},
 					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
-						return &gitlab.ProjectPushRules{}, nil, nil
+						return &gitlab.ProjectPushRules{ID: 1}, nil, nil
 					},
 				},
 				cr: project(
@@ -814,6 +815,7 @@ func TestObserve(t *testing.T) {
 					},
 					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
 						return &gitlab.ProjectPushRules{
+							ID:            1,
 							DenyDeleteTag: true,
 						}, nil, nil
 					},
@@ -930,6 +932,8 @@ func TestUpdate(t *testing.T) {
 
 	cases := map[string]struct {
 		args
+		cacheExternalPushRules *v1alpha1.PushRules
+		cachePushRulesUpToDate bool
 		want
 	}{
 		"InValidInput": {
@@ -974,10 +978,132 @@ func TestUpdate(t *testing.T) {
 				err: errors.Wrap(errBoom, errUpdateFailed),
 			},
 		},
+		"SuccessfulEditPushRules": {
+			args: args{
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, nil
+					},
+					MockEditProjectPushRule: func(pid interface{}, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withProjectPushRules(&v1alpha1.PushRules{DenyDeleteTag: ptr.To(true)}),
+				),
+			},
+			cacheExternalPushRules: &v1alpha1.PushRules{DenyDeleteTag: ptr.To(false)},
+			cachePushRulesUpToDate: false,
+			want: want{
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withProjectPushRules(&v1alpha1.PushRules{DenyDeleteTag: ptr.To(true)}),
+				),
+			},
+		},
+		"SuccessfulAddPushRules": {
+			args: args{
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, nil
+					},
+					MockAddProjectPushRule: func(pid interface{}, opt *gitlab.AddProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withProjectPushRules(&v1alpha1.PushRules{DenyDeleteTag: ptr.To(true)}),
+				),
+			},
+			cacheExternalPushRules: nil,
+			cachePushRulesUpToDate: false,
+			want: want{
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withProjectPushRules(&v1alpha1.PushRules{DenyDeleteTag: ptr.To(true)}),
+				),
+			},
+		},
+		"FailedEditPushRules": {
+			args: args{
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, nil
+					},
+					MockEditProjectPushRule: func(pid interface{}, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, &gitlab.Response{}, errBoom
+					},
+				},
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withProjectPushRules(&v1alpha1.PushRules{DenyDeleteTag: ptr.To(true)}),
+				),
+			},
+			cacheExternalPushRules: &v1alpha1.PushRules{DenyDeleteTag: ptr.To(false)},
+			cachePushRulesUpToDate: false,
+			want: want{
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withProjectPushRules(&v1alpha1.PushRules{DenyDeleteTag: ptr.To(true)}),
+				),
+				err: errors.Wrap(errBoom, errUpdatePushRulesFailed),
+			},
+		},
+		"FailedAddPushRules": {
+			args: args{
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, nil
+					},
+					MockAddProjectPushRule: func(pid interface{}, opt *gitlab.AddProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, &gitlab.Response{}, errBoom
+					},
+				},
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withProjectPushRules(&v1alpha1.PushRules{DenyDeleteTag: ptr.To(true)}),
+				),
+			},
+			cacheExternalPushRules: nil,
+			cachePushRulesUpToDate: false,
+			want: want{
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withProjectPushRules(&v1alpha1.PushRules{DenyDeleteTag: ptr.To(true)}),
+				),
+				err: errors.Wrap(errBoom, errUpdatePushRulesFailed),
+			},
+		},
+		"PushRulesUpToDateSkipped": {
+			args: args{
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, nil
+					},
+					// No push rule mocks needed - they should not be called
+				},
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withProjectPushRules(&v1alpha1.PushRules{DenyDeleteTag: ptr.To(true)}),
+				),
+			},
+			cacheExternalPushRules: &v1alpha1.PushRules{DenyDeleteTag: ptr.To(true)},
+			cachePushRulesUpToDate: true,
+			want: want{
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withProjectPushRules(&v1alpha1.PushRules{DenyDeleteTag: ptr.To(true)}),
+				),
+			},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			e := &external{kube: tc.kube, client: tc.project}
+			e.cache.externalPushRules = tc.cacheExternalPushRules
+			e.cache.isPushRulesUpToDate = tc.cachePushRulesUpToDate
 			o, err := e.Update(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
