@@ -1951,6 +1951,21 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(AccessControlValue)
 		**out = **in
 	}
+	if in.MergeTrainsEnabled != nil {
+		in, out := &in.MergeTrainsEnabled, &out.MergeTrainsEnabled
+		*out = new(bool)
+		**out = **in
+	}
+	if in.MergeTrainsSkipTrainAllowed != nil {
+		in, out := &in.MergeTrainsSkipTrainAllowed, &out.MergeTrainsSkipTrainAllowed
+		*out = new(bool)
+		**out = **in
+	}
+	if in.MergePipelinesEnabled != nil {
+		in, out := &in.MergePipelinesEnabled, &out.MergePipelinesEnabled
+		*out = new(bool)
+		**out = **in
+	}
 	if in.MergeRequestsTemplate != nil {
 		in, out := &in.MergeRequestsTemplate, &out.MergeRequestsTemplate
 		*out = new(string)

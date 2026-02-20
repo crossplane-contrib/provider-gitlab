@@ -284,6 +284,18 @@ type ProjectParameters struct {
 	// +optional
 	MergeRequestsAccessLevel *AccessControlValue `json:"mergeRequestsAccessLevel,omitempty"`
 
+	// Enables merge trains.
+	// +optional
+	MergeTrainsEnabled *bool `json:"mergeTrainsEnabled,omitempty"`
+
+	// Enables allowing to skip the merge train.
+	// +optional
+	MergeTrainsSkipTrainAllowed *bool `json:"mergeTrainsSkipTrainAllowed,omitempty"`
+
+	// Enables merge pipelines.
+	// +optional
+	MergePipelinesEnabled *bool `json:"mergePipelinesEnabled,omitempty"`
+
 	// Default description for Merge Requests. Description is parsed with GitLab Flavored Markdown.
 	// See Templates for issues and merge requests.
 	// +optional
@@ -584,50 +596,53 @@ type SharedWithGroups struct {
 
 // ProjectObservation is the observed state of a Project.
 type ProjectObservation struct {
-	ID                        int64                      `json:"id,omitempty"`
-	Archived                  bool                       `json:"archived,omitempty"`
-	AvatarURL                 string                     `json:"avatarUrl,omitempty"`
-	ComplianceFrameworks      []string                   `json:"complianceFrameworks,omitempty"`
-	ContainerExpirationPolicy *ContainerExpirationPolicy `json:"containerExpirationPolicy,omitempty"`
-	CreatedAt                 *metav1.Time               `json:"createdAt,omitempty"`
-	CreatorID                 int64                      `json:"creatorId,omitempty"`
-	CustomAttributes          []CustomAttribute          `json:"customAttributes,omitempty"`
-	EmptyRepo                 bool                       `json:"emptyRepo,omitempty"`
-	ForkedFromProject         *ForkParent                `json:"forkedFromProject,omitempty"`
-	ForksCount                int64                      `json:"forksCount,omitempty"`
-	HTTPURLToRepo             string                     `json:"httpUrlToRepo,omitempty"`
-	ImportError               string                     `json:"importError,omitempty"`
-	ImportStatus              string                     `json:"importStatus,omitempty"`
-	IssuesEnabled             bool                       `json:"issuesEnabled,omitempty"`
-	JobsEnabled               bool                       `json:"jobsEnabled,omitempty"`
-	IssuesAccessLevel         AccessControlValue         `json:"issuesAccessLevel,omitempty"`
-	BuildsAccessLevel         AccessControlValue         `json:"buildsAccessLevel,omitempty"`
-	LastActivityAt            *metav1.Time               `json:"lastActivityAt,omitempty"`
-	License                   *ProjectLicense            `json:"license,omitempty"`
-	LicenseURL                string                     `json:"licenseUrl,omitempty"`
-	Links                     *Links                     `json:"links,omitempty"`
-	MarkedForDeletionAt       *metav1.Time               `json:"markedForDeletionAt,omitempty"`
-	MergeRequestsEnabled      bool                       `json:"mergeRequestsEnabled,omitempty"`
-	MarkedForDeletionOn       *metav1.Time               `json:"markedForDeletionOn,omitempty"`
-	MergeRequestsAccessLevel  AccessControlValue         `json:"mergeRequestsAccessLevel,omitempty"`
-	NameWithNamespace         string                     `json:"nameWithNamespace,omitempty"`
-	Namespace                 *ProjectNamespace          `json:"namespace,omitempty"`
-	OpenIssuesCount           int64                      `json:"openIssuesCount,omitempty"`
-	Owner                     *User                      `json:"owner,omitempty"`
-	PathWithNamespace         string                     `json:"pathWithNamespace,omitempty"`
-	Permissions               *Permissions               `json:"permissions,omitempty"`
-	Public                    bool                       `json:"public,omitempty"`
-	ReadmeURL                 string                     `json:"readmeUrl,omitempty"`
-	SSHURLToRepo              string                     `json:"sshUrlToRepo,omitempty"`
-	ServiceDeskAddress        string                     `json:"serviceDeskAddress,omitempty"`
-	SharedWithGroups          []SharedWithGroups         `json:"sharedWithGroups,omitempty"`
-	SnippetsEnabled           bool                       `json:"snippetsEnabled,omitempty"`
-	SnippetsAccessLevel       AccessControlValue         `json:"snippetsAccessLevel,omitempty"`
-	StarCount                 int64                      `json:"starCount,omitempty"`
-	Statistics                *ProjectStatistics         `json:"statistics,omitempty"`
-	WebURL                    string                     `json:"webUrl,omitempty"`
-	WikiEnabled               bool                       `json:"wikiEnabled,omitempty"`
-	WikiAccessLevel           AccessControlValue         `json:"wikiAccessLevel,omitempty"`
+	ID                          int64                      `json:"id,omitempty"`
+	Archived                    bool                       `json:"archived,omitempty"`
+	AvatarURL                   string                     `json:"avatarUrl,omitempty"`
+	ComplianceFrameworks        []string                   `json:"complianceFrameworks,omitempty"`
+	ContainerExpirationPolicy   *ContainerExpirationPolicy `json:"containerExpirationPolicy,omitempty"`
+	CreatedAt                   *metav1.Time               `json:"createdAt,omitempty"`
+	CreatorID                   int64                      `json:"creatorId,omitempty"`
+	CustomAttributes            []CustomAttribute          `json:"customAttributes,omitempty"`
+	EmptyRepo                   bool                       `json:"emptyRepo,omitempty"`
+	ForkedFromProject           *ForkParent                `json:"forkedFromProject,omitempty"`
+	ForksCount                  int64                      `json:"forksCount,omitempty"`
+	HTTPURLToRepo               string                     `json:"httpUrlToRepo,omitempty"`
+	ImportError                 string                     `json:"importError,omitempty"`
+	ImportStatus                string                     `json:"importStatus,omitempty"`
+	IssuesEnabled               bool                       `json:"issuesEnabled,omitempty"`
+	JobsEnabled                 bool                       `json:"jobsEnabled,omitempty"`
+	IssuesAccessLevel           AccessControlValue         `json:"issuesAccessLevel,omitempty"`
+	BuildsAccessLevel           AccessControlValue         `json:"buildsAccessLevel,omitempty"`
+	LastActivityAt              *metav1.Time               `json:"lastActivityAt,omitempty"`
+	License                     *ProjectLicense            `json:"license,omitempty"`
+	LicenseURL                  string                     `json:"licenseUrl,omitempty"`
+	Links                       *Links                     `json:"links,omitempty"`
+	MarkedForDeletionAt         *metav1.Time               `json:"markedForDeletionAt,omitempty"`
+	MergeRequestsEnabled        bool                       `json:"mergeRequestsEnabled,omitempty"`
+	MarkedForDeletionOn         *metav1.Time               `json:"markedForDeletionOn,omitempty"`
+	MergeRequestsAccessLevel    AccessControlValue         `json:"mergeRequestsAccessLevel,omitempty"`
+	MergeTrainsEnabled          bool                       `json:"mergeTrainsEnabled,omitempty"`
+	MergeTrainsSkipTrainAllowed bool                       `json:"mergeTrainsSkipTrainAllowed,omitempty"`
+	MergePipelinesEnabled       bool                       `json:"mergePipelinesEnabled,omitempty"`
+	NameWithNamespace           string                     `json:"nameWithNamespace,omitempty"`
+	Namespace                   *ProjectNamespace          `json:"namespace,omitempty"`
+	OpenIssuesCount             int64                      `json:"openIssuesCount,omitempty"`
+	Owner                       *User                      `json:"owner,omitempty"`
+	PathWithNamespace           string                     `json:"pathWithNamespace,omitempty"`
+	Permissions                 *Permissions               `json:"permissions,omitempty"`
+	Public                      bool                       `json:"public,omitempty"`
+	ReadmeURL                   string                     `json:"readmeUrl,omitempty"`
+	SSHURLToRepo                string                     `json:"sshUrlToRepo,omitempty"`
+	ServiceDeskAddress          string                     `json:"serviceDeskAddress,omitempty"`
+	SharedWithGroups            []SharedWithGroups         `json:"sharedWithGroups,omitempty"`
+	SnippetsEnabled             bool                       `json:"snippetsEnabled,omitempty"`
+	SnippetsAccessLevel         AccessControlValue         `json:"snippetsAccessLevel,omitempty"`
+	StarCount                   int64                      `json:"starCount,omitempty"`
+	Statistics                  *ProjectStatistics         `json:"statistics,omitempty"`
+	WebURL                      string                     `json:"webUrl,omitempty"`
+	WikiEnabled                 bool                       `json:"wikiEnabled,omitempty"`
+	WikiAccessLevel             AccessControlValue         `json:"wikiAccessLevel,omitempty"`
 }
 
 // A ProjectSpec defines the desired state of a Gitlab Project.
