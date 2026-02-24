@@ -32,6 +32,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedbranches"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/variables"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/emailsonpush"
 )
 
 // Setup all project controllers
@@ -49,6 +50,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		runners.SetupRunner,
 		protectedbranches.SetupProtectedBranch,
 		badges.SetupBadge,
+		emailsonpush.SetupEmailsOnPush,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -73,6 +75,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		runners.SetupRunnerGated,
 		protectedbranches.SetupProtectedBranchGated,
 		badges.SetupBadgeGated,
+		emailsonpush.SetupEmailsOnPushGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

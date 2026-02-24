@@ -132,6 +132,14 @@ var (
 	BadgeGroupVersionKind = SchemeGroupVersion.WithKind(BadgeKind)
 )
 
+// EmailsOnPush type metadata
+var (
+	EmailsOnPushKind             = reflect.TypeOf(EmailsOnPush{}).Name()
+	EmailsOnPushGroupKind        = schema.GroupKind{Group: Group, Kind: EmailsOnPushKind}.String()
+	EmailsOnPushKindAPIVersion   = EmailsOnPushKind + "." + SchemeGroupVersion.String()
+	EmailsOnPushGroupVersionKind = SchemeGroupVersion.WithKind(EmailsOnPushKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
@@ -145,4 +153,5 @@ func init() {
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&ProtectedBranch{}, &ProtectedBranchList{})
 	SchemeBuilder.Register(&Badge{}, &BadgeList{})
+	SchemeBuilder.Register(&EmailsOnPush{}, &EmailsOnPushList{})
 }
