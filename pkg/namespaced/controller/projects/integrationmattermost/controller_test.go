@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-	http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -85,7 +85,6 @@ type args struct {
 
 type mattermostModifier func(*v1alpha1.IntegrationMattermost)
 
-// Helper functions to create test objects
 func withProjectID(id int64) mattermostModifier {
 	return func(r *v1alpha1.IntegrationMattermost) {
 		r.Spec.ForProvider.ProjectID = &id
@@ -128,6 +127,13 @@ func withDeletionTimestamp(t time.Time) mattermostModifier {
 	}
 }
 
+// withForProvider allows customizing ForProvider fields in-place.
+func withForProvider(mut func(*v1alpha1.IntegrationMattermostParameters)) mattermostModifier {
+	return func(r *v1alpha1.IntegrationMattermost) {
+		mut(&r.Spec.ForProvider)
+	}
+}
+
 func integrationMattermost(m ...mattermostModifier) *v1alpha1.IntegrationMattermost {
 	cr := &v1alpha1.IntegrationMattermost{}
 	for _, f := range m {
@@ -136,7 +142,6 @@ func integrationMattermost(m ...mattermostModifier) *v1alpha1.IntegrationMatterm
 	return cr
 }
 
-// TestConnect tests the Connect method of the connector
 func TestConnect(t *testing.T) {
 	type want struct {
 		cr     resource.Managed
@@ -174,7 +179,6 @@ func TestConnect(t *testing.T) {
 			c := &connector{kube: tc.kube, newGitlabClientFn: nil}
 			o, err := c.Connect(context.Background(), tc.args.cr)
 
-			// Compare error messages instead of error types
 			if (tc.want.err == nil) != (err == nil) {
 				t.Errorf("Connect(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
 			}
@@ -188,7 +192,6 @@ func TestConnect(t *testing.T) {
 	}
 }
 
-// TestObserve tests the Observe method of the external client
 func TestObserve(t *testing.T) {
 	type want struct {
 		cr     resource.Managed
@@ -305,7 +308,29 @@ func TestObserve(t *testing.T) {
 					withWebHook(testWebHook),
 					withUsername(testUsername),
 					withChannel(testChannel),
-					// NO late initialization
+					withForProvider(func(p *v1alpha1.IntegrationMattermostParameters) {
+						p.NotifyOnlyBrokenPipelines = ptr.To(true)
+						p.BranchesToBeNotified = ptr.To(testBranchesToBeNotified)
+						p.PushEvents = ptr.To(true)
+						p.IssuesEvents = ptr.To(true)
+						p.ConfidentialIssuesEvents = ptr.To(false)
+						p.MergeRequestsEvents = ptr.To(true)
+						p.TagPushEvents = ptr.To(true)
+						p.NoteEvents = ptr.To(true)
+						p.ConfidentialNoteEvents = ptr.To(false)
+						p.PipelineEvents = ptr.To(true)
+						p.WikiPageEvents = ptr.To(false)
+
+						p.PushChannel = ptr.To(testPushChannel)
+						p.IssueChannel = ptr.To(testIssueChannel)
+						p.ConfidentialIssueChannel = ptr.To(testConfidentialIssueChannel)
+						p.MergeRequestChannel = ptr.To(testMergeRequestChannel)
+						p.NoteChannel = ptr.To(testNoteChannel)
+						p.ConfidentialNoteChannel = ptr.To(testConfidentialNoteChannel)
+						p.TagPushChannel = ptr.To(testTagPushChannel)
+						p.PipelineChannel = ptr.To(testPipelineChannel)
+						p.WikiPageChannel = ptr.To(testWikiPageChannel)
+					}),
 					withConditions(xpv1.Available()),
 					withStatus(v1alpha1.IntegrationMattermostObservation{
 						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
@@ -355,7 +380,7 @@ func TestObserve(t *testing.T) {
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
 					ResourceUpToDate:        true,
-					ResourceLateInitialized: false, // No late initialization
+					ResourceLateInitialized: true,
 				},
 			},
 		},
@@ -367,11 +392,11 @@ func TestObserve(t *testing.T) {
 							Service: gitlab.Service{
 								ID:         testID,
 								Title:      testTitle,
-								PushEvents: false, // Different from spec
+								PushEvents: false,
 							},
 							Properties: &gitlab.MattermostServiceProperties{
 								WebHook:  testWebHook,
-								Username: "different-user", // Different from spec
+								Username: "different-user",
 							},
 						}, &gitlab.Response{}, nil
 					},
@@ -387,15 +412,24 @@ func TestObserve(t *testing.T) {
 					withProjectID(testProjectID),
 					withWebHook(testWebHook),
 					withUsername(testUsername),
-					// Empty channel is NOT late-initialized
-					// Event flags and channels are NOT late-initialized
+					withForProvider(func(p *v1alpha1.IntegrationMattermostParameters) {
+						p.NotifyOnlyBrokenPipelines = ptr.To(false)
+						p.PushEvents = ptr.To(false)
+						p.IssuesEvents = ptr.To(false)
+						p.ConfidentialIssuesEvents = ptr.To(false)
+						p.MergeRequestsEvents = ptr.To(false)
+						p.TagPushEvents = ptr.To(false)
+						p.NoteEvents = ptr.To(false)
+						p.ConfidentialNoteEvents = ptr.To(false)
+						p.PipelineEvents = ptr.To(false)
+						p.WikiPageEvents = ptr.To(false)
+					}),
 					withConditions(xpv1.Available()),
 					withStatus(v1alpha1.IntegrationMattermostObservation{
 						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
-							ID:    ptr.To(testID),
-							Title: ptr.To(testTitle),
-							Slug:  ptr.To(""),
-
+							ID:                             ptr.To(testID),
+							Title:                          ptr.To(testTitle),
+							Slug:                           ptr.To(""),
 							Active:                         ptr.To(false),
 							AlertEvents:                    ptr.To(false),
 							CommitEvents:                   ptr.To(false),
@@ -424,7 +458,7 @@ func TestObserve(t *testing.T) {
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
 					ResourceUpToDate:        false,
-					ResourceLateInitialized: false, // No late init because empty values are not initialized
+					ResourceLateInitialized: true,
 				},
 			},
 		},
@@ -479,14 +513,27 @@ func TestObserve(t *testing.T) {
 				cr: integrationMattermost(
 					withProjectID(testProjectID),
 					withWebHook(testWebHook),
-					// Username and Channel are not set, should be late initialized
 				),
 			},
 			want: want{
 				cr: integrationMattermost(
 					withProjectID(testProjectID),
 					withWebHook(testWebHook),
-					// NO late initialization - fields remain nil
+					withForProvider(func(p *v1alpha1.IntegrationMattermostParameters) {
+						p.Username = ptr.To(testUsername)
+						p.Channel = ptr.To(testChannel)
+
+						p.NotifyOnlyBrokenPipelines = ptr.To(false)
+						p.PushEvents = ptr.To(true)
+						p.IssuesEvents = ptr.To(false)
+						p.ConfidentialIssuesEvents = ptr.To(false)
+						p.MergeRequestsEvents = ptr.To(false)
+						p.TagPushEvents = ptr.To(false)
+						p.NoteEvents = ptr.To(false)
+						p.ConfidentialNoteEvents = ptr.To(false)
+						p.PipelineEvents = ptr.To(false)
+						p.WikiPageEvents = ptr.To(false)
+					}),
 					withConditions(xpv1.Available()),
 					withStatus(v1alpha1.IntegrationMattermostObservation{
 						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
@@ -522,7 +569,7 @@ func TestObserve(t *testing.T) {
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
 					ResourceUpToDate:        true,
-					ResourceLateInitialized: false, // No late initialization
+					ResourceLateInitialized: true,
 				},
 			},
 		},
@@ -533,7 +580,6 @@ func TestObserve(t *testing.T) {
 			e := &external{client: tc.mattermostClient}
 			o, err := e.Observe(context.Background(), tc.args.cr)
 
-			// Compare error messages instead of error types
 			if (tc.want.err == nil) != (err == nil) {
 				t.Errorf("Observe(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
 			}
@@ -541,7 +587,6 @@ func TestObserve(t *testing.T) {
 				t.Errorf("Observe(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
 			}
 
-			// Custom comparison options to ignore DeletionTimestamp for deleting resources
 			opts := []cmp.Option{test.EquateConditions()}
 			if cr, ok := tc.args.cr.(*v1alpha1.IntegrationMattermost); ok && cr != nil && !cr.ObjectMeta.DeletionTimestamp.IsZero() {
 				opts = append(opts, cmp.FilterPath(func(p cmp.Path) bool {
@@ -559,7 +604,6 @@ func TestObserve(t *testing.T) {
 	}
 }
 
-// TestCreate tests the Create method of the external client
 func TestCreate(t *testing.T) {
 	type want struct {
 		cr     resource.Managed
@@ -640,7 +684,6 @@ func TestCreate(t *testing.T) {
 			e := &external{client: tc.mattermostClient}
 			o, err := e.Create(context.Background(), tc.args.cr)
 
-			// Compare error messages instead of error types
 			if (tc.want.err == nil) != (err == nil) {
 				t.Errorf("Create(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
 			}
@@ -657,7 +700,6 @@ func TestCreate(t *testing.T) {
 	}
 }
 
-// TestUpdate tests the Update method of the external client
 func TestUpdate(t *testing.T) {
 	type want struct {
 		cr     resource.Managed
@@ -738,7 +780,6 @@ func TestUpdate(t *testing.T) {
 			e := &external{client: tc.mattermostClient}
 			o, err := e.Update(context.Background(), tc.args.cr)
 
-			// Compare error messages instead of error types
 			if (tc.want.err == nil) != (err == nil) {
 				t.Errorf("Update(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
 			}
@@ -755,7 +796,6 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
-// TestDelete tests the Delete method of the external client
 func TestDelete(t *testing.T) {
 	type want struct {
 		cr     resource.Managed
@@ -824,7 +864,6 @@ func TestDelete(t *testing.T) {
 			e := &external{client: tc.mattermostClient}
 			o, err := e.Delete(context.Background(), tc.args.cr)
 
-			// Compare error messages instead of error types
 			if (tc.want.err == nil) != (err == nil) {
 				t.Errorf("Delete(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
 			}
@@ -841,7 +880,6 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-// TestDisconnect tests the Disconnect method of the external client
 func TestDisconnect(t *testing.T) {
 	e := &external{}
 	err := e.Disconnect(context.Background())
