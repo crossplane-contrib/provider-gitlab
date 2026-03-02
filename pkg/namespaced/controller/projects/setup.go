@@ -25,6 +25,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/badges"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploytokens"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/emailsonpush"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/hooks"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/pipelineschedules"
@@ -49,6 +50,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		runners.SetupRunner,
 		protectedbranches.SetupProtectedBranch,
 		badges.SetupBadge,
+		emailsonpush.SetupEmailsOnPush,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -73,6 +75,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		runners.SetupRunnerGated,
 		protectedbranches.SetupProtectedBranchGated,
 		badges.SetupBadgeGated,
+		emailsonpush.SetupEmailsOnPushGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
