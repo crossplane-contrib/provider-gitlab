@@ -299,6 +299,9 @@ func TestUpdate(t *testing.T) {
 					MockDeleteSharedProjectFromGroup: func(pid any, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						return &gitlab.Response{}, nil
 					},
+					MockShareProjectWithGroup: func(pid any, opt *gitlab.ShareWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, nil
+					},
 				},
 				cr: projectShareGroup(withProjectID(&projectIDStr), withGroupID(&groupIDStr)),
 			},
