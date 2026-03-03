@@ -18,6 +18,7 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects"
 )
 
@@ -103,9 +104,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	p, _, err := e.client.GetProject(*cr.Spec.ForProvider.ProjectID, nil, gitlab.WithContext(ctx))
+	p, res, err := e.client.GetProject(*cr.Spec.ForProvider.ProjectID, nil, gitlab.WithContext(ctx))
 	if err != nil {
-		return managed.ExternalObservation{ResourceExists: false}, errors.Wrap(err, errGetProject)
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetProject)
 	}
 
 	targetGroupID, err := strconv.ParseInt(*cr.Spec.ForProvider.GroupID, 10, 64)
@@ -142,6 +146,10 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotProjectShareGroup)
 	}
 
+	if cr.Spec.ForProvider.ProjectID == nil || cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalCreation{}, errors.New("ProjectID and GroupID must be set")
+	}
+
 	groupID, err := strconv.ParseInt(*cr.Spec.ForProvider.GroupID, 10, 64)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, "GroupID must be an integer")
@@ -161,7 +169,10 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, err := e.Delete(ctx, mg)
+	if _, err := e.Delete(ctx, mg); err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+	_, err := e.Create(ctx, mg)
 	return managed.ExternalUpdate{}, err
 }
 
@@ -169,6 +180,10 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	cr, ok := mg.(*v1alpha1.ProjectShareGroup)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotProjectShareGroup)
+	}
+
+	if cr.Spec.ForProvider.ProjectID == nil || cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalDelete{}, errors.New("ProjectID and GroupID must be set")
 	}
 
 	groupID, err := strconv.ParseInt(*cr.Spec.ForProvider.GroupID, 10, 64)
