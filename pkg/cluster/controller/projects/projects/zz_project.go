@@ -20,6 +20,7 @@ package projects
 
 import (
 	"context"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -172,6 +173,9 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	current := cr.Spec.ForProvider.DeepCopy()
 
+	// Take a snapshot of the spec BEFORE applying secret-derived values.
+	specSnapshot := current.DeepCopy()
+
 	// Replace the secret in the copied spec to avoid putting sensitive information in the CR spec
 	// This is only required for observation, as this is the only method where spec can be updated.
 	if current.ImportURLSecretRef != nil {
@@ -192,9 +196,10 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	cr.Status.AtProvider = projects.GenerateObservation(prj)
 	return managed.ExternalObservation{
-		ResourceExists:          true,
-		ResourceUpToDate:        isProjectUpToDate(&cr.Spec.ForProvider, prj) && e.cache.isPushRulesUpToDate,
-		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
+		ResourceExists:   true,
+		ResourceUpToDate: isProjectUpToDate(current, prj) && e.cache.isPushRulesUpToDate,
+		// Compare against specSnapshot (pre-secret-substitution)
+		ResourceLateInitialized: !cmp.Equal(specSnapshot, &cr.Spec.ForProvider),
 		ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte(prj.RunnersToken)},
 	}, nil
 }
@@ -660,10 +665,32 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.BuildGitStrategy, g.BuildGitStrategy) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr(p.ImportURL, g.ImportURL) {
+	// GitLab always strips userinfo (credentials) from ImportURL in API responses.
+	// For example, "https://TOKEN:@github.com/org/repo.git" is returned as "https://github.com/org/repo.git".
+	// Note: a pure credential rotation (same host/path, different token) cannot
+	// be detected through the API – GitLab will still report the sanitized URL.
+	if p.ImportURL != nil && sanitizeImportURL(*p.ImportURL) != g.ImportURL {
 		return false
 	}
 	return true
+}
+
+// sanitizeImportURL strips the userinfo (username / password / token) from a
+// URL string, mirroring the sanitization that the GitLab API applies to the
+// ImportURL field in project responses. If the URL cannot be parsed the
+// original string is returned unchanged.
+//
+// Examples:
+//
+//	"https://TOKEN:@github.com/org/repo.git" to "https://github.com/org/repo.git"
+//	"https://user:pass@gitlab.com/org/repo.git" to "https://gitlab.com/org/repo.git"
+func sanitizeImportURL(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	u.User = nil
+	return u.String()
 }
 
 func isPushRulesEmpty(rules *v1alpha1.PushRules) bool { //nolint:gocyclo
