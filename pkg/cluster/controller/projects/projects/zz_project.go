@@ -205,15 +205,18 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotProject)
 	}
 
-	if cr.Spec.ForProvider.ImportURLSecretRef != nil {
-		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, cr.Spec.ForProvider.ImportURLSecretRef, &cr.Spec.ForProvider.ImportURL)
+	current := cr.Spec.ForProvider.DeepCopy()
+
+	// Replace the import URL secret in the copied spec to avoid putting sensitive information in the CR spec
+	if current.ImportURLSecretRef != nil {
+		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, current.ImportURLSecretRef, &current.ImportURL)
 		if err != nil {
 			return managed.ExternalCreation{}, errors.Wrap(err, "failed to retrieve ImportURL from secret")
 		}
 	}
 
 	prj, _, err := e.client.CreateProject(
-		projects.GenerateCreateProjectOptions(cr.Name, &cr.Spec.ForProvider),
+		projects.GenerateCreateProjectOptions(cr.Name, current),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
@@ -230,8 +233,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotProject)
 	}
 
-	if cr.Spec.ForProvider.ImportURLSecretRef != nil {
-		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, cr.Spec.ForProvider.ImportURLSecretRef, &cr.Spec.ForProvider.ImportURL)
+	current := cr.Spec.ForProvider.DeepCopy()
+
+	// Replace the import URL secret in the copied spec to avoid putting sensitive information in the CR spec
+	if current.ImportURLSecretRef != nil {
+		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, current.ImportURLSecretRef, &current.ImportURL)
 		if err != nil {
 			return managed.ExternalUpdate{}, errors.Wrap(err, "failed to retrieve ImportURL from secret")
 		}
@@ -239,7 +245,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, _, err := e.client.EditProject(
 		meta.GetExternalName(cr),
-		projects.GenerateEditProjectOptions(cr.Name, &cr.Spec.ForProvider),
+		projects.GenerateEditProjectOptions(cr.Name, current),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
