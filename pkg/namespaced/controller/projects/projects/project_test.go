@@ -32,6 +32,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -443,6 +444,188 @@ func TestObserve(t *testing.T) {
 					ResourceExists:          true,
 					ResourceUpToDate:        true,
 					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		// Regression test: ImportURLSecretRef with credentials embedded in the URL.
+		// GitLab ALWAYS strips userinfo from ImportURL in API responses.
+		// "https://TOKEN:@github.com/org/repo.git" becomes "https://github.com/org/repo.git".
+		// The controller must sanitize the spec URL before comparing so that the
+		// credential-bearing URL does not look different from GitLab's response
+		"ImportURLSecretRefUpToDate": {
+			args: args{
+				kube: &test.MockClient{
+					MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+						*obj.(*corev1.Secret) = corev1.Secret{
+							Data: map[string][]byte{
+								// Credential-bearing URL as stored in the Secret
+								"url": []byte("https://GITHUB_TOKEN:@github.com/example/repo.git"),
+							},
+						}
+						return nil
+					}),
+				},
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						// GitLab API always returns the sanitized, credential-free URL
+						return &gitlab.Project{
+							ImportURL: "https://github.com/example/repo.git",
+						}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					func(p *v1alpha1.Project) {
+						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+							Key:                  "url",
+							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+						}
+					},
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.ProjectObservation{}),
+					func(p *v1alpha1.Project) {
+						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+							Key:                  "url",
+							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+						}
+					},
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,  // sanitized URL matches GitLab's response
+					ResourceLateInitialized: false, // no spurious late-init from secret resolution
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		// Regression test: credential rotation only (same host/path, different token).
+		// Since GitLab never returns credentials we cannot detect a pure token change
+		// through the API. The sanitized URLs will match, so the resource is considered
+		// up-to-date. This is expected behaviour; the alternative would be an infinite
+		// update loop on every reconcile.
+		"ImportURLSecretRefCredentialRotationIsUpToDate": {
+			args: args{
+				kube: &test.MockClient{
+					MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+						*obj.(*corev1.Secret) = corev1.Secret{
+							Data: map[string][]byte{
+								// Token was rotated; base URL is the same
+								"url": []byte("https://NEW_TOKEN:@github.com/example/repo.git"),
+							},
+						}
+						return nil
+					}),
+				},
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						// GitLab returns the same sanitized URL regardless of the token used
+						return &gitlab.Project{
+							ImportURL: "https://github.com/example/repo.git",
+						}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					func(p *v1alpha1.Project) {
+						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+							Key:                  "url",
+							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+						}
+					},
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.ProjectObservation{}),
+					func(p *v1alpha1.Project) {
+						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+							Key:                  "url",
+							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+						}
+					},
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true, // sanitized URLs are identical; credential difference is undetectable via API
+					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		// Regression test: when the underlying repository URL changes (different host
+		// or path, not merely credentials), the resource must be marked not-up-to-date
+		// so exactly one corrective update is issued. ResourceLateInitialized must still
+		// not be set spuriously.
+		"ImportURLSecretRefNotUpToDate": {
+			args: args{
+				kube: &test.MockClient{
+					MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+						*obj.(*corev1.Secret) = corev1.Secret{
+							Data: map[string][]byte{
+								// Secret now points to a completely different repository
+								"url": []byte("https://TOKEN:@github.com/example/new-repo.git"),
+							},
+						}
+						return nil
+					}),
+				},
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						// GitLab still mirrors the old repository
+						return &gitlab.Project{
+							ImportURL: "https://github.com/example/old-repo.git",
+						}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					func(p *v1alpha1.Project) {
+						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+							Key:                  "url",
+							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+						}
+					},
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.ProjectObservation{}),
+					func(p *v1alpha1.Project) {
+						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+							Key:                  "url",
+							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+						}
+					},
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        false, // repository URL changed → one corrective update required
+					ResourceLateInitialized: false, // no spurious late-init
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
 				},
 			},
@@ -1224,4 +1407,56 @@ func TestDelete(t *testing.T) {
 		})
 	}
 
+}
+
+// TestSanitizeImportURL verifies that sanitizeImportURL strips credentials
+// from a URL the same way the GitLab API does when returning ImportURL in project
+// responses. This is critical to prevent an infinite update loop when an
+// ImportURLSecretRef is used: GitLab never echoes back the token/password, so
+// the comparison must be done on the sanitized URL.
+func TestSanitizeImportURL(t *testing.T) {
+	cases := map[string]struct {
+		input string
+		want  string
+	}{
+		// GitLab pattern: TOKEN only (empty password), as in "https://TOKEN:@host/repo.git"
+		"TokenWithEmptyPassword": {
+			input: "https://GITHUB_TOKEN:@github.com/example/repo.git",
+			want:  "https://github.com/example/repo.git",
+		},
+		// Username + password present
+		"UsernameAndPassword": {
+			input: "https://user:password@gitlab.com/group/repo.git",
+			want:  "https://gitlab.com/group/repo.git",
+		},
+		// Username only (no colon)
+		"UsernameOnly": {
+			input: "https://user@gitlab.com/group/repo.git",
+			want:  "https://gitlab.com/group/repo.git",
+		},
+		// No credentials present – must be returned unchanged
+		"NoCredentials": {
+			input: "https://github.com/example/repo.git",
+			want:  "https://github.com/example/repo.git",
+		},
+		// SSH URL – no userinfo in the RFC 3986 sense; must pass through unchanged
+		"SSHUrl": {
+			input: "git@github.com:example/repo.git",
+			want:  "git@github.com:example/repo.git",
+		},
+		// Unparseable string – must be returned as-is rather than panicking
+		"Unparseable": {
+			input: "://not a url",
+			want:  "://not a url",
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := sanitizeImportURL(tc.input)
+			if got != tc.want {
+				t.Errorf("sanitizeImportURL(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
 }
