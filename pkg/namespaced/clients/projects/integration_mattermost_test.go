@@ -1,0 +1,504 @@
+package projects
+
+import (
+	"testing"
+	"time"
+
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"k8s.io/utils/ptr"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
+	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+var (
+	// Common test variables for Mattermost integration
+	testProjectID                 int64 = 123
+	testWebHook                         = "https://mattermost.example.com/hooks/webhook123"
+	testUsername                        = "gitlab-bot"
+	testChannel                         = "general"
+	testNotifyOnlyBrokenPipelines       = true
+	testBranchesToBeNotified            = "all"
+	testPushEvents                      = true
+	testIssuesEvents                    = true
+	testConfidentialIssuesEvents        = false
+	testMergeRequestsEvents             = true
+	testTagPushEvents                   = true
+	testNoteEvents                      = true
+	testConfidentialNoteEvents          = false
+	testPipelineEvents                  = true
+	testWikiPageEvents                  = false
+	testPushChannel                     = "ci-cd"
+	testIssueChannel                    = "issues"
+	testConfidentialIssueChannel        = "confidential-issues"
+	testMergeRequestChannel             = "merge-requests"
+	testNoteChannel                     = "comments"
+	testConfidentialNoteChannel         = "confidential-comments"
+	testTagPushChannel                  = "releases"
+	testPipelineChannel                 = "pipelines"
+	testWikiPageChannel                 = "wiki"
+	testVulnerabilityChannel            = "security"
+	testID                        int64 = 456
+	testTitle                           = "Mattermost"
+	testSlug                            = "mattermost"
+	testActive                          = true
+	testAlertEvents                     = false
+	testCommitEvents                    = true
+	testGroupConfidentialMention        = false
+	testGroupMentionEvents              = false
+	testIncidentEvents                  = false
+	testJobEvents                       = true
+	testDeploymentEvents                = false
+	testVulnerabilityEvents             = false
+	testCommentOnEventEnabled           = false
+	testInherited                       = false
+	testCreatedAt                       = time.Now()
+	testUpdatedAt                       = time.Now()
+)
+
+// TestGenerateSetMattermostServiceOptions tests the conversion from
+// IntegrationMattermostParameters to GitLab SetMattermostServiceOptions
+func TestGenerateSetMattermostServiceOptions(t *testing.T) {
+	type args struct {
+		parameters *projectsv1alpha1.IntegrationMattermostParameters
+	}
+	cases := map[string]struct {
+		args args
+		want *gitlab.SetMattermostServiceOptions
+	}{
+		"AllFieldsSet": {
+			args: args{
+				parameters: &projectsv1alpha1.IntegrationMattermostParameters{
+					ProjectID:                 &testProjectID,
+					WebHook:                   testWebHook,
+					Username:                  &testUsername,
+					Channel:                   &testChannel,
+					NotifyOnlyBrokenPipelines: &testNotifyOnlyBrokenPipelines,
+					BranchesToBeNotified:      &testBranchesToBeNotified,
+					PushEvents:                &testPushEvents,
+					IssuesEvents:              &testIssuesEvents,
+					ConfidentialIssuesEvents:  &testConfidentialIssuesEvents,
+					MergeRequestsEvents:       &testMergeRequestsEvents,
+					TagPushEvents:             &testTagPushEvents,
+					NoteEvents:                &testNoteEvents,
+					ConfidentialNoteEvents:    &testConfidentialNoteEvents,
+					PipelineEvents:            &testPipelineEvents,
+					WikiPageEvents:            &testWikiPageEvents,
+					PushChannel:               &testPushChannel,
+					IssueChannel:              &testIssueChannel,
+					ConfidentialIssueChannel:  &testConfidentialIssueChannel,
+					MergeRequestChannel:       &testMergeRequestChannel,
+					NoteChannel:               &testNoteChannel,
+					ConfidentialNoteChannel:   &testConfidentialNoteChannel,
+					TagPushChannel:            &testTagPushChannel,
+					PipelineChannel:           &testPipelineChannel,
+					WikiPageChannel:           &testWikiPageChannel,
+				},
+			},
+			want: &gitlab.SetMattermostServiceOptions{
+				WebHook:                   &testWebHook,
+				Username:                  &testUsername,
+				Channel:                   &testChannel,
+				NotifyOnlyBrokenPipelines: &testNotifyOnlyBrokenPipelines,
+				BranchesToBeNotified:      &testBranchesToBeNotified,
+				PushEvents:                &testPushEvents,
+				IssuesEvents:              &testIssuesEvents,
+				ConfidentialIssuesEvents:  &testConfidentialIssuesEvents,
+				MergeRequestsEvents:       &testMergeRequestsEvents,
+				TagPushEvents:             &testTagPushEvents,
+				NoteEvents:                &testNoteEvents,
+				ConfidentialNoteEvents:    &testConfidentialNoteEvents,
+				PipelineEvents:            &testPipelineEvents,
+				WikiPageEvents:            &testWikiPageEvents,
+				PushChannel:               &testPushChannel,
+				IssueChannel:              &testIssueChannel,
+				ConfidentialIssueChannel:  &testConfidentialIssueChannel,
+				MergeRequestChannel:       &testMergeRequestChannel,
+				NoteChannel:               &testNoteChannel,
+				ConfidentialNoteChannel:   &testConfidentialNoteChannel,
+				TagPushChannel:            &testTagPushChannel,
+				PipelineChannel:           &testPipelineChannel,
+				WikiPageChannel:           &testWikiPageChannel,
+			},
+		},
+		"OnlyRequiredFields": {
+			args: args{
+				parameters: &projectsv1alpha1.IntegrationMattermostParameters{
+					ProjectID: &testProjectID,
+					WebHook:   testWebHook,
+				},
+			},
+			want: &gitlab.SetMattermostServiceOptions{
+				WebHook: &testWebHook,
+			},
+		},
+		"EmptyWebHookNotIncluded": {
+			args: args{
+				parameters: &projectsv1alpha1.IntegrationMattermostParameters{
+					ProjectID: &testProjectID,
+					WebHook:   "",
+				},
+			},
+			want: &gitlab.SetMattermostServiceOptions{},
+		},
+		"NilInput": {
+			args: args{
+				parameters: nil,
+			},
+			want: &gitlab.SetMattermostServiceOptions{},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateSetMattermostServiceOptions(tc.args.parameters)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("GenerateSetMattermostServiceOptions(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+// TestGenerateIntegrationMattermostObservation tests the conversion from
+// GitLab MattermostService to IntegrationMattermostObservation
+func TestGenerateIntegrationMattermostObservation(t *testing.T) {
+	type args struct {
+		service *gitlab.MattermostService
+	}
+	cases := map[string]struct {
+		args args
+		want projectsv1alpha1.IntegrationMattermostObservation
+	}{
+		"FullObservation": {
+			args: args{
+				service: &gitlab.MattermostService{
+					Service: gitlab.Service{
+						ID:                             testID,
+						Title:                          testTitle,
+						Slug:                           testSlug,
+						CreatedAt:                      &testCreatedAt,
+						UpdatedAt:                      &testUpdatedAt,
+						Active:                         testActive,
+						AlertEvents:                    testAlertEvents,
+						CommitEvents:                   testCommitEvents,
+						ConfidentialIssuesEvents:       testConfidentialIssuesEvents,
+						ConfidentialNoteEvents:         testConfidentialNoteEvents,
+						DeploymentEvents:               testDeploymentEvents,
+						GroupConfidentialMentionEvents: testGroupConfidentialMention,
+						GroupMentionEvents:             testGroupMentionEvents,
+						IncidentEvents:                 testIncidentEvents,
+						IssuesEvents:                   testIssuesEvents,
+						JobEvents:                      testJobEvents,
+						MergeRequestsEvents:            testMergeRequestsEvents,
+						NoteEvents:                     testNoteEvents,
+						PipelineEvents:                 testPipelineEvents,
+						PushEvents:                     testPushEvents,
+						TagPushEvents:                  testTagPushEvents,
+						VulnerabilityEvents:            testVulnerabilityEvents,
+						WikiPageEvents:                 testWikiPageEvents,
+						CommentOnEventEnabled:          testCommentOnEventEnabled,
+						Inherited:                      testInherited,
+					},
+					Properties: &gitlab.MattermostServiceProperties{
+						WebHook:                   testWebHook,
+						Username:                  testUsername,
+						Channel:                   testChannel,
+						NotifyOnlyBrokenPipelines: gitlab.BoolValue(testNotifyOnlyBrokenPipelines),
+						BranchesToBeNotified:      testBranchesToBeNotified,
+						PushChannel:               testPushChannel,
+						IssueChannel:              testIssueChannel,
+						ConfidentialIssueChannel:  testConfidentialIssueChannel,
+						MergeRequestChannel:       testMergeRequestChannel,
+						NoteChannel:               testNoteChannel,
+						ConfidentialNoteChannel:   testConfidentialNoteChannel,
+						TagPushChannel:            testTagPushChannel,
+						PipelineChannel:           testPipelineChannel,
+						WikiPageChannel:           testWikiPageChannel,
+						VulnerabilityChannel:      testVulnerabilityChannel,
+					},
+				},
+			},
+			want: projectsv1alpha1.IntegrationMattermostObservation{
+				CommonIntegrationObservation: v1alpha1.CommonIntegrationObservation{
+					ID:                             ptr.To(testID),
+					Title:                          ptr.To(testTitle),
+					Slug:                           ptr.To(testSlug),
+					CreatedAt:                      clients.TimeToMetaTime(&testCreatedAt),
+					UpdatedAt:                      clients.TimeToMetaTime(&testUpdatedAt),
+					Active:                         ptr.To(true),
+					AlertEvents:                    ptr.To(false),
+					CommitEvents:                   ptr.To(true),
+					ConfidentialIssuesEvents:       ptr.To(false),
+					ConfidentialNoteEvents:         ptr.To(false),
+					DeploymentEvents:               ptr.To(false),
+					GroupConfidentialMentionEvents: ptr.To(false),
+					GroupMentionEvents:             ptr.To(false),
+					IncidentEvents:                 ptr.To(false),
+					IssuesEvents:                   ptr.To(true),
+					JobEvents:                      ptr.To(true),
+					MergeRequestsEvents:            ptr.To(true),
+					NoteEvents:                     ptr.To(true),
+					PipelineEvents:                 ptr.To(true),
+					PushEvents:                     ptr.To(true),
+					TagPushEvents:                  ptr.To(true),
+					VulnerabilityEvents:            ptr.To(false),
+					WikiPageEvents:                 ptr.To(false),
+					CommentOnEventEnabled:          ptr.To(false),
+					Inherited:                      ptr.To(false),
+				},
+				WebHook:                   testWebHook,
+				Username:                  testUsername,
+				Channel:                   testChannel,
+				NotifyOnlyBrokenPipelines: testNotifyOnlyBrokenPipelines,
+				BranchesToBeNotified:      testBranchesToBeNotified,
+				PushChannel:               testPushChannel,
+				IssueChannel:              testIssueChannel,
+				ConfidentialIssueChannel:  testConfidentialIssueChannel,
+				MergeRequestChannel:       testMergeRequestChannel,
+				NoteChannel:               testNoteChannel,
+				ConfidentialNoteChannel:   testConfidentialNoteChannel,
+				TagPushChannel:            testTagPushChannel,
+				PipelineChannel:           testPipelineChannel,
+				WikiPageChannel:           testWikiPageChannel,
+				VulnerabilityChannel:      testVulnerabilityChannel,
+			},
+		},
+		"MinimalObservation": {
+			args: args{
+				service: &gitlab.MattermostService{
+					Service: gitlab.Service{
+						ID:    testID,
+						Title: testTitle,
+					},
+					Properties: &gitlab.MattermostServiceProperties{
+						WebHook: testWebHook,
+					},
+				},
+			},
+			want: projectsv1alpha1.IntegrationMattermostObservation{
+				CommonIntegrationObservation: v1alpha1.CommonIntegrationObservation{
+					ID:                             ptr.To(testID),
+					Title:                          ptr.To(testTitle),
+					Slug:                           ptr.To(""),
+					CreatedAt:                      nil,
+					UpdatedAt:                      nil,
+					Active:                         ptr.To(false),
+					AlertEvents:                    ptr.To(false),
+					CommitEvents:                   ptr.To(false),
+					ConfidentialIssuesEvents:       ptr.To(false),
+					ConfidentialNoteEvents:         ptr.To(false),
+					DeploymentEvents:               ptr.To(false),
+					GroupConfidentialMentionEvents: ptr.To(false),
+					GroupMentionEvents:             ptr.To(false),
+					IncidentEvents:                 ptr.To(false),
+					IssuesEvents:                   ptr.To(false),
+					JobEvents:                      ptr.To(false),
+					MergeRequestsEvents:            ptr.To(false),
+					NoteEvents:                     ptr.To(false),
+					PipelineEvents:                 ptr.To(false),
+					PushEvents:                     ptr.To(false),
+					TagPushEvents:                  ptr.To(false),
+					VulnerabilityEvents:            ptr.To(false),
+					WikiPageEvents:                 ptr.To(false),
+					CommentOnEventEnabled:          ptr.To(false),
+					Inherited:                      ptr.To(false),
+				},
+				WebHook: testWebHook,
+			},
+		},
+		"NilObservation": {
+			args: args{
+				service: nil,
+			},
+			want: projectsv1alpha1.IntegrationMattermostObservation{},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateIntegrationMattermostObservation(tc.args.service)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("GenerateIntegrationMattermostObservation(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+// TestIsIntegrationMattermostUpToDate tests whether the spec matches the observation
+func TestIsIntegrationMattermostUpToDate(t *testing.T) {
+	type args struct {
+		spec        *projectsv1alpha1.IntegrationMattermostParameters
+		observation *gitlab.MattermostService
+	}
+	cases := map[string]struct {
+		args args
+		want bool
+	}{
+		"UpToDate": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationMattermostParameters{
+					ProjectID:                 &testProjectID,
+					WebHook:                   testWebHook,
+					Username:                  &testUsername,
+					Channel:                   &testChannel,
+					NotifyOnlyBrokenPipelines: &testNotifyOnlyBrokenPipelines,
+					BranchesToBeNotified:      &testBranchesToBeNotified,
+					PushEvents:                &testPushEvents,
+					IssuesEvents:              &testIssuesEvents,
+					ConfidentialIssuesEvents:  &testConfidentialIssuesEvents,
+					MergeRequestsEvents:       &testMergeRequestsEvents,
+					TagPushEvents:             &testTagPushEvents,
+					NoteEvents:                &testNoteEvents,
+					ConfidentialNoteEvents:    &testConfidentialNoteEvents,
+					PipelineEvents:            &testPipelineEvents,
+					WikiPageEvents:            &testWikiPageEvents,
+					PushChannel:               &testPushChannel,
+					IssueChannel:              &testIssueChannel,
+					ConfidentialIssueChannel:  &testConfidentialIssueChannel,
+					MergeRequestChannel:       &testMergeRequestChannel,
+					NoteChannel:               &testNoteChannel,
+					ConfidentialNoteChannel:   &testConfidentialNoteChannel,
+					TagPushChannel:            &testTagPushChannel,
+					PipelineChannel:           &testPipelineChannel,
+					WikiPageChannel:           &testWikiPageChannel,
+				},
+				observation: &gitlab.MattermostService{
+					Service: gitlab.Service{
+						PushEvents:               testPushEvents,
+						IssuesEvents:             testIssuesEvents,
+						ConfidentialIssuesEvents: testConfidentialIssuesEvents,
+						MergeRequestsEvents:      testMergeRequestsEvents,
+						TagPushEvents:            testTagPushEvents,
+						NoteEvents:               testNoteEvents,
+						ConfidentialNoteEvents:   testConfidentialNoteEvents,
+						PipelineEvents:           testPipelineEvents,
+						WikiPageEvents:           testWikiPageEvents,
+					},
+					Properties: &gitlab.MattermostServiceProperties{
+						WebHook:                   testWebHook,
+						Username:                  testUsername,
+						Channel:                   testChannel,
+						NotifyOnlyBrokenPipelines: gitlab.BoolValue(testNotifyOnlyBrokenPipelines),
+						BranchesToBeNotified:      testBranchesToBeNotified,
+						PushChannel:               testPushChannel,
+						IssueChannel:              testIssueChannel,
+						ConfidentialIssueChannel:  testConfidentialIssueChannel,
+						MergeRequestChannel:       testMergeRequestChannel,
+						NoteChannel:               testNoteChannel,
+						ConfidentialNoteChannel:   testConfidentialNoteChannel,
+						TagPushChannel:            testTagPushChannel,
+						PipelineChannel:           testPipelineChannel,
+						WikiPageChannel:           testWikiPageChannel,
+					},
+				},
+			},
+			want: true,
+		},
+		"DifferentWebHookIsIgnored": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationMattermostParameters{
+					WebHook: "https://mattermost.example.com/hooks/different",
+				},
+				observation: &gitlab.MattermostService{
+					Properties: &gitlab.MattermostServiceProperties{
+						WebHook: testWebHook,
+					},
+				},
+			},
+			want: true,
+		},
+		"OutOfDateUsername": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationMattermostParameters{
+					WebHook:  testWebHook,
+					Username: func() *string { s := "different-user"; return &s }(),
+				},
+				observation: &gitlab.MattermostService{
+					Properties: &gitlab.MattermostServiceProperties{
+						WebHook:  testWebHook,
+						Username: testUsername,
+					},
+				},
+			},
+			want: false,
+		},
+		"OutOfDateChannel": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationMattermostParameters{
+					WebHook: testWebHook,
+					Channel: func() *string { s := "different-channel"; return &s }(),
+				},
+				observation: &gitlab.MattermostService{
+					Properties: &gitlab.MattermostServiceProperties{
+						WebHook: testWebHook,
+						Channel: testChannel,
+					},
+				},
+			},
+			want: false,
+		},
+		"OutOfDateNotifyOnlyBrokenPipelines": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationMattermostParameters{
+					WebHook:                   testWebHook,
+					NotifyOnlyBrokenPipelines: func() *bool { b := false; return &b }(),
+				},
+				observation: &gitlab.MattermostService{
+					Properties: &gitlab.MattermostServiceProperties{
+						WebHook:                   testWebHook,
+						NotifyOnlyBrokenPipelines: gitlab.BoolValue(true),
+					},
+				},
+			},
+			want: false,
+		},
+		"OutOfDatePushEvents": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationMattermostParameters{
+					WebHook:    testWebHook,
+					PushEvents: func() *bool { b := false; return &b }(),
+				},
+				observation: &gitlab.MattermostService{
+					Service: gitlab.Service{
+						PushEvents: true,
+					},
+					Properties: &gitlab.MattermostServiceProperties{
+						WebHook: testWebHook,
+					},
+				},
+			},
+			want: false,
+		},
+		"NilSpecFields": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationMattermostParameters{
+					WebHook: testWebHook,
+				},
+				observation: &gitlab.MattermostService{
+					Properties: &gitlab.MattermostServiceProperties{
+						WebHook: testWebHook,
+					},
+				},
+			},
+			want: true,
+		},
+		"NilObservationReturnsFalse": {
+			args: args{
+				spec:        &projectsv1alpha1.IntegrationMattermostParameters{},
+				observation: nil,
+			},
+			want: false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsIntegrationMattermostUpToDate(tc.args.spec, tc.args.observation)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("IsIntegrationMattermostUpToDate(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
