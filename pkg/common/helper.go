@@ -52,6 +52,8 @@ func GetTokenValueFromSecret(ctx context.Context, client client.Client, m resour
 	return &data, nil
 }
 
+// GetTokenValueFromLocalSecret is a helper function that retrieves the value of a secret key specified by a LocalSecretKeySelector.
+// It constructs a SecretKeySelector from the LocalSecretKeySelector and calls GetTokenValueFromSecret to fetch the value.
 func GetTokenValueFromLocalSecret(ctx context.Context, client client.Client, m resource.Managed, l *xpv1.LocalSecretKeySelector) (*string, error) {
 	if l == nil {
 		return nil, errors.Errorf(ErrSecretSelectorNil)

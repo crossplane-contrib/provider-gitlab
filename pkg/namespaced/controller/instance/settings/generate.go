@@ -59,6 +59,8 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/common"
 )
 
 `
@@ -85,7 +87,7 @@ func main() {
 		// Generate assignment from SecretRef to corresponding field in ApplicationSettingsParameters
 		paramFieldName := strings.TrimSuffix(fieldName, "SecretRef")
 		fmt.Fprintf(out, "\tif params.%sSecretRef != nil {\n", paramFieldName)
-		fmt.Fprintf(out, "\t\tif err := e.updateParameterFromSecret(mg, ctx, params.%sSecretRef, &params.%s); err != nil {\n", paramFieldName, paramFieldName)
+		fmt.Fprintf(out, "\t\tif err := common.UpdateStringFromSecret(mg, ctx, e.kube, params.%sSecretRef, &params.%s); err != nil {\n", paramFieldName, paramFieldName)
 		fmt.Fprintf(out, "\t\t\treturn errors.Wrap(err, \"failed to get %s from secret reference\")\n", paramFieldName)
 		fmt.Fprintf(out, "\t\t}\n")
 		fmt.Fprintf(out, "\t}\n\n")

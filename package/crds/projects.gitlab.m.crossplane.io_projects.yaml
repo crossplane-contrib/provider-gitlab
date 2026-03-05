@@ -169,6 +169,20 @@ spec:
                   importUrl:
                     description: URL to import repository from.
                     type: string
+                  importUrlSecretRef:
+                    description: |-
+                      ImportURLSecretRef is a reference to a Kubernetes secret to retrieve the URL to import repository from.
+                      This is preferable to using ImportURL since it allows users to reference a URL that contains sensitive information such as a personal access token.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   initializeWithReadme:
                     description: false by default.
                     type: boolean

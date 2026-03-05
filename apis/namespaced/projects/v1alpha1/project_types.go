@@ -258,6 +258,11 @@ type ProjectParameters struct {
 	// +optional
 	ImportURL *string `json:"importUrl,omitempty"`
 
+	// ImportURLSecretRef is a reference to a Kubernetes secret to retrieve the URL to import repository from.
+	// This is preferable to using ImportURL since it allows users to reference a URL that contains sensitive information such as a personal access token.
+	// +optional
+	ImportURLSecretRef *xpv1.LocalSecretKeySelector `json:"importUrlSecretRef,omitempty"`
+
 	// false by default.
 	// +optional
 	// +immutable
