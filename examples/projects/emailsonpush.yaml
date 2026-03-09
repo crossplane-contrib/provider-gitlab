@@ -1,0 +1,15 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: EmailsOnPush
+metadata:
+  name: example-emailsonpush
+spec:
+  forProvider:
+    projectId: 123456
+    recipients: example@example.com
+    pushEvents: true
+    tagPushEvents: true
+    disableDiffs: false
+    sendFromCommitterEmail: false
+    branchesToBeNotified: all
+  providerConfigRef:
+    name: gitlab-provider

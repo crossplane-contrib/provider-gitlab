@@ -1,0 +1,98 @@
+package projects
+
+import (
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+// EmailsOnPushClient defines GitLab Emails on Push service operations.
+type EmailsOnPushClient interface {
+	GetEmailsOnPushService(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.EmailsOnPushService, *gitlab.Response, error)
+	SetEmailsOnPushService(pid interface{}, opt *gitlab.SetEmailsOnPushServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.EmailsOnPushService, *gitlab.Response, error)
+	DeleteEmailsOnPushService(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// NewEmailsOnPushClient returns a new GitLab Emails on Push service client.
+func NewEmailsOnPushClient(cfg common.Config) EmailsOnPushClient {
+	git := common.NewClient(cfg)
+	return git.Services
+}
+
+// LateInitializeEmailsOnPush fills empty spec fields using values from GitLab.
+func LateInitializeEmailsOnPush(in *v1alpha1.EmailsOnPushParameters, svc *gitlab.EmailsOnPushService) {
+	if svc == nil || svc.Properties == nil {
+		return
+	}
+
+	lateInitRecipients(in, svc)
+	lateInitBranches(in, svc)
+	lateInitBooleans(in, svc)
+}
+
+func lateInitRecipients(in *v1alpha1.EmailsOnPushParameters, svc *gitlab.EmailsOnPushService) {
+	if in.Recipients == nil && svc.Properties.Recipients != "" {
+		in.Recipients = clients.StringToPtr(svc.Properties.Recipients)
+	}
+}
+
+func lateInitBranches(in *v1alpha1.EmailsOnPushParameters, svc *gitlab.EmailsOnPushService) {
+	branches := svc.Properties.BranchesToBeNotified
+	if branches == "" {
+		branches = "all"
+	}
+
+	if in.BranchesToBeNotified == nil {
+		in.BranchesToBeNotified = clients.StringToPtr(branches)
+	}
+}
+
+func lateInitBooleans(in *v1alpha1.EmailsOnPushParameters, svc *gitlab.EmailsOnPushService) {
+	if in.DisableDiffs == nil {
+		in.DisableDiffs = &svc.Properties.DisableDiffs
+	}
+	if in.SendFromCommitterEmail == nil {
+		in.SendFromCommitterEmail = &svc.Properties.SendFromCommitterEmail
+	}
+	if in.PushEvents == nil {
+		in.PushEvents = &svc.Properties.PushEvents
+	}
+	if in.TagPushEvents == nil {
+		in.TagPushEvents = &svc.Properties.TagPushEvents
+	}
+}
+
+// GenerateEmailsOnPushObservation converts GitLab response to status.
+func GenerateEmailsOnPushObservation(svc *gitlab.EmailsOnPushService) v1alpha1.EmailsOnPushObservation {
+	if svc == nil || svc.Properties == nil {
+		return v1alpha1.EmailsOnPushObservation{}
+	}
+
+	branches := svc.Properties.BranchesToBeNotified
+	if branches == "" {
+		branches = "all"
+	}
+
+	return v1alpha1.EmailsOnPushObservation{
+		Recipients:             svc.Properties.Recipients,
+		DisableDiffs:           svc.Properties.DisableDiffs,
+		SendFromCommitterEmail: svc.Properties.SendFromCommitterEmail,
+		PushEvents:             svc.Properties.PushEvents,
+		TagPushEvents:          svc.Properties.TagPushEvents,
+		BranchesToBeNotified:   branches,
+	}
+}
+
+// GenerateSetEmailsOnPushOptions builds GitLab update options from spec.
+func GenerateSetEmailsOnPushOptions(p *v1alpha1.EmailsOnPushParameters) *gitlab.SetEmailsOnPushServiceOptions {
+	return &gitlab.SetEmailsOnPushServiceOptions{
+		Recipients:             p.Recipients,
+		DisableDiffs:           p.DisableDiffs,
+		SendFromCommitterEmail: p.SendFromCommitterEmail,
+		PushEvents:             p.PushEvents,
+		TagPushEvents:          p.TagPushEvents,
+		BranchesToBeNotified:   p.BranchesToBeNotified,
+	}
+}
