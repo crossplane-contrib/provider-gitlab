@@ -186,6 +186,9 @@ spec:
                   mergeMethod:
                     description: Set the merge method used.
                     type: string
+                  mergePipelinesEnabled:
+                    description: Enables merge pipelines.
+                    type: boolean
                   mergeRequestsAccessLevel:
                     description: One of disabled, private, or enabled.
                     type: string
@@ -194,6 +197,12 @@ spec:
                       Default description for Merge Requests. Description is parsed with GitLab Flavored Markdown.
                       See Templates for issues and merge requests.
                     type: string
+                  mergeTrainsEnabled:
+                    description: Enables merge trains.
+                    type: boolean
+                  mergeTrainsSkipTrainAllowed:
+                    description: Enables allowing to skip the merge train.
+                    type: boolean
                   mirror:
                     description: Enables pull mirroring in a project.
                     type: boolean
@@ -714,6 +723,8 @@ spec:
                   markedForDeletionOn:
                     format: date-time
                     type: string
+                  mergePipelinesEnabled:
+                    type: boolean
                   mergeRequestsAccessLevel:
                     description: |-
                       AccessControlValue represents an access control value within GitLab,
@@ -722,6 +733,10 @@ spec:
                       GitLab API docs: https://docs.gitlab.com/ce/api/projects.html
                     type: string
                   mergeRequestsEnabled:
+                    type: boolean
+                  mergeTrainsEnabled:
+                    type: boolean
+                  mergeTrainsSkipTrainAllowed:
                     type: boolean
                   nameWithNamespace:
                     type: string
