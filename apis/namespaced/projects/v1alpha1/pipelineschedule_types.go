@@ -106,13 +106,13 @@ type PipelineVariable struct {
 
 // PipelineScheduleSpec defines desired state of Gitlab Pipeline Schedule.
 type PipelineScheduleSpec struct {
-	xpv2.ManagedResourceSpec `json:","`
+	xpv2.ManagedResourceSpec `json:",inline"`
 	ForProvider              PipelineScheduleParameters `json:"forProvider"`
 }
 
 // PipelineScheduleStatus represents observed state of Gitlab Pipeline Schedule.
 type PipelineScheduleStatus struct {
-	xpv1.ResourceStatus `json:","`
+	xpv1.ResourceStatus `json:",inline"`
 	AtProvider          PipelineScheduleObservation `json:"atProvider,omitempty"`
 }
 
@@ -125,7 +125,7 @@ type PipelineScheduleStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitlab}
 type PipelineSchedule struct {
-	metav1.TypeMeta   `json:","`
+	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   PipelineScheduleSpec   `json:"spec"`
@@ -136,7 +136,7 @@ type PipelineSchedule struct {
 
 // PipelineScheduleList contains a list of Pipeline Schedule items.
 type PipelineScheduleList struct {
-	metav1.TypeMeta `json:","`
+	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []PipelineSchedule `json:"items"`

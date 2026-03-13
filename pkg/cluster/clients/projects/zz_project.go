@@ -354,8 +354,8 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 	}
 	project.NamespaceID = p.NamespaceID
 	project.BuildTimeout = p.BuildTimeout
-	if p.ApprovalsBeforeMerge != nil {
-		val := p.ApprovalsBeforeMerge
+	if p.ApprovalsBeforeMerge != nil { //nolint:staticcheck
+		val := p.ApprovalsBeforeMerge      //nolint:staticcheck
 		project.ApprovalsBeforeMerge = val //nolint:staticcheck // SA1019 ApprovalsBeforeMerge is deprecated by GitLab API, will migrate to Merge Request Approvals API later
 	}
 	project.TemplateProjectID = p.TemplateProjectID
@@ -422,9 +422,9 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 	}
 	o.BuildTimeout = p.BuildTimeout
 	o.CIDefaultGitDepth = p.CIDefaultGitDepth
-	if p.ApprovalsBeforeMerge != nil {
-		val := p.ApprovalsBeforeMerge
-		o.ApprovalsBeforeMerge = val //nolint:staticcheck // SA1019 ApprovalsBeforeMerge is deprecated by GitLab API, will migrate to Merge Request Approvals API later
+	if p.ApprovalsBeforeMerge != nil { //nolint:staticcheck
+		val := p.ApprovalsBeforeMerge //nolint:staticcheck
+		o.ApprovalsBeforeMerge = val  //nolint:staticcheck // SA1019 ApprovalsBeforeMerge is deprecated by GitLab API, will migrate to Merge Request Approvals API later
 	}
 	o.MirrorUserID = p.MirrorUserID
 	return o
