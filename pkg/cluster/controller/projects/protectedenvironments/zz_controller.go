@@ -46,7 +46,7 @@ const (
 
 // SetupProtectedEnvironment adds a controller that reconciles ProtectedEnvironments.
 func SetupProtectedEnvironment(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.ProtectedEnvironmentGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.ProtectedEnvironmentGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProtectedEnvironmentClient}),

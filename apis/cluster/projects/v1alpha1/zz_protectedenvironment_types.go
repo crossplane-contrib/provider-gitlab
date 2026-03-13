@@ -25,16 +25,16 @@ type EnvironmentAccessLevelParameters struct {
 
 	// UserID is a GitLab user ID allowed to deploy.
 	// +optional
-	UserID *int `json:"userId,omitempty"`
+	UserID *int64 `json:"userId,omitempty"`
 
 	// GroupID is a GitLab group ID allowed to deploy.
 	// +optional
-	GroupID *int `json:"groupId,omitempty"`
+	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupInheritanceType controls how inherited group memberships are treated.
 	// 0 => direct only, 1 => include inherited.
 	// +optional
-	GroupInheritanceType *int `json:"groupInheritanceType,omitempty"`
+	GroupInheritanceType *int64 `json:"groupInheritanceType,omitempty"`
 }
 
 // EnvironmentApprovalRuleParameters defines who can approve and how many approvals are required.
@@ -45,41 +45,41 @@ type EnvironmentApprovalRuleParameters struct {
 
 	// UserID is a GitLab user ID allowed to approve.
 	// +optional
-	UserID *int `json:"userId,omitempty"`
+	UserID *int64 `json:"userId,omitempty"`
 
 	// GroupID is a GitLab group ID allowed to approve.
 	// +optional
-	GroupID *int `json:"groupId,omitempty"`
+	GroupID *int64 `json:"groupId,omitempty"`
 
 	// RequiredApprovals required for this rule.
 	// +optional
-	RequiredApprovals *int `json:"requiredApprovals,omitempty"`
+	RequiredApprovals *int64 `json:"requiredApprovals,omitempty"`
 
 	// GroupInheritanceType controls how inherited group memberships are treated.
 	// 0 => direct only, 1 => include inherited.
 	// +optional
-	GroupInheritanceType *int `json:"groupInheritanceType,omitempty"`
+	GroupInheritanceType *int64 `json:"groupInheritanceType,omitempty"`
 }
 
 // EnvironmentAccessLevelObservation reflects a deploy access level entry returned by GitLab.
 type EnvironmentAccessLevelObservation struct {
-	ID                     *int    `json:"id,omitempty"`
+	ID                     *int64  `json:"id,omitempty"`
 	AccessLevel            *int    `json:"accessLevel,omitempty"`
 	AccessLevelDescription *string `json:"accessLevelDescription,omitempty"`
-	UserID                 *int    `json:"userId,omitempty"`
-	GroupID                *int    `json:"groupId,omitempty"`
-	GroupInheritanceType   *int    `json:"groupInheritanceType,omitempty"`
+	UserID                 *int64  `json:"userId,omitempty"`
+	GroupID                *int64  `json:"groupId,omitempty"`
+	GroupInheritanceType   *int64  `json:"groupInheritanceType,omitempty"`
 }
 
 // EnvironmentApprovalRuleObservation reflects an approval rule entry returned by GitLab.
 type EnvironmentApprovalRuleObservation struct {
-	ID                     *int    `json:"id,omitempty"`
-	UserID                 *int    `json:"userId,omitempty"`
-	GroupID                *int    `json:"groupId,omitempty"`
+	ID                     *int64  `json:"id,omitempty"`
+	UserID                 *int64  `json:"userId,omitempty"`
+	GroupID                *int64  `json:"groupId,omitempty"`
 	AccessLevel            *int    `json:"accessLevel,omitempty"`
 	AccessLevelDescription *string `json:"accessLevelDescription,omitempty"`
-	RequiredApprovals      *int    `json:"requiredApprovals,omitempty"`
-	GroupInheritanceType   *int    `json:"groupInheritanceType,omitempty"`
+	RequiredApprovals      *int64  `json:"requiredApprovals,omitempty"`
+	GroupInheritanceType   *int64  `json:"groupInheritanceType,omitempty"`
 }
 
 // ProtectedEnvironmentParameters define the desired state of a GitLab Protected Environment.
@@ -111,13 +111,13 @@ type ProtectedEnvironmentParameters struct {
 
 	// RequiredApprovalCount is the unified (legacy) approval count.
 	// +optional
-	RequiredApprovalCount *int `json:"requiredApprovalCount,omitempty"`
+	RequiredApprovalCount *int64 `json:"requiredApprovalCount,omitempty"`
 }
 
 // ProtectedEnvironmentObservation reflects the observed state from GitLab.
 type ProtectedEnvironmentObservation struct {
 	Name                  *string `json:"name,omitempty"`
-	RequiredApprovalCount *int    `json:"requiredApprovalCount,omitempty"`
+	RequiredApprovalCount *int64  `json:"requiredApprovalCount,omitempty"`
 
 	DeployAccessLevels []EnvironmentAccessLevelObservation  `json:"deployAccessLevels,omitempty"`
 	ApprovalRules      []EnvironmentApprovalRuleObservation `json:"approvalRules,omitempty"`

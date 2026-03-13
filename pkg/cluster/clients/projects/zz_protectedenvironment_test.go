@@ -20,9 +20,9 @@ func TestFilterRuleSpecs_DropsEmptySubjects(t *testing.T) {
 
 		{AccessLevel: ptr.To(40)},
 
-		{UserID: ptr.To(1)},
+		{UserID: ptr.To(int64(1))},
 
-		{GroupID: ptr.To(2)},
+		{GroupID: ptr.To(int64(2))},
 	}
 
 	out := filterRuleSpecs(in)
@@ -43,9 +43,9 @@ func TestFilterDeploySpecs_DropsEmptySubjects(t *testing.T) {
 
 		{AccessLevel: ptr.To(20)},
 
-		{UserID: ptr.To(1)},
+		{UserID: ptr.To(int64(1))},
 
-		{GroupID: ptr.To(2)},
+		{GroupID: ptr.To(int64(2))},
 	}
 
 	out := filterDeploySpecs(in)
@@ -62,9 +62,9 @@ func TestMatchApprovalRules_OrderInsensitive(t *testing.T) {
 
 	spec := []v1alpha1.EnvironmentApprovalRuleParameters{
 
-		{AccessLevel: ptr.To(40), RequiredApprovals: ptr.To(1)},
+		{AccessLevel: ptr.To(40), RequiredApprovals: ptr.To(int64(1))},
 
-		{AccessLevel: ptr.To(30), RequiredApprovals: ptr.To(2)},
+		{AccessLevel: ptr.To(30), RequiredApprovals: ptr.To(int64(2))},
 	}
 
 	got := []*gitlab.EnvironmentApprovalRule{
@@ -172,7 +172,7 @@ func TestBuildApprovalRulesDelta_UpdateRequiredApprovalsByIdentity(t *testing.T)
 
 	spec := []v1alpha1.EnvironmentApprovalRuleParameters{
 
-		{AccessLevel: ptr.To(40), RequiredApprovals: ptr.To(3)},
+		{AccessLevel: ptr.To(40), RequiredApprovals: ptr.To(int64(3))},
 	}
 
 	got := []*gitlab.EnvironmentApprovalRule{
@@ -208,7 +208,7 @@ func TestBuildApprovalRulesDelta_ReplaceSubject_DeleteOldCreateNew(t *testing.T)
 
 	spec := []v1alpha1.EnvironmentApprovalRuleParameters{
 
-		{UserID: ptr.To(123), RequiredApprovals: ptr.To(1)},
+		{UserID: ptr.To(int64(123)), RequiredApprovals: ptr.To(int64(1))},
 	}
 
 	got := []*gitlab.EnvironmentApprovalRule{
@@ -330,7 +330,7 @@ func TestGenerateUpdateProtectedEnvironmentsOptions_NoChangesReturnsNil(t *testi
 
 	als := []v1alpha1.EnvironmentAccessLevelParameters{{AccessLevel: ptr.To(20)}}
 
-	ars := []v1alpha1.EnvironmentApprovalRuleParameters{{AccessLevel: ptr.To(40), RequiredApprovals: ptr.To(1)}}
+	ars := []v1alpha1.EnvironmentApprovalRuleParameters{{AccessLevel: ptr.To(40), RequiredApprovals: ptr.To(int64(1))}}
 
 	p := &v1alpha1.ProtectedEnvironmentParameters{
 
@@ -372,7 +372,7 @@ func TestGenerateUpdateProtectedEnvironmentsOptions_ApprovalCountOnlyWhenRulesEx
 
 		ApprovalRules: &emptyRules,
 
-		RequiredApprovalCount: ptr.To(2),
+		RequiredApprovalCount: ptr.To(int64(2)),
 	}
 
 	pe := &gitlab.ProtectedEnvironment{RequiredApprovalCount: 1}
@@ -389,13 +389,13 @@ func TestGenerateUpdateProtectedEnvironmentsOptions_ApprovalCountOnlyWhenRulesEx
 
 func TestSameAccessSubject_PrefersUserOverGroupOverAccessLevel(t *testing.T) {
 
-	if !sameAccessSubject(ptr.To(40), ptr.To(1), ptr.To(2), 40, 1, 2) {
+	if !sameAccessSubject(ptr.To(40), ptr.To(int64(1)), ptr.To(int64(2)), 40, 1, 2) {
 
 		t.Fatalf("expected match by user")
 
 	}
 
-	if !sameAccessSubject(ptr.To(40), nil, ptr.To(2), 40, 99, 2) {
+	if !sameAccessSubject(ptr.To(40), nil, ptr.To(int64(2)), 40, 99, 2) {
 
 		t.Fatalf("expected match by group")
 
@@ -419,7 +419,7 @@ func TestFilterRuleSpecs_StableOutput(t *testing.T) {
 
 	in := []v1alpha1.EnvironmentApprovalRuleParameters{
 
-		{UserID: ptr.To(1)},
+		{UserID: ptr.To(int64(1))},
 
 		{},
 
@@ -430,7 +430,7 @@ func TestFilterRuleSpecs_StableOutput(t *testing.T) {
 
 	want := []v1alpha1.EnvironmentApprovalRuleParameters{
 
-		{UserID: ptr.To(1)},
+		{UserID: ptr.To(int64(1))},
 
 		{AccessLevel: ptr.To(40)},
 	}

@@ -957,7 +957,7 @@ func (in *EnvironmentAccessLevelObservation) DeepCopyInto(out *EnvironmentAccess
 	*out = *in
 	if in.ID != nil {
 		in, out := &in.ID, &out.ID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.AccessLevel != nil {
@@ -972,17 +972,17 @@ func (in *EnvironmentAccessLevelObservation) DeepCopyInto(out *EnvironmentAccess
 	}
 	if in.UserID != nil {
 		in, out := &in.UserID, &out.UserID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupInheritanceType != nil {
 		in, out := &in.GroupInheritanceType, &out.GroupInheritanceType
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 }
@@ -1007,17 +1007,17 @@ func (in *EnvironmentAccessLevelParameters) DeepCopyInto(out *EnvironmentAccessL
 	}
 	if in.UserID != nil {
 		in, out := &in.UserID, &out.UserID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupInheritanceType != nil {
 		in, out := &in.GroupInheritanceType, &out.GroupInheritanceType
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 }
@@ -1037,17 +1037,17 @@ func (in *EnvironmentApprovalRuleObservation) DeepCopyInto(out *EnvironmentAppro
 	*out = *in
 	if in.ID != nil {
 		in, out := &in.ID, &out.ID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.UserID != nil {
 		in, out := &in.UserID, &out.UserID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.AccessLevel != nil {
@@ -1062,12 +1062,12 @@ func (in *EnvironmentApprovalRuleObservation) DeepCopyInto(out *EnvironmentAppro
 	}
 	if in.RequiredApprovals != nil {
 		in, out := &in.RequiredApprovals, &out.RequiredApprovals
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupInheritanceType != nil {
 		in, out := &in.GroupInheritanceType, &out.GroupInheritanceType
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 }
@@ -1092,22 +1092,22 @@ func (in *EnvironmentApprovalRuleParameters) DeepCopyInto(out *EnvironmentApprov
 	}
 	if in.UserID != nil {
 		in, out := &in.UserID, &out.UserID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupID != nil {
 		in, out := &in.GroupID, &out.GroupID
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.RequiredApprovals != nil {
 		in, out := &in.RequiredApprovals, &out.RequiredApprovals
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.GroupInheritanceType != nil {
 		in, out := &in.GroupInheritanceType, &out.GroupInheritanceType
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 }
@@ -2895,7 +2895,7 @@ func (in *ProtectedEnvironmentObservation) DeepCopyInto(out *ProtectedEnvironmen
 	}
 	if in.RequiredApprovalCount != nil {
 		in, out := &in.RequiredApprovalCount, &out.RequiredApprovalCount
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 	if in.DeployAccessLevels != nil {
@@ -2971,7 +2971,7 @@ func (in *ProtectedEnvironmentParameters) DeepCopyInto(out *ProtectedEnvironment
 	}
 	if in.RequiredApprovalCount != nil {
 		in, out := &in.RequiredApprovalCount, &out.RequiredApprovalCount
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 }

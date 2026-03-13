@@ -97,7 +97,7 @@ func withName(name *string) peModifier {
 
 func withRequiredApprovalCount(n *int) peModifier {
 
-	return func(r *v1alpha1.ProtectedEnvironment) { r.Spec.ForProvider.RequiredApprovalCount = n }
+	return func(r *v1alpha1.ProtectedEnvironment) { r.Spec.ForProvider.RequiredApprovalCount = ptr.To(int64(*n)) }
 
 }
 
@@ -417,7 +417,7 @@ func TestObserve(t *testing.T) {
 
 						Name: ptr.To(envName),
 
-						RequiredApprovalCount: ptr.To(0),
+						RequiredApprovalCount: ptr.To(int64(0)),
 					}),
 				),
 
@@ -474,7 +474,7 @@ func TestObserve(t *testing.T) {
 
 						Name: ptr.To(envName),
 
-						RequiredApprovalCount: ptr.To(2),
+						RequiredApprovalCount: ptr.To(int64(2)),
 					}),
 				),
 

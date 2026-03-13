@@ -111,7 +111,7 @@ func GenerateProtectRepositoryEnvironmentsOptions(p *v1alpha1.ProtectedEnvironme
 	return opt
 }
 
-func isEmptySubject(accessLevel *int, userID *int, groupID *int) bool {
+func isEmptySubject(accessLevel *int, userID *int64, groupID *int64) bool {
 	return accessLevel == nil && userID == nil && groupID == nil
 }
 
@@ -226,8 +226,8 @@ func filterRuleSpecs(spec []v1alpha1.EnvironmentApprovalRuleParameters) []v1alph
 }
 
 func sameAccessSubject(
-	accessLevelSpec *int, userIDSpec *int, groupIDSpec *int,
-	accessLevelGit gitlab.AccessLevelValue, userIDGit int, groupIDGit int,
+	accessLevelSpec *int, userIDSpec *int64, groupIDSpec *int64,
+	accessLevelGit gitlab.AccessLevelValue, userIDGit int64, groupIDGit int64,
 ) bool {
 	switch {
 	case userIDSpec != nil:
@@ -243,18 +243,18 @@ func sameAccessSubject(
 
 func deployAccessMatchesSpec(s v1alpha1.EnvironmentAccessLevelParameters, g *gitlab.EnvironmentAccessDescription) bool {
 	return sameAccessSubject(s.AccessLevel, s.UserID, s.GroupID, g.AccessLevel, g.UserID, g.GroupID) &&
-		clients.IsIntEqualToIntPtr(s.GroupInheritanceType, g.GroupInheritanceType)
+		clients.IsInt64EqualToInt64Ptr(s.GroupInheritanceType, g.GroupInheritanceType)
 }
 
 func approvalRuleEqualsSpec(s v1alpha1.EnvironmentApprovalRuleParameters, g *gitlab.EnvironmentApprovalRule) bool {
 	return sameAccessSubject(s.AccessLevel, s.UserID, s.GroupID, g.AccessLevel, g.UserID, g.GroupID) &&
-		clients.IsIntEqualToIntPtr(s.GroupInheritanceType, g.GroupInheritanceType) &&
-		clients.IsIntEqualToIntPtr(s.RequiredApprovals, g.RequiredApprovalCount)
+		clients.IsInt64EqualToInt64Ptr(s.GroupInheritanceType, g.GroupInheritanceType) &&
+		clients.IsInt64EqualToInt64Ptr(s.RequiredApprovals, g.RequiredApprovalCount)
 }
 
 func approvalRuleIdentityMatchesSpec(s v1alpha1.EnvironmentApprovalRuleParameters, g *gitlab.EnvironmentApprovalRule) bool {
 	return sameAccessSubject(s.AccessLevel, s.UserID, s.GroupID, g.AccessLevel, g.UserID, g.GroupID) &&
-		clients.IsIntEqualToIntPtr(s.GroupInheritanceType, g.GroupInheritanceType)
+		clients.IsInt64EqualToInt64Ptr(s.GroupInheritanceType, g.GroupInheritanceType)
 }
 
 func matchDeployAccessLevels(spec *[]v1alpha1.EnvironmentAccessLevelParameters, got []*gitlab.EnvironmentAccessDescription) bool {
@@ -431,7 +431,7 @@ func buildApprovalRulesDelta(
 			cur := got[matched]
 
 			// If required approvals are equal, this is a no-op.
-			if clients.IsIntEqualToIntPtr(s.RequiredApprovals, cur.RequiredApprovalCount) {
+			if clients.IsInt64EqualToInt64Ptr(s.RequiredApprovals, cur.RequiredApprovalCount) {
 				used[matched] = true
 				continue
 			}
