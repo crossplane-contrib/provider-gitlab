@@ -31,6 +31,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/pipelineschedules"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedbranches"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedenvironments"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/variables"
 )
@@ -51,6 +52,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		protectedbranches.SetupProtectedBranch,
 		badges.SetupBadge,
 		integrationmattermost.SetupIntegrationMattermost,
+		protectedenvironments.SetupProtectedEnvironment,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -76,6 +78,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		protectedbranches.SetupProtectedBranchGated,
 		badges.SetupBadgeGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
+		protectedenvironments.SetupProtectedEnvironmentGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

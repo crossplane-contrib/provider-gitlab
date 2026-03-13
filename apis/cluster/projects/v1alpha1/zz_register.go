@@ -126,6 +126,14 @@ var (
 	ProtectedBranchGroupVersionKind = SchemeGroupVersion.WithKind(ProtectedBranchKind)
 )
 
+// Protected Environment type metadata
+var (
+	ProtectedEnvironmentKind             = reflect.TypeOf(ProtectedEnvironment{}).Name()
+	ProtectedEnvironmentGroupKind        = schema.GroupKind{Group: Group, Kind: ProtectedEnvironmentKind}.String()
+	ProtectedEnvironmentKindAPIVersion   = ProtectedEnvironmentKind + "." + SchemeGroupVersion.String()
+	ProtectedEnvironmentGroupVersionKind = SchemeGroupVersion.WithKind(ProtectedEnvironmentKind)
+)
+
 // Badge type metadata
 var (
 	BadgeKind             = reflect.TypeOf(Badge{}).Name()
@@ -154,6 +162,7 @@ func init() {
 	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&ProtectedBranch{}, &ProtectedBranchList{})
+	SchemeBuilder.Register(&ProtectedEnvironment{}, &ProtectedEnvironmentList{})
 	SchemeBuilder.Register(&Badge{}, &BadgeList{})
 
 	// Mattermost
