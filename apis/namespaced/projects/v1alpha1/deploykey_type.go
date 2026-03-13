@@ -72,7 +72,7 @@ type DeployKeyObservation struct {
 
 // DeployKeySpec defines desired state of Gitlab Deploy Key.
 type DeployKeySpec struct {
-	xpv2.ManagedResourceSpec `json:","`
+	xpv2.ManagedResourceSpec `json:",inline"`
 	ForProvider              DeployKeyParameters `json:"forProvider"`
 }
 
@@ -91,7 +91,7 @@ type DeployKeyStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitlab}
 type DeployKey struct {
-	metav1.TypeMeta   `json:","`
+	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   DeployKeySpec   `json:"spec"`
@@ -102,7 +102,7 @@ type DeployKey struct {
 
 // DeployKeyList contains a list of Deploy Key items.
 type DeployKeyList struct {
-	metav1.TypeMeta `json:","`
+	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []DeployKey `json:"items"`
 }

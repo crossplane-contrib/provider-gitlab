@@ -1,6 +1,6 @@
 module github.com/crossplane-contrib/provider-gitlab
 
-go 1.25.2
+go 1.25.8
 
 require (
 	github.com/crossplane/crossplane-runtime/v2 v2.1.0

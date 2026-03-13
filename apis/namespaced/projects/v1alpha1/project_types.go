@@ -157,6 +157,7 @@ type ProjectParameters struct {
 
 	// How many approvers should approve merge request by default.More actions
 	// To configure approval rules, see Merge request approvals API.
+	//
 	// Deprecated: use Approvals Resource instead
 	// +optional
 	ApprovalsBeforeMerge *int64 `json:"approvalsBeforeMerge,omitempty"`
