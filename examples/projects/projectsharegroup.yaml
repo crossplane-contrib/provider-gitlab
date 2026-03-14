@@ -1,0 +1,13 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: ProjectShareGroup
+metadata:
+  name: example-project-share-group
+spec:
+  forProvider:
+    projectRef:
+      name: example-project
+    groupRef:
+      name: example-group
+    accessLevel: 30
+  providerConfigRef:
+    name: gitlab-provider
