@@ -20,6 +20,7 @@ package projects
 
 import (
 	"context"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -42,6 +43,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects"
+	commonController "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
@@ -170,6 +172,19 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
+
+	// Take a snapshot of the spec BEFORE applying secret-derived values.
+	specSnapshot := current.DeepCopy()
+
+	// Replace the secret in the copied spec to avoid putting sensitive information in the CR spec
+	// This is only required for observation, as this is the only method where spec can be updated.
+	if current.ImportURLSecretRef != nil {
+		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, current.ImportURLSecretRef, &current.ImportURL)
+		if err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, "failed to retrieve ImportURL from secret")
+		}
+	}
+
 	if err := e.lateInitialize(ctx, cr, prj); err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(err, errLateInitialize)
 	}
@@ -181,9 +196,10 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	cr.Status.AtProvider = projects.GenerateObservation(prj)
 	return managed.ExternalObservation{
-		ResourceExists:          true,
-		ResourceUpToDate:        isProjectUpToDate(&cr.Spec.ForProvider, prj) && e.cache.isPushRulesUpToDate,
-		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
+		ResourceExists:   true,
+		ResourceUpToDate: isProjectUpToDate(current, prj) && e.cache.isPushRulesUpToDate,
+		// Compare against specSnapshot (pre-secret-substitution)
+		ResourceLateInitialized: !cmp.Equal(specSnapshot, &cr.Spec.ForProvider),
 		ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte(prj.RunnersToken)},
 	}, nil
 }
@@ -194,8 +210,18 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotProject)
 	}
 
+	current := cr.Spec.ForProvider.DeepCopy()
+
+	// Replace the import URL secret in the copied spec to avoid putting sensitive information in the CR spec
+	if current.ImportURLSecretRef != nil {
+		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, current.ImportURLSecretRef, &current.ImportURL)
+		if err != nil {
+			return managed.ExternalCreation{}, errors.Wrap(err, "failed to retrieve ImportURL from secret")
+		}
+	}
+
 	prj, _, err := e.client.CreateProject(
-		projects.GenerateCreateProjectOptions(cr.Name, &cr.Spec.ForProvider),
+		projects.GenerateCreateProjectOptions(cr.Name, current),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
@@ -212,9 +238,19 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotProject)
 	}
 
+	current := cr.Spec.ForProvider.DeepCopy()
+
+	// Replace the import URL secret in the copied spec to avoid putting sensitive information in the CR spec
+	if current.ImportURLSecretRef != nil {
+		err := commonController.UpdateStringFromSecret(mg, ctx, e.kube, current.ImportURLSecretRef, &current.ImportURL)
+		if err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, "failed to retrieve ImportURL from secret")
+		}
+	}
+
 	_, _, err := e.client.EditProject(
 		meta.GetExternalName(cr),
-		projects.GenerateEditProjectOptions(cr.Name, &cr.Spec.ForProvider),
+		projects.GenerateEditProjectOptions(cr.Name, current),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
@@ -629,7 +665,32 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.BuildGitStrategy, g.BuildGitStrategy) {
 		return false
 	}
+	// GitLab always strips userinfo (credentials) from ImportURL in API responses.
+	// For example, "https://TOKEN:@github.com/org/repo.git" is returned as "https://github.com/org/repo.git".
+	// Note: a pure credential rotation (same host/path, different token) cannot
+	// be detected through the API – GitLab will still report the sanitized URL.
+	if p.ImportURL != nil && sanitizeImportURL(*p.ImportURL) != g.ImportURL {
+		return false
+	}
 	return true
+}
+
+// sanitizeImportURL strips the userinfo (username / password / token) from a
+// URL string, mirroring the sanitization that the GitLab API applies to the
+// ImportURL field in project responses. If the URL cannot be parsed the
+// original string is returned unchanged.
+//
+// Examples:
+//
+//	"https://TOKEN:@github.com/org/repo.git" to "https://github.com/org/repo.git"
+//	"https://user:pass@gitlab.com/org/repo.git" to "https://gitlab.com/org/repo.git"
+func sanitizeImportURL(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	u.User = nil
+	return u.String()
 }
 
 func isPushRulesEmpty(rules *v1alpha1.PushRules) bool { //nolint:gocyclo
