@@ -26,6 +26,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/hooks"
+	integrationgithub "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationgithub"
 	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationmattermost"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/pipelineschedules"
@@ -52,6 +53,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		protectedbranches.SetupProtectedBranch,
 		badges.SetupBadge,
 		integrationmattermost.SetupIntegrationMattermost,
+		integrationgithub.SetupIntegrationGithub,
 		protectedenvironments.SetupProtectedEnvironment,
 	} {
 		if err := setup(mgr, o); err != nil {
@@ -78,6 +80,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		protectedbranches.SetupProtectedBranchGated,
 		badges.SetupBadgeGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
+		integrationgithub.SetupIntegrationGithubGated,
 		protectedenvironments.SetupProtectedEnvironmentGated,
 	} {
 		if err := setup(mgr, o); err != nil {
