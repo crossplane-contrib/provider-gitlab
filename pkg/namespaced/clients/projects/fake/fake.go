@@ -88,6 +88,10 @@ type MockClient struct {
 	MockGetMattermostService    func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
 	MockSetMattermostService    func(pid any, opt *gitlab.SetMattermostServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
 	MockDeleteMattermostService func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockGetGithubService    func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error)
+	MockSetGithubService    func(pid any, opt *gitlab.SetGithubServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error)
+	MockDeleteGithubService func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetPipelineSchedule calls the underlying MockGetPipelineSchedule method.
@@ -329,4 +333,19 @@ func (c *MockClient) SetMattermostService(pid any, opt *gitlab.SetMattermostServ
 // DeleteMattermostService calls the underlying MockDeleteMattermostService method.
 func (c *MockClient) DeleteMattermostService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteMattermostService(pid, options...)
+}
+
+// GetGithubService calls the underlying MockGetGithubService method.
+func (c *MockClient) GetGithubService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+	return c.MockGetGithubService(pid, options...)
+}
+
+// SetGithubService calls the underlying MockSetGithubService method.
+func (c *MockClient) SetGithubService(pid any, opt *gitlab.SetGithubServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+	return c.MockSetGithubService(pid, opt, options...)
+}
+
+// DeleteGithubService calls the underlying MockDeleteGithubService method.
+func (c *MockClient) DeleteGithubService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteGithubService(pid, options...)
 }

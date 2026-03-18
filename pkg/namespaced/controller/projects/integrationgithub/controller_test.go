@@ -1,0 +1,715 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package integrationgithub
+
+import (
+	"context"
+	"net/http"
+	"testing"
+	"time"
+
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects/fake"
+)
+
+var (
+	unexpectedItem resource.Managed
+	errBoom        = errors.New("boom")
+
+	// Test data
+	testProjectID       int64 = 123
+	testToken                 = "ghp_secrettoken"
+	testRepositoryURL         = "https://github.com/example/repo"
+	testStaticContext         = true
+	testID              int64 = 456
+	testTitle                 = "GitHub"
+	testSlug                  = "github"
+	testActive                = true
+	testCreatedAt             = time.Now()
+	testUpdatedAt             = time.Now()
+)
+
+type args struct {
+	githubClient projects.GithubClient
+	kube         client.Client
+	cr           resource.Managed
+}
+
+type githubModifier func(*v1alpha1.IntegrationGithub)
+
+func withProjectID(id int64) githubModifier {
+	return func(r *v1alpha1.IntegrationGithub) {
+		r.Spec.ForProvider.ProjectID = &id
+	}
+}
+
+func withToken(token string) githubModifier {
+	return func(r *v1alpha1.IntegrationGithub) {
+		r.Spec.ForProvider.Token = token
+	}
+}
+
+func withRepositoryURL(url string) githubModifier {
+	return func(r *v1alpha1.IntegrationGithub) {
+		r.Spec.ForProvider.RepositoryURL = &url
+	}
+}
+
+func withConditions(c ...xpv1.Condition) githubModifier {
+	return func(cr *v1alpha1.IntegrationGithub) {
+		cr.Status.ConditionedStatus.Conditions = c
+	}
+}
+
+func withStatus(s v1alpha1.IntegrationGithubObservation) githubModifier {
+	return func(r *v1alpha1.IntegrationGithub) {
+		r.Status.AtProvider = s
+	}
+}
+
+func withDeletionTimestamp(t time.Time) githubModifier {
+	return func(r *v1alpha1.IntegrationGithub) {
+		r.ObjectMeta.DeletionTimestamp = &metav1.Time{Time: t}
+	}
+}
+
+func withForProvider(mut func(*v1alpha1.IntegrationGithubParameters)) githubModifier {
+	return func(r *v1alpha1.IntegrationGithub) {
+		mut(&r.Spec.ForProvider)
+	}
+}
+
+func integrationGithub(m ...githubModifier) *v1alpha1.IntegrationGithub {
+	cr := &v1alpha1.IntegrationGithub{}
+	for _, f := range m {
+		f(cr)
+	}
+	return cr
+}
+
+func TestConnect(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalClient
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"InvalidInput": {
+			args: args{
+				cr: unexpectedItem,
+			},
+			want: want{
+				cr:  unexpectedItem,
+				err: errors.New(errNotIntegrationGithub),
+			},
+		},
+		"ProviderConfigRefNotGivenError": {
+			args: args{
+				cr:   integrationGithub(),
+				kube: &test.MockClient{MockGet: test.NewMockGetFn(nil)},
+			},
+			want: want{
+				cr:  integrationGithub(),
+				err: errors.New("providerConfigRef is not given"),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			c := &connector{kube: tc.kube, newGitlabClientFn: nil}
+			o, err := c.Connect(context.Background(), tc.args.cr)
+
+			if (tc.want.err == nil) != (err == nil) {
+				t.Errorf("Connect(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
+			}
+			if tc.want.err != nil && err != nil && tc.want.err.Error() != err.Error() {
+				t.Errorf("Connect(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("Connect(...): -want result, +got result:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestObserve(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalObservation
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"InvalidInput": {
+			args: args{
+				cr: unexpectedItem,
+			},
+			want: want{
+				cr:  unexpectedItem,
+				err: errors.New(errNotIntegrationGithub),
+			},
+		},
+		"NotFound": {
+			args: args{
+				githubClient: &fake.MockClient{
+					MockGetGithubService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+				),
+			},
+			want: want{
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+				),
+				result: managed.ExternalObservation{ResourceExists: false},
+			},
+		},
+		"GetFailed": {
+			args: args{
+				githubClient: &fake.MockClient{
+					MockGetGithubService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 500}}, errBoom
+					},
+				},
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+				),
+			},
+			want: want{
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+				),
+				result: managed.ExternalObservation{},
+				err:    errors.Wrap(errBoom, errGetFailed),
+			},
+		},
+		"SuccessUpToDate": {
+			args: args{
+				githubClient: &fake.MockClient{
+					MockGetGithubService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+						return &gitlab.GithubService{
+							Service: gitlab.Service{
+								ID:        testID,
+								Title:     testTitle,
+								Slug:      testSlug,
+								CreatedAt: &testCreatedAt,
+								UpdatedAt: &testUpdatedAt,
+								Active:    testActive,
+							},
+							Properties: &gitlab.GithubServiceProperties{
+								RepositoryURL: testRepositoryURL,
+								StaticContext: testStaticContext,
+							},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+					withRepositoryURL(testRepositoryURL),
+					withForProvider(func(p *v1alpha1.IntegrationGithubParameters) {
+						p.StaticContext = &testStaticContext
+					}),
+				),
+			},
+			want: want{
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+					withRepositoryURL(testRepositoryURL),
+					withForProvider(func(p *v1alpha1.IntegrationGithubParameters) {
+						p.StaticContext = &testStaticContext
+					}),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.IntegrationGithubObservation{
+						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
+							ID:                             ptr.To(testID),
+							Title:                          ptr.To(testTitle),
+							Slug:                           ptr.To(testSlug),
+							CreatedAt:                      &metav1.Time{Time: testCreatedAt},
+							UpdatedAt:                      &metav1.Time{Time: testUpdatedAt},
+							Active:                         ptr.To(true),
+							AlertEvents:                    ptr.To(false),
+							CommitEvents:                   ptr.To(false),
+							ConfidentialIssuesEvents:       ptr.To(false),
+							ConfidentialNoteEvents:         ptr.To(false),
+							DeploymentEvents:               ptr.To(false),
+							GroupConfidentialMentionEvents: ptr.To(false),
+							GroupMentionEvents:             ptr.To(false),
+							IncidentEvents:                 ptr.To(false),
+							IssuesEvents:                   ptr.To(false),
+							JobEvents:                      ptr.To(false),
+							MergeRequestsEvents:            ptr.To(false),
+							NoteEvents:                     ptr.To(false),
+							PipelineEvents:                 ptr.To(false),
+							PushEvents:                     ptr.To(false),
+							TagPushEvents:                  ptr.To(false),
+							VulnerabilityEvents:            ptr.To(false),
+							WikiPageEvents:                 ptr.To(false),
+							CommentOnEventEnabled:          ptr.To(false),
+							Inherited:                      ptr.To(false),
+						},
+						RepositoryURL: testRepositoryURL,
+						StaticContext: testStaticContext,
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
+		"DeletingResource": {
+			args: args{
+				githubClient: &fake.MockClient{
+					MockGetGithubService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+						return &gitlab.GithubService{
+							Service: gitlab.Service{
+								ID:    testID,
+								Title: testTitle,
+							},
+							Properties: &gitlab.GithubServiceProperties{
+								RepositoryURL: testRepositoryURL,
+							},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+					withDeletionTimestamp(time.Now()),
+				),
+			},
+			want: want{
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+					withDeletionTimestamp(time.Now()),
+				),
+				result: managed.ExternalObservation{ResourceExists: false},
+			},
+		},
+		"LateInitialization": {
+			args: args{
+				githubClient: &fake.MockClient{
+					MockGetGithubService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+						return &gitlab.GithubService{
+							Service: gitlab.Service{
+								ID:    testID,
+								Title: testTitle,
+							},
+							Properties: &gitlab.GithubServiceProperties{
+								RepositoryURL: testRepositoryURL,
+								StaticContext: testStaticContext,
+							},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+				),
+			},
+			want: want{
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+					withForProvider(func(p *v1alpha1.IntegrationGithubParameters) {
+						p.RepositoryURL = ptr.To(testRepositoryURL)
+						p.StaticContext = ptr.To(testStaticContext)
+					}),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.IntegrationGithubObservation{
+						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
+							ID:                             ptr.To(testID),
+							Title:                          ptr.To(testTitle),
+							Slug:                           ptr.To(""),
+							Active:                         ptr.To(false),
+							AlertEvents:                    ptr.To(false),
+							CommitEvents:                   ptr.To(false),
+							ConfidentialIssuesEvents:       ptr.To(false),
+							ConfidentialNoteEvents:         ptr.To(false),
+							DeploymentEvents:               ptr.To(false),
+							GroupConfidentialMentionEvents: ptr.To(false),
+							GroupMentionEvents:             ptr.To(false),
+							IncidentEvents:                 ptr.To(false),
+							IssuesEvents:                   ptr.To(false),
+							JobEvents:                      ptr.To(false),
+							MergeRequestsEvents:            ptr.To(false),
+							NoteEvents:                     ptr.To(false),
+							PipelineEvents:                 ptr.To(false),
+							PushEvents:                     ptr.To(false),
+							TagPushEvents:                  ptr.To(false),
+							VulnerabilityEvents:            ptr.To(false),
+							WikiPageEvents:                 ptr.To(false),
+							CommentOnEventEnabled:          ptr.To(false),
+							Inherited:                      ptr.To(false),
+						},
+						RepositoryURL: testRepositoryURL,
+						StaticContext: testStaticContext,
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: true,
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: tc.githubClient}
+			o, err := e.Observe(context.Background(), tc.args.cr)
+
+			if (tc.want.err == nil) != (err == nil) {
+				t.Errorf("Observe(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
+			}
+			if tc.want.err != nil && err != nil && tc.want.err.Error() != err.Error() {
+				t.Errorf("Observe(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
+			}
+
+			opts := []cmp.Option{test.EquateConditions()}
+			if cr, ok := tc.args.cr.(*v1alpha1.IntegrationGithub); ok && cr != nil && !cr.ObjectMeta.DeletionTimestamp.IsZero() {
+				opts = append(opts, cmp.FilterPath(func(p cmp.Path) bool {
+					return p.String() == "ObjectMeta.DeletionTimestamp"
+				}, cmp.Ignore()))
+			}
+
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, opts...); diff != "" {
+				t.Errorf("Observe(...): -want CR, +got CR:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("Observe(...): -want result, +got result:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestCreate(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalCreation
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"InvalidInput": {
+			args: args{
+				cr: unexpectedItem,
+			},
+			want: want{
+				cr:  unexpectedItem,
+				err: errors.New(errNotIntegrationGithub),
+			},
+		},
+		"SuccessfulCreate": {
+			args: args{
+				githubClient: &fake.MockClient{
+					MockSetGithubService: func(pid any, opt *gitlab.SetGithubServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+						return &gitlab.GithubService{
+							Service: gitlab.Service{
+								ID:    testID,
+								Title: testTitle,
+							},
+							Properties: &gitlab.GithubServiceProperties{
+								RepositoryURL: testRepositoryURL,
+							},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+					withRepositoryURL(testRepositoryURL),
+				),
+			},
+			want: want{
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+					withRepositoryURL(testRepositoryURL),
+					withConditions(xpv1.Creating()),
+				),
+				result: managed.ExternalCreation{},
+			},
+		},
+		"CreateFailed": {
+			args: args{
+				githubClient: &fake.MockClient{
+					MockSetGithubService: func(pid any, opt *gitlab.SetGithubServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+						return nil, &gitlab.Response{}, errBoom
+					},
+				},
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+				),
+			},
+			want: want{
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+					withConditions(xpv1.Creating()),
+				),
+				result: managed.ExternalCreation{},
+				err:    errors.Wrap(errBoom, errCreateFailed),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: tc.githubClient}
+			o, err := e.Create(context.Background(), tc.args.cr)
+
+			if (tc.want.err == nil) != (err == nil) {
+				t.Errorf("Create(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
+			}
+			if tc.want.err != nil && err != nil && tc.want.err.Error() != err.Error() {
+				t.Errorf("Create(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("Create(...): -want CR, +got CR:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("Create(...): -want result, +got result:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalUpdate
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"InvalidInput": {
+			args: args{
+				cr: unexpectedItem,
+			},
+			want: want{
+				cr:  unexpectedItem,
+				err: errors.New(errNotIntegrationGithub),
+			},
+		},
+		"SuccessfulUpdate": {
+			args: args{
+				githubClient: &fake.MockClient{
+					MockSetGithubService: func(pid any, opt *gitlab.SetGithubServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+						return &gitlab.GithubService{
+							Service: gitlab.Service{
+								ID:    testID,
+								Title: testTitle,
+							},
+							Properties: &gitlab.GithubServiceProperties{
+								RepositoryURL: testRepositoryURL,
+							},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+					withRepositoryURL(testRepositoryURL),
+				),
+			},
+			want: want{
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+					withRepositoryURL(testRepositoryURL),
+					withConditions(xpv1.Creating()),
+				),
+				result: managed.ExternalUpdate{},
+			},
+		},
+		"UpdateFailed": {
+			args: args{
+				githubClient: &fake.MockClient{
+					MockSetGithubService: func(pid any, opt *gitlab.SetGithubServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+						return nil, &gitlab.Response{}, errBoom
+					},
+				},
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+				),
+			},
+			want: want{
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+					withConditions(xpv1.Creating()),
+				),
+				result: managed.ExternalUpdate{},
+				err:    errors.Wrap(errBoom, errUpdateFailed),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: tc.githubClient}
+			o, err := e.Update(context.Background(), tc.args.cr)
+
+			if (tc.want.err == nil) != (err == nil) {
+				t.Errorf("Update(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
+			}
+			if tc.want.err != nil && err != nil && tc.want.err.Error() != err.Error() {
+				t.Errorf("Update(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("Update(...): -want CR, +got CR:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("Update(...): -want result, +got result:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestDelete(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalDelete
+		err    error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"InvalidInput": {
+			args: args{
+				cr: unexpectedItem,
+			},
+			want: want{
+				cr:  unexpectedItem,
+				err: errors.New(errNotIntegrationGithub),
+			},
+		},
+		"SuccessfulDelete": {
+			args: args{
+				githubClient: &fake.MockClient{
+					MockDeleteGithubService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+				),
+			},
+			want: want{
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+				),
+				result: managed.ExternalDelete{},
+			},
+		},
+		"DeleteFailed": {
+			args: args{
+				githubClient: &fake.MockClient{
+					MockDeleteGithubService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, errBoom
+					},
+				},
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+				),
+			},
+			want: want{
+				cr: integrationGithub(
+					withProjectID(testProjectID),
+					withToken(testToken),
+				),
+				result: managed.ExternalDelete{},
+				err:    errors.Wrap(errBoom, errDeleteFailed),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: tc.githubClient}
+			o, err := e.Delete(context.Background(), tc.args.cr)
+
+			if (tc.want.err == nil) != (err == nil) {
+				t.Errorf("Delete(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
+			}
+			if tc.want.err != nil && err != nil && tc.want.err.Error() != err.Error() {
+				t.Errorf("Delete(...): -want error, +got error: \nwant: %v\ngot: %v", tc.want.err, err)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+				t.Errorf("Delete(...): -want CR, +got CR:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("Delete(...): -want result, +got result:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestDisconnect(t *testing.T) {
+	e := &external{}
+	err := e.Disconnect(context.Background())
+	if err != nil {
+		t.Errorf("Disconnect(...): unexpected error: %v", err)
+	}
+}
