@@ -42,6 +42,9 @@ type Client interface {
 	GetProjectPushRules(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 	AddProjectPushRule(pid interface{}, opt *gitlab.AddProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 	EditProjectPushRule(pid interface{}, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
+
+	ShareProjectWithGroup(pid any, opt *gitlab.ShareWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	DeleteSharedProjectFromGroup(pid any, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewProjectClient returns a new Gitlab Project service
