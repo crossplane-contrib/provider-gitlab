@@ -979,7 +979,7 @@ func TestDelete(t *testing.T) {
 					},
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
 						recordedGetCalls = append(recordedGetCalls, getGroupCalls{Pid: pid})
-						return &gitlab.Group{ID: 0, FullPath: "group"}, &gitlab.Response{}, nil
+						return &gitlab.Group{ID: 0, FullPath: "group-deletion_scheduled-0"}, &gitlab.Response{}, nil
 					},
 				},
 				cr: group(
@@ -998,7 +998,9 @@ func TestDelete(t *testing.T) {
 					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
 				calls: []deleteGroupCalls{
 					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}},
-					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{PermanentlyRemove: gitlab.Ptr(true), FullPath: gitlab.Ptr("path/to/group")}},
+					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{
+						PermanentlyRemove: gitlab.Ptr(true), FullPath: gitlab.Ptr("group-deletion_scheduled-0"),
+					}},
 				},
 				getCalls: []getGroupCalls{{Pid: "0"}},
 				err:      nil,
