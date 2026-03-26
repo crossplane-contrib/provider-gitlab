@@ -292,7 +292,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		}
 		_, err = e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{
 			PermanentlyRemove: cr.Spec.ForProvider.PermanentlyRemove,
-			FullPath:          cr.Status.AtProvider.FullPath,
+			FullPath:          &g.FullPath,
 		}, gitlab.WithContext(ctx))
 	}
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
