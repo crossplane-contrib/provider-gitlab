@@ -75,6 +75,7 @@ func SetupServiceAccount(mgr ctrl.Manager, o controller.Options) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
+		WithOptions(o.ForControllerRuntime()).
 		For(&v1alpha1.ServiceAccount{}).
 		Complete(r)
 }
