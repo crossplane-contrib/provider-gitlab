@@ -1,0 +1,314 @@
+package projects
+
+import (
+	"testing"
+	"time"
+
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"k8s.io/utils/ptr"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
+	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+var (
+	testGithubProjectID    int64 = 123
+	testGithubToken              = "ghp_secrettoken"
+	testGithubRepositoryURL      = "https://github.com/example/repo"
+	testGithubStaticContext      = true
+
+	testGithubID        int64 = 456
+	testGithubTitle           = "GitHub"
+	testGithubSlug            = "github"
+	testGithubActive          = true
+	testGithubCreatedAt       = time.Now()
+	testGithubUpdatedAt       = time.Now()
+)
+
+// TestGenerateSetGithubServiceOptions tests the conversion from
+// IntegrationGithubParameters to GitLab SetGithubServiceOptions
+func TestGenerateSetGithubServiceOptions(t *testing.T) {
+	type args struct {
+		parameters *projectsv1alpha1.IntegrationGithubParameters
+	}
+	cases := map[string]struct {
+		args args
+		want *gitlab.SetGithubServiceOptions
+	}{
+		"AllFieldsSet": {
+			args: args{
+				parameters: &projectsv1alpha1.IntegrationGithubParameters{
+					ProjectID:     &testGithubProjectID,
+					Token:         testGithubToken,
+					RepositoryURL: &testGithubRepositoryURL,
+					StaticContext: &testGithubStaticContext,
+				},
+			},
+			want: &gitlab.SetGithubServiceOptions{
+				Token:         &testGithubToken,
+				RepositoryURL: &testGithubRepositoryURL,
+				StaticContext: &testGithubStaticContext,
+			},
+		},
+		"OnlyRequiredFields": {
+			args: args{
+				parameters: &projectsv1alpha1.IntegrationGithubParameters{
+					ProjectID: &testGithubProjectID,
+					Token:     testGithubToken,
+				},
+			},
+			want: &gitlab.SetGithubServiceOptions{
+				Token: &testGithubToken,
+			},
+		},
+		"EmptyTokenNotIncluded": {
+			args: args{
+				parameters: &projectsv1alpha1.IntegrationGithubParameters{
+					ProjectID: &testGithubProjectID,
+					Token:     "",
+				},
+			},
+			want: &gitlab.SetGithubServiceOptions{},
+		},
+		"NilInput": {
+			args: args{
+				parameters: nil,
+			},
+			want: &gitlab.SetGithubServiceOptions{},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateSetGithubServiceOptions(tc.args.parameters)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("GenerateSetGithubServiceOptions(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+// TestGenerateIntegrationGithubObservation tests the conversion from
+// GitLab GithubService to IntegrationGithubObservation
+func TestGenerateIntegrationGithubObservation(t *testing.T) {
+	type args struct {
+		service *gitlab.GithubService
+	}
+	cases := map[string]struct {
+		args args
+		want projectsv1alpha1.IntegrationGithubObservation
+	}{
+		"FullObservation": {
+			args: args{
+				service: &gitlab.GithubService{
+					Service: gitlab.Service{
+						ID:        testGithubID,
+						Title:     testGithubTitle,
+						Slug:      testGithubSlug,
+						CreatedAt: &testGithubCreatedAt,
+						UpdatedAt: &testGithubUpdatedAt,
+						Active:    testGithubActive,
+					},
+					Properties: &gitlab.GithubServiceProperties{
+						RepositoryURL: testGithubRepositoryURL,
+						StaticContext: testGithubStaticContext,
+					},
+				},
+			},
+			want: projectsv1alpha1.IntegrationGithubObservation{
+				CommonIntegrationObservation: v1alpha1.CommonIntegrationObservation{
+					ID:                             ptr.To(testGithubID),
+					Title:                          ptr.To(testGithubTitle),
+					Slug:                           ptr.To(testGithubSlug),
+					CreatedAt:                      clients.TimeToMetaTime(&testGithubCreatedAt),
+					UpdatedAt:                      clients.TimeToMetaTime(&testGithubUpdatedAt),
+					Active:                         ptr.To(true),
+					AlertEvents:                    ptr.To(false),
+					CommitEvents:                   ptr.To(false),
+					ConfidentialIssuesEvents:       ptr.To(false),
+					ConfidentialNoteEvents:         ptr.To(false),
+					DeploymentEvents:               ptr.To(false),
+					GroupConfidentialMentionEvents: ptr.To(false),
+					GroupMentionEvents:             ptr.To(false),
+					IncidentEvents:                 ptr.To(false),
+					IssuesEvents:                   ptr.To(false),
+					JobEvents:                      ptr.To(false),
+					MergeRequestsEvents:            ptr.To(false),
+					NoteEvents:                     ptr.To(false),
+					PipelineEvents:                 ptr.To(false),
+					PushEvents:                     ptr.To(false),
+					TagPushEvents:                  ptr.To(false),
+					VulnerabilityEvents:            ptr.To(false),
+					WikiPageEvents:                 ptr.To(false),
+					CommentOnEventEnabled:          ptr.To(false),
+					Inherited:                      ptr.To(false),
+				},
+				RepositoryURL: testGithubRepositoryURL,
+				StaticContext: testGithubStaticContext,
+			},
+		},
+		"MinimalObservation": {
+			args: args{
+				service: &gitlab.GithubService{
+					Service: gitlab.Service{
+						ID:    testGithubID,
+						Title: testGithubTitle,
+					},
+					Properties: &gitlab.GithubServiceProperties{
+						RepositoryURL: testGithubRepositoryURL,
+					},
+				},
+			},
+			want: projectsv1alpha1.IntegrationGithubObservation{
+				CommonIntegrationObservation: v1alpha1.CommonIntegrationObservation{
+					ID:                             ptr.To(testGithubID),
+					Title:                          ptr.To(testGithubTitle),
+					Slug:                           ptr.To(""),
+					CreatedAt:                      nil,
+					UpdatedAt:                      nil,
+					Active:                         ptr.To(false),
+					AlertEvents:                    ptr.To(false),
+					CommitEvents:                   ptr.To(false),
+					ConfidentialIssuesEvents:       ptr.To(false),
+					ConfidentialNoteEvents:         ptr.To(false),
+					DeploymentEvents:               ptr.To(false),
+					GroupConfidentialMentionEvents: ptr.To(false),
+					GroupMentionEvents:             ptr.To(false),
+					IncidentEvents:                 ptr.To(false),
+					IssuesEvents:                   ptr.To(false),
+					JobEvents:                      ptr.To(false),
+					MergeRequestsEvents:            ptr.To(false),
+					NoteEvents:                     ptr.To(false),
+					PipelineEvents:                 ptr.To(false),
+					PushEvents:                     ptr.To(false),
+					TagPushEvents:                  ptr.To(false),
+					VulnerabilityEvents:            ptr.To(false),
+					WikiPageEvents:                 ptr.To(false),
+					CommentOnEventEnabled:          ptr.To(false),
+					Inherited:                      ptr.To(false),
+				},
+				RepositoryURL: testGithubRepositoryURL,
+			},
+		},
+		"NilObservation": {
+			args: args{
+				service: nil,
+			},
+			want: projectsv1alpha1.IntegrationGithubObservation{},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateIntegrationGithubObservation(tc.args.service)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("GenerateIntegrationGithubObservation(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+// TestIsIntegrationGithubUpToDate tests whether the spec matches the observation
+func TestIsIntegrationGithubUpToDate(t *testing.T) {
+	type args struct {
+		spec        *projectsv1alpha1.IntegrationGithubParameters
+		observation *gitlab.GithubService
+	}
+	cases := map[string]struct {
+		args args
+		want bool
+	}{
+		"UpToDate": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationGithubParameters{
+					ProjectID:     &testGithubProjectID,
+					Token:         testGithubToken,
+					RepositoryURL: &testGithubRepositoryURL,
+					StaticContext: &testGithubStaticContext,
+				},
+				observation: &gitlab.GithubService{
+					Properties: &gitlab.GithubServiceProperties{
+						RepositoryURL: testGithubRepositoryURL,
+						StaticContext: testGithubStaticContext,
+					},
+				},
+			},
+			want: true,
+		},
+		"DifferentTokenIsIgnored": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationGithubParameters{
+					Token:         "different-token",
+					RepositoryURL: &testGithubRepositoryURL,
+					StaticContext: &testGithubStaticContext,
+				},
+				observation: &gitlab.GithubService{
+					Properties: &gitlab.GithubServiceProperties{
+						RepositoryURL: testGithubRepositoryURL,
+						StaticContext: testGithubStaticContext,
+					},
+				},
+			},
+			want: true,
+		},
+		"OutOfDateRepositoryURL": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationGithubParameters{
+					Token:         testGithubToken,
+					RepositoryURL: func() *string { s := "https://github.com/other/repo"; return &s }(),
+				},
+				observation: &gitlab.GithubService{
+					Properties: &gitlab.GithubServiceProperties{
+						RepositoryURL: testGithubRepositoryURL,
+					},
+				},
+			},
+			want: false,
+		},
+		"OutOfDateStaticContext": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationGithubParameters{
+					Token:         testGithubToken,
+					StaticContext: func() *bool { b := false; return &b }(),
+				},
+				observation: &gitlab.GithubService{
+					Properties: &gitlab.GithubServiceProperties{
+						StaticContext: true,
+					},
+				},
+			},
+			want: false,
+		},
+		"NilSpecFields": {
+			args: args{
+				spec: &projectsv1alpha1.IntegrationGithubParameters{
+					Token: testGithubToken,
+				},
+				observation: &gitlab.GithubService{
+					Properties: &gitlab.GithubServiceProperties{
+						RepositoryURL: testGithubRepositoryURL,
+					},
+				},
+			},
+			want: true,
+		},
+		"NilObservationReturnsFalse": {
+			args: args{
+				spec:        &projectsv1alpha1.IntegrationGithubParameters{},
+				observation: nil,
+			},
+			want: false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsIntegrationGithubUpToDate(tc.args.spec, tc.args.observation)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("IsIntegrationGithubUpToDate(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}

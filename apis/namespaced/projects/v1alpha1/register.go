@@ -148,6 +148,14 @@ var (
 	IntegrationMattermostGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationMattermostKind)
 )
 
+// IntegrationGithub type metadata
+var (
+	IntegrationGithubKind             = reflect.TypeOf(IntegrationGithub{}).Name()
+	IntegrationGithubGroupKind        = schema.GroupKind{Group: Group, Kind: IntegrationGithubKind}.String()
+	IntegrationGithubKindAPIVersion   = IntegrationGithubKind + "." + SchemeGroupVersion.String()
+	IntegrationGithubGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationGithubKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
@@ -165,4 +173,7 @@ func init() {
 
 	// Mattermost
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
+
+	// GitHub
+	SchemeBuilder.Register(&IntegrationGithub{}, &IntegrationGithubList{})
 }

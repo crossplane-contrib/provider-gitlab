@@ -1,0 +1,15 @@
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: IntegrationGithub
+metadata:
+  name: github-p7
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    projectId: 14
+    token: "ghp_yourgithubtoken"
+    repositoryUrl: "https://github.com/example/repo"
+    staticContext: true

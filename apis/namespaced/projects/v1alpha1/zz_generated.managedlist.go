@@ -83,6 +83,15 @@ func (l *IntegrationMattermostList) GetItems() []resource.Managed {
 	return items
 }
 
+// GetItems of this IntegrationGithubList.
+func (l *IntegrationGithubList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
 // GetItems of this MemberList.
 func (l *MemberList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
