@@ -90,6 +90,9 @@ type MockClient struct {
 	MockGetMattermostService    func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
 	MockSetMattermostService    func(pid any, opt *gitlab.SetMattermostServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
 	MockDeleteMattermostService func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockShareProjectWithGroup        func(pid any, opt *gitlab.ShareWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockDeleteSharedProjectFromGroup func(pid any, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetPipelineSchedule calls the underlying MockGetPipelineSchedule method.
@@ -331,4 +334,14 @@ func (c *MockClient) SetMattermostService(pid any, opt *gitlab.SetMattermostServ
 // DeleteMattermostService calls the underlying MockDeleteMattermostService method.
 func (c *MockClient) DeleteMattermostService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteMattermostService(pid, options...)
+}
+
+// ShareProjectWithGroup calls the underlying MockShareProjectWithGroup method.
+func (c *MockClient) ShareProjectWithGroup(pid any, opt *gitlab.ShareWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockShareProjectWithGroup(pid, opt, options...)
+}
+
+// DeleteSharedProjectFromGroup calls the underlying MockDeleteSharedProjectFromGroup method.
+func (c *MockClient) DeleteSharedProjectFromGroup(pid any, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteSharedProjectFromGroup(pid, groupID, options...)
 }
