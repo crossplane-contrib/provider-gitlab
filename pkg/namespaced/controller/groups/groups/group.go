@@ -18,7 +18,6 @@ package groups
 
 import (
 	"context"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -273,44 +272,39 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 	}
 
+	result, err := e.DeletePermanentlyWhenApplicable(ctx, cr)
+	if err != nil {
+		return result, err
+	}
+
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+}
+
+func (e *external) DeletePermanentlyWhenApplicable(ctx context.Context, cr *v1alpha1.Group) (managed.ExternalDelete, error) {
 	// permanent deletion is only available on subgroups; when executed against top-level groups the backend will return an error
 	isSubGroup := cr.Status.AtProvider.FullPath != nil && *cr.Status.AtProvider.FullPath != cr.Spec.ForProvider.Path
 	if cr.Spec.ForProvider.PermanentlyRemove != nil && *cr.Spec.ForProvider.PermanentlyRemove && isSubGroup {
 		// FIX: Fetch the current state of the group from GitLab.
 		// This ensures we get the "actual" path if GitLab has already
 		// renamed it for deletion (e.g., path-deletion_scheduled-14).
-		g, _, err := e.client.GetGroup(meta.GetExternalName(cr), &gitlab.GetGroupOptions{}, gitlab.WithContext(ctx))
-		if g == nil {
-			return managed.ExternalDelete{}, errors.New("GitLab API returned empty group object")
-		}
+		g, res, err := e.client.GetGroup(meta.GetExternalName(cr), &gitlab.GetGroupOptions{}, gitlab.WithContext(ctx))
 		if err != nil {
 			// If the group is already gone (404), our job is done.
-			if isErrorNotFound(err) {
+			if clients.IsResponseNotFound(res) {
 				return managed.ExternalDelete{}, nil
 			}
-			return managed.ExternalDelete{}, errors.Wrap(err, "cannot get group before deletion")
+			return managed.ExternalDelete{}, errors.Wrap(err, "Cannot get group before deletion")
+		}
+		if g == nil {
+			return managed.ExternalDelete{}, errors.New("GitLab API returned empty group object")
 		}
 		_, err = e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{
 			PermanentlyRemove: cr.Spec.ForProvider.PermanentlyRemove,
 			FullPath:          &g.FullPath,
 		}, gitlab.WithContext(ctx))
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 	}
-	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
-}
-
-func isErrorNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	// Check if it's a GitLab error response
-	var gErr *gitlab.ErrorResponse
-	if errors.As(err, &gErr) && gErr.Response != nil {
-		return gErr.Response.StatusCode == http.StatusNotFound
-	}
-
-	// Fallback for wrapped errors or strings
-	return strings.Contains(err.Error(), "404")
+	return managed.ExternalDelete{}, nil
 }
 
 func (e *external) Disconnect(ctx context.Context) error {
