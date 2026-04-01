@@ -1,0 +1,21 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: RepositoryFile
+metadata:
+  name: example-repositoryfile
+spec:
+  forProvider:
+    projectIdRef:
+      name: example-project
+    filePath: README.md
+    branch: main
+    content: |
+      # Example Project
+
+      This file is managed by Crossplane.
+    reconcileInterval: 1h
+    createCommitMessage: "docs: create README.md"
+    updateCommitMessage: "docs: update README.md"
+    deleteCommitMessage: "docs: delete README.md"
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig

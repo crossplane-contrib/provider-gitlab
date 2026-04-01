@@ -35,6 +35,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/projectsharegroups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/protectedbranches"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/protectedenvironments"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/repositoryfiles"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/variables"
 )
@@ -48,6 +49,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		deploytokens.SetupDeployToken,
 		accesstokens.SetupAccessToken,
 		variables.SetupVariable,
+		repositoryfiles.SetupRepositoryFile,
 		deploykeys.SetupDeployKey,
 		pipelineschedules.SetupPipelineSchedule,
 		approvalrules.SetupRules,
@@ -75,6 +77,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		deploytokens.SetupDeployTokenGated,
 		accesstokens.SetupAccessTokenGated,
 		variables.SetupVariableGated,
+		repositoryfiles.SetupRepositoryFileGated,
 		deploykeys.SetupDeployKeyGated,
 		pipelineschedules.SetupPipelineScheduleGated,
 		approvalrules.SetupRulesGated,
