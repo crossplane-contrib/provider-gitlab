@@ -53,6 +53,7 @@ const (
 	errExternalNameMismatch         = "external-name must match spec.forProvider.filePath"
 	errReconcileIntervalInvalid     = "invalid reconcileInterval"
 	errRepositoryFileContentMissing = "exactly one of content or contentSecretRef must be set"
+	errCreateOnlyPolicyConflict     = "createOnly conflicts with explicit managementPolicies"
 )
 
 // SetupRepositoryFile adds a controller that reconciles RepositoryFiles.
@@ -65,7 +66,7 @@ func SetupRepositoryFile(mgr ctrl.Manager, o controller.Options) error {
 			newGitlabClientFn: projectclients.NewRepositoryFileClient,
 			pollInterval:      o.PollInterval,
 		}),
-		managed.WithInitializers(),
+		managed.WithInitializers(managed.NewNameAsExternalName(mgr.GetClient()), createOnlyInitializer{client: mgr.GetClient()}),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
@@ -124,6 +125,31 @@ type external struct {
 	pollInterval time.Duration
 }
 
+type createOnlyInitializer struct {
+	client client.Client
+}
+
+func (i createOnlyInitializer) Initialize(ctx context.Context, mg resource.Managed) error {
+	cr, ok := mg.(*projectsv1alpha1.RepositoryFile)
+	if !ok {
+		return errors.New(errNotRepositoryFile)
+	}
+	if !projectclients.RepositoryFileCreateOnly(&cr.Spec.ForProvider) {
+		return nil
+	}
+
+	createOnlyPolicies := projectclients.RepositoryFileCreateOnlyPolicies()
+	if len(cr.GetManagementPolicies()) > 0 && !projectclients.RepositoryFilePoliciesEqual(cr.GetManagementPolicies(), createOnlyPolicies) {
+		return errors.New(errCreateOnlyPolicyConflict)
+	}
+	if projectclients.RepositoryFilePoliciesEqual(cr.GetManagementPolicies(), createOnlyPolicies) {
+		return nil
+	}
+
+	cr.SetManagementPolicies(createOnlyPolicies)
+	return errors.Wrap(i.client.Update(ctx, cr), "cannot update RepositoryFile managementPolicies")
+}
+
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
 	cr, ok := mg.(*projectsv1alpha1.RepositoryFile)
 	if !ok {
@@ -167,14 +193,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	projectclients.LateInitializeRepositoryFile(&cr.Spec.ForProvider, file)
 	cr.Status.AtProvider = projectclients.GenerateRepositoryFileObservation(file, now)
 	cr.Status.SetConditions(xpv1.Available())
-
-	if projectclients.RepositoryFileCreateOnly(&cr.Spec.ForProvider) {
-		return managed.ExternalObservation{
-			ResourceExists:          true,
-			ResourceUpToDate:        true,
-			ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
-		}, nil
-	}
 
 	content, err := e.resolveContent(ctx, mg, &cr.Spec.ForProvider)
 	if err != nil {
@@ -224,9 +242,6 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalUpdate{}, errors.New(errProjectIDMissing)
-	}
-	if projectclients.RepositoryFileCreateOnly(&cr.Spec.ForProvider) {
-		return managed.ExternalUpdate{}, nil
 	}
 
 	content, err := e.resolveContent(ctx, mg, &cr.Spec.ForProvider)

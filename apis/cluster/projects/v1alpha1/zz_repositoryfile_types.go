@@ -23,6 +23,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// RepositoryFileCreateOnlyManagementPolicies is the management policy set implied by createOnly.
+	RepositoryFileCreateOnlyManagementPolicies = `{"Observe","Create","Delete"}`
+)
+
 // RepositoryFileParameters define the desired state of a GitLab Repository File.
 // https://docs.gitlab.com/api/repository_files/
 type RepositoryFileParameters struct {
@@ -158,6 +163,7 @@ type RepositoryFileStatus struct {
 // +kubebuilder:object:root=true
 
 // A RepositoryFile is a managed resource that represents a file in a GitLab repository.
+// +kubebuilder:validation:XValidation:rule="!has(self.spec.forProvider.createOnly) || !self.spec.forProvider.createOnly || !has(self.spec.managementPolicies) || self.spec.managementPolicies == ['Observe', 'Create', 'Delete'] || self.spec.managementPolicies == ['Create', 'Observe', 'Delete'] || self.spec.managementPolicies == ['Create', 'Delete', 'Observe']",message="createOnly=true requires managementPolicies to be exactly [Observe, Create, Delete] when managementPolicies is set explicitly"
 // +kubebuilder:printcolumn:name="FILE",type="string",JSONPath=".spec.forProvider.filePath"
 // +kubebuilder:printcolumn:name="BRANCH",type="string",JSONPath=".spec.forProvider.branch"
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"

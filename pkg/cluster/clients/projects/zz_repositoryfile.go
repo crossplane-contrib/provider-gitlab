@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -254,4 +255,33 @@ func RepositoryFileContentSHA256(p *projectsv1alpha1.RepositoryFileParameters, c
 // RepositoryFileCreateOnly returns true if createOnly is enabled.
 func RepositoryFileCreateOnly(p *projectsv1alpha1.RepositoryFileParameters) bool {
 	return p != nil && p.CreateOnly != nil && *p.CreateOnly
+}
+
+// RepositoryFileCreateOnlyPolicies returns the policy set implied by createOnly.
+func RepositoryFileCreateOnlyPolicies() xpv1.ManagementPolicies {
+	return xpv1.ManagementPolicies{
+		xpv1.ManagementActionObserve,
+		xpv1.ManagementActionCreate,
+		xpv1.ManagementActionDelete,
+	}
+}
+
+// RepositoryFilePoliciesEqual compares policy sets ignoring order.
+func RepositoryFilePoliciesEqual(a, b xpv1.ManagementPolicies) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	counts := map[xpv1.ManagementAction]int{}
+	for _, action := range a {
+		counts[action]++
+	}
+	for _, action := range b {
+		counts[action]--
+	}
+	for _, count := range counts {
+		if count != 0 {
+			return false
+		}
+	}
+	return true
 }

@@ -381,6 +381,14 @@ spec:
         required:
         - spec
         type: object
+        x-kubernetes-validations:
+        - message: createOnly=true requires managementPolicies to be exactly [Observe,
+            Create, Delete] when managementPolicies is set explicitly
+          rule: '!has(self.spec.forProvider.createOnly) || !self.spec.forProvider.createOnly
+            || !has(self.spec.managementPolicies) || self.spec.managementPolicies
+            == [''Observe'', ''Create'', ''Delete''] || self.spec.managementPolicies
+            == [''Create'', ''Observe'', ''Delete''] || self.spec.managementPolicies
+            == [''Create'', ''Delete'', ''Observe'']'
     served: true
     storage: true
     subresources:
