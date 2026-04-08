@@ -24,13 +24,11 @@ import (
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
@@ -39,8 +37,10 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects/fake"
 )
 
+const testContent = "hello"
+
 func TestResolveContent(t *testing.T) {
-	content := "hello"
+	content := testContent
 	cr := &projectsv1alpha1.RepositoryFile{}
 	cr.Namespace = "default"
 
@@ -55,7 +55,7 @@ func TestResolveContent(t *testing.T) {
 }
 
 func TestResolveContentFromSecret(t *testing.T) {
-	content := "hello"
+	content := testContent
 	cr := &projectsv1alpha1.RepositoryFile{}
 	cr.Namespace = "default"
 
@@ -78,37 +78,33 @@ func TestResolveContentFromSecret(t *testing.T) {
 	}
 }
 
-func TestObserveIntervalSkip(t *testing.T) {
+func TestObserveCreateOnlyIgnoresDrift(t *testing.T) {
 	projectID := "123"
-	filePath := "README.md"
-	branch := "main"
-	content := "hello"
-	observeAt := metav1.NewTime(time.Now())
-
+	content := testContent
+	createOnly := true
 	cr := &projectsv1alpha1.RepositoryFile{
 		Spec: projectsv1alpha1.RepositoryFileSpec{
 			ForProvider: projectsv1alpha1.RepositoryFileParameters{
-				ProjectID:         &projectID,
-				FilePath:          filePath,
-				Branch:            branch,
-				Content:           &content,
-				ReconcileInterval: stringPtr("1h"),
-			},
-		},
-		Status: projectsv1alpha1.RepositoryFileStatus{
-			AtProvider: projectsv1alpha1.RepositoryFileObservation{
-				LastObserveTime: &observeAt,
+				ProjectID:  &projectID,
+				FilePath:   "README.md",
+				Branch:     "main",
+				Content:    &content,
+				CreateOnly: &createOnly,
 			},
 		},
 	}
 
-	e := &external{pollInterval: time.Minute, client: &fake.MockClient{}}
+	e := &external{client: &fake.MockClient{
+		MockGetFile: func(pid any, fileName string, opt *gitlab.GetFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.File, *gitlab.Response, error) {
+			return &gitlab.File{FilePath: "README.md", Ref: "main", SHA256: "different"}, &gitlab.Response{}, nil
+		},
+	}}
 	obs, err := e.Observe(context.Background(), cr)
 	if err != nil {
 		t.Fatalf("Observe() error = %v", err)
 	}
-	if diff := cmp.Diff(managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, obs); diff != "" {
-		t.Fatalf("Observe(): -want, +got:\n%s", diff)
+	if diff := cmp.Diff(true, obs.ResourceUpToDate); diff != "" {
+		t.Fatalf("Observe() upToDate: -want, +got:\n%s", diff)
 	}
 }
 
@@ -151,7 +147,7 @@ func TestCreateOnlyInitializerConflict(t *testing.T) {
 
 func TestObserveExternalNameMismatch(t *testing.T) {
 	projectID := "123"
-	content := "hello"
+	content := testContent
 	cr := &projectsv1alpha1.RepositoryFile{
 		Spec: projectsv1alpha1.RepositoryFileSpec{
 			ForProvider: projectsv1alpha1.RepositoryFileParameters{
@@ -173,7 +169,7 @@ func TestObserveExternalNameMismatch(t *testing.T) {
 
 func TestDeleteIgnores404(t *testing.T) {
 	projectID := "123"
-	content := "hello"
+	content := testContent
 	cr := &projectsv1alpha1.RepositoryFile{
 		Spec: projectsv1alpha1.RepositoryFileSpec{
 			ForProvider: projectsv1alpha1.RepositoryFileParameters{
@@ -198,8 +194,4 @@ func TestDeleteIgnores404(t *testing.T) {
 	if got := cr.Status.ConditionedStatus.Conditions[0].Reason; got != xpv1.Deleting().Reason {
 		t.Fatalf("Delete() condition reason = %s, want %s", got, xpv1.Deleting().Reason)
 	}
-}
-
-func stringPtr(s string) *string {
-	return &s
 }

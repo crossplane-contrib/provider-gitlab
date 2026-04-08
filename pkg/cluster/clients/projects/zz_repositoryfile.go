@@ -27,7 +27,6 @@ import (
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
@@ -53,22 +52,19 @@ func NewRepositoryFileClient(cfg common.Config) RepositoryFileClient {
 }
 
 // GenerateRepositoryFileObservation builds observation from a gitlab file.
-func GenerateRepositoryFileObservation(file *gitlab.File, observedAt time.Time) projectsv1alpha1.RepositoryFileObservation {
-	observation := projectsv1alpha1.RepositoryFileObservation{
-		LastObserveTime: &metav1.Time{Time: observedAt},
-	}
+func GenerateRepositoryFileObservation(file *gitlab.File) projectsv1alpha1.RepositoryFileObservation {
 	if file == nil {
-		return observation
+		return projectsv1alpha1.RepositoryFileObservation{}
 	}
 
-	observation.FilePath = file.FilePath
-	observation.BlobID = file.BlobID
-	observation.CommitID = file.CommitID
-	observation.LastCommitID = file.LastCommitID
-	observation.SHA256 = file.SHA256
-	observation.Size = file.Size
-
-	return observation
+	return projectsv1alpha1.RepositoryFileObservation{
+		FilePath:     file.FilePath,
+		BlobID:       file.BlobID,
+		CommitID:     file.CommitID,
+		LastCommitID: file.LastCommitID,
+		SHA256:       file.SHA256,
+		Size:         file.Size,
+	}
 }
 
 // LateInitializeRepositoryFile fills empty optional fields from the external file.
@@ -170,24 +166,6 @@ func IsRepositoryFileUpToDate(p *projectsv1alpha1.RepositoryFileParameters, exte
 	}
 
 	return RepositoryFileContentSHA256(p, content) == external.SHA256
-}
-
-// ShouldObserveRepositoryFileNow checks whether observe should call GitLab now.
-func ShouldObserveRepositoryFileNow(p *projectsv1alpha1.RepositoryFileParameters, observation *projectsv1alpha1.RepositoryFileObservation, defaultPollInterval time.Duration, now time.Time) (bool, error) {
-	if observation == nil || observation.LastObserveTime == nil {
-		return true, nil
-	}
-
-	interval, err := RepositoryFileReconcileInterval(p, defaultPollInterval)
-	if err != nil {
-		return false, err
-	}
-
-	if interval <= 0 {
-		return true, nil
-	}
-
-	return !observation.LastObserveTime.Add(interval).After(now), nil
 }
 
 // RepositoryFileReconcileInterval returns configured reconcile interval or default.

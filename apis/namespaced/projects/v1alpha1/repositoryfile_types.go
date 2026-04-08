@@ -23,11 +23,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	// RepositoryFileCreateOnlyManagementPolicies is the management policy set implied by createOnly.
-	RepositoryFileCreateOnlyManagementPolicies = `{"Observe","Create","Delete"}`
-)
-
 // RepositoryFileParameters define the desired state of a GitLab Repository File.
 // https://docs.gitlab.com/api/repository_files/
 type RepositoryFileParameters struct {
@@ -111,12 +106,14 @@ type RepositoryFileParameters struct {
 	// the GitLab API. Examples: "5m", "1h", "8h". If unset, the resource is
 	// reconciled at the controller's default poll interval.
 	// +optional
+	// +kubebuilder:validation:Pattern=`^([0-9]+(ns|us|µs|ms|s|m|h))+$`
 	ReconcileInterval *string `json:"reconcileInterval,omitempty"`
 
 	// CreateOnly when true, creates the file once and never updates it.
 	// The file is still deleted from GitLab when the CR is deleted.
 	// Observe only checks for file existence, not content drift.
 	// +optional
+	// +immutable
 	// +kubebuilder:default=false
 	CreateOnly *bool `json:"createOnly,omitempty"`
 }
@@ -140,10 +137,6 @@ type RepositoryFileObservation struct {
 
 	// Size is the file size in bytes.
 	Size int64 `json:"size,omitempty"`
-
-	// LastObserveTime is the timestamp of the last successful observe
-	// that made an actual API call to GitLab. Used for reconcileInterval.
-	LastObserveTime *metav1.Time `json:"lastObserveTime,omitempty"`
 }
 
 // A RepositoryFileSpec defines the desired state of a GitLab Repository File.
@@ -163,7 +156,8 @@ type RepositoryFileStatus struct {
 // +kubebuilder:object:root=true
 
 // A RepositoryFile is a managed resource that represents a file in a GitLab repository.
-// +kubebuilder:validation:XValidation:rule="!has(self.spec.forProvider.createOnly) || !self.spec.forProvider.createOnly || !has(self.spec.managementPolicies) || self.spec.managementPolicies == ['Observe', 'Create', 'Delete'] || self.spec.managementPolicies == ['Create', 'Observe', 'Delete'] || self.spec.managementPolicies == ['Create', 'Delete', 'Observe']",message="createOnly=true requires managementPolicies to be exactly [Observe, Create, Delete] when managementPolicies is set explicitly"
+// +kubebuilder:validation:XValidation:rule="has(self.spec.forProvider.content) != has(self.spec.forProvider.contentSecretRef)",message="exactly one of spec.forProvider.content or spec.forProvider.contentSecretRef must be set"
+// +kubebuilder:validation:XValidation:rule="!has(self.spec.forProvider.createOnly) || !self.spec.forProvider.createOnly || !has(self.spec.managementPolicies) || size(self.spec.managementPolicies) != 1 || self.spec.managementPolicies[0] != '*'",message="createOnly=true cannot be combined with managementPolicies=['*']"
 // +kubebuilder:printcolumn:name="FILE",type="string",JSONPath=".spec.forProvider.filePath"
 // +kubebuilder:printcolumn:name="BRANCH",type="string",JSONPath=".spec.forProvider.branch"
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"

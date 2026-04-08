@@ -217,6 +217,7 @@ spec:
                       ReconcileInterval controls how often this resource is reconciled against
                       the GitLab API. Examples: "5m", "1h", "8h". If unset, the resource is
                       reconciled at the controller's default poll interval.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h))+$
                     type: string
                   startBranch:
                     description: StartBranch is the source branch used to create branch
@@ -310,12 +311,6 @@ spec:
                     description: LastCommitID is the last commit SHA that modified
                       this file.
                     type: string
-                  lastObserveTime:
-                    description: |-
-                      LastObserveTime is the timestamp of the last successful observe
-                      that made an actual API call to GitLab. Used for reconcileInterval.
-                    format: date-time
-                    type: string
                   sha256:
                     description: SHA256 is the SHA-256 hash of the file content.
                     type: string
@@ -382,13 +377,13 @@ spec:
         - spec
         type: object
         x-kubernetes-validations:
-        - message: createOnly=true requires managementPolicies to be exactly [Observe,
-            Create, Delete] when managementPolicies is set explicitly
+        - message: exactly one of spec.forProvider.content or spec.forProvider.contentSecretRef
+            must be set
+          rule: has(self.spec.forProvider.content) != has(self.spec.forProvider.contentSecretRef)
+        - message: createOnly=true cannot be combined with managementPolicies=['*']
           rule: '!has(self.spec.forProvider.createOnly) || !self.spec.forProvider.createOnly
-            || !has(self.spec.managementPolicies) || self.spec.managementPolicies
-            == [''Observe'', ''Create'', ''Delete''] || self.spec.managementPolicies
-            == [''Create'', ''Observe'', ''Delete''] || self.spec.managementPolicies
-            == [''Create'', ''Delete'', ''Observe'']'
+            || !has(self.spec.managementPolicies) || size(self.spec.managementPolicies)
+            != 1 || self.spec.managementPolicies[0] != ''*'''
     served: true
     storage: true
     subresources:

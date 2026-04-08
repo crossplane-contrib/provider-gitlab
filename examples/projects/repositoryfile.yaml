@@ -1,4 +1,4 @@
-apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
 kind: RepositoryFile
 metadata:
   name: example-repositoryfile
@@ -17,5 +17,4 @@ spec:
     updateCommitMessage: "docs: update README.md"
     deleteCommitMessage: "docs: delete README.md"
   providerConfigRef:
-    name: default
-    kind: ProviderConfig
+    name: gitlab-provider

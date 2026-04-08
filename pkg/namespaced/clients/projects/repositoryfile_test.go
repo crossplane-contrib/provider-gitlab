@@ -26,7 +26,6 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
 )
@@ -66,42 +65,26 @@ func TestRepositoryFileContentSHA256(t *testing.T) {
 	}
 }
 
-func TestShouldObserveRepositoryFileNow(t *testing.T) {
-	now := time.Now()
+func TestRepositoryFileReconcileInterval(t *testing.T) {
 	oneHour := "1h"
-
 	cases := map[string]struct {
 		params      *projectsv1alpha1.RepositoryFileParameters
-		observation *projectsv1alpha1.RepositoryFileObservation
 		defaultPoll time.Duration
-		want        bool
+		want        time.Duration
 		wantErr     bool
 	}{
-		"NoLastObserveTime": {
+		"Default": {
 			params:      &projectsv1alpha1.RepositoryFileParameters{},
-			observation: &projectsv1alpha1.RepositoryFileObservation{},
 			defaultPoll: time.Minute,
-			want:        true,
+			want:        time.Minute,
 		},
-		"SkipBeforeInterval": {
-			params: &projectsv1alpha1.RepositoryFileParameters{ReconcileInterval: &oneHour},
-			observation: &projectsv1alpha1.RepositoryFileObservation{
-				LastObserveTime: &metav1.Time{Time: now.Add(-30 * time.Minute)},
-			},
+		"Custom": {
+			params:      &projectsv1alpha1.RepositoryFileParameters{ReconcileInterval: &oneHour},
 			defaultPoll: time.Minute,
-			want:        false,
+			want:        time.Hour,
 		},
-		"ObserveAfterInterval": {
-			params: &projectsv1alpha1.RepositoryFileParameters{ReconcileInterval: &oneHour},
-			observation: &projectsv1alpha1.RepositoryFileObservation{
-				LastObserveTime: &metav1.Time{Time: now.Add(-2 * time.Hour)},
-			},
-			defaultPoll: time.Minute,
-			want:        true,
-		},
-		"InvalidInterval": {
+		"Invalid": {
 			params:      &projectsv1alpha1.RepositoryFileParameters{ReconcileInterval: stringPtr("nope")},
-			observation: &projectsv1alpha1.RepositoryFileObservation{LastObserveTime: &metav1.Time{Time: now}},
 			defaultPoll: time.Minute,
 			wantErr:     true,
 		},
@@ -109,18 +92,18 @@ func TestShouldObserveRepositoryFileNow(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got, err := ShouldObserveRepositoryFileNow(tc.params, tc.observation, tc.defaultPoll, now)
+			got, err := RepositoryFileReconcileInterval(tc.params, tc.defaultPoll)
 			if tc.wantErr {
 				if err == nil {
-					t.Fatal("ShouldObserveRepositoryFileNow() expected error")
+					t.Fatal("RepositoryFileReconcileInterval() expected error")
 				}
 				return
 			}
 			if err != nil {
-				t.Fatalf("ShouldObserveRepositoryFileNow() error = %v", err)
+				t.Fatalf("RepositoryFileReconcileInterval() error = %v", err)
 			}
 			if diff := cmp.Diff(tc.want, got); diff != "" {
-				t.Fatalf("ShouldObserveRepositoryFileNow(): -want, +got:\n%s", diff)
+				t.Fatalf("RepositoryFileReconcileInterval(): -want, +got:\n%s", diff)
 			}
 		})
 	}

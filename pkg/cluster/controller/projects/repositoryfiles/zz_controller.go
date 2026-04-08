@@ -25,7 +25,6 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -51,7 +50,6 @@ const (
 	errResolveContentFailed         = "cannot resolve Gitlab repository file content"
 	errProjectIDMissing             = "ProjectID is missing"
 	errExternalNameMismatch         = "external-name must match spec.forProvider.filePath"
-	errReconcileIntervalInvalid     = "invalid reconcileInterval"
 	errRepositoryFileContentMissing = "exactly one of content or contentSecretRef must be set"
 	errCreateOnlyPolicyConflict     = "createOnly conflicts with explicit managementPolicies"
 )
@@ -60,7 +58,8 @@ const (
 func SetupRepositoryFile(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName("cluster." + projectsv1alpha1.RepositoryFileGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	reconcilerOpts := make([]managed.ReconcilerOption, 0, 7)
+	reconcilerOpts = append(reconcilerOpts,
 		managed.WithExternalConnecter(&connector{
 			kube:              mgr.GetClient(),
 			newGitlabClientFn: projectclients.NewRepositoryFileClient,
@@ -68,13 +67,21 @@ func SetupRepositoryFile(mgr ctrl.Manager, o controller.Options) error {
 		}),
 		managed.WithInitializers(managed.NewNameAsExternalName(mgr.GetClient()), createOnlyInitializer{client: mgr.GetClient()}),
 		managed.WithPollInterval(o.PollInterval),
+		managed.WithPollIntervalHook(func(mg resource.Managed, pollInterval time.Duration) time.Duration {
+			cr, ok := mg.(*projectsv1alpha1.RepositoryFile)
+			if !ok {
+				return pollInterval
+			}
+			interval, err := projectclients.RepositoryFileReconcileInterval(&cr.Spec.ForProvider, pollInterval)
+			if err != nil {
+				return pollInterval
+			}
+			return interval
+		}),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
+		managed.WithManagementPolicies(),
+	)
 
 	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(projectsv1alpha1.RepositoryFileGroupVersionKind),
@@ -160,20 +167,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
 
-	if externalName := meta.GetExternalName(cr); externalName != "" && externalName != cr.Spec.ForProvider.FilePath {
-		return managed.ExternalObservation{}, errors.New(errExternalNameMismatch)
-	}
-
-	now := time.Now()
-	shouldObserve, err := projectclients.ShouldObserveRepositoryFileNow(&cr.Spec.ForProvider, &cr.Status.AtProvider, e.pollInterval, now)
-	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(err, errReconcileIntervalInvalid)
-	}
-	if !shouldObserve {
-		return managed.ExternalObservation{
-			ResourceExists:   true,
-			ResourceUpToDate: true,
-		}, nil
+	if err := validateRepositoryFileExternalName(cr); err != nil {
+		return managed.ExternalObservation{}, err
 	}
 
 	file, res, err := e.client.GetFile(
@@ -191,8 +186,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	current := cr.Spec.ForProvider.DeepCopy()
 	projectclients.LateInitializeRepositoryFile(&cr.Spec.ForProvider, file)
-	cr.Status.AtProvider = projectclients.GenerateRepositoryFileObservation(file, now)
+	cr.Status.AtProvider = projectclients.GenerateRepositoryFileObservation(file)
 	cr.Status.SetConditions(xpv1.Available())
+
+	if observation, handled := observeCreateOnlyRepositoryFile(cr, current); handled {
+		return observation, nil
+	}
 
 	content, err := e.resolveContent(ctx, mg, &cr.Spec.ForProvider)
 	if err != nil {
@@ -204,6 +203,30 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		ResourceUpToDate:        projectclients.IsRepositoryFileUpToDate(&cr.Spec.ForProvider, file, content),
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 	}, nil
+}
+
+func validateRepositoryFileExternalName(cr *projectsv1alpha1.RepositoryFile) error {
+	externalName := meta.GetExternalName(cr)
+	if externalName == "" || externalName == cr.Spec.ForProvider.FilePath {
+		return nil
+	}
+	if meta.WasCreated(cr) || (externalName == cr.GetName() && cr.Status.AtProvider.FilePath == "") {
+		// Newly created resources may still carry metadata.name as external-name
+		// until Create sets the real file path. Do not block initial creation.
+		return nil
+	}
+	return errors.New(errExternalNameMismatch)
+}
+
+func observeCreateOnlyRepositoryFile(cr *projectsv1alpha1.RepositoryFile, current *projectsv1alpha1.RepositoryFileParameters) (managed.ExternalObservation, bool) {
+	if !projectclients.RepositoryFileCreateOnly(&cr.Spec.ForProvider) {
+		return managed.ExternalObservation{}, false
+	}
+	return managed.ExternalObservation{
+		ResourceExists:          true,
+		ResourceUpToDate:        true,
+		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
+	}, true
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
