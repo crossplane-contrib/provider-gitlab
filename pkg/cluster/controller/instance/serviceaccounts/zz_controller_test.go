@@ -52,8 +52,7 @@ const (
 	testServiceAccountEmail    = "sa@example.org"
 )
 
-// MockClient is a small, purpose-built mock for instance.ServiceAccountClient.
-// We keep it local to this test file to avoid adding any non-test code.
+// MockClient is a small mock for instance.ServiceAccountClient used by controller tests.
 type MockClient struct {
 	MockGetUser                  func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	MockCreateServiceAccountUser func(opts *gitlab.CreateServiceAccountUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
