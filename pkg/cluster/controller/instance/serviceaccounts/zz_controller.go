@@ -249,7 +249,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	// Reconcile service account fields
 	updateWaitGroup.Go(func() {
-		serviceAccount, _, err := e.client.ModifyUser(
+		_, _, err := e.client.ModifyUser(
 			serviceAccountID,
 			instance.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider),
 			gitlab.WithContext(ctx))
@@ -257,8 +257,6 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			errorsChannel <- errors.Wrap(err, errUpdateFailed)
 			return
 		}
-
-		cr.Status.AtProvider = instance.GenerateServiceAccountObservation(serviceAccount)
 	})
 
 	minPermission := ptr.Deref(cr.Spec.ForProvider.BaselinePermissions, accessLevelNoAccess)
@@ -267,7 +265,6 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	// Reconcile service account group memberships
 	updateWaitGroup.Go(func() {
 		if cr.Status.AtProvider.MissingMemberShipGroups != nil {
-
 			errorsChannel <- e.addServiceAccountToGroups(ctx, serviceAccountID, cr.Status.AtProvider.MissingMemberShipGroups, minPermissionValue)
 		}
 	})
@@ -275,7 +272,6 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	// Reconcile service account group permissions
 	updateWaitGroup.Go(func() {
 		if cr.Status.AtProvider.WrongPermissionsGroups != nil {
-
 			errorsChannel <- e.updateServiceAccountGroupPermissions(ctx, serviceAccountID, cr.Status.AtProvider.WrongPermissionsGroups, minPermissionValue)
 		}
 	})
