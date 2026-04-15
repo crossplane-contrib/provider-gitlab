@@ -159,7 +159,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
-		ResourceExists:          true,
+		ResourceExists:          !runners.IsRunnerTokenExpired(cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt),
 		ResourceUpToDate:        runners.IsRunnerUpToDate(&cr.Spec.ForProvider.CommonRunnerParameters, runner),
 		ResourceLateInitialized: false,
 	}, nil

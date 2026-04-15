@@ -51,7 +51,6 @@ const (
 	errCreateFailed            = "cannot create Gitlab Runner"
 	errUpdateFailed            = "cannot update Gitlab Runner"
 	errDeleteFailed            = "cannot delete Gitlab Runner"
-	errRunnertNotFound         = "cannot find Gitlab Runner"
 	errMissingProjectID        = "missing Spec.ForProvider.ProjectID"
 	errMissingExternalName     = "external name annotation not found"
 	errMissingConnectionSecret = "writeConnectionSecretToRef or publishConnectionDetailsTo must be specified to receive the runner token"
@@ -162,7 +161,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
-		ResourceExists:          true,
+		ResourceExists:          !runners.IsRunnerTokenExpired(cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt),
 		ResourceUpToDate:        isRunnerUpToDate(&cr.Spec.ForProvider, runner),
 		ResourceLateInitialized: false,
 	}, nil

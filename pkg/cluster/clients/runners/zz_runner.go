@@ -20,6 +20,7 @@ package users
 
 import (
 	"strings"
+	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,6 +57,16 @@ func IsErrorRunnerNotFound(err error) bool {
 		return false
 	}
 	return strings.Contains(err.Error(), errRunnerNotFound)
+}
+
+// IsRunnerTokenExpired checks if a runner token has expired by comparing
+// the token expiration time with the current time.
+// Returns true if the token is expired, false if it's still valid or if the expiration time is nil.
+func IsRunnerTokenExpired(expiresAt *metav1.Time) bool {
+	if expiresAt == nil {
+		return false
+	}
+	return time.Now().After(expiresAt.Time)
 }
 
 // GenerateInstanceRunnerObservation is used to produce v1alpha1.RunnerObservation from
