@@ -33,11 +33,30 @@ import (
 // ServiceAccountParameters defines the desired state of Gitlab Instance ServiceAccount
 type ServiceAccountParameters struct {
 	commonv1alpha1.CommonServiceAccountParameters `json:",inline"`
+
+	// Admin represents whether the service account has admin privileges.
+	// +optional
+	Admin *bool `json:"admin,omitempty"`
+	// BaselinePermissions represents the minimal permissions level for all top level groups.
+	// WARNING: If this field is set to a value other than "no-access", the service account will be added to all groups with at least the specified access level. This can lead to unintended consequences if not used carefully.
+	// WARNING: This DOES NOT remove the service account from groups if changed from a higher access level to a lower access level. It only adds the service account to groups if changed from a lower access level to a higher access level.
+	// +optional
+	// +kubebuilder:validation:Enum=no-access;minimal-access;guest;planner;reporter;security-manager;developer;maintainer;owner
+	BaselinePermissions *string `json:"baselinePermissions,omitempty"`
 }
 
 // ServiceAccountObservation represents the observed state of the Gitlab Instance ServiceAccount
 type ServiceAccountObservation struct {
 	commonv1alpha1.CommonServiceAccountObservation `json:",inline"`
+
+	// ServiceAccountBaselinePermissionsObservation represents the observed state of the service account's baseline permissions, which is used to determine if the service account is missing permissions for any top level groups or has the wrong permissions for any top level groups.
+	ServiceAccountBaselinePermissionsObservation `json:",inline"`
+}
+
+// ServiceAccountBaselinePermissionsObservation represents the observed state of the service account's baseline permissions, which is used to determine if the service account is missing permissions for any top level groups or has the wrong permissions for any top level groups.
+type ServiceAccountBaselinePermissionsObservation struct {
+	MissingMemberShipGroups []int64 `json:"missingMembershipGroups,omitempty"`
+	WrongPermissionsGroups  []int64 `json:"wrongPermissionsGroups,omitempty"`
 }
 
 // A ServiceAccountSpec defines the desired state of a GitLab instance service account.

@@ -47,6 +47,7 @@ func GenerateServiceAccountObservation(u *gitlab.User) v1alpha1.ServiceAccountOb
 			Name:     u.Name,
 			Username: u.Username,
 			Email:    u.Email,
+			Admin:    u.IsAdmin,
 		},
 	}
 }
@@ -57,6 +58,7 @@ func GenerateUpdateServiceAccountOptions(p *v1alpha1.ServiceAccountParameters) *
 		Name:     p.Name,
 		Username: p.Username,
 		Email:    p.Email,
+		Admin:    p.Admin,
 	}
 }
 
@@ -79,17 +81,8 @@ func IsServiceAccountUpToDate(p *v1alpha1.ServiceAccountParameters, u *gitlab.Us
 		return false
 	}
 
-	if !clients.IsComparableEqualToComparablePtr(p.Name, u.Name) {
-		return false
-	}
-
-	if !clients.IsComparableEqualToComparablePtr(p.Username, u.Username) {
-		return false
-	}
-
-	if !clients.IsComparableEqualToComparablePtr(p.Email, u.Email) {
-		return false
-	}
-
-	return true
+	return clients.IsComparableEqualToComparablePtr(p.Name, u.Name) &&
+		clients.IsComparableEqualToComparablePtr(p.Username, u.Username) &&
+		clients.IsComparableEqualToComparablePtr(p.Email, u.Email) &&
+		clients.IsComparableEqualToComparablePtr(p.Admin, u.IsAdmin)
 }
