@@ -1,0 +1,18 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: RepositoryFile
+metadata:
+  name: example-repositoryfile-createonly
+spec:
+  forProvider:
+    projectIdRef:
+      name: example-project
+    filePath: docs/bootstrap.md
+    branch: main
+    content: |
+      bootstrap content written once
+    createOnly: true
+    reconcileInterval: 8h
+    createCommitMessage: "docs: bootstrap file"
+    deleteCommitMessage: "docs: remove bootstrap file"
+  providerConfigRef:
+    name: gitlab-provider

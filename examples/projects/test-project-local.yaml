@@ -1,0 +1,16 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Project
+metadata:
+  name: local-repositoryfile-test
+  namespace: default
+spec:
+  forProvider:
+    name: "Local RepositoryFile Test"
+    path: local-repositoryfile-test
+    description: "Local test project for provider-gitlab RepositoryFile resource"
+    visibility: private
+    initializeWithReadme: true
+    defaultBranch: main
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig

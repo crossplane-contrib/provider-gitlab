@@ -55,6 +55,11 @@ type MockClient struct {
 	MockListVariables  func(pid any, opt *gitlab.ListProjectVariablesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.ProjectVariable, *gitlab.Response, error)
 	MockRemoveVariable func(pid any, key string, opt *gitlab.RemoveProjectVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
+	MockGetFile    func(pid any, fileName string, opt *gitlab.GetFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.File, *gitlab.Response, error)
+	MockCreateFile func(pid any, fileName string, opt *gitlab.CreateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error)
+	MockUpdateFile func(pid any, fileName string, opt *gitlab.UpdateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error)
+	MockDeleteFile func(pid any, fileName string, opt *gitlab.DeleteFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
 	MockGetProjectAccessToken    func(pid any, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
 	MockCreateProjectAccessToken func(pid any, opt *gitlab.CreateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
 	MockRevokeProjectAccessToken func(pid any, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
@@ -233,6 +238,26 @@ func (c *MockClient) RemoveVariable(pid any, key string, opt *gitlab.RemoveProje
 // ListVariables calls the underlying MockListVariables
 func (c *MockClient) ListVariables(pid any, opt *gitlab.ListProjectVariablesOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.ProjectVariable, *gitlab.Response, error) {
 	return c.MockListVariables(pid, opt)
+}
+
+// GetFile calls the underlying MockGetFile.
+func (c *MockClient) GetFile(pid any, fileName string, opt *gitlab.GetFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.File, *gitlab.Response, error) {
+	return c.MockGetFile(pid, fileName, opt)
+}
+
+// CreateFile calls the underlying MockCreateFile.
+func (c *MockClient) CreateFile(pid any, fileName string, opt *gitlab.CreateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error) {
+	return c.MockCreateFile(pid, fileName, opt)
+}
+
+// UpdateFile calls the underlying MockUpdateFile.
+func (c *MockClient) UpdateFile(pid any, fileName string, opt *gitlab.UpdateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error) {
+	return c.MockUpdateFile(pid, fileName, opt)
+}
+
+// DeleteFile calls the underlying MockDeleteFile.
+func (c *MockClient) DeleteFile(pid any, fileName string, opt *gitlab.DeleteFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteFile(pid, fileName, opt)
 }
 
 // GetDeployKey calls the underlying MockGetDeployKey

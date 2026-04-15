@@ -1,0 +1,98 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: RepositoryFile
+metadata:
+  name: local-repositoryfile-readme
+  namespace: default
+spec:
+  forProvider:
+    projectId: "1"
+    filePath: docs/README-LONG.md
+    branch: main
+    reconcileInterval: 1h
+    createCommitMessage: "docs: create long repository file test"
+    updateCommitMessage: "docs: update long repository file test"
+    deleteCommitMessage: "docs: delete long repository file test"
+    content: |
+      # Local RepositoryFile Test
+
+      This document is managed by the Crossplane provider-gitlab RepositoryFile resource.
+      It exists to validate end-to-end behavior against a local GitLab instance running in Docker.
+      The content is intentionally long so the resource exercises non-trivial payload sizes while
+      still fitting comfortably within Kubernetes object limits.
+
+      ## Purpose
+
+      The goal of this file is to prove a few things at once.
+      First, the provider can authenticate against a non-public GitLab API endpoint.
+      Second, the provider can create a project-scoped file on a specific branch.
+      Third, the provider can keep a larger multi-paragraph document in sync using the normal
+      reconciliation loop without relying on tiny placeholder content.
+      Fourth, the resource can be inspected by humans in both Kubernetes and GitLab without any
+      special tooling.
+
+      ## Background
+
+      Crossplane works best when the desired state is explicit, reviewable, and reproducible.
+      A repository file is a deceptively small resource, but it is also a useful integration test.
+      If file creation works, then authentication, provider configuration, project lookup, branch
+      targeting, content transport, commit creation, and status observation all work together.
+      That makes this resource a good way to validate the provider locally before introducing more
+      complex use cases.
+
+      ## Reconciliation Notes
+
+      This example uses a one hour reconcile interval.
+      That means the controller should not hammer the GitLab API every few minutes for a document
+      that changes rarely.
+      In real-world usage, some files might reconcile hourly while other files reconcile only every
+      eight hours or once per day.
+      The important part is that the interval is configured per resource instead of globally.
+
+      ## Content Strategy
+
+      The text here is plain Markdown stored inline in the managed resource.
+      For sensitive or generated content, the provider also supports sourcing file content from a
+      Kubernetes Secret.
+      That makes it possible to manage rendered manifests, bootstrap configuration, policy files,
+      or application templates without embedding sensitive data directly in Git.
+
+      ## Validation Checklist
+
+      When this example succeeds, the following should be true.
+      The project exists in the local GitLab instance.
+      The default branch is available.
+      The file path `docs/README-LONG.md` exists.
+      A commit was created with the configured commit message.
+      The Crossplane managed resource reports as Ready and Synced.
+      The provider pod remains healthy after observe and late-initialize steps.
+
+      ## Long Form Text
+
+      Reliable infrastructure automation depends on clarity.
+      Clear state models reduce operator confusion.
+      Clear APIs reduce accidental misuse.
+      Clear validation rules catch mistakes early.
+      Clear status fields shorten debugging loops.
+      Clear examples help other engineers reproduce success quickly.
+
+      A good provider should behave predictably when the external system is reachable, when it is
+      slow, and when it disagrees with the desired state.
+      It should also avoid unnecessary API traffic, because noisy reconciliation scales poorly and
+      tends to mask real operational issues.
+      A per-resource interval gives operators a pragmatic control surface without forcing every
+      managed object into the same cadence.
+
+      In this example, the file content is mostly narrative text, but the same mechanism can be
+      used for release metadata, generated documentation, static site content, bootstrap manifests,
+      compliance notices, onboarding guides, or application-level configuration checked into a
+      repository for auditability.
+
+      ## Final Notes
+
+      If you are reading this inside GitLab, the local end-to-end test worked.
+      If you are reading this inside Kubernetes, the manifest applied successfully.
+      If you are reading this in the repository examples directory, the setup is reproducible.
+      That is enough for a solid local validation loop.
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig

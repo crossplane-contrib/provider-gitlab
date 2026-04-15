@@ -1,0 +1,263 @@
+/*
+Copyright 2026 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package projects
+
+import (
+	"crypto/sha256"
+	"encoding/base64"
+	"fmt"
+	"strings"
+	"time"
+
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+
+	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+const (
+	defaultRepositoryFileEncoding = "text"
+)
+
+// RepositoryFileClient defines GitLab repository file operations.
+type RepositoryFileClient interface {
+	GetFile(pid any, fileName string, opt *gitlab.GetFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.File, *gitlab.Response, error)
+	CreateFile(pid any, fileName string, opt *gitlab.CreateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error)
+	UpdateFile(pid any, fileName string, opt *gitlab.UpdateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error)
+	DeleteFile(pid any, fileName string, opt *gitlab.DeleteFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// NewRepositoryFileClient returns a new GitLab repository files service.
+func NewRepositoryFileClient(cfg common.Config) RepositoryFileClient {
+	git := common.NewClient(cfg)
+	return git.RepositoryFiles
+}
+
+// GenerateRepositoryFileObservation builds observation from a gitlab file.
+func GenerateRepositoryFileObservation(file *gitlab.File) projectsv1alpha1.RepositoryFileObservation {
+	if file == nil {
+		return projectsv1alpha1.RepositoryFileObservation{}
+	}
+
+	return projectsv1alpha1.RepositoryFileObservation{
+		FilePath:     file.FilePath,
+		BlobID:       file.BlobID,
+		CommitID:     file.CommitID,
+		LastCommitID: file.LastCommitID,
+		SHA256:       file.SHA256,
+		Size:         file.Size,
+	}
+}
+
+// LateInitializeRepositoryFile fills empty optional fields from the external file.
+func LateInitializeRepositoryFile(in *projectsv1alpha1.RepositoryFileParameters, file *gitlab.File) {
+	if in == nil || file == nil {
+		return
+	}
+
+	if in.Encoding == nil && file.Encoding != "" {
+		in.Encoding = &file.Encoding
+	}
+
+	if in.ExecuteFilemode == nil {
+		in.ExecuteFilemode = &file.ExecuteFilemode
+	}
+
+	if in.Branch == "" && file.Ref != "" {
+		in.Branch = file.Ref
+	}
+}
+
+// GenerateGetFileOptions generates get options.
+func GenerateGetFileOptions(p *projectsv1alpha1.RepositoryFileParameters) *gitlab.GetFileOptions {
+	if p == nil {
+		return nil
+	}
+	return &gitlab.GetFileOptions{Ref: clients.StringToPtr(p.Branch)}
+}
+
+// GenerateCreateFileOptions generates create options.
+func GenerateCreateFileOptions(p *projectsv1alpha1.RepositoryFileParameters, content string) *gitlab.CreateFileOptions {
+	if p == nil {
+		return nil
+	}
+	return &gitlab.CreateFileOptions{
+		Branch:          clients.StringToPtr(p.Branch),
+		StartBranch:     p.StartBranch,
+		Encoding:        RepositoryFileEncodingOrDefault(p.Encoding),
+		AuthorEmail:     p.AuthorEmail,
+		AuthorName:      p.AuthorName,
+		Content:         &content,
+		CommitMessage:   RepositoryFileCommitMessageForCreate(p),
+		ExecuteFilemode: p.ExecuteFilemode,
+	}
+}
+
+// GenerateUpdateFileOptions generates update options.
+func GenerateUpdateFileOptions(p *projectsv1alpha1.RepositoryFileParameters, content string, lastCommitID *string) *gitlab.UpdateFileOptions {
+	if p == nil {
+		return nil
+	}
+	return &gitlab.UpdateFileOptions{
+		Branch:          clients.StringToPtr(p.Branch),
+		StartBranch:     p.StartBranch,
+		Encoding:        RepositoryFileEncodingOrDefault(p.Encoding),
+		AuthorEmail:     p.AuthorEmail,
+		AuthorName:      p.AuthorName,
+		Content:         &content,
+		CommitMessage:   RepositoryFileCommitMessageForUpdate(p),
+		LastCommitID:    lastCommitID,
+		ExecuteFilemode: p.ExecuteFilemode,
+	}
+}
+
+// GenerateDeleteFileOptions generates delete options.
+func GenerateDeleteFileOptions(p *projectsv1alpha1.RepositoryFileParameters, lastCommitID *string) *gitlab.DeleteFileOptions {
+	if p == nil {
+		return nil
+	}
+	return &gitlab.DeleteFileOptions{
+		Branch:        clients.StringToPtr(p.Branch),
+		StartBranch:   p.StartBranch,
+		AuthorEmail:   p.AuthorEmail,
+		AuthorName:    p.AuthorName,
+		CommitMessage: RepositoryFileCommitMessageForDelete(p),
+		LastCommitID:  lastCommitID,
+	}
+}
+
+// IsRepositoryFileUpToDate checks whether the desired file content and settings match the external file.
+func IsRepositoryFileUpToDate(p *projectsv1alpha1.RepositoryFileParameters, external *gitlab.File, content string) bool {
+	if p == nil {
+		return true
+	}
+	if external == nil {
+		return false
+	}
+
+	if p.FilePath != external.FilePath {
+		return false
+	}
+
+	if p.Branch != external.Ref {
+		return false
+	}
+
+	if !clients.IsComparableEqualToComparablePtr(p.ExecuteFilemode, external.ExecuteFilemode) {
+		return false
+	}
+
+	return RepositoryFileContentSHA256(p, content) == external.SHA256
+}
+
+// RepositoryFileReconcileInterval returns configured reconcile interval or default.
+func RepositoryFileReconcileInterval(p *projectsv1alpha1.RepositoryFileParameters, defaultPollInterval time.Duration) (time.Duration, error) {
+	if p == nil || p.ReconcileInterval == nil || strings.TrimSpace(*p.ReconcileInterval) == "" {
+		return defaultPollInterval, nil
+	}
+	return time.ParseDuration(*p.ReconcileInterval)
+}
+
+// RepositoryFileEncodingOrDefault returns configured encoding or text.
+func RepositoryFileEncodingOrDefault(encoding *string) *string {
+	if encoding == nil || *encoding == "" {
+		return clients.StringToPtr(defaultRepositoryFileEncoding)
+	}
+	return encoding
+}
+
+// RepositoryFileCommitMessageForCreate returns commit message for create.
+func RepositoryFileCommitMessageForCreate(p *projectsv1alpha1.RepositoryFileParameters) *string {
+	if p != nil && p.CreateCommitMessage != nil && *p.CreateCommitMessage != "" {
+		return p.CreateCommitMessage
+	}
+	if p == nil {
+		return nil
+	}
+	return clients.StringToPtr(fmt.Sprintf("crossplane: create %s", p.FilePath))
+}
+
+// RepositoryFileCommitMessageForUpdate returns commit message for update.
+func RepositoryFileCommitMessageForUpdate(p *projectsv1alpha1.RepositoryFileParameters) *string {
+	if p != nil && p.UpdateCommitMessage != nil && *p.UpdateCommitMessage != "" {
+		return p.UpdateCommitMessage
+	}
+	if p == nil {
+		return nil
+	}
+	return clients.StringToPtr(fmt.Sprintf("crossplane: update %s", p.FilePath))
+}
+
+// RepositoryFileCommitMessageForDelete returns commit message for delete.
+func RepositoryFileCommitMessageForDelete(p *projectsv1alpha1.RepositoryFileParameters) *string {
+	if p != nil && p.DeleteCommitMessage != nil && *p.DeleteCommitMessage != "" {
+		return p.DeleteCommitMessage
+	}
+	if p == nil {
+		return nil
+	}
+	return clients.StringToPtr(fmt.Sprintf("crossplane: delete %s", p.FilePath))
+}
+
+// RepositoryFileContentSHA256 calculates the GitLab-compatible SHA256 for desired content.
+func RepositoryFileContentSHA256(p *projectsv1alpha1.RepositoryFileParameters, content string) string {
+	bytes := []byte(content)
+	if p != nil && p.Encoding != nil && *p.Encoding == "base64" {
+		decoded, err := base64.StdEncoding.DecodeString(content)
+		if err == nil {
+			bytes = decoded
+		}
+	}
+	sum := sha256.Sum256(bytes)
+	return fmt.Sprintf("%x", sum)
+}
+
+// RepositoryFileCreateOnly returns true if createOnly is enabled.
+func RepositoryFileCreateOnly(p *projectsv1alpha1.RepositoryFileParameters) bool {
+	return p != nil && p.CreateOnly != nil && *p.CreateOnly
+}
+
+// RepositoryFileCreateOnlyPolicies returns the policy set implied by createOnly.
+func RepositoryFileCreateOnlyPolicies() xpv1.ManagementPolicies {
+	return xpv1.ManagementPolicies{
+		xpv1.ManagementActionObserve,
+		xpv1.ManagementActionCreate,
+		xpv1.ManagementActionDelete,
+	}
+}
+
+// RepositoryFilePoliciesEqual compares policy sets ignoring order.
+func RepositoryFilePoliciesEqual(a, b xpv1.ManagementPolicies) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	counts := map[xpv1.ManagementAction]int{}
+	for _, action := range a {
+		counts[action]++
+	}
+	for _, action := range b {
+		counts[action]--
+	}
+	for _, count := range counts {
+		if count != 0 {
+			return false
+		}
+	}
+	return true
+}
