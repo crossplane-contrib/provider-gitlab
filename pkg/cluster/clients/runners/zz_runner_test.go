@@ -74,6 +74,42 @@ func TestIsErrorRunnerNotFound(t *testing.T) {
 	}
 }
 
+func TestIsRunnerTokenExpired(t *testing.T) {
+	now := time.Now()
+
+	cases := map[string]struct {
+		expiresAt *metav1.Time
+		want      bool
+	}{
+		"NilExpiresAt": {
+			expiresAt: nil,
+			want:      false,
+		},
+		"ExpiresAtInFuture": {
+			expiresAt: &metav1.Time{Time: now.Add(1 * time.Hour)},
+			want:      false,
+		},
+		"ExpiresAtInPast": {
+			expiresAt: &metav1.Time{Time: now.Add(-1 * time.Hour)},
+			want:      true,
+		},
+		"ExpiresAtNowMinusOneSecond": {
+			// Token expires one second in the past is definitely expired
+			expiresAt: &metav1.Time{Time: now.Add(-1 * time.Second)},
+			want:      true,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsRunnerTokenExpired(tc.expiresAt)
+			if got != tc.want {
+				t.Errorf("IsRunnerTokenExpired() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestGenerateCommonRunnerObservation(t *testing.T) {
 	contactedAt := time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC)
 

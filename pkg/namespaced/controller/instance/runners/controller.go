@@ -154,10 +154,21 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	tokenExpiresAt := cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt
 	cr.Status.AtProvider = runners.GenerateInstanceRunnerObservation(runner)
 	cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = tokenExpiresAt
-	cr.SetConditions(xpv1.Available())
+
+	// Delete token if it has expired, so it can be recreated.
+	// This avoids dangling tokens in case auto rotation is enabled.
+	if runners.IsRunnerTokenExpired(tokenExpiresAt) {
+		//nolint:errcheck // ignore errors here as the token may already be deleted
+		e.client.DeleteRegisteredRunnerByID(
+			int64(runnerID),
+			gitlab.WithContext(ctx),
+		)
+	} else {
+		cr.SetConditions(xpv1.Available())
+	}
 
 	return managed.ExternalObservation{
-		ResourceExists:          true,
+		ResourceExists:          !runners.IsRunnerTokenExpired(cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt),
 		ResourceUpToDate:        runners.IsRunnerUpToDate(&cr.Spec.ForProvider.CommonRunnerParameters, runner),
 		ResourceLateInitialized: false,
 	}, nil

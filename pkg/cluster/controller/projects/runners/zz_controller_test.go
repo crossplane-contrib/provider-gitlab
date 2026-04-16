@@ -22,6 +22,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
@@ -31,9 +32,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
+	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	runners "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/runners"
 	runnersfake "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/runners/fake"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/users"
@@ -49,6 +52,7 @@ var (
 	runnerID          = int64(1)
 	extName           = "1"
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: extName}
+	expiredTokenTime  = metav1.NewTime(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))
 )
 
 type args struct {
@@ -84,6 +88,10 @@ func withConnectionSecretRef() RunnerModifier {
 	return func(r *v1alpha1.Runner) {
 		r.Spec.WriteConnectionSecretToReference = common.TestCreateSecretReference("test-secret")
 	}
+}
+
+func withAtProvider(o v1alpha1.RunnerObservation) RunnerModifier {
+	return func(r *v1alpha1.Runner) { r.Status.AtProvider = o }
 }
 
 func runner(m ...RunnerModifier) *v1alpha1.Runner {
@@ -276,6 +284,50 @@ func TestObserve(t *testing.T) {
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
+		"ExpiredToken": {
+			args: args{
+				runnerClient: &runnersfake.MockClient{
+					MockGetRunnerDetails: func(rid any, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error) {
+						return &gitlab.RunnerDetails{
+							ID: 1,
+						}, &gitlab.Response{}, nil
+					},
+					MockDeleteRegisteredRunnerByID: func(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, nil
+					},
+				},
+				cr: runner(
+					withProjectID(),
+					withExternalName(extName),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
+					withAtProvider(v1alpha1.RunnerObservation{
+						CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{
+							ID:             1,
+							TokenExpiresAt: &expiredTokenTime,
+						},
+					}),
+				),
+			},
+			want: want{
+				cr: runner(
+					withProjectID(),
+					withExternalName(extName),
+					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
+					withAtProvider(v1alpha1.RunnerObservation{
+						CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{
+							ID:             1,
+							TokenExpiresAt: &expiredTokenTime,
+						},
+						Projects: []v1alpha1.RunnerProject{},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          false,
 					ResourceUpToDate:        true,
 					ResourceLateInitialized: false,
 				},
