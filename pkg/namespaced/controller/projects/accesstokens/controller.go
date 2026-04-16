@@ -29,10 +29,8 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
-	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -43,14 +41,14 @@ import (
 )
 
 const (
-	errNotAccessToken       = "managed resource is not a Gitlab accesstoken custom resource"
-	errExternalNameNotInt   = "custom resource external name is not an integer"
-	errFailedParseID        = "cannot parse Access Token ID to int"
-	errGetFailed            = "cannot get Gitlab accesstoken"
-	errCreateFailed         = "cannot create Gitlab accesstoken"
-	errDeleteFailed         = "cannot delete Gitlab accesstoken"
-	errAccessTokentNotFound = "cannot find Gitlab accesstoken"
-	errMissingProjectID     = "missing Spec.ForProvider.ProjectID"
+	errNotAccessToken      = "managed resource is not a Gitlab accesstoken custom resource"
+	errExternalNameNotInt  = "custom resource external name is not an integer"
+	errFailedParseID       = "cannot parse Access Token ID to int"
+	errGetFailed           = "cannot get Gitlab accesstoken"
+	errCreateFailed        = "cannot create Gitlab accesstoken"
+	errDeleteFailed        = "cannot delete Gitlab accesstoken"
+	errAccessTokenNotFound = "cannot find Gitlab accesstoken"
+	errMissingProjectID    = "missing Spec.ForProvider.ProjectID"
 )
 
 // SetupAccessToken adds a controller that reconciles ProjectAccessTokens.
@@ -140,24 +138,27 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	at, res, err := e.client.GetProjectAccessToken(*cr.Spec.ForProvider.ProjectID, int64(accessTokenID))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
-			return managed.ExternalObservation{}, nil
+			return managed.ExternalObservation{
+				ResourceExists: false,
+			}, nil
 		}
-		return managed.ExternalObservation{}, errors.Wrap(err, errAccessTokentNotFound)
+		return managed.ExternalObservation{}, errors.Wrap(err, errAccessTokenNotFound)
 	}
 
-	if at.Revoked {
-		return managed.ExternalObservation{}, nil
+	// Recreate only when token is clearly unusable. Some GitLab responses may not
+	// populate Active right after creation, which would cause a false recreate loop.
+	if at.Revoked || (at.ExpiresAt != nil && time.Now().After(time.Time(*at.ExpiresAt))) {
+		return managed.ExternalObservation{
+			ResourceExists: false,
+		}, nil
 	}
-
-	current := cr.Spec.ForProvider.DeepCopy()
-	lateInitializeProjectAccessToken(&cr.Spec.ForProvider, at)
 
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        true,
-		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
+		ResourceUpToDate:        projects.IsAccessTokenUpToDate(&cr.Spec.ForProvider, at),
+		ResourceLateInitialized: false,
 	}, nil
 }
 
@@ -189,8 +190,37 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	// it's not possible to update a ProjectAccessToken
-	return managed.ExternalUpdate{}, nil
+	// rotate the token to update expiration date
+	cr, ok := mg.(*v1alpha1.AccessToken)
+	if !ok {
+		return managed.ExternalUpdate{}, errors.New(errNotAccessToken)
+	}
+
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalUpdate{}, errors.New(errMissingProjectID)
+	}
+
+	accessTokenID, err := strconv.Atoi(meta.GetExternalName(cr))
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errFailedParseID)
+	}
+
+	at, _, err := e.client.RotateProjectAccessToken(
+		*cr.Spec.ForProvider.ProjectID,
+		int64(accessTokenID),
+		projects.GenerateRotateProjectAccessTokenOptions(&cr.Spec.ForProvider),
+		gitlab.WithContext(ctx),
+	)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errCreateFailed)
+	}
+
+	cr.Status.SetConditions(xpv1.Available())
+	return managed.ExternalUpdate{
+		ConnectionDetails: managed.ConnectionDetails{
+			"token": []byte(at.Token),
+		},
+	}, nil
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
@@ -219,20 +249,4 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 func (e *external) Disconnect(ctx context.Context) error {
 	// Disconnect is not implemented as it is a new method required by the SDK
 	return nil
-}
-
-// lateInitializeProjectAccessToken fills the empty fields in the access token spec with the
-// values seen in gitlab access token.
-func lateInitializeProjectAccessToken(in *v1alpha1.AccessTokenParameters, accessToken *gitlab.ProjectAccessToken) {
-	if accessToken == nil {
-		return
-	}
-
-	if in.AccessLevel == nil {
-		in.AccessLevel = (*v1alpha1.AccessLevelValue)(&accessToken.AccessLevel)
-	}
-
-	if in.ExpiresAt == nil && accessToken.ExpiresAt != nil {
-		in.ExpiresAt = &metav1.Time{Time: time.Time(*accessToken.ExpiresAt)}
-	}
 }

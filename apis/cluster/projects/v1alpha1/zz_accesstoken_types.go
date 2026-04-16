@@ -44,9 +44,10 @@ type AccessTokenParameters struct {
 	// Expiration date of the access token. The date cannot be set later than the maximum allowable lifetime of an access token.
 	// If not set, the maximum allowable lifetime of a personal access token is 365 days.
 	// Expected in ISO 8601 format (2019-03-15T08:00:00Z)
-	// +nullable
-	// +immutable
-	ExpiresAt *metav1.Time `json:"expiresAt"`
+	// Since GitLab 16.0, it is no longer possible to create a project access token without an expiration date.
+	// If left empty, the token will be automatically renewed every 7 days.
+	// +optional
+	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
 
 	// Access level for the project. Default is 40.
 	// Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).

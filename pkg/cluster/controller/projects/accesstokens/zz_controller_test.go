@@ -172,7 +172,7 @@ func TestObserve(t *testing.T) {
 					}),
 				),
 				result: managed.ExternalObservation{},
-				err:    errors.Wrap(errBoom, errAccessTokentNotFound),
+				err:    errors.Wrap(errBoom, errAccessTokenNotFound),
 			},
 		},
 		"GetErr404": {
@@ -194,7 +194,7 @@ func TestObserve(t *testing.T) {
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{ProjectID: &projectID}),
 				),
-				result: managed.ExternalObservation{},
+				result: managed.ExternalObservation{ResourceExists: false},
 				err:    nil,
 			},
 		},
@@ -220,14 +220,14 @@ func TestObserve(t *testing.T) {
 					}),
 				),
 				result: managed.ExternalObservation{},
-				err:    errors.Wrap(errBoom, errAccessTokentNotFound),
+				err:    errors.Wrap(errBoom, errAccessTokenNotFound),
 			},
 		},
 		"ResourceLateInitializedFalse": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
 					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
-						return &gitlab.ProjectAccessToken{}, &gitlab.Response{}, nil
+						return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)}}, &gitlab.Response{}, nil
 					},
 				},
 				cr: accessToken(
@@ -262,6 +262,7 @@ func TestObserve(t *testing.T) {
 					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return &gitlab.ProjectAccessToken{
 							PersonalAccessToken: gitlab.PersonalAccessToken{
+								Active:    true,
 								ExpiresAt: accessTokenObj.ExpiresAt,
 							},
 							AccessLevel: accessTokenObj.AccessLevel,
@@ -280,15 +281,13 @@ func TestObserve(t *testing.T) {
 					withExternalName(sAccessTokenID),
 					withConditions(xpv1.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID:   &projectID,
-						ExpiresAt:   &v1.Time{Time: expiresAt},
-						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ProjectID: &projectID,
 					}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
 					ResourceUpToDate:        true,
-					ResourceLateInitialized: true,
+					ResourceLateInitialized: false,
 				},
 			},
 		},
@@ -336,11 +335,45 @@ func TestObserve(t *testing.T) {
 				err: nil,
 			},
 		},
+		"ResourceUpToDateSameDayDifferentTime": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						observedExpiresAt := time.Date(2026, time.June, 15, 0, 0, 0, 0, time.UTC)
+						return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&observedExpiresAt)}}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: time.Date(2026, time.June, 15, 8, 0, 0, 0, time.UTC)},
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(xpv1.Available()),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: time.Date(2026, time.June, 15, 8, 0, 0, 0, time.UTC)},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
 		"TokenUpToDate": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
 					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
-						return &gitlab.ProjectAccessToken{}, &gitlab.Response{}, nil
+						return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)}}, &gitlab.Response{}, nil
 					},
 				},
 				cr: accessToken(
@@ -369,6 +402,110 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
+		"TokenUpToDateNoDesiredExpiry": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)}}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(xpv1.Available()),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
+		"TokenNotRevokedOrExpired": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						return &gitlab.ProjectAccessToken{
+							PersonalAccessToken: gitlab.PersonalAccessToken{Active: false, Revoked: false, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(xpv1.Available()),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+				err: nil,
+			},
+		},
+		"TokenExpired": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						expiredAt := time.Now().AddDate(0, 0, -1)
+						return &gitlab.ProjectAccessToken{
+							PersonalAccessToken: gitlab.PersonalAccessToken{Active: false, Revoked: false, ExpiresAt: (*gitlab.ISOTime)(&expiredAt)},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          false,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
+				},
+				err: nil,
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -384,6 +521,45 @@ func TestObserve(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want.result, o); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestIsAccessTokenUpToDate(t *testing.T) {
+	otherExpiresAt := expiresAt.Add(24 * time.Hour)
+
+	cases := map[string]struct {
+		params *v1alpha1.AccessTokenParameters
+		at     *gitlab.ProjectAccessToken
+		want   bool
+	}{
+		"NilAccessTokenAndNoDesiredExpiry": {
+			params: &v1alpha1.AccessTokenParameters{},
+			at:     nil,
+			want:   true,
+		},
+		"MatchingExpiresAt": {
+			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				ExpiresAt: (*gitlab.ISOTime)(&expiresAt),
+			}},
+			want: true,
+		},
+		"MismatchingExpiresAt": {
+			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				ExpiresAt: (*gitlab.ISOTime)(&otherExpiresAt),
+			}},
+			want: false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := projects.IsAccessTokenUpToDate(tc.params, tc.at)
+			if got != tc.want {
+				t.Errorf("IsAccessTokenUpToDate() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -532,11 +708,23 @@ func TestUpdate(t *testing.T) {
 	}{
 		"SuccessfulUpdate": {
 			args: args{
-				cr: accessToken(),
+				accessTokenClient: &fake.MockClient{
+					MockRotateProjectAccessToken: func(pid interface{}, id int64, opt *gitlab.RotateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						return &accessTokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{ProjectID: &projectID}),
+					withAnnotations(extNameAnnotation),
+				),
 			},
 			want: want{
-				cr:     accessToken(),
-				result: managed.ExternalUpdate{},
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{ProjectID: &projectID}),
+					withAnnotations(extNameAnnotation),
+					withConditions(xpv1.Available()),
+				),
+				result: managed.ExternalUpdate{ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)}},
 			},
 		},
 	}

@@ -20,8 +20,10 @@ package projects
 
 import (
 	"strings"
+	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
@@ -32,6 +34,7 @@ type AccessTokenClient interface {
 	GetProjectAccessToken(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
 	CreateProjectAccessToken(pid interface{}, opt *gitlab.CreateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
 	RevokeProjectAccessToken(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	RotateProjectAccessToken(pid interface{}, id int64, opt *gitlab.RotateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
 }
 
 // IsErrorProjectAccessTokenNotFound helper function to test for errProjectAccessTokenNotFound error.
@@ -57,6 +60,8 @@ func GenerateCreateProjectAccessTokenOptions(name string, p *v1alpha1.AccessToke
 
 	if p.ExpiresAt != nil {
 		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
+	} else {
+		accesstoken.ExpiresAt = generate7daysExpiration()
 	}
 
 	if p.AccessLevel != nil {
@@ -64,4 +69,48 @@ func GenerateCreateProjectAccessTokenOptions(name string, p *v1alpha1.AccessToke
 	}
 
 	return accesstoken
+}
+
+// GenerateRotateProjectAccessTokenOptions generates project access token rotation options
+func GenerateRotateProjectAccessTokenOptions(p *v1alpha1.AccessTokenParameters) *gitlab.RotateProjectAccessTokenOptions {
+	accesstoken := &gitlab.RotateProjectAccessTokenOptions{}
+
+	if p.ExpiresAt != nil {
+		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
+	} else {
+		accesstoken.ExpiresAt = generate7daysExpiration()
+	}
+
+	return accesstoken
+}
+
+// generate7daysExpiration generates an expiration date 7 days in the future, which is the default expiration period for GitLab project access tokens when no expiration date is provided.
+func generate7daysExpiration() *gitlab.ISOTime {
+	return (*gitlab.ISOTime)(ptr.To(time.Now().AddDate(0, 0, 7)))
+}
+
+// IsAccessTokenUpToDate checks if the existing Access Token is up to date with the desired state.
+// It returns false if the token must be rotated, else true.
+func IsAccessTokenUpToDate(p *v1alpha1.AccessTokenParameters, a *gitlab.ProjectAccessToken) bool {
+	// When expiresAt is omitted in the desired state, GitLab/server defaults manage
+	// expiration and we should not trigger rotations on every observe loop.
+	if p == nil || p.ExpiresAt == nil {
+		return true
+	}
+
+	if a == nil || a.ExpiresAt == nil {
+		return false
+	}
+
+	if !sameDay(p.ExpiresAt.Time, time.Time(*a.ExpiresAt)) {
+		return false
+	}
+
+	return true
+}
+
+func sameDay(a, b time.Time) bool {
+	a = a.UTC()
+	b = b.UTC()
+	return a.Year() == b.Year() && a.Month() == b.Month() && a.Day() == b.Day()
 }

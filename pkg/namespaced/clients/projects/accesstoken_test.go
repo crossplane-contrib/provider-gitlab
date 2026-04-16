@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package groups
+package projects
 
 import (
 	"testing"
@@ -24,23 +24,25 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
 )
 
-func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
+func TestGenerateCreateProjectAccessTokenOptions(t *testing.T) {
 	name := "Name"
 	var expiresAt time.Time
 	defaultExpiresAt := time.Now().AddDate(0, 0, 7)
 	scopes := []string{"scope1", "scope2"}
 	accessLevel := v1alpha1.AccessLevelValue(40)
 	gitlabAccessLevel := gitlab.AccessLevelValue(40)
+
 	type args struct {
 		name       string
 		parameters *v1alpha1.AccessTokenParameters
 	}
+
 	cases := map[string]struct {
 		args args
-		want *gitlab.CreateGroupAccessTokenOptions
+		want *gitlab.CreateProjectAccessTokenOptions
 	}{
 		"AllFields": {
 			args: args{
@@ -52,14 +54,14 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 					Scopes:      scopes,
 				},
 			},
-			want: &gitlab.CreateGroupAccessTokenOptions{
+			want: &gitlab.CreateProjectAccessTokenOptions{
 				Name:        &name,
 				AccessLevel: &gitlabAccessLevel,
 				ExpiresAt:   (*gitlab.ISOTime)(&expiresAt),
 				Scopes:      &scopes,
 			},
 		},
-		"noExpiresAt": {
+		"NoExpiresAt": {
 			args: args{
 				name: name,
 				parameters: &v1alpha1.AccessTokenParameters{
@@ -69,7 +71,7 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 					Scopes:      scopes,
 				},
 			},
-			want: &gitlab.CreateGroupAccessTokenOptions{
+			want: &gitlab.CreateProjectAccessTokenOptions{
 				Name:        &name,
 				AccessLevel: &gitlabAccessLevel,
 				ExpiresAt:   (*gitlab.ISOTime)(&defaultExpiresAt),
@@ -77,11 +79,11 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 			},
 		},
 	}
+
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateCreateGroupAccessTokenOptions(tc.args.name, tc.args.parameters)
+			got := GenerateCreateProjectAccessTokenOptions(tc.args.name, tc.args.parameters)
 
-			// Compare fields individually since gitlab.ISOTime has unexported fields
 			if tc.want.Name != nil && got.Name != nil && *tc.want.Name != *got.Name {
 				t.Errorf("Name: want %v, got %v", *tc.want.Name, *got.Name)
 			}
@@ -109,27 +111,27 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 	}
 }
 
-func TestGenerateRotateGroupAccessTokenOptions(t *testing.T) {
+func TestGenerateRotateProjectAccessTokenOptions(t *testing.T) {
 	expiresAt := time.Now().UTC().Truncate(time.Second)
 	defaultExpiresAt := time.Now().AddDate(0, 0, 7)
 
 	cases := map[string]struct {
 		params *v1alpha1.AccessTokenParameters
-		want   *gitlab.RotateGroupAccessTokenOptions
+		want   *gitlab.RotateProjectAccessTokenOptions
 	}{
 		"WithExpiresAt": {
 			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
-			want:   &gitlab.RotateGroupAccessTokenOptions{ExpiresAt: (*gitlab.ISOTime)(&expiresAt)},
+			want:   &gitlab.RotateProjectAccessTokenOptions{ExpiresAt: (*gitlab.ISOTime)(&expiresAt)},
 		},
 		"WithoutExpiresAt": {
 			params: &v1alpha1.AccessTokenParameters{},
-			want:   &gitlab.RotateGroupAccessTokenOptions{ExpiresAt: (*gitlab.ISOTime)(&defaultExpiresAt)},
+			want:   &gitlab.RotateProjectAccessTokenOptions{ExpiresAt: (*gitlab.ISOTime)(&defaultExpiresAt)},
 		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := GenerateRotateGroupAccessTokenOptions(tc.params)
+			got := GenerateRotateProjectAccessTokenOptions(tc.params)
 
 			if tc.want.ExpiresAt != nil && got.ExpiresAt != nil {
 				wantTime := time.Time(*tc.want.ExpiresAt)
@@ -152,7 +154,7 @@ func TestIsAccessTokenUpToDate(t *testing.T) {
 
 	cases := map[string]struct {
 		params *v1alpha1.AccessTokenParameters
-		at     *gitlab.GroupAccessToken
+		at     *gitlab.ProjectAccessToken
 		want   bool
 	}{
 		"NilTokenNilParams": {
@@ -172,38 +174,38 @@ func TestIsAccessTokenUpToDate(t *testing.T) {
 		},
 		"MatchingExpiresAt": {
 			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
-			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
 				ExpiresAt: (*gitlab.ISOTime)(&expiresAt),
 			}},
 			want: true,
 		},
 		"MismatchingExpiresAt": {
 			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
-			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
 				ExpiresAt: (*gitlab.ISOTime)(&otherExpiresAt),
 			}},
 			want: false,
 		},
 		"ObservedNoExpiryDesiredHasExpiry": {
 			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
-			at:     &gitlab.GroupAccessToken{},
+			at:     &gitlab.ProjectAccessToken{},
 			want:   false,
 		},
 		"ObservedNoExpiryDesiredNoExpiry": {
 			params: &v1alpha1.AccessTokenParameters{},
-			at:     &gitlab.GroupAccessToken{},
+			at:     &gitlab.ProjectAccessToken{},
 			want:   true,
 		},
 		"ObservedHasExpiryDesiredNoExpiry": {
 			params: &v1alpha1.AccessTokenParameters{},
-			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
 				ExpiresAt: (*gitlab.ISOTime)(&expiresAt),
 			}},
 			want: true,
 		},
 		"SameDayDifferentTime": {
 			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: time.Date(2026, time.June, 15, 8, 0, 0, 0, time.UTC)}},
-			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
 				ExpiresAt: ptrToISOTime(time.Date(2026, time.June, 15, 0, 0, 0, 0, time.UTC)),
 			}},
 			want: true,
