@@ -314,6 +314,9 @@ func TestObserve(t *testing.T) {
 							ID: 1,
 						}, &gitlab.Response{}, nil
 					},
+					MockDeleteRegisteredRunnerByID: func(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{}, nil
+					},
 				},
 				cr: runner(
 					withExternalName(extName),
@@ -328,7 +331,6 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: runner(
-					withConditions(xpv1.Available()),
 					withExternalName(extName),
 					withSpec(v1alpha1.RunnerParameters{}),
 					withAtProvider(v1alpha1.RunnerObservation{
