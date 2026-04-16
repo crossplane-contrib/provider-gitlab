@@ -65,7 +65,9 @@ spec:
                       Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
                     type: integer
                   description:
-                    description: Description of the project access token
+                    description: |-
+                      Description of the project access token
+                      WARNING: this field is only reconciled on expiration / revokation of the token
                     type: string
                   expiresAt:
                     description: |-

@@ -66,6 +66,7 @@ type AccessTokenParameters struct {
 	Name string `json:"name"`
 
 	// Description of the project access token
+	// WARNING: this field is only reconciled on expiration / revokation of the token
 	// +optional
 	Description *string `json:"description,omitempty"`
 }
