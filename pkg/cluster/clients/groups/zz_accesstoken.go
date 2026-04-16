@@ -20,10 +20,13 @@ package groups
 
 import (
 	"strings"
+	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
@@ -32,6 +35,7 @@ type AccessTokenClient interface {
 	GetGroupAccessToken(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
 	CreateGroupAccessToken(pid interface{}, opt *gitlab.CreateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
 	RevokeGroupAccessToken(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	RotateGroupAccessToken(gid any, id int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
 }
 
 // IsErrorGroupAccessTokenNotFound helper function to test for errGroupAccessTokenNotFound error.
@@ -57,11 +61,81 @@ func GenerateCreateGroupAccessTokenOptions(name string, p *v1alpha1.AccessTokenP
 
 	if p.ExpiresAt != nil {
 		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
+	} else {
+		accesstoken.ExpiresAt = generate7daysExpiration()
 	}
 
 	if p.AccessLevel != nil {
 		accesstoken.AccessLevel = (*gitlab.AccessLevelValue)(p.AccessLevel)
 	}
 
+	if p.Description != nil {
+		accesstoken.Description = ptr.To(*p.Description)
+	}
+
 	return accesstoken
+}
+
+// GenerateGroupAccessTokenObservation generates group access token observation from gitlab.GroupAccessToken
+func GenerateGroupAccessTokenObservation(at *gitlab.GroupAccessToken) v1alpha1.AccessTokenObservation {
+	if at == nil {
+		return v1alpha1.AccessTokenObservation{}
+	}
+
+	return v1alpha1.AccessTokenObservation{
+		ID:          at.ID,
+		Name:        at.Name,
+		Description: at.Description,
+		UserID:      at.UserID,
+		Scopes:      at.Scopes,
+		ExpiresAt:   clients.TimeToMetaTime((*time.Time)(at.ExpiresAt)),
+		Active:      at.Active,
+		CreatedAt:   clients.TimeToMetaTime(at.CreatedAt),
+		Revoked:     at.Revoked,
+		AccessLevel: int64(at.AccessLevel),
+	}
+}
+
+// GenerateRotateGroupAccessTokenOptions generates group access token rotation options
+func GenerateRotateGroupAccessTokenOptions(p *v1alpha1.AccessTokenParameters) *gitlab.RotateGroupAccessTokenOptions {
+	accesstoken := &gitlab.RotateGroupAccessTokenOptions{}
+
+	if p.ExpiresAt != nil {
+		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
+	} else {
+		accesstoken.ExpiresAt = generate7daysExpiration()
+	}
+
+	return accesstoken
+}
+
+// generate7daysExpiration generates an expiration date 7 days in the future, which is the default expiration period for GitLab group access tokens when no expiration date is provided.
+func generate7daysExpiration() *gitlab.ISOTime {
+	return (*gitlab.ISOTime)(ptr.To(time.Now().AddDate(0, 0, 7)))
+}
+
+// IsAccessTokenUpToDate checks if the existing Access Token is up to date with the desired state.
+// It returns false if the token must be rotated, else true.
+func IsAccessTokenUpToDate(p *v1alpha1.AccessTokenParameters, a *gitlab.GroupAccessToken) bool {
+	// When expiresAt is omitted in the desired state, GitLab/server defaults manage
+	// expiration and we should not trigger rotations on every observe loop.
+	if p == nil || p.ExpiresAt == nil {
+		return true
+	}
+
+	if a == nil || a.ExpiresAt == nil {
+		return false
+	}
+
+	if !sameDay(p.ExpiresAt.Time, time.Time(*a.ExpiresAt)) {
+		return false
+	}
+
+	return true
+}
+
+func sameDay(a, b time.Time) bool {
+	a = a.UTC()
+	b = b.UTC()
+	return a.Year() == b.Year() && a.Month() == b.Month() && a.Day() == b.Day()
 }

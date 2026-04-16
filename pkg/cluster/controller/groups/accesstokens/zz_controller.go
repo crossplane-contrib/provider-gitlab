@@ -21,7 +21,6 @@ package accesstokens
 import (
 	"context"
 	"strconv"
-	"time"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -31,10 +30,8 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
-	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -45,14 +42,14 @@ import (
 )
 
 const (
-	errNotAccessToken       = "managed resource is not a Gitlab accesstoken custom resource"
-	errExternalNameNotInt   = "custom resource external name is not an integer"
-	errFailedParseID        = "cannot parse Access Token ID to int"
-	errGetFailed            = "cannot get Gitlab accesstoken"
-	errCreateFailed         = "cannot create Gitlab accesstoken"
-	errDeleteFailed         = "cannot delete Gitlab accesstoken"
-	errAccessTokentNotFound = "cannot find Gitlab accesstoken"
-	errMissingGroupID       = "missing Spec.ForProvider.GroupID"
+	errNotAccessToken      = "managed resource is not a Gitlab accesstoken custom resource"
+	errExternalNameNotInt  = "custom resource external name is not an integer"
+	errFailedParseID       = "cannot parse Access Token ID to int"
+	errGetFailed           = "cannot get Gitlab accesstoken"
+	errCreateFailed        = "cannot create Gitlab accesstoken"
+	errDeleteFailed        = "cannot delete Gitlab accesstoken"
+	errAccessTokenNotFound = "cannot find Gitlab accesstoken"
+	errMissingGroupID      = "missing Spec.ForProvider.GroupID"
 )
 
 // SetupAccessToken adds a controller that reconciles GroupAccessTokens.
@@ -142,24 +139,28 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	at, res, err := e.client.GetGroupAccessToken(*cr.Spec.ForProvider.GroupID, int64(accessTokenID))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
-			return managed.ExternalObservation{}, nil
+			return managed.ExternalObservation{
+				ResourceExists: false,
+			}, nil
 		}
-		return managed.ExternalObservation{}, errors.Wrap(err, errAccessTokentNotFound)
+		return managed.ExternalObservation{}, errors.Wrap(err, errAccessTokenNotFound)
 	}
 
-	if at.Revoked {
-		return managed.ExternalObservation{}, nil
-	}
+	cr.Status.AtProvider = groups.GenerateGroupAccessTokenObservation(at)
 
-	current := cr.Spec.ForProvider.DeepCopy()
-	lateInitializeGroupAccessToken(&cr.Spec.ForProvider, at)
+	// Recreate only when token is clearly unusable.
+	if !at.Active {
+		return managed.ExternalObservation{
+			ResourceExists: false,
+		}, nil
+	}
 
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        true,
-		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
+		ResourceUpToDate:        groups.IsAccessTokenUpToDate(&cr.Spec.ForProvider, at),
+		ResourceLateInitialized: false,
 	}, nil
 }
 
@@ -191,8 +192,40 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	// it's not possible to update a GroupAccessToken
-	return managed.ExternalUpdate{}, nil
+	// rotate the token to update expiration date
+	cr, ok := mg.(*v1alpha1.AccessToken)
+	if !ok {
+		return managed.ExternalUpdate{}, errors.New(errNotAccessToken)
+	}
+
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalUpdate{}, errors.New(errMissingGroupID)
+	}
+
+	accessTokenID, err := strconv.Atoi(meta.GetExternalName(cr))
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errFailedParseID)
+	}
+
+	at, _, err := e.client.RotateGroupAccessToken(
+		*cr.Spec.ForProvider.GroupID,
+		int64(accessTokenID),
+		groups.GenerateRotateGroupAccessTokenOptions(&cr.Spec.ForProvider),
+		gitlab.WithContext(ctx),
+	)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errCreateFailed)
+	}
+
+	// Set external name again in case the ID changes after rotation, although it shouldn't
+	meta.SetExternalName(cr, strconv.FormatInt(at.ID, 10))
+
+	cr.Status.SetConditions(xpv1.Available())
+	return managed.ExternalUpdate{
+		ConnectionDetails: managed.ConnectionDetails{
+			"token": []byte(at.Token),
+		},
+	}, nil
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
@@ -221,20 +254,4 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 func (e *external) Disconnect(ctx context.Context) error {
 	// Disconnect is not implemented as it is a new method required by the SDK
 	return nil
-}
-
-// lateInitializeGroupAccessToken fills the empty fields in the access token spec with the
-// values seen in gitlab access token.
-func lateInitializeGroupAccessToken(in *v1alpha1.AccessTokenParameters, accessToken *gitlab.GroupAccessToken) {
-	if accessToken == nil {
-		return
-	}
-
-	if in.AccessLevel == nil {
-		in.AccessLevel = (*v1alpha1.AccessLevelValue)(&accessToken.AccessLevel)
-	}
-
-	if in.ExpiresAt == nil && accessToken.ExpiresAt != nil {
-		in.ExpiresAt = &metav1.Time{Time: time.Time(*accessToken.ExpiresAt)}
-	}
 }
