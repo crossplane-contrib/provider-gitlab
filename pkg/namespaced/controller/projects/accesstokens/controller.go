@@ -19,7 +19,6 @@ package accesstokens
 import (
 	"context"
 	"strconv"
-	"time"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -145,9 +144,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errAccessTokenNotFound)
 	}
 
-	// Recreate only when token is clearly unusable. Some GitLab responses may not
-	// populate Active right after creation, which would cause a false recreate loop.
-	if at.Revoked || (at.ExpiresAt != nil && time.Now().After(time.Time(*at.ExpiresAt))) {
+	// Recreate only when token is clearly unusable.
+	if !at.Active {
 		return managed.ExternalObservation{
 			ResourceExists: false,
 		}, nil
