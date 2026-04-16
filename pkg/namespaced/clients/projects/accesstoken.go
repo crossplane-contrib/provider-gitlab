@@ -66,7 +66,22 @@ func GenerateCreateProjectAccessTokenOptions(name string, p *v1alpha1.AccessToke
 		accesstoken.AccessLevel = (*gitlab.AccessLevelValue)(p.AccessLevel)
 	}
 
+	if p.Description != nil {
+		accesstoken.Description = ptr.To(*p.Description)
+	}
+
 	return accesstoken
+}
+
+// GenerateProjectAccessTokenObservation generates project access token observation from gitlab.ProjectAccessToken.
+func GenerateProjectAccessTokenObservation(at *gitlab.ProjectAccessToken) v1alpha1.AccessTokenObservation {
+	if at == nil {
+		return v1alpha1.AccessTokenObservation{}
+	}
+
+	return v1alpha1.AccessTokenObservation{
+		TokenID: ptr.To(at.ID),
+	}
 }
 
 // GenerateRotateProjectAccessTokenOptions generates project access token rotation options

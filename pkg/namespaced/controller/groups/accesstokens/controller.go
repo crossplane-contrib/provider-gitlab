@@ -144,6 +144,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errAccessTokenNotFound)
 	}
 
+	cr.Status.AtProvider = groups.GenerateGroupAccessTokenObservation(at)
+
 	// Recreate only when token is clearly unusable.
 	if !at.Active {
 		return managed.ExternalObservation{

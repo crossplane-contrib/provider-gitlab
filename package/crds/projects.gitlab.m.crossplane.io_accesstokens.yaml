@@ -64,6 +64,9 @@ spec:
                       Access level for the project. Default is 40.
                       Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
                     type: integer
+                  description:
+                    description: Description of the project access token
+                    type: string
                   expiresAt:
                     description: |-
                       Expiration date of the access token. The date cannot be set later than the maximum allowable lifetime of an access token.

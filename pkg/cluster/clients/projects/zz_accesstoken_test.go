@@ -36,6 +36,7 @@ func TestGenerateCreateProjectAccessTokenOptions(t *testing.T) {
 	scopes := []string{"scope1", "scope2"}
 	accessLevel := v1alpha1.AccessLevelValue(40)
 	gitlabAccessLevel := gitlab.AccessLevelValue(40)
+	description := "token description"
 
 	type args struct {
 		name       string
@@ -54,6 +55,7 @@ func TestGenerateCreateProjectAccessTokenOptions(t *testing.T) {
 					AccessLevel: &accessLevel,
 					ExpiresAt:   &v1.Time{Time: expiresAt},
 					Scopes:      scopes,
+					Description: &description,
 				},
 			},
 			want: &gitlab.CreateProjectAccessTokenOptions{
@@ -61,6 +63,7 @@ func TestGenerateCreateProjectAccessTokenOptions(t *testing.T) {
 				AccessLevel: &gitlabAccessLevel,
 				ExpiresAt:   (*gitlab.ISOTime)(&expiresAt),
 				Scopes:      &scopes,
+				Description: &description,
 			},
 		},
 		"NoExpiresAt": {
@@ -109,7 +112,20 @@ func TestGenerateCreateProjectAccessTokenOptions(t *testing.T) {
 			if diff := cmp.Diff(tc.want.Scopes, got.Scopes); diff != "" {
 				t.Errorf("Scopes: -want, +got:\n%s", diff)
 			}
+
+			if tc.want.Description != nil && got.Description != nil && *tc.want.Description != *got.Description {
+				t.Errorf("Description: want %v, got %v", *tc.want.Description, *got.Description)
+			}
 		})
+	}
+}
+
+func TestGenerateProjectAccessTokenObservation(t *testing.T) {
+	tokenID := int64(123)
+	got := GenerateProjectAccessTokenObservation(&gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{ID: tokenID}})
+
+	if got.TokenID == nil || *got.TokenID != tokenID {
+		t.Fatalf("unexpected token id: %v", got.TokenID)
 	}
 }
 

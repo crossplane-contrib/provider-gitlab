@@ -64,6 +64,10 @@ type AccessTokenParameters struct {
 	// Name of the project access token
 	// +required
 	Name string `json:"name"`
+
+	// Description of the project access token
+	// +optional
+	Description *string `json:"description,omitempty"`
 }
 
 // AccessTokenObservation represents a access token.

@@ -30,6 +30,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -452,7 +453,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(xpv1.Available()),
+					withConditions(),
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -460,8 +461,8 @@ func TestObserve(t *testing.T) {
 					}),
 				),
 				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        true,
+					ResourceExists:          false,
+					ResourceUpToDate:        false,
 					ResourceLateInitialized: false,
 				},
 				err: nil,
@@ -514,13 +515,36 @@ func TestObserve(t *testing.T) {
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
-			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions(), cmpopts.IgnoreFields(v1alpha1.AccessTokenStatus{}, "AtProvider")); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.result, o); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestObserveSetsAtProvider(t *testing.T) {
+	cr := accessToken(
+		withExternalName(sAccessTokenID),
+		withSpec(v1alpha1.AccessTokenParameters{ProjectID: &projectID}),
+	)
+
+	e := &external{client: &fake.MockClient{
+		MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+			return &accessTokenObj, &gitlab.Response{}, nil
+		},
+	}}
+
+	_, err := e.Observe(context.Background(), cr)
+	if err != nil {
+		t.Fatalf("Observe() error = %v", err)
+	}
+
+	want := projects.GenerateProjectAccessTokenObservation(&accessTokenObj)
+	if diff := cmp.Diff(want, cr.Status.AtProvider); diff != "" {
+		t.Fatalf("AtProvider mismatch (-want +got):\n%s", diff)
 	}
 }
 

@@ -63,6 +63,10 @@ type AccessTokenParameters struct {
 	// Name of the group access token
 	// +required
 	Name string `json:"name"`
+
+	// Description of the group access token
+	// +optional
+	Description *string `json:"description,omitempty"`
 }
 
 // AccessTokenObservation represents a access token.
@@ -70,7 +74,16 @@ type AccessTokenParameters struct {
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/group_access_tokens.html
 type AccessTokenObservation struct {
-	TokenID *int64 `json:"id,omitempty"`
+	ID          int64        `json:"id"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	UserID      int64        `json:"userId"`
+	Scopes      []string     `json:"scopes"`
+	ExpiresAt   *metav1.Time `json:"expiresAt,omitempty"`
+	Active      bool         `json:"active"`
+	CreatedAt   *metav1.Time `json:"createdAt"`
+	Revoked     bool         `json:"revoked"`
+	AccessLevel int64        `json:"accessLevel"`
 }
 
 // A AccessTokenSpec defines the desired state of a Gitlab group.

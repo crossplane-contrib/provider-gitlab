@@ -34,6 +34,7 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 	scopes := []string{"scope1", "scope2"}
 	accessLevel := v1alpha1.AccessLevelValue(40)
 	gitlabAccessLevel := gitlab.AccessLevelValue(40)
+	description := "token description"
 	type args struct {
 		name       string
 		parameters *v1alpha1.AccessTokenParameters
@@ -50,6 +51,7 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 					AccessLevel: &accessLevel,
 					ExpiresAt:   &v1.Time{Time: expiresAt},
 					Scopes:      scopes,
+					Description: &description,
 				},
 			},
 			want: &gitlab.CreateGroupAccessTokenOptions{
@@ -57,6 +59,7 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 				AccessLevel: &gitlabAccessLevel,
 				ExpiresAt:   (*gitlab.ISOTime)(&expiresAt),
 				Scopes:      &scopes,
+				Description: &description,
 			},
 		},
 		"noExpiresAt": {
@@ -105,7 +108,47 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 			if diff := cmp.Diff(tc.want.Scopes, got.Scopes); diff != "" {
 				t.Errorf("Scopes: -want, +got:\n%s", diff)
 			}
+
+			if tc.want.Description != nil && got.Description != nil && *tc.want.Description != *got.Description {
+				t.Errorf("Description: want %v, got %v", *tc.want.Description, *got.Description)
+			}
 		})
+	}
+}
+
+func TestGenerateGroupAccessTokenObservation(t *testing.T) {
+	expiresAt := time.Now().UTC().Truncate(time.Second)
+	createdAt := time.Now().UTC().Add(-time.Hour).Truncate(time.Second)
+
+	got := GenerateGroupAccessTokenObservation(&gitlab.GroupAccessToken{
+		PersonalAccessToken: gitlab.PersonalAccessToken{
+			ID:          123,
+			Name:        "token-name",
+			Description: "token-description",
+			UserID:      99,
+			Scopes:      []string{"read_repository"},
+			ExpiresAt:   (*gitlab.ISOTime)(&expiresAt),
+			Active:      true,
+			CreatedAt:   &createdAt,
+			Revoked:     false,
+		},
+		AccessLevel: 40,
+	})
+
+	if got.ID != 123 || got.Name != "token-name" || got.Description != "token-description" || got.UserID != 99 || !got.Active || got.Revoked {
+		t.Fatalf("unexpected observation scalar fields: %+v", got)
+	}
+	if diff := cmp.Diff([]string{"read_repository"}, got.Scopes); diff != "" {
+		t.Fatalf("unexpected scopes: %s", diff)
+	}
+	if got.ExpiresAt == nil || !got.ExpiresAt.Time.Equal(expiresAt) {
+		t.Fatalf("unexpected expiresAt: %v", got.ExpiresAt)
+	}
+	if got.CreatedAt == nil || !got.CreatedAt.Time.Equal(createdAt) {
+		t.Fatalf("unexpected createdAt: %v", got.CreatedAt)
+	}
+	if got.AccessLevel != 40 {
+		t.Fatalf("unexpected access level: %d", got.AccessLevel)
 	}
 }
 

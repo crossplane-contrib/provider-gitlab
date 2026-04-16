@@ -26,6 +26,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
@@ -68,7 +69,31 @@ func GenerateCreateGroupAccessTokenOptions(name string, p *v1alpha1.AccessTokenP
 		accesstoken.AccessLevel = (*gitlab.AccessLevelValue)(p.AccessLevel)
 	}
 
+	if p.Description != nil {
+		accesstoken.Description = ptr.To(*p.Description)
+	}
+
 	return accesstoken
+}
+
+// GenerateGroupAccessTokenObservation generates group access token observation from gitlab.GroupAccessToken
+func GenerateGroupAccessTokenObservation(at *gitlab.GroupAccessToken) v1alpha1.AccessTokenObservation {
+	if at == nil {
+		return v1alpha1.AccessTokenObservation{}
+	}
+
+	return v1alpha1.AccessTokenObservation{
+		ID:          at.ID,
+		Name:        at.Name,
+		Description: at.Description,
+		UserID:      at.UserID,
+		Scopes:      at.Scopes,
+		ExpiresAt:   clients.TimeToMetaTime((*time.Time)(at.ExpiresAt)),
+		Active:      at.Active,
+		CreatedAt:   clients.TimeToMetaTime(at.CreatedAt),
+		Revoked:     at.Revoked,
+		AccessLevel: int64(at.AccessLevel),
+	}
 }
 
 // GenerateRotateGroupAccessTokenOptions generates group access token rotation options

@@ -64,6 +64,9 @@ spec:
                       Access level for the group. Default is 40.
                       Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
                     type: integer
+                  description:
+                    description: Description of the group access token
+                    type: string
                   expiresAt:
                     description: |-
                       Expiration date of the access token. The date cannot be set later than the maximum allowable lifetime of an access token.
@@ -244,9 +247,43 @@ spec:
                   GitLab API docs:
                   https://docs.gitlab.com/ee/api/group_access_tokens.html
                 properties:
+                  accessLevel:
+                    format: int64
+                    type: integer
+                  active:
+                    type: boolean
+                  createdAt:
+                    format: date-time
+                    type: string
+                  description:
+                    type: string
+                  expiresAt:
+                    format: date-time
+                    type: string
                   id:
                     format: int64
                     type: integer
+                  name:
+                    type: string
+                  revoked:
+                    type: boolean
+                  scopes:
+                    items:
+                      type: string
+                    type: array
+                  userId:
+                    format: int64
+                    type: integer
+                required:
+                - accessLevel
+                - active
+                - createdAt
+                - description
+                - id
+                - name
+                - revoked
+                - scopes
+                - userId
                 type: object
               conditions:
                 description: Conditions of the resource.
