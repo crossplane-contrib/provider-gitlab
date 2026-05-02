@@ -32,6 +32,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -172,7 +173,7 @@ func TestObserve(t *testing.T) {
 					}),
 				),
 				result: managed.ExternalObservation{},
-				err:    errors.Wrap(errBoom, errAccessTokentNotFound),
+				err:    errors.Wrap(errBoom, errAccessTokenNotFound),
 			},
 		},
 		"GetErr404": {
@@ -194,7 +195,7 @@ func TestObserve(t *testing.T) {
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{GroupID: &id}),
 				),
-				result: managed.ExternalObservation{},
+				result: managed.ExternalObservation{ResourceExists: false},
 				err:    nil,
 			},
 		},
@@ -220,14 +221,14 @@ func TestObserve(t *testing.T) {
 					}),
 				),
 				result: managed.ExternalObservation{},
-				err:    errors.Wrap(errBoom, errAccessTokentNotFound),
+				err:    errors.Wrap(errBoom, errAccessTokenNotFound),
 			},
 		},
 		"ResourceLateInitializedFalse": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
 					MockGetGroupAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
-						return &gitlab.GroupAccessToken{}, &gitlab.Response{}, nil
+						return &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)}}, &gitlab.Response{}, nil
 					},
 				},
 				cr: accessToken(
@@ -262,6 +263,7 @@ func TestObserve(t *testing.T) {
 					MockGetGroupAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
 						return &gitlab.GroupAccessToken{
 							PersonalAccessToken: gitlab.PersonalAccessToken{
+								Active:    true,
 								ExpiresAt: accessTokenObj.ExpiresAt,
 							},
 							AccessLevel: accessTokenObj.AccessLevel,
@@ -280,15 +282,13 @@ func TestObserve(t *testing.T) {
 					withExternalName(sAccessTokenID),
 					withConditions(xpv1.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
-						GroupID:     &id,
-						ExpiresAt:   &v1.Time{Time: expiresAt},
-						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						GroupID: &id,
 					}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
 					ResourceUpToDate:        true,
-					ResourceLateInitialized: true,
+					ResourceLateInitialized: false,
 				},
 			},
 		},
@@ -332,11 +332,45 @@ func TestObserve(t *testing.T) {
 				err: nil,
 			},
 		},
+		"ResourceUpToDateSameDayDifferentTime": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetGroupAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						observedExpiresAt := time.Date(2026, time.June, 15, 0, 0, 0, 0, time.UTC)
+						return &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&observedExpiresAt)}}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:     &id,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: time.Date(2026, time.June, 15, 8, 0, 0, 0, time.UTC)},
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(xpv1.Available()),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:     &id,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: time.Date(2026, time.June, 15, 8, 0, 0, 0, time.UTC)},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
 		"TokenUpToDate": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
 					MockGetGroupAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
-						return &gitlab.GroupAccessToken{}, &gitlab.Response{}, nil
+						return &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)}}, &gitlab.Response{}, nil
 					},
 				},
 				cr: accessToken(
@@ -365,6 +399,110 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
+		"TokenUpToDateNoDesiredExpiry": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetGroupAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						return &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)}}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:     &id,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(xpv1.Available()),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:     &id,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
+		"TokenNotRevokedOrExpired": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetGroupAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						return &gitlab.GroupAccessToken{
+							PersonalAccessToken: gitlab.PersonalAccessToken{Active: false, Revoked: false, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:     &id,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:     &id,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          false,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
+				},
+				err: nil,
+			},
+		},
+		"TokenExpired": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetGroupAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						expiredAt := time.Now().AddDate(0, 0, -1)
+						return &gitlab.GroupAccessToken{
+							PersonalAccessToken: gitlab.PersonalAccessToken{Active: false, Revoked: false, ExpiresAt: (*gitlab.ISOTime)(&expiredAt)},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:     &id,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:     &id,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          false,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
+				},
+				err: nil,
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -375,11 +513,85 @@ func TestObserve(t *testing.T) {
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
-			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions(), cmpopts.IgnoreFields(v1alpha1.AccessTokenStatus{}, "AtProvider")); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.result, o); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestObserveSetsAtProvider(t *testing.T) {
+	cr := accessToken(
+		withExternalName(sAccessTokenID),
+		withSpec(v1alpha1.AccessTokenParameters{GroupID: &id}),
+	)
+
+	e := &external{client: &fake.MockClient{
+		MockGetGroupAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+			return &accessTokenObj, &gitlab.Response{}, nil
+		},
+	}}
+
+	_, err := e.Observe(context.Background(), cr)
+	if err != nil {
+		t.Fatalf("Observe() error = %v", err)
+	}
+
+	want := groups.GenerateGroupAccessTokenObservation(&accessTokenObj)
+	if diff := cmp.Diff(want, cr.Status.AtProvider); diff != "" {
+		t.Fatalf("AtProvider mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestShouldRotateGroupAccessToken(t *testing.T) {
+	otherExpiresAt := expiresAt.Add(24 * time.Hour)
+
+	cases := map[string]struct {
+		params *v1alpha1.AccessTokenParameters
+		at     *gitlab.GroupAccessToken
+		want   bool
+	}{
+		"NilToken": {
+			params: &v1alpha1.AccessTokenParameters{},
+			at:     nil,
+			want:   true,
+		},
+		"InactiveToken": {
+			params: &v1alpha1.AccessTokenParameters{},
+			at:     &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: false}},
+			want:   true,
+		},
+		"ActiveNoDesiredExpiry": {
+			params: &v1alpha1.AccessTokenParameters{},
+			at:     &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true}},
+			want:   false,
+		},
+		"ActiveMatchingExpiresAt": {
+			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
+			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				ExpiresAt: (*gitlab.ISOTime)(&expiresAt),
+			}},
+			want: false,
+		},
+		"ActiveMismatchingExpiresAt": {
+			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
+			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				ExpiresAt: (*gitlab.ISOTime)(&otherExpiresAt),
+			}},
+			want: true,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := groups.ShouldRotateAccessToken(tc.params, tc.at)
+			if got != tc.want {
+				t.Errorf("ShouldRotateAccessToken() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -419,6 +631,9 @@ func TestCreate(t *testing.T) {
 		"CreationFailedErr": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
+					MockRotateGroupAccessToken: func(pid interface{}, id int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						return nil, nil, errBoom
+					},
 					MockCreateGroupAccessToken: func(pid interface{}, opt *gitlab.CreateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
 						return nil, nil, errBoom
 					},
@@ -471,6 +686,9 @@ func TestCreate(t *testing.T) {
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
 				accessTokenClient: &fake.MockClient{
+					MockRotateGroupAccessToken: func(pid interface{}, id int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						return nil, nil, errBoom
+					},
 					MockCreateGroupAccessToken: func(pid interface{}, opt *gitlab.CreateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
 						return &accessTokenObj, &gitlab.Response{}, nil
 					},
@@ -488,6 +706,32 @@ func TestCreate(t *testing.T) {
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID: &id,
 						Name:    "Access Token Name",
+					}),
+					withExternalName(sAccessTokenID),
+				),
+				result: managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)},
+				},
+			},
+		},
+		"RotationSuccessful": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockRotateGroupAccessToken: func(pid interface{}, id int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						return &accessTokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID: &id,
+					}),
+					withAnnotations(extNameAnnotation),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID: &id,
 					}),
 					withExternalName(sAccessTokenID),
 				),
@@ -526,13 +770,20 @@ func TestUpdate(t *testing.T) {
 		args
 		want
 	}{
-		"SuccessfulUpdate": {
+		"NoOp": {
 			args: args{
-				cr: accessToken(),
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{GroupID: &id}),
+					withAnnotations(extNameAnnotation),
+				),
 			},
 			want: want{
-				cr:     accessToken(),
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{GroupID: &id}),
+					withAnnotations(extNameAnnotation),
+				),
 				result: managed.ExternalUpdate{},
+				err:    nil,
 			},
 		},
 	}
