@@ -7,7 +7,8 @@ metadata:
 spec:
   forProvider:
     name: example-group-access-token
-    groupId: 13
+    groupIdRef:
+      name: example-group
     accessLevel: 40
     expiresAt: "2026-06-15T08:00:00Z"
     scopes:
@@ -26,8 +27,10 @@ metadata:
 spec:
   forProvider:
     name: example-group-access-token-no-expiry
-    groupId: 13
+    groupIdRef:
+      name: example-group
     accessLevel: 40
+    renewalPeriodDays: 5
     scopes:
       - "read_repository"
   providerConfigRef:

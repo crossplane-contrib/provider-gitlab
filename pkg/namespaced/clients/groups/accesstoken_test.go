@@ -30,7 +30,7 @@ import (
 func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 	name := "Name"
 	var expiresAt time.Time
-	defaultExpiresAt := time.Now().AddDate(0, 0, 7)
+	renewalPeriodDays30 := 30
 	scopes := []string{"scope1", "scope2"}
 	accessLevel := v1alpha1.AccessLevelValue(40)
 	gitlabAccessLevel := gitlab.AccessLevelValue(40)
@@ -40,8 +40,9 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 		parameters *v1alpha1.AccessTokenParameters
 	}
 	cases := map[string]struct {
-		args args
-		want *gitlab.CreateGroupAccessTokenOptions
+		args        args
+		want        *gitlab.CreateGroupAccessTokenOptions
+		wantDaysOut *int
 	}{
 		"AllFields": {
 			args: args{
@@ -62,20 +63,36 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 				Description: &description,
 			},
 		},
-		"noExpiresAt": {
+		"WithRenewalPeriodDays": {
+			args: args{
+				name: name,
+				parameters: &v1alpha1.AccessTokenParameters{
+					Name:              name,
+					AccessLevel:       &accessLevel,
+					RenewalPeriodDays: &renewalPeriodDays30,
+					Scopes:            scopes,
+				},
+			},
+			want: &gitlab.CreateGroupAccessTokenOptions{
+				Name:        &name,
+				AccessLevel: &gitlabAccessLevel,
+				Scopes:      &scopes,
+			},
+			wantDaysOut: &renewalPeriodDays30,
+		},
+		"NeitherExpiresAtNorRenewalPeriodDays": {
 			args: args{
 				name: name,
 				parameters: &v1alpha1.AccessTokenParameters{
 					Name:        name,
 					AccessLevel: &accessLevel,
-					ExpiresAt:   nil,
 					Scopes:      scopes,
 				},
 			},
 			want: &gitlab.CreateGroupAccessTokenOptions{
 				Name:        &name,
 				AccessLevel: &gitlabAccessLevel,
-				ExpiresAt:   (*gitlab.ISOTime)(&defaultExpiresAt),
+				ExpiresAt:   nil,
 				Scopes:      &scopes,
 			},
 		},
@@ -84,7 +101,6 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			got := GenerateCreateGroupAccessTokenOptions(tc.args.name, tc.args.parameters)
 
-			// Compare fields individually since gitlab.ISOTime has unexported fields
 			if tc.want.Name != nil && got.Name != nil && *tc.want.Name != *got.Name {
 				t.Errorf("Name: want %v, got %v", *tc.want.Name, *got.Name)
 			}
@@ -93,7 +109,19 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 				t.Errorf("AccessLevel: want %v, got %v", *tc.want.AccessLevel, *got.AccessLevel)
 			}
 
-			if tc.want.ExpiresAt != nil && got.ExpiresAt != nil {
+			switch {
+			case tc.wantDaysOut != nil:
+				if got.ExpiresAt == nil {
+					t.Errorf("ExpiresAt: want ~%d days from now, got nil", *tc.wantDaysOut)
+				} else {
+					gotTime := time.Time(*got.ExpiresAt)
+					expectedDay := time.Now().UTC().AddDate(0, 0, *tc.wantDaysOut).Truncate(24 * time.Hour)
+					gotDay := gotTime.UTC().Truncate(24 * time.Hour)
+					if !expectedDay.Equal(gotDay) {
+						t.Errorf("ExpiresAt: want ~%v, got %v", expectedDay, gotDay)
+					}
+				}
+			case tc.want.ExpiresAt != nil && got.ExpiresAt != nil:
 				wantTime := time.Time(*tc.want.ExpiresAt)
 				gotTime := time.Time(*got.ExpiresAt)
 				wantDay := wantTime.Truncate(24 * time.Hour)
@@ -101,7 +129,7 @@ func TestGenerateCreateGroupAccessTokenOptions(t *testing.T) {
 				if !wantDay.Equal(gotDay) {
 					t.Errorf("ExpiresAt: want %v, got %v", wantDay, gotDay)
 				}
-			} else if tc.want.ExpiresAt != got.ExpiresAt {
+			case tc.want.ExpiresAt != got.ExpiresAt:
 				t.Errorf("ExpiresAt: want %v, got %v", tc.want.ExpiresAt, got.ExpiresAt)
 			}
 
@@ -154,19 +182,25 @@ func TestGenerateGroupAccessTokenObservation(t *testing.T) {
 
 func TestGenerateRotateGroupAccessTokenOptions(t *testing.T) {
 	expiresAt := time.Now().UTC().Truncate(time.Second)
-	defaultExpiresAt := time.Now().AddDate(0, 0, 7)
+	renewalPeriodDays30 := 30
 
 	cases := map[string]struct {
-		params *v1alpha1.AccessTokenParameters
-		want   *gitlab.RotateGroupAccessTokenOptions
+		params      *v1alpha1.AccessTokenParameters
+		want        *gitlab.RotateGroupAccessTokenOptions
+		wantDaysOut *int
 	}{
 		"WithExpiresAt": {
 			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
 			want:   &gitlab.RotateGroupAccessTokenOptions{ExpiresAt: (*gitlab.ISOTime)(&expiresAt)},
 		},
-		"WithoutExpiresAt": {
+		"WithRenewalPeriodDays": {
+			params:      &v1alpha1.AccessTokenParameters{RenewalPeriodDays: &renewalPeriodDays30},
+			want:        &gitlab.RotateGroupAccessTokenOptions{},
+			wantDaysOut: &renewalPeriodDays30,
+		},
+		"NeitherExpiresAtNorRenewalPeriodDays": {
 			params: &v1alpha1.AccessTokenParameters{},
-			want:   &gitlab.RotateGroupAccessTokenOptions{ExpiresAt: (*gitlab.ISOTime)(&defaultExpiresAt)},
+			want:   &gitlab.RotateGroupAccessTokenOptions{ExpiresAt: nil},
 		},
 	}
 
@@ -174,7 +208,19 @@ func TestGenerateRotateGroupAccessTokenOptions(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			got := GenerateRotateGroupAccessTokenOptions(tc.params)
 
-			if tc.want.ExpiresAt != nil && got.ExpiresAt != nil {
+			switch {
+			case tc.wantDaysOut != nil:
+				if got.ExpiresAt == nil {
+					t.Errorf("ExpiresAt: want ~%d days from now, got nil", *tc.wantDaysOut)
+				} else {
+					gotTime := time.Time(*got.ExpiresAt)
+					expectedDay := time.Now().UTC().AddDate(0, 0, *tc.wantDaysOut).Truncate(24 * time.Hour)
+					gotDay := gotTime.UTC().Truncate(24 * time.Hour)
+					if !expectedDay.Equal(gotDay) {
+						t.Errorf("ExpiresAt: want ~%v, got %v", expectedDay, gotDay)
+					}
+				}
+			case tc.want.ExpiresAt != nil && got.ExpiresAt != nil:
 				wantTime := time.Time(*tc.want.ExpiresAt)
 				gotTime := time.Time(*got.ExpiresAt)
 				wantDay := wantTime.Truncate(24 * time.Hour)
@@ -182,14 +228,14 @@ func TestGenerateRotateGroupAccessTokenOptions(t *testing.T) {
 				if !wantDay.Equal(gotDay) {
 					t.Errorf("ExpiresAt: want %v, got %v", wantDay, gotDay)
 				}
-			} else if tc.want.ExpiresAt != got.ExpiresAt {
+			case tc.want.ExpiresAt != got.ExpiresAt:
 				t.Errorf("ExpiresAt: want %v, got %v", tc.want.ExpiresAt, got.ExpiresAt)
 			}
 		})
 	}
 }
 
-func TestIsAccessTokenUpToDate(t *testing.T) {
+func TestShouldRotateGroupAccessToken(t *testing.T) {
 	expiresAt := time.Now().UTC().Truncate(time.Second)
 	otherExpiresAt := expiresAt.Add(24 * time.Hour)
 
@@ -198,66 +244,65 @@ func TestIsAccessTokenUpToDate(t *testing.T) {
 		at     *gitlab.GroupAccessToken
 		want   bool
 	}{
-		"NilTokenNilParams": {
-			params: nil,
-			at:     nil,
-			want:   true,
-		},
-		"NilTokenNoDesiredExpiry": {
+		"NilToken": {
 			params: &v1alpha1.AccessTokenParameters{},
 			at:     nil,
 			want:   true,
 		},
-		"NilTokenWithDesiredExpiry": {
-			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
-			at:     nil,
+		"InactiveToken": {
+			params: &v1alpha1.AccessTokenParameters{},
+			at:     &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: false}},
+			want:   true,
+		},
+		"ActiveNoDesiredExpiry": {
+			params: &v1alpha1.AccessTokenParameters{},
+			at:     &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true}},
 			want:   false,
 		},
-		"MatchingExpiresAt": {
+		"ActiveMatchingExpiresAt": {
 			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
 			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
-				ExpiresAt: (*gitlab.ISOTime)(&expiresAt),
-			}},
-			want: true,
-		},
-		"MismatchingExpiresAt": {
-			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
-			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
-				ExpiresAt: (*gitlab.ISOTime)(&otherExpiresAt),
+				Active:    true,
+				ExpiresAt: ptrToISOTime(expiresAt),
 			}},
 			want: false,
 		},
-		"ObservedNoExpiryDesiredHasExpiry": {
+		"ActiveMismatchingExpiresAt": {
 			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
-			at:     &gitlab.GroupAccessToken{},
-			want:   false,
+			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				ExpiresAt: ptrToISOTime(otherExpiresAt),
+			}},
+			want: true,
 		},
-		"ObservedNoExpiryDesiredNoExpiry": {
-			params: &v1alpha1.AccessTokenParameters{},
-			at:     &gitlab.GroupAccessToken{},
+		"ActiveNoActualExpiryButDesiredSet": {
+			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
+			at:     &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true}},
 			want:   true,
 		},
-		"ObservedHasExpiryDesiredNoExpiry": {
-			params: &v1alpha1.AccessTokenParameters{},
-			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
-				ExpiresAt: (*gitlab.ISOTime)(&expiresAt),
-			}},
-			want: true,
-		},
-		"SameDayDifferentTime": {
+		"ActiveSameDayDifferentTime": {
 			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: time.Date(2026, time.June, 15, 8, 0, 0, 0, time.UTC)}},
 			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
 				ExpiresAt: ptrToISOTime(time.Date(2026, time.June, 15, 0, 0, 0, 0, time.UTC)),
 			}},
-			want: true,
+			want: false,
+		},
+		"ActiveWithRenewalPeriodDays": {
+			params: &v1alpha1.AccessTokenParameters{RenewalPeriodDays: func() *int { v := 30; return &v }()},
+			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				ExpiresAt: ptrToISOTime(time.Now().UTC().AddDate(0, 0, 20)),
+			}},
+			want: false, // active → no rotation until it expires
 		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := IsAccessTokenUpToDate(tc.params, tc.at)
+			got := ShouldRotateAccessToken(tc.params, tc.at)
 			if got != tc.want {
-				t.Errorf("IsAccessTokenUpToDate() = %v, want %v", got, tc.want)
+				t.Errorf("ShouldRotateAccessToken() = %v, want %v", got, tc.want)
 			}
 		})
 	}

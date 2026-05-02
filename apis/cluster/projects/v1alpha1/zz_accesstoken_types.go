@@ -25,6 +25,7 @@ import (
 
 // AccessTokenParameters define the desired state of a Gitlab access token
 // https://docs.gitlab.com/ee/api/access_tokens.html
+// +kubebuilder:validation:XValidation:rule="(has(self.expiresAt) ? 1 : 0) + (has(self.renewalPeriodDays) ? 1 : 0) == 1",message="exactly one of expiresAt or renewalPeriodDays must be set"
 type AccessTokenParameters struct {
 	// ProjectID is the ID of the project to create the access token in.
 	// +optional
@@ -41,13 +42,20 @@ type AccessTokenParameters struct {
 	// +optional
 	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
 
-	// Expiration date of the access token. The date cannot be set later than the maximum allowable lifetime of an access token.
-	// If not set, the maximum allowable lifetime of a personal access token is 365 days.
-	// Expected in ISO 8601 format (2019-03-15T08:00:00Z)
-	// Since GitLab 16.0, it is no longer possible to create a project access token without an expiration date.
-	// If left empty, the token will be automatically renewed every 7 days.
+	// ExpiresAt is the expiration date of the access token in ISO 8601 format (2019-03-15T08:00:00Z).
+	// The date cannot be set later than the maximum allowable lifetime of an access token.
+	// Since GitLab 16.0, tokens must have an expiration date.
+	// Mutually exclusive with RenewalPeriodDays.
 	// +optional
 	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
+
+	// RenewalPeriodDays is the number of days each token generation should live.
+	// When the token becomes inactive the provider rotates it, setting the new expiry to
+	// RenewalPeriodDays days from the rotation time.
+	// Mutually exclusive with ExpiresAt.
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	RenewalPeriodDays *int `json:"renewalPeriodDays,omitempty"`
 
 	// Access level for the project. Default is 40.
 	// Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).

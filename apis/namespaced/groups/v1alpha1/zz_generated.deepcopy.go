@@ -134,6 +134,11 @@ func (in *AccessTokenParameters) DeepCopyInto(out *AccessTokenParameters) {
 		in, out := &in.ExpiresAt, &out.ExpiresAt
 		*out = (*in).DeepCopy()
 	}
+	if in.RenewalPeriodDays != nil {
+		in, out := &in.RenewalPeriodDays, &out.RenewalPeriodDays
+		*out = new(int)
+		**out = **in
+	}
 	if in.AccessLevel != nil {
 		in, out := &in.AccessLevel, &out.AccessLevel
 		*out = new(AccessLevelValue)

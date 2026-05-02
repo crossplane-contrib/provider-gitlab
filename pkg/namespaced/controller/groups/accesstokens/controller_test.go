@@ -544,7 +544,7 @@ func TestObserveSetsAtProvider(t *testing.T) {
 	}
 }
 
-func TestIsAccessTokenUpToDate(t *testing.T) {
+func TestShouldRotateGroupAccessToken(t *testing.T) {
 	otherExpiresAt := expiresAt.Add(24 * time.Hour)
 
 	cases := map[string]struct {
@@ -552,32 +552,44 @@ func TestIsAccessTokenUpToDate(t *testing.T) {
 		at     *gitlab.GroupAccessToken
 		want   bool
 	}{
-		"NilAccessTokenAndNoDesiredExpiry": {
+		"NilToken": {
 			params: &v1alpha1.AccessTokenParameters{},
 			at:     nil,
 			want:   true,
 		},
-		"MatchingExpiresAt": {
+		"InactiveToken": {
+			params: &v1alpha1.AccessTokenParameters{},
+			at:     &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: false}},
+			want:   true,
+		},
+		"ActiveNoDesiredExpiry": {
+			params: &v1alpha1.AccessTokenParameters{},
+			at:     &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true}},
+			want:   false,
+		},
+		"ActiveMatchingExpiresAt": {
 			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
 			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
 				ExpiresAt: (*gitlab.ISOTime)(&expiresAt),
 			}},
-			want: true,
+			want: false,
 		},
-		"MismatchingExpiresAt": {
+		"ActiveMismatchingExpiresAt": {
 			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
 			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
 				ExpiresAt: (*gitlab.ISOTime)(&otherExpiresAt),
 			}},
-			want: false,
+			want: true,
 		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := groups.IsAccessTokenUpToDate(tc.params, tc.at)
+			got := groups.ShouldRotateAccessToken(tc.params, tc.at)
 			if got != tc.want {
-				t.Errorf("IsAccessTokenUpToDate() = %v, want %v", got, tc.want)
+				t.Errorf("ShouldRotateAccessToken() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -617,6 +629,9 @@ func TestCreate(t *testing.T) {
 		"CreationFailedErr": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
+					MockRotateGroupAccessToken: func(pid interface{}, id int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						return nil, nil, errBoom
+					},
 					MockCreateGroupAccessToken: func(pid interface{}, opt *gitlab.CreateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
 						return nil, nil, errBoom
 					},
@@ -669,6 +684,9 @@ func TestCreate(t *testing.T) {
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
 				accessTokenClient: &fake.MockClient{
+					MockRotateGroupAccessToken: func(pid interface{}, id int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						return nil, nil, errBoom
+					},
 					MockCreateGroupAccessToken: func(pid interface{}, opt *gitlab.CreateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
 						return &accessTokenObj, &gitlab.Response{}, nil
 					},
@@ -686,6 +704,32 @@ func TestCreate(t *testing.T) {
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID: &id,
 						Name:    "Access Token Name",
+					}),
+					withExternalName(sAccessTokenID),
+				),
+				result: managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)},
+				},
+			},
+		},
+		"RotationSuccessful": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockRotateGroupAccessToken: func(pid interface{}, id int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						return &accessTokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID: &id,
+					}),
+					withAnnotations(extNameAnnotation),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID: &id,
 					}),
 					withExternalName(sAccessTokenID),
 				),
@@ -724,13 +768,8 @@ func TestUpdate(t *testing.T) {
 		args
 		want
 	}{
-		"SuccessfulUpdate": {
+		"NoOp": {
 			args: args{
-				accessTokenClient: &fake.MockClient{
-					MockRotateGroupAccessToken: func(pid interface{}, id int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
-						return &accessTokenObj, &gitlab.Response{}, nil
-					},
-				},
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{GroupID: &id}),
 					withAnnotations(extNameAnnotation),
@@ -740,9 +779,9 @@ func TestUpdate(t *testing.T) {
 				cr: accessToken(
 					withSpec(v1alpha1.AccessTokenParameters{GroupID: &id}),
 					withAnnotations(extNameAnnotation),
-					withConditions(xpv1.Available()),
 				),
-				result: managed.ExternalUpdate{ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)}},
+				result: managed.ExternalUpdate{},
+				err:    nil,
 			},
 		},
 	}

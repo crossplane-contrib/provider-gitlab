@@ -59,8 +59,8 @@ func GenerateCreateGroupAccessTokenOptions(name string, p *v1alpha1.AccessTokenP
 
 	if p.ExpiresAt != nil {
 		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
-	} else {
-		accesstoken.ExpiresAt = generate7daysExpiration()
+	} else if p.RenewalPeriodDays != nil {
+		accesstoken.ExpiresAt = generateRenewalExpiration(*p.RenewalPeriodDays)
 	}
 
 	if p.AccessLevel != nil {
@@ -100,36 +100,32 @@ func GenerateRotateGroupAccessTokenOptions(p *v1alpha1.AccessTokenParameters) *g
 
 	if p.ExpiresAt != nil {
 		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
-	} else {
-		accesstoken.ExpiresAt = generate7daysExpiration()
+	} else if p.RenewalPeriodDays != nil {
+		accesstoken.ExpiresAt = generateRenewalExpiration(*p.RenewalPeriodDays)
 	}
 
 	return accesstoken
 }
 
-// generate7daysExpiration generates an expiration date 7 days in the future, which is the default expiration period for GitLab group access tokens when no expiration date is provided.
-func generate7daysExpiration() *gitlab.ISOTime {
-	return (*gitlab.ISOTime)(ptr.To(time.Now().AddDate(0, 0, 7)))
+func generateRenewalExpiration(days int) *gitlab.ISOTime {
+	return (*gitlab.ISOTime)(ptr.To(time.Now().UTC().AddDate(0, 0, days)))
 }
 
-// IsAccessTokenUpToDate checks if the existing Access Token is up to date with the desired state.
-// It returns false if the token must be rotated, else true.
-func IsAccessTokenUpToDate(p *v1alpha1.AccessTokenParameters, a *gitlab.GroupAccessToken) bool {
-	// When expiresAt is omitted in the desired state, GitLab/server defaults manage
-	// expiration and we should not trigger rotations on every observe loop.
-	if p == nil || p.ExpiresAt == nil {
+// ShouldRotateAccessToken returns true when the token must be rotated:
+// the token is inactive, or ExpiresAt is set and the actual expiry does not match.
+func ShouldRotateAccessToken(p *v1alpha1.AccessTokenParameters, a *gitlab.GroupAccessToken) bool {
+	if a == nil || !a.Active {
 		return true
 	}
 
-	if a == nil || a.ExpiresAt == nil {
-		return false
+	if p != nil && p.ExpiresAt != nil {
+		if a.ExpiresAt == nil {
+			return true
+		}
+		return !sameDay(p.ExpiresAt.Time, time.Time(*a.ExpiresAt))
 	}
 
-	if !sameDay(p.ExpiresAt.Time, time.Time(*a.ExpiresAt)) {
-		return false
-	}
-
-	return true
+	return false
 }
 
 func sameDay(a, b time.Time) bool {

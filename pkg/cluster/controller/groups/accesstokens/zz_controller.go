@@ -45,7 +45,6 @@ const (
 	errNotAccessToken      = "managed resource is not a Gitlab accesstoken custom resource"
 	errExternalNameNotInt  = "custom resource external name is not an integer"
 	errFailedParseID       = "cannot parse Access Token ID to int"
-	errGetFailed           = "cannot get Gitlab accesstoken"
 	errCreateFailed        = "cannot create Gitlab accesstoken"
 	errDeleteFailed        = "cannot delete Gitlab accesstoken"
 	errAccessTokenNotFound = "cannot find Gitlab accesstoken"
@@ -148,18 +147,15 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	cr.Status.AtProvider = groups.GenerateGroupAccessTokenObservation(at)
 
-	// Recreate only when token is clearly unusable.
-	if !at.Active {
-		return managed.ExternalObservation{
-			ResourceExists: false,
-		}, nil
+	if groups.ShouldRotateAccessToken(&cr.Spec.ForProvider, at) {
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
 	cr.Status.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        groups.IsAccessTokenUpToDate(&cr.Spec.ForProvider, at),
+		ResourceUpToDate:        true,
 		ResourceLateInitialized: false,
 	}, nil
 }
@@ -174,6 +170,24 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errMissingGroupID)
 	}
 
+	// If a token ID is already set as the external name, try rotating it first.
+	// Rotation atomically revokes the old token and issues a new one.
+	if existingID, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64); err == nil && existingID > 0 {
+		at, _, rotErr := e.client.RotateGroupAccessToken(
+			*cr.Spec.ForProvider.GroupID,
+			existingID,
+			groups.GenerateRotateGroupAccessTokenOptions(&cr.Spec.ForProvider),
+			gitlab.WithContext(ctx),
+		)
+		if rotErr == nil {
+			meta.SetExternalName(cr, strconv.FormatInt(at.ID, 10))
+			return managed.ExternalCreation{
+				ConnectionDetails: managed.ConnectionDetails{"token": []byte(at.Token)},
+			}, nil
+		}
+		// Rotation failed (e.g. token was already revoked externally); fall through to fresh create.
+	}
+
 	at, _, err := e.client.CreateGroupAccessToken(
 		*cr.Spec.ForProvider.GroupID,
 		groups.GenerateCreateGroupAccessTokenOptions(cr.Name, &cr.Spec.ForProvider),
@@ -185,47 +199,13 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	meta.SetExternalName(cr, strconv.FormatInt(at.ID, 10))
 	return managed.ExternalCreation{
-		ConnectionDetails: managed.ConnectionDetails{
-			"token": []byte(at.Token),
-		},
+		ConnectionDetails: managed.ConnectionDetails{"token": []byte(at.Token)},
 	}, nil
 }
 
-func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	// rotate the token to update expiration date
-	cr, ok := mg.(*v1alpha1.AccessToken)
-	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotAccessToken)
-	}
-
-	if cr.Spec.ForProvider.GroupID == nil {
-		return managed.ExternalUpdate{}, errors.New(errMissingGroupID)
-	}
-
-	accessTokenID, err := strconv.Atoi(meta.GetExternalName(cr))
-	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errFailedParseID)
-	}
-
-	at, _, err := e.client.RotateGroupAccessToken(
-		*cr.Spec.ForProvider.GroupID,
-		int64(accessTokenID),
-		groups.GenerateRotateGroupAccessTokenOptions(&cr.Spec.ForProvider),
-		gitlab.WithContext(ctx),
-	)
-	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errCreateFailed)
-	}
-
-	// Set external name again in case the ID changes after rotation, although it shouldn't
-	meta.SetExternalName(cr, strconv.FormatInt(at.ID, 10))
-
-	cr.Status.SetConditions(xpv1.Available())
-	return managed.ExternalUpdate{
-		ConnectionDetails: managed.ConnectionDetails{
-			"token": []byte(at.Token),
-		},
-	}, nil
+// Update is currently a no-op as the only updatable field is expiration, which is handled by rotation in Observe.
+func (e *external) Update(_ context.Context, _ resource.Managed) (managed.ExternalUpdate, error) {
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
