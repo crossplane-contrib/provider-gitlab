@@ -33,6 +33,7 @@ type AccessTokenClient interface {
 	CreateProjectAccessToken(pid interface{}, opt *gitlab.CreateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
 	RevokeProjectAccessToken(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	RotateProjectAccessToken(pid interface{}, id int64, opt *gitlab.RotateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
+	RotateSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 }
 
 // IsErrorProjectAccessTokenNotFound helper function to test for errProjectAccessTokenNotFound error.
@@ -46,7 +47,20 @@ func IsErrorProjectAccessTokenNotFound(err error) bool {
 // NewAccessTokenClient returns a new Gitlab ProjectAccessToken service
 func NewAccessTokenClient(cfg common.Config) AccessTokenClient {
 	git := common.NewClient(cfg)
-	return git.ProjectAccessTokens
+	return &accessTokenClient{
+		ProjectAccessTokensServiceInterface:  git.ProjectAccessTokens,
+		PersonalAccessTokensServiceInterface: git.PersonalAccessTokens,
+	}
+}
+
+// accessTokenClient composes project and personal access token services.
+type accessTokenClient struct {
+	gitlab.ProjectAccessTokensServiceInterface
+	gitlab.PersonalAccessTokensServiceInterface
+}
+
+func (c *accessTokenClient) RotateSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.PersonalAccessTokensServiceInterface.RotatePersonalAccessTokenSelf(opt, options...)
 }
 
 // GenerateCreateProjectAccessTokenOptions generates project creation options
@@ -59,7 +73,7 @@ func GenerateCreateProjectAccessTokenOptions(name string, p *v1alpha1.AccessToke
 	if p.ExpiresAt != nil {
 		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
 	} else if p.RenewalPeriodDays != nil {
-		accesstoken.ExpiresAt = generateRenewalExpiration(*p.RenewalPeriodDays)
+		accesstoken.ExpiresAt = common.GenerateRenewalExpiration(*p.RenewalPeriodDays)
 	}
 
 	if p.AccessLevel != nil {
@@ -80,7 +94,16 @@ func GenerateProjectAccessTokenObservation(at *gitlab.ProjectAccessToken) v1alph
 	}
 
 	return v1alpha1.AccessTokenObservation{
-		TokenID: ptr.To(at.ID),
+		ID:          at.ID,
+		Name:        at.Name,
+		Description: at.Description,
+		UserID:      at.UserID,
+		Scopes:      at.Scopes,
+		ExpiresAt:   common.TimeToMetaTime((*time.Time)(at.ExpiresAt)),
+		Active:      at.Active,
+		CreatedAt:   common.TimeToMetaTime(at.CreatedAt),
+		Revoked:     at.Revoked,
+		AccessLevel: int64(at.AccessLevel),
 	}
 }
 
@@ -91,35 +114,36 @@ func GenerateRotateProjectAccessTokenOptions(p *v1alpha1.AccessTokenParameters) 
 	if p.ExpiresAt != nil {
 		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
 	} else if p.RenewalPeriodDays != nil {
-		accesstoken.ExpiresAt = generateRenewalExpiration(*p.RenewalPeriodDays)
+		accesstoken.ExpiresAt = common.GenerateRenewalExpiration(*p.RenewalPeriodDays)
 	}
 
 	return accesstoken
 }
 
-func generateRenewalExpiration(days int) *gitlab.ISOTime {
-	return (*gitlab.ISOTime)(ptr.To(time.Now().UTC().AddDate(0, 0, days)))
+// GenerateRotateSelfOptions generates self-rotation options from access token parameters.
+func GenerateRotateSelfOptions(p *v1alpha1.AccessTokenParameters) *gitlab.RotatePersonalAccessTokenOptions {
+	opt := &gitlab.RotatePersonalAccessTokenOptions{}
+
+	if p.ExpiresAt != nil {
+		opt.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
+	} else if p.RenewalPeriodDays != nil {
+		opt.ExpiresAt = common.GenerateRenewalExpiration(*p.RenewalPeriodDays)
+	}
+
+	return opt
 }
 
 // ShouldRotateAccessToken returns true when the token must be rotated:
 // the token is inactive, or ExpiresAt is set and the actual expiry does not match.
 func ShouldRotateAccessToken(p *v1alpha1.AccessTokenParameters, a *gitlab.ProjectAccessToken) bool {
-	if a == nil || !a.Active {
+	if a == nil {
 		return true
 	}
 
+	var desiredExpiresAt *time.Time
 	if p != nil && p.ExpiresAt != nil {
-		if a.ExpiresAt == nil {
-			return true
-		}
-		return !sameDay(p.ExpiresAt.Time, time.Time(*a.ExpiresAt))
+		desiredExpiresAt = &p.ExpiresAt.Time
 	}
 
-	return false
-}
-
-func sameDay(a, b time.Time) bool {
-	a = a.UTC()
-	b = b.UTC()
-	return a.Year() == b.Year() && a.Month() == b.Month() && a.Day() == b.Day()
+	return common.ShouldRotateToken(a.Active, a.ExpiresAt, desiredExpiresAt)
 }

@@ -148,11 +148,38 @@ func TestGenerateCreateProjectAccessTokenOptions(t *testing.T) {
 }
 
 func TestGenerateProjectAccessTokenObservation(t *testing.T) {
-	tokenID := int64(123)
-	got := GenerateProjectAccessTokenObservation(&gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{ID: tokenID}})
+	expiresAt := time.Now().UTC().Truncate(time.Second)
+	createdAt := time.Now().UTC().Add(-time.Hour).Truncate(time.Second)
 
-	if got.TokenID == nil || *got.TokenID != tokenID {
-		t.Fatalf("unexpected token id: %v", got.TokenID)
+	got := GenerateProjectAccessTokenObservation(&gitlab.ProjectAccessToken{
+		PersonalAccessToken: gitlab.PersonalAccessToken{
+			ID:          123,
+			Name:        "token-name",
+			Description: "token-description",
+			UserID:      99,
+			Scopes:      []string{"read_repository"},
+			ExpiresAt:   (*gitlab.ISOTime)(&expiresAt),
+			Active:      true,
+			CreatedAt:   &createdAt,
+			Revoked:     false,
+		},
+		AccessLevel: 40,
+	})
+
+	if got.ID != 123 || got.Name != "token-name" || got.Description != "token-description" || got.UserID != 99 || !got.Active || got.Revoked {
+		t.Fatalf("unexpected observation scalar fields: %+v", got)
+	}
+	if diff := cmp.Diff([]string{"read_repository"}, got.Scopes); diff != "" {
+		t.Fatalf("unexpected scopes: %s", diff)
+	}
+	if got.ExpiresAt == nil || !got.ExpiresAt.Time.Equal(expiresAt) {
+		t.Fatalf("unexpected expiresAt: %v", got.ExpiresAt)
+	}
+	if got.CreatedAt == nil || !got.CreatedAt.Time.Equal(createdAt) {
+		t.Fatalf("unexpected createdAt: %v", got.CreatedAt)
+	}
+	if got.AccessLevel != 40 {
+		t.Fatalf("unexpected access level: %d", got.AccessLevel)
 	}
 }
 
