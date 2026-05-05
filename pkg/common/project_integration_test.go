@@ -25,7 +25,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 )
 
 // TestGenerateCommonIntegrationObservation tests the conversion from
@@ -99,8 +98,8 @@ func TestGenerateCommonIntegrationObservation(t *testing.T) {
 				ID:                             ptr.To(testID),
 				Title:                          ptr.To(testTitle),
 				Slug:                           ptr.To(testSlug),
-				CreatedAt:                      clients.TimeToMetaTime(&testCreatedAt),
-				UpdatedAt:                      clients.TimeToMetaTime(&testUpdatedAt),
+				CreatedAt:                      TimeToMetaTime(&testCreatedAt),
+				UpdatedAt:                      TimeToMetaTime(&testUpdatedAt),
 				Active:                         ptr.To(testActive),
 				AlertEvents:                    ptr.To(testAlertEvents),
 				CommitEvents:                   ptr.To(testCommitEvents),

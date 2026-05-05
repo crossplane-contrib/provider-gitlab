@@ -57,6 +57,7 @@ import (
 	"strings"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
@@ -250,7 +251,7 @@ func generateObservationAssignment(fieldName string, gitlabType, v1Type reflect.
 
 	// Check for *time.Time -> *metav1.Time
 	if gitlabType.String() == "*time.Time" && strings.Contains(v1Type.String(), "Time") {
-		return fmt.Sprintf("o.%s = clients.TimeToMetaTime(g.%s)", fieldName, fieldName)
+		return fmt.Sprintf("o.%s = common.TimeToMetaTime(g.%s)", fieldName, fieldName)
 	}
 
 	// Check for same types

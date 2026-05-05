@@ -23,7 +23,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 )
@@ -247,12 +246,4 @@ func IsResponseNotFound(res *gitlab.Response) bool {
 		return true
 	}
 	return false
-}
-
-// TimeToMetaTime returns nil if parameter is nil, otherwise metav1.Time value
-func TimeToMetaTime(t *time.Time) *metav1.Time {
-	if t == nil {
-		return nil
-	}
-	return &metav1.Time{Time: *t}
 }
