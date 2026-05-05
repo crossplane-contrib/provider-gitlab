@@ -173,7 +173,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	// If a token ID is already set as the external name, try rotating it first.
 	// Rotation atomically revokes the old token and issues a new one
 	if existingID, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64); err == nil && existingID > 0 {
-		at, _, rotErr := e.client.RotateProjectAccessToken(
+		at, res, rotErr := e.client.RotateProjectAccessToken(
 			*cr.Spec.ForProvider.ProjectID,
 			existingID,
 			projects.GenerateRotateProjectAccessTokenOptions(&cr.Spec.ForProvider),
@@ -185,6 +185,19 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 			return managed.ExternalCreation{
 				ConnectionDetails: managed.ConnectionDetails{"token": []byte(at.Token)},
 			}, nil
+		}
+		// If 401, try self-rotation (token with self_rotate scope can only rotate itself).
+		if res != nil && res.StatusCode == 401 {
+			pat, _, selfErr := e.client.RotateSelf(
+				projects.GenerateRotateSelfOptions(&cr.Spec.ForProvider),
+				gitlab.WithContext(ctx),
+			)
+			if selfErr == nil {
+				meta.SetExternalName(cr, strconv.FormatInt(int64(pat.ID), 10))
+				return managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{"token": []byte(pat.Token)},
+				}, nil
+			}
 		}
 		// Rotation failed (e.g. token was already revoked externally); fall through to fresh create.
 	}
