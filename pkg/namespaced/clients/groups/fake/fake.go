@@ -48,6 +48,7 @@ type MockClient struct {
 	MockCreateGroupAccessToken func(gid interface{}, opt *gitlab.CreateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
 	MockRevokeGroupAccessToken func(gid interface{}, accessToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockRotateGroupAccessToken func(gid interface{}, accessToken int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
+	MockRotateSelf             func(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 
 	MockListGroupLDAPLinks                func(pid interface{}, options ...gitlab.RequestOptionFunc) ([]*gitlab.LDAPGroupLink, *gitlab.Response, error)
 	MockAddGroupLDAPLink                  func(pid interface{}, opt *gitlab.AddGroupLDAPLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.LDAPGroupLink, *gitlab.Response, error)
@@ -149,6 +150,11 @@ func (c *MockClient) RevokeGroupAccessToken(gid interface{}, deployToken int64, 
 // RotateGroupAccessToken calls the underlying MockRotateGroupAccessToken method.
 func (c *MockClient) RotateGroupAccessToken(gid interface{}, accessToken int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
 	return c.MockRotateGroupAccessToken(gid, accessToken, opt, options...)
+}
+
+// RotateSelf calls the underlying MockRotateSelf method.
+func (c *MockClient) RotateSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.MockRotateSelf(opt, options...)
 }
 
 // ListVariables calls the underlying MockListGroupVariables method.

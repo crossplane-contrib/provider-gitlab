@@ -57,6 +57,7 @@ type MockClient struct {
 	MockCreateProjectAccessToken func(pid any, opt *gitlab.CreateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
 	MockRevokeProjectAccessToken func(pid any, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockRotateProjectAccessToken func(pid any, id int64, opt *gitlab.RotateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
+	MockRotateSelf               func(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 
 	MockAddDeployKey    func(pid any, opt *gitlab.AddDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error)
 	MockDeleteDeployKey func(pid any, deployKey int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
@@ -272,6 +273,11 @@ func (c *MockClient) RevokeProjectAccessToken(pid any, id int64, options ...gitl
 // RotateProjectAccessToken calls the underlying MockRotateProjectAccessToken method.
 func (c *MockClient) RotateProjectAccessToken(pid any, id int64, opt *gitlab.RotateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 	return c.MockRotateProjectAccessToken(pid, id, opt, options...)
+}
+
+// RotateSelf calls the underlying MockRotateSelf method.
+func (c *MockClient) RotateSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.MockRotateSelf(opt, options...)
 }
 
 // ListUsers calls the underlying MockListUsers method.
