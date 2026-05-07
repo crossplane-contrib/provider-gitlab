@@ -245,4 +245,3 @@ func IsResponseNotFound(res *gitlab.Response) bool {
 	}
 	return false
 }
-

@@ -29,13 +29,13 @@ func TestSameDay(t *testing.T) {
 		want bool
 	}{
 		"Same": {
-			a: time.Date(2026, 6, 15, 8, 0, 0, 0, time.UTC),
-			b: time.Date(2026, 6, 15, 0, 0, 0, 0, time.UTC),
+			a:    time.Date(2026, 6, 15, 8, 0, 0, 0, time.UTC),
+			b:    time.Date(2026, 6, 15, 0, 0, 0, 0, time.UTC),
 			want: true,
 		},
 		"Different": {
-			a: time.Date(2026, 6, 15, 0, 0, 0, 0, time.UTC),
-			b: time.Date(2026, 6, 16, 0, 0, 0, 0, time.UTC),
+			a:    time.Date(2026, 6, 15, 0, 0, 0, 0, time.UTC),
+			b:    time.Date(2026, 6, 16, 0, 0, 0, 0, time.UTC),
 			want: false,
 		},
 	}
