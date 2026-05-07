@@ -23,7 +23,6 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 )
 
 // LicenseClient defines Gitlab License service operations
@@ -66,9 +65,9 @@ func GenerateLicenseObservation(observed *gitlab.License) v1alpha1.LicenseObserv
 	return v1alpha1.LicenseObservation{
 		ID:               observed.ID,
 		Plan:             observed.Plan,
-		CreatedAt:        clients.TimeToMetaTime(observed.CreatedAt),
-		StartsAt:         clients.TimeToMetaTime((*time.Time)(observed.StartsAt)),
-		ExpiresAt:        clients.TimeToMetaTime((*time.Time)(observed.ExpiresAt)),
+		CreatedAt:        common.TimeToMetaTime(observed.CreatedAt),
+		StartsAt:         common.TimeToMetaTime((*time.Time)(observed.StartsAt)),
+		ExpiresAt:        common.TimeToMetaTime((*time.Time)(observed.ExpiresAt)),
 		HistoricalMax:    observed.HistoricalMax,
 		MaximumUserCount: observed.MaximumUserCount,
 		Expired:          observed.Expired,

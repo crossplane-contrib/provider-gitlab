@@ -1,37 +1,39 @@
-apiVersion: projects.gitlab.crossplane.io/v1alpha1
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
 kind: AccessToken
 metadata:
   name: example-access-token
+  namespace: default
 spec:
   forProvider:
     name: example-access-token
     projectIdRef:
       name: example-project
     accessLevel: 40
-    expiresAt: "2025-06-15T08:00:00Z"
+    expiresAt: "2026-06-15T08:00:00Z"
     scopes:
       - "read_repository"
   providerConfigRef:
     name: gitlab-provider
+    kind: ProviderConfig
   writeConnectionSecretToRef:
     name: gitlab-example-access-token
-    namespace: crossplane-system
 ---
-apiVersion: projects.gitlab.crossplane.io/v1alpha1
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
 kind: AccessToken
 metadata:
   name: example-access-token-no-expiry
+  namespace: default
 spec:
   forProvider:
     name: example-access-token-no-expiry
     projectIdRef:
       name: example-project
     accessLevel: 40
-    expiresAt: null # This configures the expiration date to the maximum allowable lifetime limit set by GitLab instance
+    renewalPeriodDays: 5 # Configure auto renewal every 5 days
     scopes:
       - "read_repository"
   providerConfigRef:
     name: gitlab-provider
+    kind: ProviderConfig
   writeConnectionSecretToRef:
     name: gitlab-example-access-token-no-expiry
-    namespace: crossplane-system

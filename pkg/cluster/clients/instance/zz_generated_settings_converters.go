@@ -25,6 +25,7 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
@@ -512,14 +513,14 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.ContainerRegistryDeleteTagsServiceTimeout = g.ContainerRegistryDeleteTagsServiceTimeout
 	o.ContainerRegistryExpirationPoliciesCaching = g.ContainerRegistryExpirationPoliciesCaching
 	o.ContainerRegistryExpirationPoliciesWorkerCapacity = g.ContainerRegistryExpirationPoliciesWorkerCapacity
-	o.ContainerRegistryImportCreatedBefore = clients.TimeToMetaTime(g.ContainerRegistryImportCreatedBefore)
+	o.ContainerRegistryImportCreatedBefore = common.TimeToMetaTime(g.ContainerRegistryImportCreatedBefore)
 	o.ContainerRegistryImportMaxRetries = g.ContainerRegistryImportMaxRetries
 	o.ContainerRegistryImportMaxStepDuration = g.ContainerRegistryImportMaxStepDuration
 	o.ContainerRegistryImportMaxTagsCount = g.ContainerRegistryImportMaxTagsCount
 	o.ContainerRegistryImportStartMaxRetries = g.ContainerRegistryImportStartMaxRetries
 	o.ContainerRegistryImportTargetPlan = g.ContainerRegistryImportTargetPlan
 	o.ContainerRegistryTokenExpireDelay = g.ContainerRegistryTokenExpireDelay
-	o.CreatedAt = clients.TimeToMetaTime(g.CreatedAt)
+	o.CreatedAt = common.TimeToMetaTime(g.CreatedAt)
 	o.CustomHTTPCloneURLRoot = g.CustomHTTPCloneURLRoot
 	o.DNSRebindingProtectionEnabled = g.DNSRebindingProtectionEnabled
 	o.DSAKeyRestriction = g.DSAKeyRestriction
@@ -837,7 +838,7 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.UniqueIPsLimitPerUser = g.UniqueIPsLimitPerUser
 	o.UniqueIPsLimitTimeWindow = g.UniqueIPsLimitTimeWindow
 	o.UpdateRunnerVersionsEnabled = g.UpdateRunnerVersionsEnabled
-	o.UpdatedAt = clients.TimeToMetaTime(g.UpdatedAt)
+	o.UpdatedAt = common.TimeToMetaTime(g.UpdatedAt)
 	o.UpdatingNameDisabledForUsers = g.UpdatingNameDisabledForUsers
 	o.UsagePingEnabled = g.UsagePingEnabled
 	o.UsagePingFeaturesEnabled = g.UsagePingFeaturesEnabled

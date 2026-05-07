@@ -149,7 +149,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 			}
 			return nil
 		}(),
-		CreatedAt: clients.TimeToMetaTime(dk.CreatedAt),
+		CreatedAt: common.TimeToMetaTime(dk.CreatedAt),
 	}
 
 	cr.Status.SetConditions(xpv1.Available())

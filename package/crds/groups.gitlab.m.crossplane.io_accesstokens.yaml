@@ -64,13 +64,18 @@ spec:
                       Access level for the group. Default is 40.
                       Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
                     type: integer
+                  description:
+                    description: |-
+                      Description of the group access token
+                      WARNING: this field is only reconciled on expiration / revokation of the token
+                    type: string
                   expiresAt:
                     description: |-
-                      Expiration date of the access token. The date cannot be set later than the maximum allowable lifetime of an access token.
-                      If not set, the maximum allowable lifetime of a group access token is configured to the maximum allowable lifetime limit.
-                      Expected in ISO 8601 format (2019-03-15T08:00:00Z)
+                      ExpiresAt is the expiration date of the access token in ISO 8601 format (2019-03-15T08:00:00Z).
+                      The date cannot be set later than the maximum allowable lifetime of an access token.
+                      Since GitLab 16.0, tokens must have an expiration date.
+                      Mutually exclusive with RenewalPeriodDays.
                     format: date-time
-                    nullable: true
                     type: string
                   groupId:
                     description: GroupID is the ID of the group to create the deploy
@@ -162,6 +167,14 @@ spec:
                   name:
                     description: Name of the group access token
                     type: string
+                  renewalPeriodDays:
+                    description: |-
+                      RenewalPeriodDays is the number of days each token generation should live.
+                      When the token becomes inactive the provider rotates it, setting the new expiry to
+                      RenewalPeriodDays days from the rotation time.
+                      Mutually exclusive with ExpiresAt.
+                    minimum: 1
+                    type: integer
                   scopes:
                     description: |-
                       Scopes indicates the access token scopes.
@@ -171,10 +184,13 @@ spec:
                       type: string
                     type: array
                 required:
-                - expiresAt
                 - name
                 - scopes
                 type: object
+                x-kubernetes-validations:
+                - message: exactly one of expiresAt or renewalPeriodDays must be set
+                  rule: '(has(self.expiresAt) ? 1 : 0) + (has(self.renewalPeriodDays)
+                    ? 1 : 0) == 1'
               managementPolicies:
                 default:
                 - '*'
@@ -244,9 +260,43 @@ spec:
                   GitLab API docs:
                   https://docs.gitlab.com/ee/api/group_access_tokens.html
                 properties:
+                  accessLevel:
+                    format: int64
+                    type: integer
+                  active:
+                    type: boolean
+                  createdAt:
+                    format: date-time
+                    type: string
+                  description:
+                    type: string
+                  expiresAt:
+                    format: date-time
+                    type: string
                   id:
                     format: int64
                     type: integer
+                  name:
+                    type: string
+                  revoked:
+                    type: boolean
+                  scopes:
+                    items:
+                      type: string
+                    type: array
+                  userId:
+                    format: int64
+                    type: integer
+                required:
+                - accessLevel
+                - active
+                - createdAt
+                - description
+                - id
+                - name
+                - revoked
+                - scopes
+                - userId
                 type: object
               conditions:
                 description: Conditions of the resource.
