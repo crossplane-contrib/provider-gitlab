@@ -193,7 +193,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 				gitlab.WithContext(ctx),
 			)
 			if selfErr == nil {
-				meta.SetExternalName(cr, strconv.FormatInt(int64(pat.ID), 10))
+				meta.SetExternalName(cr, strconv.FormatInt(pat.ID, 10))
 				return managed.ExternalCreation{
 					ConnectionDetails: managed.ConnectionDetails{"token": []byte(pat.Token)},
 				}, nil
