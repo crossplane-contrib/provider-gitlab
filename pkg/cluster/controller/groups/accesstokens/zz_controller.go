@@ -21,7 +21,6 @@ package accesstokens
 import (
 	"context"
 	"strconv"
-	"time"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -31,7 +30,6 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
-	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -109,13 +107,12 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if err != nil {
 		return nil, err
 	}
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), logger: ctrl.LoggerFrom(ctx)}, nil
+	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
 }
 
 type external struct {
 	kube   client.Client
 	client groups.AccessTokenClient
-	logger logr.Logger
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -150,8 +147,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	cr.Status.AtProvider = groups.GenerateGroupAccessTokenObservation(at)
 
-	e.logRenewalTime(cr, at.CreatedAt, at.ExpiresAt)
-
 	if groups.ShouldRotateAccessToken(&cr.Spec.ForProvider, at) {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
@@ -163,25 +158,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		ResourceUpToDate:        true,
 		ResourceLateInitialized: false,
 	}, nil
-}
-
-func (e *external) logRenewalTime(cr *v1alpha1.AccessToken, createdAt *time.Time, expiresAt *gitlab.ISOTime) {
-	if cr.Spec.ForProvider.RenewalPeriodDays == nil || createdAt == nil || expiresAt == nil {
-		return
-	}
-
-	renewAt, ok := common.RenewalTime(*createdAt, time.Time(*expiresAt))
-	if !ok {
-		return
-	}
-
-	e.logger.V(1).Info("calculated access token renewal time",
-		"name", cr.Name,
-		"external-name", meta.GetExternalName(cr),
-		"createdAt", createdAt.UTC().Format(time.RFC3339),
-		"expiresAt", time.Time(*expiresAt).UTC().Format(time.RFC3339),
-		"renewAt", renewAt.Format(time.RFC3339),
-	)
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {

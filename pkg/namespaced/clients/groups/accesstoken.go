@@ -141,12 +141,12 @@ func ShouldRotateAccessToken(p *v1alpha1.AccessTokenParameters, a *gitlab.GroupA
 	}
 
 	var desiredExpiresAt *time.Time
-	if p != nil && p.ExpiresAt != nil {
+	if p.ExpiresAt != nil {
 		desiredExpiresAt = &p.ExpiresAt.Time
 	}
 
 	var createdAt *time.Time
-	if p != nil && p.RenewalPeriodDays != nil {
+	if p.RenewalPeriodDays != nil {
 		createdAt = a.CreatedAt
 	}
 

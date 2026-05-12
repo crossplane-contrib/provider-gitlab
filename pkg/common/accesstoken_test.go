@@ -49,11 +49,15 @@ func TestSameDay(t *testing.T) {
 }
 
 func TestShouldRotateToken(t *testing.T) {
-	now := time.Now().UTC().Truncate(time.Second)
-	tomorrow := now.Add(24 * time.Hour)
-	createdAt := now.Add(-20 * time.Hour)
-	expiresSoon := now.Add(4 * time.Hour)
-	expiresLater := now.Add(16 * time.Hour)
+	// Fixed dates for desiredExpiresAt / SameDay checks (no dependency on time.Now)
+	fixedDay := time.Date(2026, time.June, 1, 12, 0, 0, 0, time.UTC)
+	nextDay := fixedDay.Add(24 * time.Hour)
+
+	// For renewal threshold tests: ShouldRotateToken calls time.Now() internally,
+	// so dates must be chosen relative to the real clock, using wide margins.
+	renewalCreatedAt := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
+	renewalExpiresSoon := time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)   // 2/3 threshold ~2024-09, already past
+	renewalExpiresLater := time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC) // 2/3 threshold ~2075, well after today
 
 	cases := map[string]struct {
 		active           bool
@@ -64,12 +68,12 @@ func TestShouldRotateToken(t *testing.T) {
 	}{
 		"Inactive":                   {active: false, want: true},
 		"ActiveNoDesired":            {active: true, want: false},
-		"ActiveMatching":             {active: true, actualExpiresAt: (*gitlab.ISOTime)(&now), desiredExpiresAt: &now, want: false},
-		"ActiveMismatching":          {active: true, actualExpiresAt: (*gitlab.ISOTime)(&tomorrow), desiredExpiresAt: &now, want: true},
-		"ActiveNilActual":            {active: true, actualExpiresAt: nil, desiredExpiresAt: &now, want: true},
-		"RenewalThresholdReached":    {active: true, createdAt: &createdAt, actualExpiresAt: (*gitlab.ISOTime)(&expiresSoon), want: true},
-		"RenewalThresholdNotReached": {active: true, createdAt: &createdAt, actualExpiresAt: (*gitlab.ISOTime)(&expiresLater), want: false},
-		"RenewalWithoutCreatedAt":    {active: true, actualExpiresAt: (*gitlab.ISOTime)(&expiresSoon), want: false},
+		"ActiveMatching":             {active: true, actualExpiresAt: (*gitlab.ISOTime)(&fixedDay), desiredExpiresAt: &fixedDay, want: false},
+		"ActiveMismatching":          {active: true, actualExpiresAt: (*gitlab.ISOTime)(&nextDay), desiredExpiresAt: &fixedDay, want: true},
+		"ActiveNilActual":            {active: true, actualExpiresAt: nil, desiredExpiresAt: &fixedDay, want: true},
+		"RenewalThresholdReached":    {active: true, createdAt: &renewalCreatedAt, actualExpiresAt: (*gitlab.ISOTime)(&renewalExpiresSoon), want: true},
+		"RenewalThresholdNotReached": {active: true, createdAt: &renewalCreatedAt, actualExpiresAt: (*gitlab.ISOTime)(&renewalExpiresLater), want: false},
+		"RenewalWithoutCreatedAt":    {active: true, actualExpiresAt: (*gitlab.ISOTime)(&renewalExpiresSoon), want: false},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

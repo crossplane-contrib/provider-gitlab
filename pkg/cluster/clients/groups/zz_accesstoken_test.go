@@ -294,25 +294,25 @@ func TestShouldRotateGroupAccessToken(t *testing.T) {
 			params: &v1alpha1.AccessTokenParameters{RenewalPeriodDays: func() *int { v := 30; return &v }()},
 			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
 				Active:    true,
-				CreatedAt: ptrToTime(time.Now().UTC().Add(-10 * 24 * time.Hour)),
-				ExpiresAt: ptrToISOTime(time.Now().UTC().AddDate(0, 0, 20)),
+				CreatedAt: ptrToTime(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
+				ExpiresAt: ptrToISOTime(time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC)),
 			}},
-			want: false,
+			want: false, // 2/3 threshold ~2075, well after today
 		},
 		"ActiveWithRenewalPeriodDaysPastTwoThirds": {
 			params: &v1alpha1.AccessTokenParameters{RenewalPeriodDays: func() *int { v := 30; return &v }()},
 			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
 				Active:    true,
-				CreatedAt: ptrToTime(time.Now().UTC().Add(-20 * 24 * time.Hour)),
-				ExpiresAt: ptrToISOTime(time.Now().UTC().AddDate(0, 0, 10)),
+				CreatedAt: ptrToTime(time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)),
+				ExpiresAt: ptrToISOTime(time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			}},
-			want: true,
+			want: true, // 2/3 threshold ~2024-09, already past
 		},
 		"ActiveWithRenewalPeriodDaysNoCreatedAt": {
 			params: &v1alpha1.AccessTokenParameters{RenewalPeriodDays: func() *int { v := 30; return &v }()},
 			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
 				Active:    true,
-				ExpiresAt: ptrToISOTime(time.Now().UTC().AddDate(0, 0, 10)),
+				ExpiresAt: ptrToISOTime(time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			}},
 			want: false,
 		},

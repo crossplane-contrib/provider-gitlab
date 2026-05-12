@@ -340,8 +340,8 @@ func TestObserve(t *testing.T) {
 			args: args{
 				accessTokenClient: &fake.MockClient{
 					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
-						observedCreatedAt := time.Now().UTC().Add(-20 * 24 * time.Hour)
-						observedExpiresAt := time.Now().UTC().AddDate(0, 0, 10)
+						observedCreatedAt := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
+						observedExpiresAt := time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)
 						return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, CreatedAt: &observedCreatedAt, ExpiresAt: (*gitlab.ISOTime)(&observedExpiresAt)}}, &gitlab.Response{}, nil
 					},
 				},

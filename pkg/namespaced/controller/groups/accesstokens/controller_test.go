@@ -29,7 +29,6 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
-	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
@@ -67,73 +66,6 @@ var (
 
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: fmt.Sprint(accessTokenID)}
 )
-
-type recordedLog struct {
-	level int
-	msg   string
-	kvs   []any
-}
-
-func (l recordedLog) hasKV(key, want string) bool {
-	for i := 0; i+1 < len(l.kvs); i += 2 {
-		if fmt.Sprint(l.kvs[i]) == key && fmt.Sprint(l.kvs[i+1]) == want {
-			return true
-		}
-	}
-	return false
-}
-
-type testLogSink struct {
-	entries *[]recordedLog
-	values  []any
-}
-
-func newTestLogger() (logr.Logger, *[]recordedLog) {
-	entries := []recordedLog{}
-	return logr.New(&testLogSink{entries: &entries}), &entries
-}
-
-func (s *testLogSink) Init(logr.RuntimeInfo) {}
-
-func (s *testLogSink) Enabled(int) bool { return true }
-
-func (s *testLogSink) Info(level int, msg string, keysAndValues ...any) {
-	combined := append([]any{}, s.values...)
-	combined = append(combined, keysAndValues...)
-	*s.entries = append(*s.entries, recordedLog{level: level, msg: msg, kvs: combined})
-}
-
-func (s *testLogSink) Error(error, string, ...any) {}
-
-func (s *testLogSink) WithValues(keysAndValues ...any) logr.LogSink {
-	combined := append([]any{}, s.values...)
-	combined = append(combined, keysAndValues...)
-	return &testLogSink{entries: s.entries, values: combined}
-}
-
-func (s *testLogSink) WithName(string) logr.LogSink {
-	return &testLogSink{entries: s.entries, values: append([]any{}, s.values...)}
-}
-
-func hasRecordedLog(entries []recordedLog, msg string, kvs map[string]string) bool {
-	for _, entry := range entries {
-		if entry.msg != msg {
-			continue
-		}
-
-		matches := true
-		for key, want := range kvs {
-			if !entry.hasKV(key, want) {
-				matches = false
-				break
-			}
-		}
-		if matches {
-			return true
-		}
-	}
-	return false
-}
 
 type args struct {
 	accessTokenClient groups.AccessTokenClient
@@ -402,8 +334,8 @@ func TestObserve(t *testing.T) {
 			args: args{
 				accessTokenClient: &fake.MockClient{
 					MockGetGroupAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
-						observedCreatedAt := time.Now().UTC().Add(-20 * 24 * time.Hour)
-						observedExpiresAt := time.Now().UTC().AddDate(0, 0, 10)
+						observedCreatedAt := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
+						observedExpiresAt := time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)
 						return &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, CreatedAt: &observedCreatedAt, ExpiresAt: (*gitlab.ISOTime)(&observedExpiresAt)}}, &gitlab.Response{}, nil
 					},
 				},
@@ -616,56 +548,6 @@ func TestObserve(t *testing.T) {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 		})
-	}
-}
-
-func TestObserveLogsCalculatedRenewalTime(t *testing.T) {
-	renewalPeriodDays := 30
-	observedCreatedAt := time.Now().UTC().Truncate(time.Second)
-	observedExpiresAt := observedCreatedAt.Add(30 * 24 * time.Hour)
-	renewAt := observedCreatedAt.Add(20 * 24 * time.Hour)
-	logger, entries := newTestLogger()
-
-	cr := accessToken(
-		withExternalName(sAccessTokenID),
-		withSpec(v1alpha1.AccessTokenParameters{
-			GroupID:           &id,
-			RenewalPeriodDays: &renewalPeriodDays,
-		}),
-	)
-	cr.Name = "test-access-token"
-
-	e := &external{
-		client: &fake.MockClient{
-			MockGetGroupAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
-				return &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, CreatedAt: &observedCreatedAt, ExpiresAt: (*gitlab.ISOTime)(&observedExpiresAt)}}, &gitlab.Response{}, nil
-			},
-		},
-		logger: logger,
-	}
-
-	o, err := e.Observe(context.Background(), cr)
-	if err != nil {
-		t.Fatalf("Observe() error = %v", err)
-	}
-
-	want := managed.ExternalObservation{
-		ResourceExists:          true,
-		ResourceUpToDate:        true,
-		ResourceLateInitialized: false,
-	}
-	if diff := cmp.Diff(want, o); diff != "" {
-		t.Fatalf("Observe() result mismatch (-want +got):\n%s", diff)
-	}
-
-	if !hasRecordedLog(*entries, "calculated access token renewal time", map[string]string{
-		"name":          cr.Name,
-		"external-name": sAccessTokenID,
-		"createdAt":     observedCreatedAt.Format(time.RFC3339),
-		"expiresAt":     observedExpiresAt.Format(time.RFC3339),
-		"renewAt":       renewAt.Format(time.RFC3339),
-	}) {
-		t.Fatalf("Observe() logs = %#v, want renewal-time log", *entries)
 	}
 }
 
