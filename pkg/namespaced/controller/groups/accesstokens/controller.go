@@ -145,6 +145,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	cr.Status.AtProvider = groups.GenerateGroupAccessTokenObservation(at)
 
+	if cr.Spec.ForProvider.RenewalPeriodDays != nil {
+		cr.Status.RenewAt = common.ComputeNextRotation(at.CreatedAt, at.ExpiresAt, cr.Spec.ForProvider.RenewBeforeDays)
+	} else {
+		cr.Status.RenewAt = nil
+	}
+
 	if groups.ShouldRotateAccessToken(&cr.Spec.ForProvider, at) {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}

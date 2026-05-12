@@ -38,8 +38,11 @@ func GenerateRenewalExpiration(days int) *gitlab.ISOTime {
 }
 
 // ShouldRotateToken returns true when a token must be rotated based on its
-// active state and whether the actual expiry matches the desired expiry.
-func ShouldRotateToken(active bool, actualExpiresAt *gitlab.ISOTime, desiredExpiresAt *time.Time) bool {
+// active state, desired expiry drift, or a renewal-managed token lifetime.
+// When renewBeforeDays is non-nil the provider rotates once fewer than that
+// many days remain before expiry; otherwise the default 2/3-lifetime
+// threshold applies.
+func ShouldRotateToken(active bool, createdAt *time.Time, actualExpiresAt *gitlab.ISOTime, desiredExpiresAt *time.Time, renewBeforeDays *int, now time.Time) bool {
 	if !active {
 		return true
 	}
@@ -51,7 +54,57 @@ func ShouldRotateToken(active bool, actualExpiresAt *gitlab.ISOTime, desiredExpi
 		return !SameDay(*desiredExpiresAt, time.Time(*actualExpiresAt))
 	}
 
-	return false
+	if createdAt == nil || actualExpiresAt == nil {
+		return false
+	}
+
+	return HasReachedRenewalTime(*createdAt, time.Time(*actualExpiresAt), now, renewBeforeDays)
+}
+
+// HasReachedRenewalTime returns true once the token is eligible for rotation.
+// When renewBeforeDays is non-nil rotation is due once expiresAt minus that
+// many days has been reached; otherwise the default 2/3-lifetime threshold applies.
+func HasReachedRenewalTime(createdAt, expiresAt, now time.Time, renewBeforeDays *int) bool {
+	renewAt, ok := RotationTime(createdAt, expiresAt, renewBeforeDays)
+	if !ok {
+		return false
+	}
+	return !now.UTC().Before(renewAt)
+}
+
+// RotationTime returns the time at which a renewal-managed token becomes
+// eligible for rotation. When renewBeforeDays is non-nil the rotation time
+// is expiresAt minus that many days; otherwise it is after 2/3 of the
+// observed lifetime has elapsed.
+func RotationTime(createdAt, expiresAt time.Time, renewBeforeDays *int) (time.Time, bool) {
+	createdAt = createdAt.UTC()
+	expiresAt = expiresAt.UTC()
+
+	if renewBeforeDays != nil {
+		return expiresAt.AddDate(0, 0, -*renewBeforeDays), true
+	}
+
+	lifetime := expiresAt.Sub(createdAt)
+	if lifetime <= 0 {
+		return time.Time{}, false
+	}
+
+	renewAt := createdAt.Add(lifetime * 2 / 3)
+	return renewAt, true
+}
+
+// ComputeNextRotation returns the next rotation time for a renewal-managed
+// token, or nil when it cannot be computed (e.g. explicit expiresAt mode
+// or missing timestamps).
+func ComputeNextRotation(createdAt *time.Time, expiresAt *gitlab.ISOTime, renewBeforeDays *int) *metav1.Time {
+	if createdAt == nil || expiresAt == nil {
+		return nil
+	}
+	t, ok := RotationTime(*createdAt, time.Time(*expiresAt), renewBeforeDays)
+	if !ok {
+		return nil
+	}
+	return &metav1.Time{Time: t}
 }
 
 // SameDay returns true if two times fall on the same UTC calendar day.

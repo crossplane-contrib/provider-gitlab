@@ -297,9 +297,51 @@ func TestShouldRotateProjectAccessToken(t *testing.T) {
 			params: &v1alpha1.AccessTokenParameters{RenewalPeriodDays: func() *int { v := 30; return &v }()},
 			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
 				Active:    true,
-				ExpiresAt: ptrToISOTime(time.Now().UTC().AddDate(0, 0, 20)),
+				CreatedAt: ptrToTime(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
+				ExpiresAt: ptrToISOTime(time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC)),
 			}},
-			want: false, // active → no rotation until it expires
+			want: false, // 2/3 threshold ~2075, well after today
+		},
+		"ActiveWithRenewalPeriodDaysPastTwoThirds": {
+			params: &v1alpha1.AccessTokenParameters{RenewalPeriodDays: func() *int { v := 30; return &v }()},
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				CreatedAt: ptrToTime(time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)),
+				ExpiresAt: ptrToISOTime(time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)),
+			}},
+			want: true, // 2/3 threshold ~2024-09, already past
+		},
+		"ActiveWithRenewalPeriodDaysNoCreatedAt": {
+			params: &v1alpha1.AccessTokenParameters{RenewalPeriodDays: func() *int { v := 30; return &v }()},
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				ExpiresAt: ptrToISOTime(time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)),
+			}},
+			want: false,
+		},
+		"ActiveWithRenewBeforeDaysNotYetDue": {
+			params: &v1alpha1.AccessTokenParameters{
+				RenewalPeriodDays: func() *int { v := 30; return &v }(),
+				RenewBeforeDays:   func() *int { v := 5; return &v }(),
+			},
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				CreatedAt: ptrToTime(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
+				ExpiresAt: ptrToISOTime(time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC)),
+			}},
+			want: false, // expiresAt - 5 days = ~2099-12-26, well after today
+		},
+		"ActiveWithRenewBeforeDaysDue": {
+			params: &v1alpha1.AccessTokenParameters{
+				RenewalPeriodDays: func() *int { v := 365; return &v }(),
+				RenewBeforeDays:   func() *int { v := 365; return &v }(),
+			},
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				CreatedAt: ptrToTime(time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)),
+				ExpiresAt: ptrToISOTime(time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)),
+			}},
+			want: true, // expiresAt - 365 days = 2026-01-02, already past
 		},
 	}
 
@@ -312,5 +354,7 @@ func TestShouldRotateProjectAccessToken(t *testing.T) {
 		})
 	}
 }
+
+func ptrToTime(t time.Time) *time.Time { return &t }
 
 func ptrToISOTime(t time.Time) *gitlab.ISOTime { return (*gitlab.ISOTime)(&t) }

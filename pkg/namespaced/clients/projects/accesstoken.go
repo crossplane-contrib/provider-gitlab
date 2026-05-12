@@ -133,17 +133,21 @@ func GenerateRotateSelfOptions(p *v1alpha1.AccessTokenParameters) *gitlab.Rotate
 	return opt
 }
 
-// ShouldRotateAccessToken returns true when the token must be rotated:
-// the token is inactive, or ExpiresAt is set and the actual expiry does not match.
+// ShouldRotateAccessToken returns true when the token must be rotated.
 func ShouldRotateAccessToken(p *v1alpha1.AccessTokenParameters, a *gitlab.ProjectAccessToken) bool {
 	if a == nil {
 		return true
 	}
 
 	var desiredExpiresAt *time.Time
-	if p != nil && p.ExpiresAt != nil {
+	if p.ExpiresAt != nil {
 		desiredExpiresAt = &p.ExpiresAt.Time
 	}
 
-	return common.ShouldRotateToken(a.Active, a.ExpiresAt, desiredExpiresAt)
+	var createdAt *time.Time
+	if p.RenewalPeriodDays != nil {
+		createdAt = a.CreatedAt
+	}
+
+	return common.ShouldRotateToken(a.Active, createdAt, a.ExpiresAt, desiredExpiresAt, p.RenewBeforeDays, time.Now().UTC())
 }

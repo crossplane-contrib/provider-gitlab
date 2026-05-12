@@ -25,6 +25,12 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='Synced')].status
       name: SYNCED
       type: string
+    - jsonPath: .status.renewAt
+      name: RENEW-AT
+      type: string
+    - jsonPath: .status.atProvider.expiresAt
+      name: EXPIRES-AT
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
@@ -167,11 +173,19 @@ spec:
                   name:
                     description: Name of the group access token
                     type: string
+                  renewBeforeDays:
+                    description: |-
+                      RenewBeforeDays overrides the default 2/3-lifetime renewal threshold.
+                      When set, the provider rotates the token when fewer than RenewBeforeDays
+                      remain before expiry. Only valid with RenewalPeriodDays.
+                      Must be less than RenewalPeriodDays.
+                    minimum: 1
+                    type: integer
                   renewalPeriodDays:
                     description: |-
                       RenewalPeriodDays is the number of days each token generation should live.
-                      When the token becomes inactive the provider rotates it, setting the new expiry to
-                      RenewalPeriodDays days from the rotation time.
+                      The provider rotates it shortly before expiry, or once inactive, setting the new
+                      expiry to RenewalPeriodDays days from the rotation time.
                       Mutually exclusive with ExpiresAt.
                     minimum: 1
                     type: integer
@@ -191,6 +205,11 @@ spec:
                 - message: exactly one of expiresAt or renewalPeriodDays must be set
                   rule: '(has(self.expiresAt) ? 1 : 0) + (has(self.renewalPeriodDays)
                     ? 1 : 0) == 1'
+                - message: renewBeforeDays requires renewalPeriodDays
+                  rule: '!has(self.renewBeforeDays) || has(self.renewalPeriodDays)'
+                - message: renewalPeriodDays must be greater than renewBeforeDays
+                  rule: '!has(self.renewBeforeDays) || !has(self.renewalPeriodDays)
+                    || self.renewalPeriodDays > self.renewBeforeDays'
               managementPolicies:
                 default:
                 - '*'
@@ -351,6 +370,12 @@ spec:
                   it can not recover from without human intervention.
                 format: int64
                 type: integer
+              renewAt:
+                description: |-
+                  RenewAt is the computed time at which the provider will renew
+                  the token. Only populated for renewal-managed tokens.
+                format: date-time
+                type: string
             type: object
         required:
         - spec
