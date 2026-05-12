@@ -31,7 +31,6 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
-	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -41,6 +40,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/go-logr/logr"
 )
 
 const (
@@ -150,17 +150,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	cr.Status.AtProvider = projects.GenerateProjectAccessTokenObservation(at)
 
-	if cr.Spec.ForProvider.RenewalPeriodDays != nil && at.CreatedAt != nil && at.ExpiresAt != nil {
-		if renewAt, ok := common.RenewalTime(*at.CreatedAt, time.Time(*at.ExpiresAt)); ok {
-			e.logger.V(1).Info("calculated access token renewal time",
-				"name", cr.Name,
-				"external-name", meta.GetExternalName(cr),
-				"createdAt", at.CreatedAt.UTC().Format(time.RFC3339),
-				"expiresAt", time.Time(*at.ExpiresAt).UTC().Format(time.RFC3339),
-				"renewAt", renewAt.Format(time.RFC3339),
-			)
-		}
-	}
+	e.logRenewalTime(cr, at.CreatedAt, at.ExpiresAt)
 
 	if projects.ShouldRotateAccessToken(&cr.Spec.ForProvider, at) {
 		return managed.ExternalObservation{ResourceExists: false}, nil
@@ -173,6 +163,25 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		ResourceUpToDate:        true,
 		ResourceLateInitialized: false,
 	}, nil
+}
+
+func (e *external) logRenewalTime(cr *v1alpha1.AccessToken, createdAt *time.Time, expiresAt *gitlab.ISOTime) {
+	if cr.Spec.ForProvider.RenewalPeriodDays == nil || createdAt == nil || expiresAt == nil {
+		return
+	}
+
+	renewAt, ok := common.RenewalTime(*createdAt, time.Time(*expiresAt))
+	if !ok {
+		return
+	}
+
+	e.logger.V(1).Info("calculated access token renewal time",
+		"name", cr.Name,
+		"external-name", meta.GetExternalName(cr),
+		"createdAt", createdAt.UTC().Format(time.RFC3339),
+		"expiresAt", time.Time(*expiresAt).UTC().Format(time.RFC3339),
+		"renewAt", renewAt.Format(time.RFC3339),
+	)
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {

@@ -62,14 +62,14 @@ func TestShouldRotateToken(t *testing.T) {
 		desiredExpiresAt *time.Time
 		want             bool
 	}{
-		"Inactive":                     {active: false, want: true},
-		"ActiveNoDesired":              {active: true, want: false},
-		"ActiveMatching":               {active: true, actualExpiresAt: (*gitlab.ISOTime)(&now), desiredExpiresAt: &now, want: false},
-		"ActiveMismatching":            {active: true, actualExpiresAt: (*gitlab.ISOTime)(&tomorrow), desiredExpiresAt: &now, want: true},
-		"ActiveNilActual":              {active: true, actualExpiresAt: nil, desiredExpiresAt: &now, want: true},
-		"RenewalThresholdReached":      {active: true, createdAt: &createdAt, actualExpiresAt: (*gitlab.ISOTime)(&expiresSoon), want: true},
-		"RenewalThresholdNotReached":   {active: true, createdAt: &createdAt, actualExpiresAt: (*gitlab.ISOTime)(&expiresLater), want: false},
-		"RenewalWithoutCreatedAt":      {active: true, actualExpiresAt: (*gitlab.ISOTime)(&expiresSoon), want: false},
+		"Inactive":                   {active: false, want: true},
+		"ActiveNoDesired":            {active: true, want: false},
+		"ActiveMatching":             {active: true, actualExpiresAt: (*gitlab.ISOTime)(&now), desiredExpiresAt: &now, want: false},
+		"ActiveMismatching":          {active: true, actualExpiresAt: (*gitlab.ISOTime)(&tomorrow), desiredExpiresAt: &now, want: true},
+		"ActiveNilActual":            {active: true, actualExpiresAt: nil, desiredExpiresAt: &now, want: true},
+		"RenewalThresholdReached":    {active: true, createdAt: &createdAt, actualExpiresAt: (*gitlab.ISOTime)(&expiresSoon), want: true},
+		"RenewalThresholdNotReached": {active: true, createdAt: &createdAt, actualExpiresAt: (*gitlab.ISOTime)(&expiresLater), want: false},
+		"RenewalWithoutCreatedAt":    {active: true, actualExpiresAt: (*gitlab.ISOTime)(&expiresSoon), want: false},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
