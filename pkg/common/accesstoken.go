@@ -60,17 +60,26 @@ func ShouldRotateToken(active bool, createdAt *time.Time, actualExpiresAt *gitla
 
 // HasReachedRenewalTime returns true once 2/3 of the token lifetime has elapsed.
 func HasReachedRenewalTime(createdAt, expiresAt, now time.Time) bool {
+	renewAt, ok := RenewalTime(createdAt, expiresAt)
+	if !ok {
+		return false
+	}
+	return !now.UTC().Before(renewAt)
+}
+
+// RenewalTime returns the time at which a renewal-managed token becomes eligible
+// for rotation, i.e. after 2/3 of its observed lifetime has elapsed.
+func RenewalTime(createdAt, expiresAt time.Time) (time.Time, bool) {
 	createdAt = createdAt.UTC()
 	expiresAt = expiresAt.UTC()
-	now = now.UTC()
 
 	lifetime := expiresAt.Sub(createdAt)
 	if lifetime <= 0 {
-		return false
+		return time.Time{}, false
 	}
 
 	renewAt := createdAt.Add(lifetime * 2 / 3)
-	return !now.Before(renewAt)
+	return renewAt, true
 }
 
 // SameDay returns true if two times fall on the same UTC calendar day.

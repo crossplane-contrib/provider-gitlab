@@ -21,6 +21,7 @@ package accesstokens
 import (
 	"context"
 	"strconv"
+	"time"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -30,6 +31,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -107,12 +109,13 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if err != nil {
 		return nil, err
 	}
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
+	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), logger: ctrl.LoggerFrom(ctx)}, nil
 }
 
 type external struct {
 	kube   client.Client
 	client projects.AccessTokenClient
+	logger logr.Logger
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -146,6 +149,18 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	cr.Status.AtProvider = projects.GenerateProjectAccessTokenObservation(at)
+
+	if cr.Spec.ForProvider.RenewalPeriodDays != nil && at.CreatedAt != nil && at.ExpiresAt != nil {
+		if renewAt, ok := common.RenewalTime(*at.CreatedAt, time.Time(*at.ExpiresAt)); ok {
+			e.logger.V(1).Info("calculated access token renewal time",
+				"name", cr.Name,
+				"external-name", meta.GetExternalName(cr),
+				"createdAt", at.CreatedAt.UTC().Format(time.RFC3339),
+				"expiresAt", time.Time(*at.ExpiresAt).UTC().Format(time.RFC3339),
+				"renewAt", renewAt.Format(time.RFC3339),
+			)
+		}
+	}
 
 	if projects.ShouldRotateAccessToken(&cr.Spec.ForProvider, at) {
 		return managed.ExternalObservation{ResourceExists: false}, nil
