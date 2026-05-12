@@ -127,8 +127,8 @@ type AccessTokenStatus struct {
 // A AccessToken is a managed resource that represents a Gitlab group access token
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
-// +kubebuilder:printcolumn:name="RENEW-AT",type="date",JSONPath=".status.renewAt"
-// +kubebuilder:printcolumn:name="EXPIRES-AT",type="date",JSONPath=".status.atProvider.expiresAt"
+// +kubebuilder:printcolumn:name="RENEW-AT",type="string",JSONPath=".status.renewAt"
+// +kubebuilder:printcolumn:name="EXPIRES-AT",type="string",JSONPath=".status.atProvider.expiresAt"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab}

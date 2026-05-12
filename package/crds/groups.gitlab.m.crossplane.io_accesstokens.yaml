@@ -27,10 +27,10 @@ spec:
       type: string
     - jsonPath: .status.renewAt
       name: RENEW-AT
-      type: date
+      type: string
     - jsonPath: .status.atProvider.expiresAt
       name: EXPIRES-AT
-      type: date
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
