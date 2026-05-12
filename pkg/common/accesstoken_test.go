@@ -56,7 +56,7 @@ func TestShouldRotateToken(t *testing.T) {
 	// For renewal threshold tests: ShouldRotateToken calls time.Now() internally,
 	// so dates must be chosen relative to the real clock, using wide margins.
 	renewalCreatedAt := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
-	renewalExpiresSoon := time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)   // 2/3 threshold ~2024-09, already past
+	renewalExpiresSoon := time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)    // 2/3 threshold ~2024-09, already past
 	renewalExpiresLater := time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC) // 2/3 threshold ~2075, well after today
 
 	cases := map[string]struct {
