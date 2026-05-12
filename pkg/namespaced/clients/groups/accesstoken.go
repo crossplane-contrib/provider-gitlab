@@ -150,5 +150,5 @@ func ShouldRotateAccessToken(p *v1alpha1.AccessTokenParameters, a *gitlab.GroupA
 		createdAt = a.CreatedAt
 	}
 
-	return common.ShouldRotateToken(a.Active, createdAt, a.ExpiresAt, desiredExpiresAt)
+	return common.ShouldRotateToken(a.Active, createdAt, a.ExpiresAt, desiredExpiresAt, p.RenewBeforeDays, time.Now().UTC())
 }

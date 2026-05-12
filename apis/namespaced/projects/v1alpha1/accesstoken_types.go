@@ -26,6 +26,8 @@ import (
 // AccessTokenParameters define the desired state of a Gitlab access token
 // https://docs.gitlab.com/ee/api/access_tokens.html
 // +kubebuilder:validation:XValidation:rule="(has(self.expiresAt) ? 1 : 0) + (has(self.renewalPeriodDays) ? 1 : 0) == 1",message="exactly one of expiresAt or renewalPeriodDays must be set"
+// +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || has(self.renewalPeriodDays)",message="renewBeforeDays requires renewalPeriodDays"
+// +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || !has(self.renewalPeriodDays) || self.renewalPeriodDays > self.renewBeforeDays",message="renewalPeriodDays must be greater than renewBeforeDays"
 type AccessTokenParameters struct {
 	// ProjectID is the ID of the project to create the access token in.
 	// +optional
@@ -56,6 +58,14 @@ type AccessTokenParameters struct {
 	// +kubebuilder:validation:Minimum=1
 	// +optional
 	RenewalPeriodDays *int `json:"renewalPeriodDays,omitempty"`
+
+	// RenewBeforeDays overrides the default 2/3-lifetime renewal threshold.
+	// When set, the provider rotates the token when fewer than RenewBeforeDays
+	// remain before expiry. Only valid with RenewalPeriodDays.
+	// Must be less than RenewalPeriodDays.
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	RenewBeforeDays *int `json:"renewBeforeDays,omitempty"`
 
 	// Access level for the project. Default is 40.
 	// Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
@@ -106,6 +116,11 @@ type AccessTokenSpec struct {
 type AccessTokenStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
 	AtProvider          AccessTokenObservation `json:"atProvider,omitempty"`
+
+	// RenewAt is the computed time at which the provider will renew
+	// the token. Only populated for renewal-managed tokens.
+	// +optional
+	RenewAt *metav1.Time `json:"renewAt,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -113,6 +128,8 @@ type AccessTokenStatus struct {
 // A AccessToken is a managed resource that represents a Gitlab project access token
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
+// +kubebuilder:printcolumn:name="RENEW-AT",type="date",JSONPath=".status.renewAt"
+// +kubebuilder:printcolumn:name="EXPIRES-AT",type="date",JSONPath=".status.atProvider.expiresAt"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitlab}

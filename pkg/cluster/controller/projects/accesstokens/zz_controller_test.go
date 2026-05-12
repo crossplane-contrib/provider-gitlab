@@ -547,7 +547,7 @@ func TestObserve(t *testing.T) {
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
-			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions(), cmpopts.IgnoreFields(v1alpha1.AccessTokenStatus{}, "AtProvider")); diff != "" {
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions(), cmpopts.IgnoreFields(v1alpha1.AccessTokenStatus{}, "AtProvider", "RenewAt")); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.result, o); diff != "" {
@@ -578,6 +578,100 @@ func TestObserveSetsAtProvider(t *testing.T) {
 	if diff := cmp.Diff(want, cr.Status.AtProvider); diff != "" {
 		t.Fatalf("AtProvider mismatch (-want +got):\n%s", diff)
 	}
+}
+
+func TestObserveSetsRenewAt(t *testing.T) {
+	createdAt := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	obsExpiresAt := time.Date(2026, time.January, 31, 0, 0, 0, 0, time.UTC)
+
+	t.Run("NilForExplicitExpiresAt", func(t *testing.T) {
+		cr := accessToken(
+			withExternalName(sAccessTokenID),
+			withSpec(v1alpha1.AccessTokenParameters{
+				ProjectID: &projectID,
+				ExpiresAt: &v1.Time{Time: obsExpiresAt},
+			}),
+		)
+		e := &external{client: &fake.MockClient{
+			MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+				return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+					Active: true, CreatedAt: &createdAt, ExpiresAt: (*gitlab.ISOTime)(&obsExpiresAt),
+				}}, &gitlab.Response{}, nil
+			},
+		}}
+
+		_, err := e.Observe(context.Background(), cr)
+		if err != nil {
+			t.Fatalf("Observe() error = %v", err)
+		}
+		if cr.Status.RenewAt != nil {
+			t.Errorf("expected nil RenewAt for explicit expiresAt, got %v", cr.Status.RenewAt)
+		}
+	})
+
+	t.Run("SetForRenewalPeriodDaysDefault", func(t *testing.T) {
+		renewalDays := 30
+		cr := accessToken(
+			withExternalName(sAccessTokenID),
+			withSpec(v1alpha1.AccessTokenParameters{
+				ProjectID:         &projectID,
+				RenewalPeriodDays: &renewalDays,
+			}),
+		)
+		e := &external{client: &fake.MockClient{
+			MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+				return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+					Active: true, CreatedAt: &createdAt, ExpiresAt: (*gitlab.ISOTime)(&obsExpiresAt),
+				}}, &gitlab.Response{}, nil
+			},
+		}}
+
+		_, err := e.Observe(context.Background(), cr)
+		if err != nil {
+			t.Fatalf("Observe() error = %v", err)
+		}
+		if cr.Status.RenewAt == nil {
+			t.Fatal("expected non-nil RenewAt for renewalPeriodDays")
+		}
+		// 2/3 of 30 days = 20 days → 2026-01-21
+		want := time.Date(2026, time.January, 21, 0, 0, 0, 0, time.UTC)
+		if !cr.Status.RenewAt.Time.Equal(want) {
+			t.Errorf("RenewAt: want %v, got %v", want, cr.Status.RenewAt.Time)
+		}
+	})
+
+	t.Run("SetForRenewBeforeDaysOverride", func(t *testing.T) {
+		renewalDays := 30
+		renewBefore := 5
+		cr := accessToken(
+			withExternalName(sAccessTokenID),
+			withSpec(v1alpha1.AccessTokenParameters{
+				ProjectID:         &projectID,
+				RenewalPeriodDays: &renewalDays,
+				RenewBeforeDays:   &renewBefore,
+			}),
+		)
+		e := &external{client: &fake.MockClient{
+			MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+				return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+					Active: true, CreatedAt: &createdAt, ExpiresAt: (*gitlab.ISOTime)(&obsExpiresAt),
+				}}, &gitlab.Response{}, nil
+			},
+		}}
+
+		_, err := e.Observe(context.Background(), cr)
+		if err != nil {
+			t.Fatalf("Observe() error = %v", err)
+		}
+		if cr.Status.RenewAt == nil {
+			t.Fatal("expected non-nil RenewAt for renewBeforeDays override")
+		}
+		// expiresAt - 5 days = 2026-01-26
+		want := time.Date(2026, time.January, 26, 0, 0, 0, 0, time.UTC)
+		if !cr.Status.RenewAt.Time.Equal(want) {
+			t.Errorf("RenewAt: want %v, got %v", want, cr.Status.RenewAt.Time)
+		}
+	})
 }
 
 func TestShouldRotateProjectAccessToken(t *testing.T) {

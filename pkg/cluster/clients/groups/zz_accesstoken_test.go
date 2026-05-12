@@ -316,6 +316,30 @@ func TestShouldRotateGroupAccessToken(t *testing.T) {
 			}},
 			want: false,
 		},
+		"ActiveWithRenewBeforeDaysNotYetDue": {
+			params: &v1alpha1.AccessTokenParameters{
+				RenewalPeriodDays: func() *int { v := 30; return &v }(),
+				RenewBeforeDays:   func() *int { v := 5; return &v }(),
+			},
+			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				CreatedAt: ptrToTime(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
+				ExpiresAt: ptrToISOTime(time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC)),
+			}},
+			want: false, // expiresAt - 5 days = ~2099-12-26, well after today
+		},
+		"ActiveWithRenewBeforeDaysDue": {
+			params: &v1alpha1.AccessTokenParameters{
+				RenewalPeriodDays: func() *int { v := 365; return &v }(),
+				RenewBeforeDays:   func() *int { v := 365; return &v }(),
+			},
+			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				CreatedAt: ptrToTime(time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)),
+				ExpiresAt: ptrToISOTime(time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)),
+			}},
+			want: true, // expiresAt - 365 days = 2026-01-02, already past
+		},
 	}
 
 	for name, tc := range cases {
