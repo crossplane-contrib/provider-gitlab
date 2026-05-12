@@ -50,8 +50,8 @@ type AccessTokenParameters struct {
 	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
 
 	// RenewalPeriodDays is the number of days each token generation should live.
-	// When the token becomes inactive the provider rotates it, setting the new expiry to
-	// RenewalPeriodDays days from the rotation time.
+	// The provider rotates it shortly before expiry, or once inactive, setting the new
+	// expiry to RenewalPeriodDays days from the rotation time.
 	// Mutually exclusive with ExpiresAt.
 	// +kubebuilder:validation:Minimum=1
 	// +optional

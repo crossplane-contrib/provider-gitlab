@@ -38,8 +38,8 @@ func GenerateRenewalExpiration(days int) *gitlab.ISOTime {
 }
 
 // ShouldRotateToken returns true when a token must be rotated based on its
-// active state and whether the actual expiry matches the desired expiry.
-func ShouldRotateToken(active bool, actualExpiresAt *gitlab.ISOTime, desiredExpiresAt *time.Time) bool {
+// active state, desired expiry drift, or a renewal-managed token lifetime.
+func ShouldRotateToken(active bool, createdAt *time.Time, actualExpiresAt *gitlab.ISOTime, desiredExpiresAt *time.Time) bool {
 	if !active {
 		return true
 	}
@@ -51,7 +51,26 @@ func ShouldRotateToken(active bool, actualExpiresAt *gitlab.ISOTime, desiredExpi
 		return !SameDay(*desiredExpiresAt, time.Time(*actualExpiresAt))
 	}
 
-	return false
+	if createdAt == nil || actualExpiresAt == nil {
+		return false
+	}
+
+	return HasReachedRenewalTime(*createdAt, time.Time(*actualExpiresAt), time.Now().UTC())
+}
+
+// HasReachedRenewalTime returns true once 2/3 of the token lifetime has elapsed.
+func HasReachedRenewalTime(createdAt, expiresAt, now time.Time) bool {
+	createdAt = createdAt.UTC()
+	expiresAt = expiresAt.UTC()
+	now = now.UTC()
+
+	lifetime := expiresAt.Sub(createdAt)
+	if lifetime <= 0 {
+		return false
+	}
+
+	renewAt := createdAt.Add(lifetime * 2 / 3)
+	return !now.Before(renewAt)
 }
 
 // SameDay returns true if two times fall on the same UTC calendar day.

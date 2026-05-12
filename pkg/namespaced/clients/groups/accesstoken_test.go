@@ -292,9 +292,27 @@ func TestShouldRotateGroupAccessToken(t *testing.T) {
 			params: &v1alpha1.AccessTokenParameters{RenewalPeriodDays: func() *int { v := 30; return &v }()},
 			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
 				Active:    true,
+				CreatedAt: ptrToTime(time.Now().UTC().Add(-10 * 24 * time.Hour)),
 				ExpiresAt: ptrToISOTime(time.Now().UTC().AddDate(0, 0, 20)),
 			}},
-			want: false, // active → no rotation until it expires
+			want: false,
+		},
+		"ActiveWithRenewalPeriodDaysPastTwoThirds": {
+			params: &v1alpha1.AccessTokenParameters{RenewalPeriodDays: func() *int { v := 30; return &v }()},
+			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				CreatedAt: ptrToTime(time.Now().UTC().Add(-20 * 24 * time.Hour)),
+				ExpiresAt: ptrToISOTime(time.Now().UTC().AddDate(0, 0, 10)),
+			}},
+			want: true,
+		},
+		"ActiveWithRenewalPeriodDaysNoCreatedAt": {
+			params: &v1alpha1.AccessTokenParameters{RenewalPeriodDays: func() *int { v := 30; return &v }()},
+			at: &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				ExpiresAt: ptrToISOTime(time.Now().UTC().AddDate(0, 0, 10)),
+			}},
+			want: false,
 		},
 	}
 
@@ -307,5 +325,7 @@ func TestShouldRotateGroupAccessToken(t *testing.T) {
 		})
 	}
 }
+
+func ptrToTime(t time.Time) *time.Time { return &t }
 
 func ptrToISOTime(t time.Time) *gitlab.ISOTime { return (*gitlab.ISOTime)(&t) }

@@ -51,25 +51,45 @@ func TestSameDay(t *testing.T) {
 func TestShouldRotateToken(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
 	tomorrow := now.Add(24 * time.Hour)
+	createdAt := now.Add(-20 * time.Hour)
+	expiresSoon := now.Add(4 * time.Hour)
+	expiresLater := now.Add(16 * time.Hour)
 
 	cases := map[string]struct {
 		active           bool
+		createdAt        *time.Time
 		actualExpiresAt  *gitlab.ISOTime
 		desiredExpiresAt *time.Time
 		want             bool
 	}{
-		"Inactive":          {active: false, want: true},
-		"ActiveNoDesired":   {active: true, want: false},
-		"ActiveMatching":    {active: true, actualExpiresAt: (*gitlab.ISOTime)(&now), desiredExpiresAt: &now, want: false},
-		"ActiveMismatching": {active: true, actualExpiresAt: (*gitlab.ISOTime)(&tomorrow), desiredExpiresAt: &now, want: true},
-		"ActiveNilActual":   {active: true, actualExpiresAt: nil, desiredExpiresAt: &now, want: true},
+		"Inactive":                     {active: false, want: true},
+		"ActiveNoDesired":              {active: true, want: false},
+		"ActiveMatching":               {active: true, actualExpiresAt: (*gitlab.ISOTime)(&now), desiredExpiresAt: &now, want: false},
+		"ActiveMismatching":            {active: true, actualExpiresAt: (*gitlab.ISOTime)(&tomorrow), desiredExpiresAt: &now, want: true},
+		"ActiveNilActual":              {active: true, actualExpiresAt: nil, desiredExpiresAt: &now, want: true},
+		"RenewalThresholdReached":      {active: true, createdAt: &createdAt, actualExpiresAt: (*gitlab.ISOTime)(&expiresSoon), want: true},
+		"RenewalThresholdNotReached":   {active: true, createdAt: &createdAt, actualExpiresAt: (*gitlab.ISOTime)(&expiresLater), want: false},
+		"RenewalWithoutCreatedAt":      {active: true, actualExpiresAt: (*gitlab.ISOTime)(&expiresSoon), want: false},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			if got := ShouldRotateToken(tc.active, tc.actualExpiresAt, tc.desiredExpiresAt); got != tc.want {
+			if got := ShouldRotateToken(tc.active, tc.createdAt, tc.actualExpiresAt, tc.desiredExpiresAt); got != tc.want {
 				t.Errorf("ShouldRotateToken() = %v, want %v", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestHasReachedRenewalTime(t *testing.T) {
+	createdAt := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	expiresAt := createdAt.Add(30 * time.Hour)
+	renewAt := createdAt.Add(20 * time.Hour)
+
+	if HasReachedRenewalTime(createdAt, expiresAt, renewAt.Add(-time.Second)) {
+		t.Fatal("expected false before renewal time")
+	}
+	if !HasReachedRenewalTime(createdAt, expiresAt, renewAt) {
+		t.Fatal("expected true at renewal time")
 	}
 }
 

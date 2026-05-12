@@ -332,6 +332,36 @@ func TestObserve(t *testing.T) {
 				err: nil,
 			},
 		},
+		"TokenPastTwoThirdsLifetimeWithRenewalPeriod": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetGroupAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error) {
+						observedCreatedAt := time.Now().UTC().Add(-20 * 24 * time.Hour)
+						observedExpiresAt := time.Now().UTC().AddDate(0, 0, 10)
+						return &gitlab.GroupAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, CreatedAt: &observedCreatedAt, ExpiresAt: (*gitlab.ISOTime)(&observedExpiresAt)}}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:           &id,
+						AccessLevel:       (*v1alpha1.AccessLevelValue)(&accessLevel),
+						RenewalPeriodDays: func() *int { v := 30; return &v }(),
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						GroupID:           &id,
+						AccessLevel:       (*v1alpha1.AccessLevelValue)(&accessLevel),
+						RenewalPeriodDays: func() *int { v := 30; return &v }(),
+					}),
+				),
+				result: managed.ExternalObservation{ResourceExists: false},
+			},
+		},
 		"ResourceUpToDateSameDayDifferentTime": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
