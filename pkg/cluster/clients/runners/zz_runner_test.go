@@ -74,37 +74,134 @@ func TestIsErrorRunnerNotFound(t *testing.T) {
 	}
 }
 
-func TestIsRunnerTokenExpired(t *testing.T) {
-	now := time.Now()
+func TestShouldRotateRunnerToken(t *testing.T) {
+	// Use fixed dates to keep tests deterministic.
+	createdAt := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	expiresAt := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC) // 90 days lifetime
+
+	// 2/3 of 90 days = 60 days → renewAt = 2026-03-02
+	renewAt2Third := createdAt.Add(time.Duration(expiresAt.Sub(createdAt) * 2 / 3))
+
+	intPtr := func(i int) *int { return &i }
 
 	cases := map[string]struct {
-		expiresAt *metav1.Time
-		want      bool
+		obs             commonv1alpha1.CommonRunnerObservation
+		renewBeforeDays *int
+		now             time.Time
+		want            bool
 	}{
 		"NilExpiresAt": {
-			expiresAt: nil,
-			want:      false,
+			obs:  commonv1alpha1.CommonRunnerObservation{},
+			now:  createdAt.Add(80 * 24 * time.Hour),
+			want: false,
 		},
-		"ExpiresAtInFuture": {
-			expiresAt: &metav1.Time{Time: now.Add(1 * time.Hour)},
-			want:      false,
+		"NoCreatedAtBeforeExpiry": {
+			obs:  commonv1alpha1.CommonRunnerObservation{TokenExpiresAt: &metav1.Time{Time: expiresAt}},
+			now:  expiresAt.Add(-1 * time.Hour),
+			want: false,
 		},
-		"ExpiresAtInPast": {
-			expiresAt: &metav1.Time{Time: now.Add(-1 * time.Hour)},
-			want:      true,
+		"NoCreatedAtAfterExpiry": {
+			obs:  commonv1alpha1.CommonRunnerObservation{TokenExpiresAt: &metav1.Time{Time: expiresAt}},
+			now:  expiresAt.Add(1 * time.Second),
+			want: true,
 		},
-		"ExpiresAtNowMinusOneSecond": {
-			// Token expires one second in the past is definitely expired
-			expiresAt: &metav1.Time{Time: now.Add(-1 * time.Second)},
-			want:      true,
+		"TwoThirdsThresholdNotReached": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: createdAt},
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			now:  renewAt2Third.Add(-1 * time.Hour),
+			want: false,
+		},
+		"TwoThirdsThresholdReached": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: createdAt},
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			now:  renewAt2Third,
+			want: true,
+		},
+		"RenewBeforeDaysNotReached": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			renewBeforeDays: intPtr(14),
+			now:             expiresAt.Add(-15 * 24 * time.Hour),
+			want:            false,
+		},
+		"RenewBeforeDaysReached": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			renewBeforeDays: intPtr(14),
+			now:             expiresAt.Add(-13 * 24 * time.Hour),
+			want:            true,
 		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := IsRunnerTokenExpired(tc.expiresAt)
+			got := ShouldRotateRunnerToken(&tc.obs, tc.renewBeforeDays, tc.now)
 			if got != tc.want {
-				t.Errorf("IsRunnerTokenExpired() = %v, want %v", got, tc.want)
+				t.Errorf("ShouldRotateRunnerToken() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestComputeNextRunnerTokenRotation(t *testing.T) {
+	createdAt := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	expiresAt := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC) // 90 days
+
+	renewAt2Third := createdAt.Add(time.Duration(expiresAt.Sub(createdAt) * 2 / 3))
+	renewAt14Days := expiresAt.AddDate(0, 0, -14)
+
+	intPtr := func(i int) *int { return &i }
+
+	cases := map[string]struct {
+		obs             commonv1alpha1.CommonRunnerObservation
+		renewBeforeDays *int
+		wantNil         bool
+		wantTime        time.Time
+	}{
+		"NilExpiresAt": {
+			obs:     commonv1alpha1.CommonRunnerObservation{},
+			wantNil: true,
+		},
+		"NilCreatedAtNoRenewBefore": {
+			obs:     commonv1alpha1.CommonRunnerObservation{TokenExpiresAt: &metav1.Time{Time: expiresAt}},
+			wantNil: true,
+		},
+		"WithCreatedAt": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: createdAt},
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			wantTime: renewAt2Third,
+		},
+		"WithRenewBeforeDays": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			renewBeforeDays: intPtr(14),
+			wantTime:        renewAt14Days,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := ComputeNextRunnerTokenRotation(&tc.obs, tc.renewBeforeDays)
+			if tc.wantNil {
+				if got != nil {
+					t.Errorf("ComputeNextRunnerTokenRotation() = %v, want nil", got)
+				}
+				return
+			}
+			if got == nil {
+				t.Fatalf("ComputeNextRunnerTokenRotation() = nil, want %v", tc.wantTime)
+			}
+			if !got.Time.Equal(tc.wantTime) {
+				t.Errorf("ComputeNextRunnerTokenRotation() = %v, want %v", got.Time, tc.wantTime)
 			}
 		})
 	}

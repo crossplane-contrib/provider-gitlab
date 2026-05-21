@@ -25,6 +25,12 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='Synced')].status
       name: SYNCED
       type: string
+    - jsonPath: .status.tokenRenewAt
+      name: TOKEN-RENEW-AT
+      type: string
+    - jsonPath: .status.atProvider.tokenExpiresAt
+      name: TOKEN-EXPIRES-AT
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
@@ -140,6 +146,13 @@ spec:
                     items:
                       type: string
                     type: array
+                  tokenRenewBeforeDays:
+                    description: |-
+                      TokenRenewBeforeDays overrides the default 2/3-lifetime renewal threshold.
+                      When set, the provider rotates the runner token when fewer than TokenRenewBeforeDays
+                      remain before expiry. Only meaningful when the GitLab instance enforces token expiry.
+                    minimum: 1
+                    type: integer
                 type: object
               managementPolicies:
                 default:
@@ -315,6 +328,13 @@ spec:
                     items:
                       type: string
                     type: array
+                  tokenCreatedAt:
+                    description: |-
+                      TokenCreatedAt is the timestamp when the current runner token was issued.
+                      Set by the provider when a new runner is created; not returned by the GitLab API.
+                      Used together with TokenExpiresAt to compute the proactive renewal threshold.
+                    format: date-time
+                    type: string
                   tokenExpiresAt:
                     description: |-
                       TokenExpiresAt is the timestamp when the runner token expires.
@@ -386,6 +406,12 @@ spec:
                   it can not recover from without human intervention.
                 format: int64
                 type: integer
+              tokenRenewAt:
+                description: |-
+                  TokenRenewAt is the computed time at which the provider will renew
+                  the runner token. Only populated when the token has an expiry.
+                format: date-time
+                type: string
             type: object
         required:
         - spec

@@ -100,6 +100,11 @@ type RunnerSpec struct {
 type RunnerStatus struct {
 	v2.ManagedResourceStatus `json:",inline"`
 	AtProvider               RunnerObservation `json:"atProvider,omitempty"`
+
+	// TokenRenewAt is the computed time at which the provider will renew
+	// the runner token. Only populated when the token has an expiry.
+	// +optional
+	TokenRenewAt *metav1.Time `json:"tokenRenewAt,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -128,6 +133,8 @@ type RunnerStatus struct {
 // https://docs.gitlab.com/ee/api/runners.html
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
+// +kubebuilder:printcolumn:name="TOKEN-RENEW-AT",type="string",JSONPath=".status.tokenRenewAt"
+// +kubebuilder:printcolumn:name="TOKEN-EXPIRES-AT",type="string",JSONPath=".status.atProvider.tokenExpiresAt"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".status.atProvider.id"
 // +kubebuilder:subresource:status

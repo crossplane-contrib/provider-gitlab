@@ -22,6 +22,7 @@ import (
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
@@ -57,14 +58,40 @@ func IsErrorRunnerNotFound(err error) bool {
 	return strings.Contains(err.Error(), errRunnerNotFound)
 }
 
-// IsRunnerTokenExpired checks if a runner token has expired by comparing
-// the token expiration time with the current time.
-// Returns true if the token is expired, false if it's still valid or if the expiration time is nil.
-func IsRunnerTokenExpired(expiresAt *metav1.Time) bool {
-	if expiresAt == nil {
+// ShouldRotateRunnerToken returns true when the runner token should be rotated.
+// It uses a proactive 2/3-lifetime threshold by default, or TokenRenewBeforeDays
+// when set. Falls back to checking expiry when TokenCreatedAt is not tracked.
+func ShouldRotateRunnerToken(obs *commonv1alpha1.CommonRunnerObservation, renewBeforeDays *int, now time.Time) bool {
+	if obs.TokenExpiresAt == nil {
 		return false
 	}
-	return time.Now().After(expiresAt.Time)
+	if renewBeforeDays != nil {
+		return common.HasReachedRenewalTime(time.Time{}, obs.TokenExpiresAt.Time, now, renewBeforeDays)
+	}
+	if obs.TokenCreatedAt == nil {
+		return !now.UTC().Before(obs.TokenExpiresAt.Time)
+	}
+	return common.HasReachedRenewalTime(obs.TokenCreatedAt.Time, obs.TokenExpiresAt.Time, now, nil)
+}
+
+// ComputeNextRunnerTokenRotation returns the time at which the provider will
+// next rotate the runner token, or nil when it cannot be determined.
+func ComputeNextRunnerTokenRotation(obs *commonv1alpha1.CommonRunnerObservation, renewBeforeDays *int) *metav1.Time {
+	if obs.TokenExpiresAt == nil {
+		return nil
+	}
+	var createdAt time.Time
+	if renewBeforeDays == nil {
+		if obs.TokenCreatedAt == nil {
+			return nil
+		}
+		createdAt = obs.TokenCreatedAt.Time
+	}
+	t, ok := common.RotationTime(createdAt, obs.TokenExpiresAt.Time, renewBeforeDays)
+	if !ok {
+		return nil
+	}
+	return ptr.To(metav1.NewTime(t))
 }
 
 // GenerateInstanceRunnerObservation is used to produce v1alpha1.RunnerObservation from

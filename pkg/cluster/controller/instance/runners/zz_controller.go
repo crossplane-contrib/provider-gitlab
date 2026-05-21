@@ -21,6 +21,7 @@ package runners
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
@@ -152,25 +153,26 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
-	// we need to make sure the token expiration time is preserved as it is not returned by the API
+	// Preserve token fields that are not returned by the API.
 	tokenExpiresAt := cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt
+	tokenCreatedAt := cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt
 	cr.Status.AtProvider = runners.GenerateInstanceRunnerObservation(runner)
 	cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = tokenExpiresAt
+	cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt = tokenCreatedAt
 
-	// Delete token if it has expired, so it can be recreated.
-	// This avoids dangling tokens in case auto rotation is enabled.
-	if runners.IsRunnerTokenExpired(tokenExpiresAt) {
-		//nolint:errcheck // ignore errors here as the token may already be deleted
-		e.client.DeleteRegisteredRunnerByID(
-			int64(runnerID),
-			gitlab.WithContext(ctx),
-		)
-	} else {
-		cr.SetConditions(v2.Available())
+	cr.Status.TokenRenewAt = runners.ComputeNextRunnerTokenRotation(
+		&cr.Status.AtProvider.CommonRunnerObservation,
+		cr.Spec.ForProvider.TokenRenewBeforeDays,
+	)
+
+	if runners.ShouldRotateRunnerToken(&cr.Status.AtProvider.CommonRunnerObservation, cr.Spec.ForProvider.TokenRenewBeforeDays, time.Now().UTC()) {
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
+	cr.SetConditions(v2.Available())
+
 	return managed.ExternalObservation{
-		ResourceExists:          !runners.IsRunnerTokenExpired(cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt),
+		ResourceExists:          true,
 		ResourceUpToDate:        runners.IsRunnerUpToDate(&cr.Spec.ForProvider.CommonRunnerParameters, runner),
 		ResourceLateInitialized: false,
 	}, nil
@@ -198,6 +200,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	meta.SetExternalName(cr, strconv.FormatInt(runner.ID, 10))
 
+	now := metav1.NewTime(time.Now().UTC())
+	cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt = &now
 	if runner.TokenExpiresAt != nil {
 		t := metav1.NewTime(*runner.TokenExpiresAt)
 		cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = &t

@@ -28,6 +28,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -312,9 +313,6 @@ func TestObserve(t *testing.T) {
 							ID: 1,
 						}, &gitlab.Response{}, nil
 					},
-					MockDeleteRegisteredRunnerByID: func(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-						return &gitlab.Response{}, nil
-					},
 				},
 				cr: runner(
 					withExternalName(extName),
@@ -340,7 +338,7 @@ func TestObserve(t *testing.T) {
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          false,
-					ResourceUpToDate:        true,
+					ResourceUpToDate:        false,
 					ResourceLateInitialized: false,
 				},
 			},
@@ -570,7 +568,8 @@ func TestCreate(t *testing.T) {
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
-			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions(),
+				cmpopts.IgnoreFields(commonv1alpha1.CommonRunnerObservation{}, "TokenCreatedAt")); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.result, o); diff != "" {
