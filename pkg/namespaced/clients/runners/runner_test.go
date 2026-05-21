@@ -78,7 +78,7 @@ func TestShouldRotateRunnerToken(t *testing.T) {
 	expiresAt := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC) // 90 days lifetime
 
 	// 2/3 of 90 days = 60 days → renewAt = 2026-03-02
-	renewAt2Third := createdAt.Add(time.Duration(expiresAt.Sub(createdAt) * 2 / 3))
+	renewAt2Third := createdAt.Add(expiresAt.Sub(createdAt) * 2 / 3)
 
 	intPtr := func(i int) *int { return &i }
 
@@ -151,7 +151,7 @@ func TestComputeNextRunnerTokenRotation(t *testing.T) {
 	createdAt := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	expiresAt := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC) // 90 days
 
-	renewAt2Third := createdAt.Add(time.Duration(expiresAt.Sub(createdAt) * 2 / 3))
+	renewAt2Third := createdAt.Add(expiresAt.Sub(createdAt) * 2 / 3)
 	renewAt14Days := expiresAt.AddDate(0, 0, -14)
 
 	intPtr := func(i int) *int { return &i }
