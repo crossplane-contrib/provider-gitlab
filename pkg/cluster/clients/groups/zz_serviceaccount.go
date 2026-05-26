@@ -60,6 +60,7 @@ func GenerateServiceAccountObservationFromUser(u *gitlab.User) v1alpha1.ServiceA
 			Name:     u.Name,
 			Username: u.Username,
 			Email:    u.Email,
+			Admin:    u.IsAdmin,
 		},
 	}
 }

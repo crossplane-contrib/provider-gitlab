@@ -21,6 +21,7 @@ package serviceaccounts
 import (
 	"context"
 	"strconv"
+	"sync"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -32,11 +33,13 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/instance"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
@@ -48,6 +51,25 @@ const (
 	errUpdateFailed      = "cannot update Gitlab service account"
 	errDeleteFailed      = "cannot delete Gitlab service account"
 	errIDNotInt          = "specified ID is not an integer"
+
+	accessLevelNoAccess             = "no-access"
+	accessLevelNoAccessValue        = 0
+	accessLevelMinimalAccess        = "minimal-access"
+	accessLevelMinimalAccessValue   = 5
+	accessLevelGuest                = "guest"
+	accessLevelGuestValue           = 10
+	accessLevelPlanner              = "planner"
+	accessLevelPlannerValue         = 15
+	accessLevelReporter             = "reporter"
+	accessLevelReporterValue        = 20
+	accessLevelSecurityManager      = "security-manager"
+	accessLevelSecurityManagerValue = 25
+	accessLevelDeveloper            = "developer"
+	accessLevelDeveloperValue       = 30
+	accessLevelMaintainer           = "maintainer"
+	accessLevelMaintainerValue      = 40
+	accessLevelOwner                = "owner"
+	accessLevelOwnerValue           = 50
 )
 
 // SetupServiceAccount adds a controller that reconciles GitLab Service Accounts.
@@ -109,13 +131,20 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if err != nil {
 		return nil, err
 	}
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
+	return &external{
+		kube:              c.kube,
+		client:            c.newGitlabClientFn(*cfg),
+		groupsClient:      groups.NewGroupClient(*cfg),
+		groupMemberClient: groups.NewMemberClient(*cfg),
+	}, nil
 }
 
 // external represents the external client for Gitlab Service Accounts
 type external struct {
-	kube   client.Client
-	client instance.ServiceAccountClient
+	kube              client.Client
+	client            instance.ServiceAccountClient
+	groupsClient      groups.Client
+	groupMemberClient groups.MemberClient
 }
 
 // Observe checks if the Gitlab Service Account external resource exists and whether
@@ -147,9 +176,26 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.Status.AtProvider = instance.GenerateServiceAccountObservation(serviceAccount)
 	cr.Status.SetConditions(xpv1.Available())
 
+	minPermission := ptr.Deref(cr.Spec.ForProvider.BaselinePermissions, accessLevelNoAccess)
+
+	groupsUpToDate := true
+
+	if minPermission != accessLevelNoAccess {
+		minPermissionValue := getAccessLevelValue(minPermission)
+
+		notInGroups, wrongPermsGroups, err := e.fetchTopLevelGroupsMissingPermissions(minPermissionValue, serviceAccount.ID)
+		if err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, "cannot fetch Gitlab groups missing permissions for service account")
+		}
+
+		groupsUpToDate = len(notInGroups) == 0 && len(wrongPermsGroups) == 0
+		cr.Status.AtProvider.MissingMemberShipGroups = notInGroups
+		cr.Status.AtProvider.WrongPermissionsGroups = wrongPermsGroups
+	}
+
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        instance.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount),
+		ResourceUpToDate:        instance.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) && groupsUpToDate,
 		ResourceLateInitialized: false,
 	}, nil
 }
@@ -179,6 +225,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 // Update updates the external resource to match the desired state.
+//
+//nolint:gocyclo
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
 	cr, ok := mg.(*v1alpha1.ServiceAccount)
 	if !ok {
@@ -196,19 +244,56 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
+	updateWaitGroup := sync.WaitGroup{}
+	errorsChannel := make(chan error, 3) // buffer size of 3 to avoid blocking if all operations fail
 
-	// Call GitLab Users API
-	serviceAccount, _, err := e.client.ModifyUser(
-		serviceAccountID,
-		instance.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider),
-		gitlab.WithContext(ctx))
-	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	// Reconcile service account fields
+	updateWaitGroup.Go(func() {
+		_, _, err := e.client.ModifyUser(
+			serviceAccountID,
+			instance.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider),
+			gitlab.WithContext(ctx))
+		if err != nil {
+			errorsChannel <- errors.Wrap(err, errUpdateFailed)
+			return
+		}
+	})
+
+	minPermission := ptr.Deref(cr.Spec.ForProvider.BaselinePermissions, accessLevelNoAccess)
+	minPermissionValue := getAccessLevelValue(minPermission)
+
+	// Reconcile service account group memberships
+	updateWaitGroup.Go(func() {
+		if cr.Status.AtProvider.MissingMemberShipGroups != nil {
+			errorsChannel <- e.addServiceAccountToGroups(ctx, serviceAccountID, cr.Status.AtProvider.MissingMemberShipGroups, minPermissionValue)
+		}
+	})
+
+	// Reconcile service account group permissions
+	updateWaitGroup.Go(func() {
+		if cr.Status.AtProvider.WrongPermissionsGroups != nil {
+			errorsChannel <- e.updateServiceAccountGroupPermissions(ctx, serviceAccountID, cr.Status.AtProvider.WrongPermissionsGroups, minPermissionValue)
+		}
+	})
+
+	updateWaitGroup.Wait()
+	close(errorsChannel)
+
+	errorsSlice := make([]error, 0)
+	for err := range errorsChannel {
+		if err != nil {
+			errorsSlice = append(errorsSlice, err)
+		}
 	}
 
-	cr.Status.AtProvider = instance.GenerateServiceAccountObservation(serviceAccount)
-
-	return managed.ExternalUpdate{}, nil
+	switch len(errorsSlice) {
+	case 0:
+		return managed.ExternalUpdate{}, nil
+	case 1:
+		return managed.ExternalUpdate{}, errorsSlice[0]
+	default:
+		return managed.ExternalUpdate{}, errors.Join(errorsSlice...)
+	}
 }
 
 // Delete removes the service account resource.

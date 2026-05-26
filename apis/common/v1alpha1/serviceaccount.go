@@ -48,4 +48,6 @@ type CommonServiceAccountObservation struct {
 	Username string `json:"username"`
 	// Email represents the email of the service account.
 	Email string `json:"email"`
+	// Admin represents whether the service account has admin privileges.
+	Admin bool `json:"admin"`
 }
