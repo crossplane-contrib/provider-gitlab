@@ -76,6 +76,8 @@ func requestContext(t *testing.T, options []gitlab.RequestOptionFunc) context.Co
 	return req.Context()
 }
 
+type observeContextKey struct{}
+
 func TestFetchTopLevelGroupsPage(t *testing.T) {
 	client := &groupsfake.MockClient{
 		MockListGroups: func(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error) {
@@ -226,7 +228,7 @@ func TestFetchTopLevelGroupsMissingPermissions(t *testing.T) {
 }
 
 func TestGetGroupPermissionStatusUsesContext(t *testing.T) {
-	ctxKey := struct{}{}
+	ctxKey := observeContextKey{}
 	ctxValue := "observe-context"
 	client := &groupsfake.MockClient{
 		MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {

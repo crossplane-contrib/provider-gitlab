@@ -82,8 +82,6 @@ func (e *external) updateServiceAccountGroupPermissions(ctx context.Context, ser
 }
 
 // fetchTopLevelGroupsMissingPermissions is a helper function that returns a list of top level group IDs that the service account is missing permissions for, based on the specified minimum permission level. This is used to determine which groups the service account needs to be added to in order to satisfy the BaselinePermissions field.
-//
-//nolint:gocyclo
 func (e *external) fetchTopLevelGroupsMissingPermissions(ctx context.Context, minPermission int, serviceAccountID int64) (notInGroups []int64, wrongPermsGroups []int64, err error) {
 	var (
 		groupsMissingPermissionsMu sync.Mutex
