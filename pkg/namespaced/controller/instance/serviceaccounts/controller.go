@@ -181,7 +181,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if minPermission != accessLevelNoAccess {
 		minPermissionValue := getAccessLevelValue(minPermission)
 
-		notInGroups, wrongPermsGroups, err := e.fetchTopLevelGroupsMissingPermissions(minPermissionValue, serviceAccount.ID)
+		notInGroups, wrongPermsGroups, err := e.fetchTopLevelGroupsMissingPermissions(ctx, minPermissionValue, serviceAccount.ID)
 		if err != nil {
 			return managed.ExternalObservation{}, errors.Wrap(err, "cannot fetch Gitlab groups missing permissions for service account")
 		}
