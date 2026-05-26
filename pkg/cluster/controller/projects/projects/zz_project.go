@@ -365,6 +365,15 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 
 	in.MergeMethod = clients.LateInitializeMergeMethodValue(in.MergeMethod, project.MergeMethod)
 	in.MergeRequestsAccessLevel = clients.LateInitializeAccessControlValue(in.MergeRequestsAccessLevel, project.MergeRequestsAccessLevel)
+	if in.MergeTrainsEnabled == nil {
+		in.MergeTrainsEnabled = &project.MergeTrainsEnabled
+	}
+	if in.MergeTrainsSkipTrainAllowed == nil {
+		in.MergeTrainsSkipTrainAllowed = &project.MergeTrainsSkipTrainAllowed
+	}
+	if in.MergePipelinesEnabled == nil {
+		in.MergePipelinesEnabled = &project.MergePipelinesEnabled
+	}
 	in.MergeRequestsTemplate = clients.LateInitializeStringPtr(in.MergeRequestsTemplate, project.MergeRequestsTemplate)
 
 	if in.Mirror == nil {
@@ -583,6 +592,15 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.MergeRequestsAccessLevel), string(g.MergeRequestsAccessLevel)) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.MergeTrainsEnabled, g.MergeTrainsEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.MergeTrainsSkipTrainAllowed, g.MergeTrainsSkipTrainAllowed) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.MergePipelinesEnabled, g.MergePipelinesEnabled) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.MergeRequestsTemplate, g.MergeRequestsTemplate) {

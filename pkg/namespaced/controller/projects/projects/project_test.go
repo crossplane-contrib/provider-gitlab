@@ -84,6 +84,14 @@ func withProjectPushRules(pr *v1alpha1.PushRules) projectModifier {
 	return func(r *v1alpha1.Project) { r.Spec.ForProvider.PushRules = pr }
 }
 
+func withMergeTrainSettings(enabled, skipAllowed, pipelines *bool) projectModifier {
+	return func(r *v1alpha1.Project) {
+		r.Spec.ForProvider.MergeTrainsEnabled = enabled
+		r.Spec.ForProvider.MergeTrainsSkipTrainAllowed = skipAllowed
+		r.Spec.ForProvider.MergePipelinesEnabled = pipelines
+	}
+}
+
 func withClientDefaultValues() projectModifier {
 	return func(p *v1alpha1.Project) {
 		f := false
@@ -107,6 +115,9 @@ func withClientDefaultValues() projectModifier {
 			CIDefaultGitDepth:                         &i64,
 			AutoDevopsEnabled:                         &f,
 			ApprovalsBeforeMerge:                      &i64,
+			MergeTrainsEnabled:                        &f,
+			MergeTrainsSkipTrainAllowed:               &f,
+			MergePipelinesEnabled:                     &f,
 			Mirror:                                    &f,
 			MirrorUserID:                              &i64,
 			MirrorTriggerBuilds:                       &f,
@@ -637,7 +648,10 @@ func TestObserve(t *testing.T) {
 				},
 				project: &fake.MockClient{
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return &gitlab.Project{Path: path, RunnersToken: "token"}, &gitlab.Response{}, nil
+						return &gitlab.Project{
+							Path:         path,
+							RunnersToken: "token",
+						}, &gitlab.Response{}, nil
 					},
 					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
 						return &gitlab.ProjectPushRules{}, nil, nil
@@ -660,7 +674,51 @@ func TestObserve(t *testing.T) {
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
 					ResourceUpToDate:        true, // Both spec and GitLab have no/empty rules
-					ResourceLateInitialized: true, // Only the path should be late-initialized
+					ResourceLateInitialized: true, // Only path should be late-initialized
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("token")},
+				},
+			},
+		},
+		"LateInitMergeTrainSettings": {
+			args: args{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{
+							MergeTrainsEnabled:          true,
+							MergeTrainsSkipTrainAllowed: true,
+							MergePipelinesEnabled:       true,
+							RunnersToken:                "token",
+						}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, nil, nil
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					withMergeTrainSettings(nil, nil, nil),
+					withExternalName(extName),
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withMergeTrainSettings(ptr.To(true), ptr.To(true), ptr.To(true)),
+					withConditions(xpv1.Available()),
+					withExternalName(extName),
+					withStatus(v1alpha1.ProjectObservation{
+						MergeTrainsEnabled:          true,
+						MergeTrainsSkipTrainAllowed: true,
+						MergePipelinesEnabled:       true,
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: true,
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("token")},
 				},
 			},
@@ -810,6 +868,9 @@ func TestObserve(t *testing.T) {
 		"IssuesAccessLevel":                         gitlab.PublicAccessControl,
 		"RepositoryAccessLevel":                     gitlab.PublicAccessControl,
 		"MergeRequestsAccessLevel":                  gitlab.PublicAccessControl,
+		"MergeTrainsEnabled":                        true,
+		"MergeTrainsSkipTrainAllowed":               true,
+		"MergePipelinesEnabled":                     true,
 		"ForkingAccessLevel":                        gitlab.PublicAccessControl,
 		"BuildsAccessLevel":                         gitlab.PublicAccessControl,
 		"WikiAccessLevel":                           gitlab.PublicAccessControl,
@@ -860,6 +921,9 @@ func TestObserve(t *testing.T) {
 		IssuesAccessLevel:                &al,
 		RepositoryAccessLevel:            &al,
 		MergeRequestsAccessLevel:         &al,
+		MergeTrainsEnabled:               &f,
+		MergeTrainsSkipTrainAllowed:      &f,
+		MergePipelinesEnabled:            &f,
 		ApprovalsBeforeMerge:             ptr.To(int64(0)),
 		ForkingAccessLevel:               &al,
 		BuildsAccessLevel:                &al,
@@ -949,6 +1013,9 @@ func TestObserve(t *testing.T) {
 			IssuesAccessLevel:                gitlab.PublicAccessControl,
 			RepositoryAccessLevel:            gitlab.PublicAccessControl,
 			MergeRequestsAccessLevel:         gitlab.PublicAccessControl,
+			MergeTrainsEnabled:               f,
+			MergeTrainsSkipTrainAllowed:      f,
+			MergePipelinesEnabled:            f,
 			ForkingAccessLevel:               gitlab.PublicAccessControl,
 			BuildsAccessLevel:                gitlab.PublicAccessControl,
 			WikiAccessLevel:                  gitlab.PublicAccessControl,
@@ -981,12 +1048,23 @@ func TestObserve(t *testing.T) {
 			AllowMergeOnSkippedPipeline:      f,
 			CIForwardDeploymentEnabled:       f,
 		}
-		gitlabProject.Name = name
 		structValue := reflect.ValueOf(gitlabProject).Elem()
 		structFieldValue := structValue.FieldByName(name)
 		val := reflect.ValueOf(value)
 
 		structFieldValue.Set(val)
+		if name == "MergeTrainsEnabled" || name == "MergeTrainsSkipTrainAllowed" || name == "MergePipelinesEnabled" {
+			wantProjectModifier = append(wantProjectModifier, withStatus(v1alpha1.ProjectObservation{
+				IssuesAccessLevel:           al,
+				BuildsAccessLevel:           al,
+				MergeRequestsAccessLevel:    al,
+				SnippetsAccessLevel:         al,
+				WikiAccessLevel:             al,
+				MergeTrainsEnabled:          gitlabProject.MergeTrainsEnabled,
+				MergeTrainsSkipTrainAllowed: gitlabProject.MergeTrainsSkipTrainAllowed,
+				MergePipelinesEnabled:       gitlabProject.MergePipelinesEnabled,
+			}))
+		}
 		cases["IsProjectUpToDate"+name] = struct {
 			args
 			want
