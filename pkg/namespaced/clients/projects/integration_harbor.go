@@ -1,0 +1,103 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package projects
+
+import (
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+// HarborClient defines GitLab Harbor integration operations for a project.
+type HarborClient interface {
+	GetHarborService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborService, *gitlab.Response, error)
+	SetHarborService(pid any, opt *gitlab.SetHarborServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborService, *gitlab.Response, error)
+	DeleteHarborService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// NewHarborClient returns a new GitLab Services client for project Harbor operations.
+func NewHarborClient(cfg common.Config) HarborClient {
+	git := common.NewClient(cfg)
+	return git.Services
+}
+
+// GenerateSetHarborServiceOptions produces SetHarborServiceOptions from IntegrationHarborParameters.
+// The password value must be resolved from the referenced secret prior to calling this function
+// and passed in through `password`. An empty password is omitted from the options so that
+// existing remote state is not unintentionally cleared.
+func GenerateSetHarborServiceOptions(in *v1alpha1.IntegrationHarborParameters, password string) *gitlab.SetHarborServiceOptions {
+	if in == nil {
+		return &gitlab.SetHarborServiceOptions{}
+	}
+
+	opts := gitlab.SetHarborServiceOptions{
+		URL:                  &in.URL,
+		ProjectName:          &in.ProjectName,
+		Username:             &in.Username,
+		UseInheritedSettings: in.UseInheritedSettings,
+	}
+
+	// Password is write-only and required at initial set time; only include it when provided.
+	if password != "" {
+		opts.Password = &password
+	}
+
+	return &opts
+}
+
+// GenerateIntegrationHarborObservation converts gitlab.HarborService to IntegrationHarborObservation.
+func GenerateIntegrationHarborObservation(observation *gitlab.HarborService) v1alpha1.IntegrationHarborObservation {
+	if observation == nil || observation.Properties == nil {
+		return v1alpha1.IntegrationHarborObservation{}
+	}
+
+	commonObservation := common.GenerateCommonIntegrationObservation(&observation.Service)
+
+	return v1alpha1.IntegrationHarborObservation{
+		CommonIntegrationObservation: commonObservation,
+		URL:                          observation.Properties.URL,
+		ProjectName:                  observation.Properties.ProjectName,
+		Username:                     observation.Properties.Username,
+		UseInheritedSettings:         observation.Properties.UseInheritedSettings,
+	}
+}
+
+// IsIntegrationHarborUpToDate returns true if the desired spec matches the observed Harbor service.
+//
+// Note: Password is intentionally excluded from comparison because GitLab does not return it (write-only).
+func IsIntegrationHarborUpToDate(spec *v1alpha1.IntegrationHarborParameters, observation *gitlab.HarborService) bool {
+	if observation == nil || observation.Properties == nil {
+		return false
+	}
+
+	return spec.URL == observation.Properties.URL &&
+		spec.ProjectName == observation.Properties.ProjectName &&
+		spec.Username == observation.Properties.Username &&
+		clients.IsComparableEqualToComparablePtr(spec.UseInheritedSettings, observation.Properties.UseInheritedSettings)
+}
+
+// LateInitializeIntegrationHarbor fills nil spec fields using values from the remote Harbor service.
+// It mutates the spec in place and does NOT touch write-only fields like the password.
+func LateInitializeIntegrationHarbor(in *v1alpha1.IntegrationHarborParameters, svc *gitlab.HarborService) {
+	if in == nil || svc == nil || svc.Properties == nil {
+		return
+	}
+
+	in.UseInheritedSettings = clients.LateInitializeFromValue(in.UseInheritedSettings, svc.Properties.UseInheritedSettings)
+}
