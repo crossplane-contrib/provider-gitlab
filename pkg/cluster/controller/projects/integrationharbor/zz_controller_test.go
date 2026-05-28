@@ -211,8 +211,85 @@ func TestObserve(t *testing.T) {
 				err: errors.New(errNotIntegrationHarbor),
 			},
 		},
-		"DeletingResource": {
+		"DeletingResourceStillExists": {
 			args: args{
+				harborClient: &fake.MockClient{
+					MockGetHarborService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborService, *gitlab.Response, error) {
+						return &gitlab.HarborService{
+							Service: gitlab.Service{
+								ID:     testIntegID,
+								Active: true,
+							},
+							Properties: &gitlab.HarborServiceProperties{
+								URL:         testHarborURL,
+								ProjectName: testProjectName,
+								Username:    testUsername,
+							},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationHarbor(
+					withProjectID(testProjectID),
+					withURL(testHarborURL),
+					withProjName(testProjectName),
+					withHarborUsername(testUsername),
+					withUseInheritedSettings(testUseInherited),
+					withDeletionTimestamp(time.Now()),
+				),
+			},
+			want: want{
+				cr: integrationHarbor(
+					withProjectID(testProjectID),
+					withURL(testHarborURL),
+					withProjName(testProjectName),
+					withHarborUsername(testUsername),
+					withUseInheritedSettings(testUseInherited),
+					withDeletionTimestamp(time.Now()),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.IntegrationHarborObservation{
+						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
+							ID:                             ptr.To(testIntegID),
+							Title:                          ptr.To(""),
+							Slug:                           ptr.To(""),
+							Active:                         ptr.To(true),
+							AlertEvents:                    ptr.To(false),
+							CommitEvents:                   ptr.To(false),
+							ConfidentialIssuesEvents:       ptr.To(false),
+							ConfidentialNoteEvents:         ptr.To(false),
+							DeploymentEvents:               ptr.To(false),
+							GroupConfidentialMentionEvents: ptr.To(false),
+							GroupMentionEvents:             ptr.To(false),
+							IncidentEvents:                 ptr.To(false),
+							IssuesEvents:                   ptr.To(false),
+							JobEvents:                      ptr.To(false),
+							MergeRequestsEvents:            ptr.To(false),
+							NoteEvents:                     ptr.To(false),
+							PipelineEvents:                 ptr.To(false),
+							PushEvents:                     ptr.To(false),
+							TagPushEvents:                  ptr.To(false),
+							VulnerabilityEvents:            ptr.To(false),
+							WikiPageEvents:                 ptr.To(false),
+							CommentOnEventEnabled:          ptr.To(false),
+							Inherited:                      ptr.To(false),
+						},
+						URL:         testHarborURL,
+						ProjectName: testProjectName,
+						Username:    testUsername,
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:   true,
+					ResourceUpToDate: true,
+				},
+			},
+		},
+		"DeletingResourceAlreadyGone": {
+			args: args{
+				harborClient: &fake.MockClient{
+					MockGetHarborService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborService, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
 				cr: integrationHarbor(
 					withProjectID(testProjectID),
 					withDeletionTimestamp(time.Now()),
@@ -322,9 +399,10 @@ func TestObserve(t *testing.T) {
 					MockGetHarborService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborService, *gitlab.Response, error) {
 						return &gitlab.HarborService{
 							Service: gitlab.Service{
-								ID:    testIntegID,
-								Title: "Harbor",
-								Slug:  "harbor",
+								ID:     testIntegID,
+								Title:  "Harbor",
+								Slug:   "harbor",
+								Active: true,
 							},
 							Properties: &gitlab.HarborServiceProperties{
 								URL:                  testHarborURL,
@@ -356,7 +434,7 @@ func TestObserve(t *testing.T) {
 							ID:                             ptr.To(testIntegID),
 							Title:                          ptr.To("Harbor"),
 							Slug:                           ptr.To("harbor"),
-							Active:                         ptr.To(false),
+							Active:                         ptr.To(true),
 							AlertEvents:                    ptr.To(false),
 							CommitEvents:                   ptr.To(false),
 							ConfidentialIssuesEvents:       ptr.To(false),
@@ -395,9 +473,10 @@ func TestObserve(t *testing.T) {
 					MockGetHarborService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborService, *gitlab.Response, error) {
 						return &gitlab.HarborService{
 							Service: gitlab.Service{
-								ID:    testIntegID,
-								Title: "Harbor",
-								Slug:  "harbor",
+								ID:     testIntegID,
+								Title:  "Harbor",
+								Slug:   "harbor",
+								Active: true,
 							},
 							Properties: &gitlab.HarborServiceProperties{
 								URL:         "https://other.harbor",
@@ -427,7 +506,7 @@ func TestObserve(t *testing.T) {
 							ID:                             ptr.To(testIntegID),
 							Title:                          ptr.To("Harbor"),
 							Slug:                           ptr.To("harbor"),
-							Active:                         ptr.To(false),
+							Active:                         ptr.To(true),
 							AlertEvents:                    ptr.To(false),
 							CommitEvents:                   ptr.To(false),
 							ConfidentialIssuesEvents:       ptr.To(false),
@@ -664,7 +743,6 @@ func TestUpdate(t *testing.T) {
 					withProjectID(testProjectID),
 					withURL(testHarborURL),
 					withPasswordSecretRef("my-secret", "password"),
-					withConditions(xpv1.Creating()),
 				),
 				err: errors.Wrap(errors.Wrap(errors.Wrap(errBoom, "Cannot find referenced secret"), errPasswordMissing), errUpdateFailed),
 			},
@@ -692,7 +770,6 @@ func TestUpdate(t *testing.T) {
 					withProjName(testProjectName),
 					withHarborUsername(testUsername),
 					withPasswordSecretRef("my-secret", "password"),
-					withConditions(xpv1.Creating()),
 				),
 				result: managed.ExternalUpdate{},
 			},
@@ -716,7 +793,6 @@ func TestUpdate(t *testing.T) {
 					withProjectID(testProjectID),
 					withURL(testHarborURL),
 					withPasswordSecretRef("my-secret", "password"),
-					withConditions(xpv1.Creating()),
 				),
 				result: managed.ExternalUpdate{},
 				err:    errors.Wrap(errBoom, errUpdateFailed),
