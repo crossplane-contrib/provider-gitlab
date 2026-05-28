@@ -59,6 +59,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	AllowRunnerRegistrationToken *bool `json:"allowRunnerRegistrationToken,omitempty"`
 	// +optional
+	AnonymousSearchesAllowed *bool `json:"anonymousSearchesAllowed,omitempty"`
+	// +optional
 	ArchiveBuildsInHumanReadable *string `json:"archiveBuildsInHumanReadable,omitempty"`
 	// +optional
 	ASCIIDocMaxIncludes *int64 `json:"asciiDocMaxIncludes,omitempty"`
@@ -200,6 +202,8 @@ type ApplicationSettingsParameters struct {
 	DisableAdminOAuthScopes *bool `json:"disableAdminOAuthScopes,omitempty"`
 	// +optional
 	DisableOverridingApproversPerMergeRequest *bool `json:"disableOverridingApproversPerMergeRequest,omitempty"`
+	// +optional
+	DisablePasswordAuthenticationForUsersWithSSOIdentities *bool `json:"disablePasswordAuthenticationForUsersWithSSOIdentities,omitempty"`
 	// +optional
 	DisablePersonalAccessTokens *bool `json:"disablePersonalAccessTokens,omitempty"`
 	// +optional
@@ -427,6 +431,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	InactiveProjectsSendWarningEmailAfterMonths *int64 `json:"inactiveProjectsSendWarningEmailAfterMonths,omitempty"`
 	// +optional
+	InactiveResourceAccessTokensDeleteAfterDays *int64 `json:"inactiveResourceAccessTokensDeleteAfterDays,omitempty"`
+	// +optional
 	IncludeOptionalMetricsInServicePing *bool `json:"includeOptionalMetricsInServicePing,omitempty"`
 	// +optional
 	InProductMarketingEmailsEnabled *bool `json:"inProductMarketingEmailsEnabled,omitempty"`
@@ -532,6 +538,8 @@ type ApplicationSettingsParameters struct {
 	PackageRegistryCleanupPoliciesWorkerCapacity *int64 `json:"packageRegistryCleanupPoliciesWorkerCapacity,omitempty"`
 	// +optional
 	PagesDomainVerificationEnabled *bool `json:"pagesDomainVerificationEnabled,omitempty"`
+	// +optional
+	PagesUniqueDomainDefaultEnabled *bool `json:"pagesUniqueDomainDefaultEnabled,omitempty"`
 	// +optional
 	PasswordAuthenticationEnabledForGit *bool `json:"passwordAuthenticationEnabledForGit,omitempty"`
 	// +optional
@@ -643,6 +651,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	SecretDetectionTokenRevocationURL *string `json:"secretDetectionTokenRevocationUrl,omitempty"`
 	// +optional
+	SecretPushProtectionAvailable *bool `json:"secretPushProtectionAvailable,omitempty"`
+	// +optional
 	SecurityApprovalPoliciesLimit *int64 `json:"securityApprovalPoliciesLimit,omitempty"`
 	// +optional
 	SecurityPolicyGlobalGroupApproversEnabled *bool `json:"securityPolicyGlobalGroupApproversEnabled,omitempty"`
@@ -655,13 +665,15 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	SentryDSN *string `json:"sentryDSN,omitempty"`
 	// +optional
-	SentryEnabled *string `json:"sentryEnabled,omitempty"`
+	SentryEnabled *bool `json:"sentryEnabled,omitempty"`
 	// +optional
 	SentryEnvironment *string `json:"sentryEnvironment,omitempty"`
 	// +optional
 	ServiceAccessTokensExpirationEnforced *bool `json:"serviceAccessTokensExpirationEnforced,omitempty"`
 	// +optional
 	SessionExpireDelay *int64 `json:"sessionExpireDelay,omitempty"`
+	// +optional
+	SessionExpireFromInit *bool `json:"sessionExpireFromInit,omitempty"`
 	// +optional
 	SharedRunnersEnabled *bool `json:"sharedRunnersEnabled,omitempty"`
 	// +optional
@@ -871,6 +883,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	WikiPageMaxContentBytes *int64 `json:"wikiPageMaxContentBytes,omitempty"`
 	// +optional
+	LockMembershipsToSAML *bool `json:"lockMembershipsToSAML,omitempty"`
+	// +optional
 	AdminNotificationEmail *string `json:"adminNotificationEmail,omitempty"`
 	// +optional
 	AllowLocalRequestsFromHooksAndServices *bool `json:"allowLocalRequestsFromHooksAndServices,omitempty"`
@@ -929,6 +943,8 @@ type ApplicationSettingsObservation struct {
 	AllowProjectCreationForGuestAndBelow bool `json:"allowProjectCreationForGuestAndBelow"`
 	// +optional
 	AllowRunnerRegistrationToken bool `json:"allowRunnerRegistrationToken"`
+	// +optional
+	AnonymousSearchesAllowed bool `json:"anonymousSearchesAllowed"`
 	// +optional
 	ArchiveBuildsInHumanReadable string `json:"archiveBuildsInHumanReadable"`
 	// +optional
@@ -1067,6 +1083,8 @@ type ApplicationSettingsObservation struct {
 	DisableFeedToken bool `json:"disableFeedToken"`
 	// +optional
 	DisableOverridingApproversPerMergeRequest bool `json:"disableOverridingApproversPerMergeRequest"`
+	// +optional
+	DisablePasswordAuthenticationForUsersWithSSOIdentities bool `json:"disablePasswordAuthenticationForUsersWithSSOIdentities"`
 	// +optional
 	DisablePersonalAccessTokens bool `json:"disablePersonalAccessTokens"`
 	// +optional
@@ -1266,6 +1284,8 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	InactiveProjectsSendWarningEmailAfterMonths int64 `json:"inactiveProjectsSendWarningEmailAfterMonths"`
 	// +optional
+	InactiveResourceAccessTokensDeleteAfterDays int64 `json:"inactiveResourceAccessTokensDeleteAfterDays"`
+	// +optional
 	IncludeOptionalMetricsInServicePing bool `json:"includeOptionalMetricsInServicePing"`
 	// +optional
 	InProductMarketingEmailsEnabled bool `json:"inProductMarketingEmailsEnabled"`
@@ -1363,6 +1383,8 @@ type ApplicationSettingsObservation struct {
 	PackageRegistryCleanupPoliciesWorkerCapacity int64 `json:"packageRegistryCleanupPoliciesWorkerCapacity"`
 	// +optional
 	PagesDomainVerificationEnabled bool `json:"pagesDomainVerificationEnabled"`
+	// +optional
+	PagesUniqueDomainDefaultEnabled bool `json:"pagesUniqueDomainDefaultEnabled"`
 	// +optional
 	PasswordAuthenticationEnabledForGit bool `json:"passwordAuthenticationEnabledForGit"`
 	// +optional
@@ -1462,6 +1484,8 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	SecretDetectionTokenRevocationURL string `json:"secretDetectionTokenRevocationUrl"`
 	// +optional
+	SecretPushProtectionAvailable bool `json:"secretPushProtectionAvailable"`
+	// +optional
 	SecurityApprovalPoliciesLimit int64 `json:"securityApprovalPoliciesLimit"`
 	// +optional
 	SecurityPolicyGlobalGroupApproversEnabled bool `json:"securityPolicyGlobalGroupApproversEnabled"`
@@ -1481,6 +1505,8 @@ type ApplicationSettingsObservation struct {
 	ServiceAccessTokensExpirationEnforced bool `json:"serviceAccessTokensExpirationEnforced"`
 	// +optional
 	SessionExpireDelay int64 `json:"sessionExpireDelay"`
+	// +optional
+	SessionExpireFromInit bool `json:"sessionExpireFromInit"`
 	// +optional
 	SharedRunnersEnabled bool `json:"sharedRunnersEnabled"`
 	// +optional
@@ -1669,6 +1695,8 @@ type ApplicationSettingsObservation struct {
 	WhatsNewVariant string `json:"whatsNewVariant"`
 	// +optional
 	WikiPageMaxContentBytes int64 `json:"wikiPageMaxContentBytes"`
+	// +optional
+	LockMembershipsToSAML bool `json:"lockMembershipsToSAML"`
 	// +optional
 	DefaultBranchProtection int64 `json:"defaultBranchProtection"`
 	// +optional

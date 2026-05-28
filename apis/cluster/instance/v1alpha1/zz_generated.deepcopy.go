@@ -537,6 +537,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(bool)
 		**out = **in
 	}
+	if in.AnonymousSearchesAllowed != nil {
+		in, out := &in.AnonymousSearchesAllowed, &out.AnonymousSearchesAllowed
+		*out = new(bool)
+		**out = **in
+	}
 	if in.ArchiveBuildsInHumanReadable != nil {
 		in, out := &in.ArchiveBuildsInHumanReadable, &out.ArchiveBuildsInHumanReadable
 		*out = new(string)
@@ -892,6 +897,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.DisableOverridingApproversPerMergeRequest != nil {
 		in, out := &in.DisableOverridingApproversPerMergeRequest, &out.DisableOverridingApproversPerMergeRequest
+		*out = new(bool)
+		**out = **in
+	}
+	if in.DisablePasswordAuthenticationForUsersWithSSOIdentities != nil {
+		in, out := &in.DisablePasswordAuthenticationForUsersWithSSOIdentities, &out.DisablePasswordAuthenticationForUsersWithSSOIdentities
 		*out = new(bool)
 		**out = **in
 	}
@@ -1492,6 +1502,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(int64)
 		**out = **in
 	}
+	if in.InactiveResourceAccessTokensDeleteAfterDays != nil {
+		in, out := &in.InactiveResourceAccessTokensDeleteAfterDays, &out.InactiveResourceAccessTokensDeleteAfterDays
+		*out = new(int64)
+		**out = **in
+	}
 	if in.IncludeOptionalMetricsInServicePing != nil {
 		in, out := &in.IncludeOptionalMetricsInServicePing, &out.IncludeOptionalMetricsInServicePing
 		*out = new(bool)
@@ -1768,6 +1783,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.PagesDomainVerificationEnabled != nil {
 		in, out := &in.PagesDomainVerificationEnabled, &out.PagesDomainVerificationEnabled
+		*out = new(bool)
+		**out = **in
+	}
+	if in.PagesUniqueDomainDefaultEnabled != nil {
+		in, out := &in.PagesUniqueDomainDefaultEnabled, &out.PagesUniqueDomainDefaultEnabled
 		*out = new(bool)
 		**out = **in
 	}
@@ -2060,6 +2080,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(string)
 		**out = **in
 	}
+	if in.SecretPushProtectionAvailable != nil {
+		in, out := &in.SecretPushProtectionAvailable, &out.SecretPushProtectionAvailable
+		*out = new(bool)
+		**out = **in
+	}
 	if in.SecurityApprovalPoliciesLimit != nil {
 		in, out := &in.SecurityApprovalPoliciesLimit, &out.SecurityApprovalPoliciesLimit
 		*out = new(int64)
@@ -2092,7 +2117,7 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.SentryEnabled != nil {
 		in, out := &in.SentryEnabled, &out.SentryEnabled
-		*out = new(string)
+		*out = new(bool)
 		**out = **in
 	}
 	if in.SentryEnvironment != nil {
@@ -2108,6 +2133,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	if in.SessionExpireDelay != nil {
 		in, out := &in.SessionExpireDelay, &out.SessionExpireDelay
 		*out = new(int64)
+		**out = **in
+	}
+	if in.SessionExpireFromInit != nil {
+		in, out := &in.SessionExpireFromInit, &out.SessionExpireFromInit
+		*out = new(bool)
 		**out = **in
 	}
 	if in.SharedRunnersEnabled != nil {
@@ -2632,6 +2662,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	if in.WikiPageMaxContentBytes != nil {
 		in, out := &in.WikiPageMaxContentBytes, &out.WikiPageMaxContentBytes
 		*out = new(int64)
+		**out = **in
+	}
+	if in.LockMembershipsToSAML != nil {
+		in, out := &in.LockMembershipsToSAML, &out.LockMembershipsToSAML
+		*out = new(bool)
 		**out = **in
 	}
 	if in.AdminNotificationEmail != nil {

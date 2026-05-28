@@ -28,7 +28,7 @@ import (
 	xerrors "github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 
 	groupsfake "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups/fake"
 )

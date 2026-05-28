@@ -19,7 +19,7 @@ limitations under the License.
 package users
 
 import (
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 
 	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
 	instancev1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"

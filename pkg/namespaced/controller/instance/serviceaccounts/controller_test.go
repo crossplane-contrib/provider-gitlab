@@ -30,7 +30,7 @@ import (
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	pkgerrors "github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -52,13 +52,13 @@ const (
 
 // MockClient is a small mock for instance.ServiceAccountClient used by controller tests.
 type MockClient struct {
-	MockGetUser                  func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	MockGetUser                  func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	MockCreateServiceAccountUser func(opts *gitlab.CreateServiceAccountUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	MockModifyUser               func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	MockDeleteUser               func(user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
-func (m *MockClient) GetUser(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+func (m *MockClient) GetUser(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 	return m.MockGetUser(user, opt, options...)
 }
 
@@ -165,19 +165,19 @@ func TestObserve(t *testing.T) {
 			want: want{cr: serviceAccount(withSpec(desired)), result: managed.ExternalObservation{ResourceExists: false}},
 		},
 		"NotIDExternalName": {
-			args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 			}}, cr: serviceAccount(withExternalName("fr"), withSpec(desired))},
 			want: want{cr: serviceAccount(withExternalName("fr"), withSpec(desired)), err: errors.New(errIDNotInt)},
 		},
 		"ErrGet": {
-			args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return nil, &gitlab.Response{Response: &http.Response{StatusCode: 500}}, errBoom
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
 			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired)), err: errors.Wrap(errBoom, errGetFailed)},
 		},
 		"ErrGet404": {
-			args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
 			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired)), result: managed.ExternalObservation{}},
@@ -192,14 +192,14 @@ func TestObserve(t *testing.T) {
 				args args
 				want want
 			}{
-				args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
 				}}, cr: sa},
 				want: want{cr: sa, result: managed.ExternalObservation{}},
 			}
 		}(),
 		"SuccessfulAvailableUpToDate": {
-			args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
 			want: want{
@@ -213,7 +213,7 @@ func TestObserve(t *testing.T) {
 			},
 		},
 		"SuccessfulAvailableNotUpToDate": {
-			args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: "different@example.org"}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
 			want: want{

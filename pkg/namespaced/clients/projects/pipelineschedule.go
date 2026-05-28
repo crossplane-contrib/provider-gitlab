@@ -16,7 +16,7 @@ limitations under the License.
 
 package projects
 
-import gitlab "gitlab.com/gitlab-org/api/client-go"
+import gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 
 // PipelineScheduleClient is an interface for Gitlab PipelineScheduleService.
 type PipelineScheduleClient interface {
