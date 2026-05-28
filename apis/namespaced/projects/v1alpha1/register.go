@@ -93,6 +93,14 @@ var (
 	VariableGroupVersionKind = SchemeGroupVersion.WithKind(VariableKind)
 )
 
+// RepositoryFile type metadata
+var (
+	RepositoryFileKind             = reflect.TypeOf(RepositoryFile{}).Name()
+	RepositoryFileGroupKind        = schema.GroupKind{Group: Group, Kind: RepositoryFileKind}.String()
+	RepositoryFileKindAPIVersion   = RepositoryFileKind + "." + SchemeGroupVersion.String()
+	RepositoryFileGroupVersionKind = SchemeGroupVersion.WithKind(RepositoryFileKind)
+)
+
 // Deploy Key type metadata
 var (
 	DeployKeyKind             = reflect.TypeOf(DeployKey{}).Name()
@@ -163,6 +171,7 @@ func init() {
 	SchemeBuilder.Register(&ApprovalRule{}, &ApprovalRuleList{})
 	SchemeBuilder.Register(&DeployToken{}, &DeployTokenList{})
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
+	SchemeBuilder.Register(&RepositoryFile{}, &RepositoryFileList{})
 	SchemeBuilder.Register(&DeployKey{}, &DeployKeyList{})
 	SchemeBuilder.Register(&AccessToken{}, &AccessTokenList{})
 	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})

@@ -1,0 +1,33 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: RepositoryFile
+metadata:
+  name: local-repositoryfile-createonly
+  namespace: default
+spec:
+  managementPolicies:
+    - Observe
+    - Create
+    - Delete
+  forProvider:
+    projectId: "1"
+    filePath: bootstrap/CREATE-ONCE.md
+    branch: main
+    reconcileInterval: 8h
+    createOnly: true
+    createCommitMessage: "docs: add create-once bootstrap note"
+    deleteCommitMessage: "docs: remove create-once bootstrap note"
+    content: |
+      # Create Once
+
+      This file was created by the RepositoryFile resource with `createOnly: true`.
+
+      Crossplane should ensure the file exists, but it should not keep rewriting the
+      content after creation. This is useful for bootstrap files or initial seed data
+      that operators may want to edit manually later on.
+
+      Reconcile interval: 8h
+      Project ID: 1
+      Resource: local-repositoryfile-createonly
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig

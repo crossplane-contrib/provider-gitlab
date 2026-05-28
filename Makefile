@@ -9,8 +9,8 @@ PLATFORMS ?= linux_amd64 linux_arm64
 # kind-related versions
 KIND_VERSION = v0.24.0
 
-# upgraded golangci-lint to Go 1.25 compatible version
-GOLANGCILINT_VERSION = 2.5.0
+# pinned golangci-lint version used by make targets
+GOLANGCILINT_VERSION = 2.11.4
 
 # -include will silently skip missing files, which allows us
 # to load those files with a target in the Makefile. If only

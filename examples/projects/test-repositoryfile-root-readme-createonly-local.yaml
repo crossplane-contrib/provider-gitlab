@@ -1,0 +1,48 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: RepositoryFile
+metadata:
+  name: local-repositoryfile-root-readme-createonly
+  namespace: default
+spec:
+  managementPolicies:
+    - Observe
+    - Create
+    - Delete
+  forProvider:
+    projectId: "1"
+    filePath: README.md
+    branch: main
+    reconcileInterval: 8h
+    createOnly: true
+    createCommitMessage: "docs: create root readme once"
+    deleteCommitMessage: "docs: remove root readme once"
+    content: |
+      # Root README managed once
+
+      This root README was created by the `RepositoryFile` resource with `createOnly: true`.
+
+      The intention of this example is to show a bootstrap workflow:
+      Crossplane creates the file once, but it does not continuously rewrite the content after that.
+      Humans can edit the README later without the provider forcing the original text back on every reconcile.
+
+      ## Why this exists
+
+      This example uses the same local GitLab test repository as the other RepositoryFile examples.
+      It demonstrates a root-level file instead of a nested path.
+      It also demonstrates the create-once pattern for a highly visible file.
+
+      ## Expected behavior
+
+      The provider should create this README once.
+      The resource should report Ready and Synced.
+      Future reconciles should observe the file, but not update content drift.
+      Deleting the Kubernetes resource should delete the file from GitLab.
+
+      ## Resource metadata
+
+      Project ID: 1
+      Resource name: local-repositoryfile-root-readme-createonly
+      Reconcile interval: 8h
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
