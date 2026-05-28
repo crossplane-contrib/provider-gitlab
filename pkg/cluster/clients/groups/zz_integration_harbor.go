@@ -19,7 +19,7 @@ limitations under the License.
 package groups
 
 import (
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
@@ -27,8 +27,8 @@ import (
 
 // HarborClient defines GitLab Harbor integration operations for a group.
 type HarborClient interface {
-	GetGroupHarborSettings(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error)
-	SetUpGroupHarbor(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error)
+	GetGroupHarborSettings(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error)
+	SetUpGroupHarbor(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error)
 	DisableGroupHarbor(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
@@ -61,31 +61,28 @@ func GenerateSetUpHarborOptions(in *v1alpha1.IntegrationHarborParameters, passwo
 	return &opts
 }
 
-// GenerateIntegrationHarborObservation converts gitlab.Integration to IntegrationHarborObservation.
-//
-// Note: The GitLab group integrations API does not expose Harbor-specific properties
-// (URL, project name, username) in the response, so only the common integration metadata
-// can be observed.
-func GenerateIntegrationHarborObservation(observation *gitlab.Integration) v1alpha1.IntegrationHarborObservation {
+// GenerateIntegrationHarborObservation converts gitlab.HarborIntegration to IntegrationHarborObservation.
+func GenerateIntegrationHarborObservation(observation *gitlab.HarborIntegration) v1alpha1.IntegrationHarborObservation {
 	if observation == nil {
 		return v1alpha1.IntegrationHarborObservation{}
 	}
 
 	return v1alpha1.IntegrationHarborObservation{
-		CommonIntegrationObservation: common.GenerateCommonIntegrationObservation(observation),
+		CommonIntegrationObservation: common.GenerateCommonIntegrationObservation(&observation.Integration),
 	}
 }
 
-// IsIntegrationHarborUpToDate returns true if a remote Harbor integration is configured.
-//
-// The GitLab group integrations API does not return Harbor-specific properties
-// (URL, project name, username, password), so detailed field-level reconciliation
-// is not possible. We rely on the integration being active. Changes to spec fields
-// trigger an update via the controller's diff between spec and previously applied values.
-func IsIntegrationHarborUpToDate(spec *v1alpha1.IntegrationHarborParameters, observation *gitlab.Integration) bool {
+// IsIntegrationHarborUpToDate returns true if the remote Harbor integration matches the desired spec.
+func IsIntegrationHarborUpToDate(spec *v1alpha1.IntegrationHarborParameters, observation *gitlab.HarborIntegration) bool {
 	if spec == nil || observation == nil {
 		return false
 	}
 
-	return observation.Active
+	if !observation.Active {
+		return false
+	}
+
+	return spec.URL == observation.Properties.URL &&
+		spec.ProjectName == observation.Properties.ProjectName &&
+		spec.Username == observation.Properties.Username
 }

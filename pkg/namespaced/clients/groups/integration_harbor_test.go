@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -85,15 +85,22 @@ func TestGenerateSetUpHarborOptions(t *testing.T) {
 
 func TestGenerateIntegrationHarborObservation(t *testing.T) {
 	cases := map[string]struct {
-		integration *gitlab.Integration
+		integration *gitlab.HarborIntegration
 		want        groupsv1alpha1.IntegrationHarborObservation
 	}{
 		"ActiveIntegration": {
-			integration: &gitlab.Integration{
-				ID:     testHarborIntegrationID,
-				Title:  "Harbor",
-				Slug:   "harbor",
-				Active: true,
+			integration: &gitlab.HarborIntegration{
+				Integration: gitlab.Integration{
+					ID:     testHarborIntegrationID,
+					Title:  "Harbor",
+					Slug:   "harbor",
+					Active: true,
+				},
+				Properties: gitlab.HarborIntegrationProperties{
+					URL:         testHarborURL,
+					ProjectName: testHarborProjectName,
+					Username:    testHarborUsername,
+				},
 			},
 			want: groupsv1alpha1.IntegrationHarborObservation{
 				CommonIntegrationObservation: v1alpha1.CommonIntegrationObservation{
@@ -142,18 +149,88 @@ func TestGenerateIntegrationHarborObservation(t *testing.T) {
 func TestIsIntegrationHarborUpToDate(t *testing.T) {
 	cases := map[string]struct {
 		spec        *groupsv1alpha1.IntegrationHarborParameters
-		observation *gitlab.Integration
+		observation *gitlab.HarborIntegration
 		want        bool
 	}{
-		"ActiveIntegration": {
-			spec:        &groupsv1alpha1.IntegrationHarborParameters{URL: testHarborURL},
-			observation: &gitlab.Integration{Active: true},
-			want:        true,
+		"UpToDate": {
+			spec: &groupsv1alpha1.IntegrationHarborParameters{
+				URL:         testHarborURL,
+				ProjectName: testHarborProjectName,
+				Username:    testHarborUsername,
+			},
+			observation: &gitlab.HarborIntegration{
+				Integration: gitlab.Integration{Active: true},
+				Properties: gitlab.HarborIntegrationProperties{
+					URL:         testHarborURL,
+					ProjectName: testHarborProjectName,
+					Username:    testHarborUsername,
+				},
+			},
+			want: true,
+		},
+		"URLDiffers": {
+			spec: &groupsv1alpha1.IntegrationHarborParameters{
+				URL:         "https://other.registry.io",
+				ProjectName: testHarborProjectName,
+				Username:    testHarborUsername,
+			},
+			observation: &gitlab.HarborIntegration{
+				Integration: gitlab.Integration{Active: true},
+				Properties: gitlab.HarborIntegrationProperties{
+					URL:         testHarborURL,
+					ProjectName: testHarborProjectName,
+					Username:    testHarborUsername,
+				},
+			},
+			want: false,
+		},
+		"ProjectNameDiffers": {
+			spec: &groupsv1alpha1.IntegrationHarborParameters{
+				URL:         testHarborURL,
+				ProjectName: "other-project",
+				Username:    testHarborUsername,
+			},
+			observation: &gitlab.HarborIntegration{
+				Integration: gitlab.Integration{Active: true},
+				Properties: gitlab.HarborIntegrationProperties{
+					URL:         testHarborURL,
+					ProjectName: testHarborProjectName,
+					Username:    testHarborUsername,
+				},
+			},
+			want: false,
+		},
+		"UsernameDiffers": {
+			spec: &groupsv1alpha1.IntegrationHarborParameters{
+				URL:         testHarborURL,
+				ProjectName: testHarborProjectName,
+				Username:    "other-user",
+			},
+			observation: &gitlab.HarborIntegration{
+				Integration: gitlab.Integration{Active: true},
+				Properties: gitlab.HarborIntegrationProperties{
+					URL:         testHarborURL,
+					ProjectName: testHarborProjectName,
+					Username:    testHarborUsername,
+				},
+			},
+			want: false,
 		},
 		"InactiveIntegration": {
-			spec:        &groupsv1alpha1.IntegrationHarborParameters{URL: testHarborURL},
-			observation: &gitlab.Integration{Active: false},
-			want:        false,
+			spec: &groupsv1alpha1.IntegrationHarborParameters{
+				URL:         testHarborURL,
+				ProjectName: testHarborProjectName,
+				Username:    testHarborUsername,
+			},
+			observation: &gitlab.HarborIntegration{
+				Integration: gitlab.Integration{Active: false},
+				Properties: gitlab.HarborIntegrationProperties{
+					URL:         testHarborURL,
+					ProjectName: testHarborProjectName,
+					Username:    testHarborUsername,
+				},
+			},
+			want: false,
 		},
 		"NilObservation": {
 			spec:        &groupsv1alpha1.IntegrationHarborParameters{},
@@ -161,9 +238,11 @@ func TestIsIntegrationHarborUpToDate(t *testing.T) {
 			want:        false,
 		},
 		"NilSpec": {
-			spec:        nil,
-			observation: &gitlab.Integration{Active: true},
-			want:        false,
+			spec: nil,
+			observation: &gitlab.HarborIntegration{
+				Integration: gitlab.Integration{Active: true},
+			},
+			want: false,
 		},
 	}
 
