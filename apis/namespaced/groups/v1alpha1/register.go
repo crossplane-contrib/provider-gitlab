@@ -132,6 +132,14 @@ var (
 	HookGroupVersionKind = SchemeGroupVersion.WithKind(HookKind)
 )
 
+// IntegrationHarbor type metadata
+var (
+	IntegrationHarborKind             = reflect.TypeOf(IntegrationHarbor{}).Name()
+	IntegrationHarborGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: IntegrationHarborKind}.String()
+	IntegrationHarborKindAPIVersion   = IntegrationHarborKind + "." + SchemeGroupVersion.String()
+	IntegrationHarborGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationHarborKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Group{}, &GroupList{})
 	SchemeBuilder.Register(&Member{}, &MemberList{})
@@ -145,4 +153,5 @@ func init() {
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
+	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
 }
