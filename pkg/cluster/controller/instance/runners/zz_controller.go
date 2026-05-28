@@ -51,6 +51,7 @@ const (
 	errCreateFailed            = "cannot create Gitlab Runner"
 	errUpdateFailed            = "cannot update Gitlab Runner"
 	errDeleteFailed            = "cannot delete Gitlab Runner"
+	errResetFailed             = "cannot reset Gitlab Runner authentication token"
 	errMissingExternalName     = "external name annotation not found"
 	errMissingConnectionSecret = "writeConnectionSecretToRef or publishConnectionDetailsTo must be specified to receive the runner token"
 )
@@ -166,7 +167,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	)
 
 	if runners.ShouldRotateRunnerToken(&cr.Status.AtProvider.CommonRunnerObservation, cr.Spec.ForProvider.TokenRenewBeforeDays, time.Now().UTC()) {
-		return managed.ExternalObservation{ResourceExists: false}, nil
+		return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}, nil
 	}
 
 	cr.SetConditions(v2.Available())
@@ -190,6 +191,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errMissingConnectionSecret)
 	}
 
+	cr.SetConditions(v2.Creating())
+
 	runner, _, err := e.userRunnerClient.CreateUserRunner(
 		users.GenerateInstanceRunnerOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
@@ -208,8 +211,6 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	} else {
 		cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = nil
 	}
-
-	cr.SetConditions(v2.Creating())
 
 	return managed.ExternalCreation{
 		ConnectionDetails: managed.ConnectionDetails{
@@ -235,11 +236,40 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
 
+	if runners.ShouldRotateRunnerToken(&cr.Status.AtProvider.CommonRunnerObservation, cr.Spec.ForProvider.TokenRenewBeforeDays, time.Now().UTC()) {
+		authToken, _, err := e.client.ResetRunnerAuthenticationToken(int64(runnerID), gitlab.WithContext(ctx))
+		if err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errResetFailed)
+		}
+
+		now := metav1.NewTime(time.Now().UTC())
+		cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt = &now
+
+		if authToken.TokenExpiresAt != nil {
+			t := metav1.NewTime(*authToken.TokenExpiresAt)
+			cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = &t
+		} else {
+			cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = nil
+		}
+
+		token := ""
+		if authToken.Token != nil {
+			token = *authToken.Token
+		}
+
+		return managed.ExternalUpdate{
+			ConnectionDetails: managed.ConnectionDetails{
+				"token": []byte(token),
+			},
+		}, nil
+	}
+
 	_, _, err = e.client.UpdateRunnerDetails(
 		runnerID,
 		runners.GenerateEditRunnerOptions(&cr.Spec.ForProvider.CommonRunnerParameters),
 		gitlab.WithContext(ctx),
 	)
+
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}

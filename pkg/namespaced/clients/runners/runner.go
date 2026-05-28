@@ -65,12 +65,30 @@ func ShouldRotateRunnerToken(obs *commonv1alpha1.CommonRunnerObservation, renewB
 	if obs.TokenExpiresAt == nil {
 		return false
 	}
+
 	if renewBeforeDays != nil {
-		return common.HasReachedRenewalTime(time.Time{}, obs.TokenExpiresAt.Time, now, renewBeforeDays)
+		createdAt := time.Time{}
+		if obs.TokenCreatedAt != nil {
+			createdAt = obs.TokenCreatedAt.Time
+		}
+
+		renewAt, ok := common.RotationTime(createdAt, obs.TokenExpiresAt.Time, renewBeforeDays)
+		if !ok {
+			return false
+		}
+
+		// if renewBeforeDays exceeds the token lifetime, renewAt ends up before or at
+		// createdAt. Resetting would immediately be due again, causing perpetual rotation.
+		if !createdAt.IsZero() && !renewAt.After(createdAt) {
+			return false
+		}
+		return !now.UTC().Before(renewAt)
 	}
+
 	if obs.TokenCreatedAt == nil {
 		return !now.UTC().Before(obs.TokenExpiresAt.Time)
 	}
+
 	return common.HasReachedRenewalTime(obs.TokenCreatedAt.Time, obs.TokenExpiresAt.Time, now, nil)
 }
 
@@ -80,17 +98,23 @@ func ComputeNextRunnerTokenRotation(obs *commonv1alpha1.CommonRunnerObservation,
 	if obs.TokenExpiresAt == nil {
 		return nil
 	}
+
 	var createdAt time.Time
-	if renewBeforeDays == nil {
-		if obs.TokenCreatedAt == nil {
-			return nil
-		}
+	if obs.TokenCreatedAt != nil {
 		createdAt = obs.TokenCreatedAt.Time
+	} else if renewBeforeDays == nil {
+		return nil
 	}
+
 	t, ok := common.RotationTime(createdAt, obs.TokenExpiresAt.Time, renewBeforeDays)
 	if !ok {
 		return nil
 	}
+
+	if renewBeforeDays != nil && !createdAt.IsZero() && !t.After(createdAt) {
+		return nil
+	}
+
 	return ptr.To(metav1.NewTime(t))
 }
 
@@ -219,23 +243,13 @@ func IsRunnerUpToDate(spec *commonv1alpha1.CommonRunnerParameters, observed *git
 	if observed == nil {
 		return false
 	}
-	// Convert observed.MaximumTimeout from int64 to int for comparison
-	observedMaxTimeout := observed.MaximumTimeout
-	// Use a compact list to keep cyclomatic complexity low
-	checks := []bool{
-		clients.IsComparableEqualToComparablePtr(spec.Description, observed.Description),
-		clients.IsComparableEqualToComparablePtr(spec.Paused, observed.Paused),
-		clients.IsComparableEqualToComparablePtr(spec.Locked, observed.Locked),
-		clients.IsComparableEqualToComparablePtr(spec.RunUntagged, observed.RunUntagged),
-		clients.IsComparableSliceEqualToComparableSlicePtr(spec.TagList, observed.TagList),
-		clients.IsComparableEqualToComparablePtr(spec.AccessLevel, observed.AccessLevel),
-		clients.IsComparableEqualToComparablePtr(spec.MaximumTimeout, observedMaxTimeout),
-		clients.IsComparableEqualToComparablePtr(spec.MaintenanceNote, observed.MaintenanceNote),
-	}
-	for _, ok := range checks {
-		if !ok {
-			return false
-		}
-	}
-	return true
+
+	return clients.IsComparableEqualToComparablePtr(spec.Description, observed.Description) &&
+		clients.IsComparableEqualToComparablePtr(spec.Paused, observed.Paused) &&
+		clients.IsComparableEqualToComparablePtr(spec.Locked, observed.Locked) &&
+		clients.IsComparableEqualToComparablePtr(spec.RunUntagged, observed.RunUntagged) &&
+		clients.IsComparableSliceEqualToComparableSlicePtr(spec.TagList, observed.TagList) &&
+		clients.IsComparableEqualToComparablePtr(spec.AccessLevel, observed.AccessLevel) &&
+		clients.IsComparableEqualToComparablePtr(spec.MaximumTimeout, observed.MaximumTimeout) &&
+		clients.IsComparableEqualToComparablePtr(spec.MaintenanceNote, observed.MaintenanceNote)
 }
