@@ -84,5 +84,6 @@ func IsIntegrationHarborUpToDate(spec *v1alpha1.IntegrationHarborParameters, obs
 	if spec == nil || observation == nil {
 		return false
 	}
+
 	return observation.Active
 }

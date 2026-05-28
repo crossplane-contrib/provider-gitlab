@@ -26,7 +26,6 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
@@ -157,10 +156,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotIntegrationHarbor)
 	}
 
-	if meta.WasDeleted(cr) {
-		return managed.ExternalObservation{ResourceExists: false}, nil
-	}
-
 	if cr.Spec.ForProvider.GroupID == nil {
 		return managed.ExternalObservation{}, errors.New(errGroupIDMissing)
 	}
@@ -175,7 +170,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
-	if harbor == nil {
+	if harbor == nil || !harbor.Active {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
@@ -217,8 +212,6 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if cr.Spec.ForProvider.GroupID == nil {
 		return managed.ExternalUpdate{}, errors.New(errGroupIDMissing)
 	}
-
-	cr.Status.SetConditions(xpv1.Creating())
 
 	if err := e.applyHarbor(ctx, cr); err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)

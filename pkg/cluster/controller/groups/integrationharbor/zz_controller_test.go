@@ -190,8 +190,71 @@ func TestObserve(t *testing.T) {
 				err: errors.New(errNotIntegrationHarbor),
 			},
 		},
-		"DeletingResource": {
+		"DeletingResourceStillExists": {
 			args: args{
+				harborClient: &fake.MockClient{
+					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
+						return &gitlab.Integration{
+							ID:     testIntegID,
+							Title:  "Harbor",
+							Slug:   "harbor",
+							Active: true,
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationHarbor(
+					withGroupID(testGroupID),
+					withURL(testHarborURL),
+					withDeletionTimestamp(time.Now()),
+				),
+			},
+			want: want{
+				cr: integrationHarbor(
+					withGroupID(testGroupID),
+					withURL(testHarborURL),
+					withDeletionTimestamp(time.Now()),
+					withConditions(xpv1.Available()),
+					withStatus(v1alpha1.IntegrationHarborObservation{
+						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
+							ID:                             ptr.To(testIntegID),
+							Title:                          ptr.To("Harbor"),
+							Slug:                           ptr.To("harbor"),
+							Active:                         ptr.To(true),
+							AlertEvents:                    ptr.To(false),
+							CommitEvents:                   ptr.To(false),
+							ConfidentialIssuesEvents:       ptr.To(false),
+							ConfidentialNoteEvents:         ptr.To(false),
+							DeploymentEvents:               ptr.To(false),
+							GroupConfidentialMentionEvents: ptr.To(false),
+							GroupMentionEvents:             ptr.To(false),
+							IncidentEvents:                 ptr.To(false),
+							IssuesEvents:                   ptr.To(false),
+							JobEvents:                      ptr.To(false),
+							MergeRequestsEvents:            ptr.To(false),
+							NoteEvents:                     ptr.To(false),
+							PipelineEvents:                 ptr.To(false),
+							PushEvents:                     ptr.To(false),
+							TagPushEvents:                  ptr.To(false),
+							VulnerabilityEvents:            ptr.To(false),
+							WikiPageEvents:                 ptr.To(false),
+							CommentOnEventEnabled:          ptr.To(false),
+							Inherited:                      ptr.To(false),
+						},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:   true,
+					ResourceUpToDate: true,
+				},
+			},
+		},
+		"DeletingResourceAlreadyGone": {
+			args: args{
+				harborClient: &fake.MockClient{
+					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
 				cr: integrationHarbor(
 					withGroupID(testGroupID),
 					withDeletionTimestamp(time.Now()),
@@ -352,38 +415,9 @@ func TestObserve(t *testing.T) {
 				cr: integrationHarbor(
 					withGroupID(testGroupID),
 					withURL(testHarborURL),
-					withConditions(xpv1.Available()),
-					withStatus(v1alpha1.IntegrationHarborObservation{
-						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
-							ID:                             ptr.To(testIntegID),
-							Title:                          ptr.To("Harbor"),
-							Slug:                           ptr.To("harbor"),
-							Active:                         ptr.To(false),
-							AlertEvents:                    ptr.To(false),
-							CommitEvents:                   ptr.To(false),
-							ConfidentialIssuesEvents:       ptr.To(false),
-							ConfidentialNoteEvents:         ptr.To(false),
-							DeploymentEvents:               ptr.To(false),
-							GroupConfidentialMentionEvents: ptr.To(false),
-							GroupMentionEvents:             ptr.To(false),
-							IncidentEvents:                 ptr.To(false),
-							IssuesEvents:                   ptr.To(false),
-							JobEvents:                      ptr.To(false),
-							MergeRequestsEvents:            ptr.To(false),
-							NoteEvents:                     ptr.To(false),
-							PipelineEvents:                 ptr.To(false),
-							PushEvents:                     ptr.To(false),
-							TagPushEvents:                  ptr.To(false),
-							VulnerabilityEvents:            ptr.To(false),
-							WikiPageEvents:                 ptr.To(false),
-							CommentOnEventEnabled:          ptr.To(false),
-							Inherited:                      ptr.To(false),
-						},
-					}),
 				),
 				result: managed.ExternalObservation{
-					ResourceExists:   true,
-					ResourceUpToDate: false,
+					ResourceExists: false,
 				},
 			},
 		},
@@ -587,7 +621,6 @@ func TestUpdate(t *testing.T) {
 					withGroupID(testGroupID),
 					withURL(testHarborURL),
 					withPasswordSecretRef("my-secret", "password"),
-					withConditions(xpv1.Creating()),
 				),
 				err: errors.Wrap(errors.Wrap(errors.Wrap(errBoom, "Cannot find referenced secret"), errPasswordMissing), errUpdateFailed),
 			},
@@ -611,7 +644,6 @@ func TestUpdate(t *testing.T) {
 					withGroupID(testGroupID),
 					withURL(testHarborURL),
 					withPasswordSecretRef("my-secret", "password"),
-					withConditions(xpv1.Creating()),
 				),
 				result: managed.ExternalUpdate{},
 			},
@@ -635,7 +667,6 @@ func TestUpdate(t *testing.T) {
 					withGroupID(testGroupID),
 					withURL(testHarborURL),
 					withPasswordSecretRef("my-secret", "password"),
-					withConditions(xpv1.Creating()),
 				),
 				result: managed.ExternalUpdate{},
 				err:    errors.Wrap(errBoom, errUpdateFailed),
