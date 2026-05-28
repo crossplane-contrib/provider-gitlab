@@ -28,7 +28,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -191,12 +191,15 @@ func TestObserve(t *testing.T) {
 		"DeletingResourceStillExists": {
 			args: args{
 				harborClient: &fake.MockClient{
-					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
-						return &gitlab.Integration{
-							ID:     testIntegID,
-							Title:  "Harbor",
-							Slug:   "harbor",
-							Active: true,
+					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
+						return &gitlab.HarborIntegration{
+							Integration: gitlab.Integration{
+								ID:     testIntegID,
+								Title:  "Harbor",
+								Slug:   "harbor",
+								Active: true,
+							},
+							Properties: gitlab.HarborIntegrationProperties{URL: testHarborURL},
 						}, &gitlab.Response{}, nil
 					},
 				},
@@ -249,7 +252,7 @@ func TestObserve(t *testing.T) {
 		"DeletingResourceAlreadyGone": {
 			args: args{
 				harborClient: &fake.MockClient{
-					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
+					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
@@ -278,7 +281,7 @@ func TestObserve(t *testing.T) {
 		"NotFound": {
 			args: args{
 				harborClient: &fake.MockClient{
-					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
+					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
@@ -298,7 +301,7 @@ func TestObserve(t *testing.T) {
 		"GetFailed": {
 			args: args{
 				harborClient: &fake.MockClient{
-					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
+					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 500}}, errBoom
 					},
 				},
@@ -319,7 +322,7 @@ func TestObserve(t *testing.T) {
 		"NilIntegration": {
 			args: args{
 				harborClient: &fake.MockClient{
-					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
+					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 					},
 				},
@@ -339,12 +342,15 @@ func TestObserve(t *testing.T) {
 		"SuccessActive": {
 			args: args{
 				harborClient: &fake.MockClient{
-					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
-						return &gitlab.Integration{
-							ID:     testIntegID,
-							Title:  "Harbor",
-							Slug:   "harbor",
-							Active: true,
+					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
+						return &gitlab.HarborIntegration{
+							Integration: gitlab.Integration{
+								ID:     testIntegID,
+								Title:  "Harbor",
+								Slug:   "harbor",
+								Active: true,
+							},
+							Properties: gitlab.HarborIntegrationProperties{URL: testHarborURL},
 						}, &gitlab.Response{}, nil
 					},
 				},
@@ -395,12 +401,14 @@ func TestObserve(t *testing.T) {
 		"SuccessInactive": {
 			args: args{
 				harborClient: &fake.MockClient{
-					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
-						return &gitlab.Integration{
-							ID:     testIntegID,
-							Title:  "Harbor",
-							Slug:   "harbor",
-							Active: false,
+					MockGetGroupHarborSettings: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
+						return &gitlab.HarborIntegration{
+							Integration: gitlab.Integration{
+								ID:     testIntegID,
+								Title:  "Harbor",
+								Slug:   "harbor",
+								Active: false,
+							},
 						}, &gitlab.Response{}, nil
 					},
 				},
@@ -504,8 +512,8 @@ func TestCreate(t *testing.T) {
 		"SuccessfulCreate": {
 			args: args{
 				harborClient: &fake.MockClient{
-					MockSetUpGroupHarbor: func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
-						return &gitlab.Integration{Active: true}, &gitlab.Response{}, nil
+					MockSetUpGroupHarbor: func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
+						return &gitlab.HarborIntegration{Integration: gitlab.Integration{Active: true}}, &gitlab.Response{}, nil
 					},
 				},
 				kube: mockKubeWithSecret(testPassword),
@@ -528,7 +536,7 @@ func TestCreate(t *testing.T) {
 		"CreateFailed": {
 			args: args{
 				harborClient: &fake.MockClient{
-					MockSetUpGroupHarbor: func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
+					MockSetUpGroupHarbor: func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
 						return nil, &gitlab.Response{}, errBoom
 					},
 				},
@@ -626,8 +634,8 @@ func TestUpdate(t *testing.T) {
 		"SuccessfulUpdate": {
 			args: args{
 				harborClient: &fake.MockClient{
-					MockSetUpGroupHarbor: func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
-						return &gitlab.Integration{Active: true}, &gitlab.Response{}, nil
+					MockSetUpGroupHarbor: func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
+						return &gitlab.HarborIntegration{Integration: gitlab.Integration{Active: true}}, &gitlab.Response{}, nil
 					},
 				},
 				kube: mockKubeWithSecret(testPassword),
@@ -649,7 +657,7 @@ func TestUpdate(t *testing.T) {
 		"UpdateFailed": {
 			args: args{
 				harborClient: &fake.MockClient{
-					MockSetUpGroupHarbor: func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Integration, *gitlab.Response, error) {
+					MockSetUpGroupHarbor: func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
 						return nil, &gitlab.Response{}, errBoom
 					},
 				},
