@@ -10,7 +10,7 @@ spec:
     kind: ProviderConfig
   forProvider:
     projectId: 7
-    url: "https://registry.boxboxjason.dev"
+    url: "https://example.registry.com"
     projectName: "library"
     username: "robot$test"
     passwordSecretRef:

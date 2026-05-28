@@ -1,13 +1,4 @@
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: harbor-credentials
-  namespace: default
-type: Opaque
-stringData:
-  password: "supersecret"
----
 apiVersion: groups.gitlab.m.crossplane.io/v1alpha1
 kind: IntegrationHarbor
 metadata:
@@ -18,10 +9,10 @@ spec:
     name: gitlab-provider
     kind: ProviderConfig
   forProvider:
-    groupId: 42
-    url: "https://demo.goharbor.io"
-    projectName: "mygroupproject"
-    username: "robot$gitlab"
+    groupId: 20
+    url: "https://example.registry.com"
+    projectName: "library"
+    username: "robot$test"
     passwordSecretRef:
       name: harbor-credentials
-      key: password
+      key: token
