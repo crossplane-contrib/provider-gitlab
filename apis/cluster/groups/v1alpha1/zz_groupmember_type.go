@@ -20,7 +20,6 @@ package v1alpha1
 
 import (
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
