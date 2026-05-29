@@ -17,9 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -51,16 +50,16 @@ type RunnerObservation struct {
 // This includes the configuration parameters for creating and managing
 // a GitLab Runner linked to a specific instance.
 type RunnerSpec struct {
-	xpv2.ManagedResourceSpec `json:",inline"`
-	ForProvider              RunnerParameters `json:"forProvider"`
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            RunnerParameters `json:"forProvider"`
 }
 
 // RunnerStatus represents the observed state of a instance Runner.
 // This includes the current status and properties of the runner as
 // reported by the GitLab API.
 type RunnerStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          RunnerObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               RunnerObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

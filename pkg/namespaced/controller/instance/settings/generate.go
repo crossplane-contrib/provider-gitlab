@@ -30,7 +30,7 @@ import (
 	"unicode"
 
 	v1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 const outputHeader = `/*
@@ -79,8 +79,8 @@ func main() {
 		fieldName := field.Name
 		fieldType := field.Type
 
-		// Skip unexported fields, keep only fields with names that end by "SecretRef" and are of type xpv1.LocalSecretKeySelector
-		if len(fieldName) > 0 && unicode.IsLower([]rune(fieldName)[0]) || !strings.HasSuffix(fieldName, "SecretRef") || fieldType != reflect.TypeOf(&xpv1.LocalSecretKeySelector{}) {
+		// Skip unexported fields, keep only fields with names that end by "SecretRef" and are of type v2.LocalSecretKeySelector
+		if len(fieldName) > 0 && unicode.IsLower([]rune(fieldName)[0]) || !strings.HasSuffix(fieldName, "SecretRef") || fieldType != reflect.TypeOf(&v2.LocalSecretKeySelector{}) {
 			continue
 		}
 

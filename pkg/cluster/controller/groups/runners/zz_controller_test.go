@@ -23,11 +23,11 @@ import (
 	"net/http"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -60,7 +60,7 @@ type args struct {
 
 type RunnerModifier func(*v1alpha1.Runner)
 
-func withConditions(c ...xpv1.Condition) RunnerModifier {
+func withConditions(c ...v2.Condition) RunnerModifier {
 	return func(cr *v1alpha1.Runner) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -268,7 +268,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: runner(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withGroupID(),
 					withExternalName(extName),
 					withSpec(v1alpha1.RunnerParameters{GroupID: &groupID}),
@@ -497,7 +497,7 @@ func TestCreate(t *testing.T) {
 					withConnectionSecretRef(),
 					withSpec(v1alpha1.RunnerParameters{GroupID: &groupID}),
 					withExternalName(extName),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: nil,
 				result: managed.ExternalCreation{

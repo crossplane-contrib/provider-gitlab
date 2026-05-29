@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -109,7 +109,7 @@ func withID(s int64) psModifier {
 	return func(ps *v1alpha1.PipelineSchedule) { ps.Status.AtProvider.ID = &s }
 }
 
-func withConditions(c xpv1.Condition) psModifier {
+func withConditions(c v2.Condition) psModifier {
 	return func(ps *v1alpha1.PipelineSchedule) { ps.Status.SetConditions(c) }
 }
 
@@ -229,7 +229,7 @@ func TestObserve(t *testing.T) {
 					withProjectID(),
 					withParams(standardPsParams),
 					withID(standardID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withVariables(pv1, pv2),
 				),
 				err: nil,
@@ -257,7 +257,7 @@ func TestObserve(t *testing.T) {
 					withExternalName(extName),
 					withID(standardID),
 					withParams(psParams),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withVariables(pv1, pv2),
 				),
 				err: nil,
@@ -285,7 +285,7 @@ func TestObserve(t *testing.T) {
 					withParams(standardPsParams),
 					withExternalName(extName),
 					withID(standardID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 				),
 				err: nil,
 				result: managed.ExternalObservation{
@@ -311,7 +311,7 @@ func TestObserve(t *testing.T) {
 				cr: buildPs(
 					withExternalName(extName),
 					withID(standardID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withParams(psParams),
 				),
 				err: nil,

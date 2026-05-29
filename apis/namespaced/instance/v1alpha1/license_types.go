@@ -17,9 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -36,7 +35,7 @@ type LicenseParameters struct {
 	// LicenseSecretRef references a secret key selector that contains the license key.
 	// This allows for secure storage and retrieval of the license key from a Kubernetes secret.
 	// +optional
-	LicenseSecretRef *xpv1.LocalSecretKeySelector `json:"licenseSecretRef,omitempty"`
+	LicenseSecretRef *v2.LocalSecretKeySelector `json:"licenseSecretRef,omitempty"`
 
 	// LicenseEndpointURL is the URL of the license endpoint.
 	// This can be used to fetch the license from a remote service.
@@ -46,7 +45,7 @@ type LicenseParameters struct {
 	// LicenseEndpointURLSecretRef references a secret key selector that contains the license endpoint URL.
 	// This allows for secure storage and retrieval of the URL from a Kubernetes secret.
 	// +optional
-	LicenseEndpointURLSecretRef *xpv1.LocalSecretKeySelector `json:"licenseEndpointURLSecretRef,omitempty"`
+	LicenseEndpointURLSecretRef *v2.LocalSecretKeySelector `json:"licenseEndpointURLSecretRef,omitempty"`
 
 	// LicenseEndpointUsername is the username for authenticating with the license endpoint.
 	// This will be combined with the password in the Authorization Basic header.
@@ -57,7 +56,7 @@ type LicenseParameters struct {
 	// This allows for secure storage and retrieval of the username from a Kubernetes secret.
 	// This will be combined with the password in the Authorization Basic header.
 	// +optional
-	LicenseEndpointUsernameSecretRef *xpv1.LocalSecretKeySelector `json:"licenseEndpointUsernameSecretRef,omitempty"`
+	LicenseEndpointUsernameSecretRef *v2.LocalSecretKeySelector `json:"licenseEndpointUsernameSecretRef,omitempty"`
 
 	// LicenseEndpointPassword is the password for authenticating with the license endpoint.
 	// This will be combined with the username in the Authorization Basic header.
@@ -68,7 +67,7 @@ type LicenseParameters struct {
 	// This allows for secure storage and retrieval of the password from a Kubernetes secret.
 	// This will be combined with the username in the Authorization Basic header.
 	// +optional
-	LicenseEndpointPasswordSecretRef *xpv1.LocalSecretKeySelector `json:"licenseEndpointPasswordSecretRef,omitempty"`
+	LicenseEndpointPasswordSecretRef *v2.LocalSecretKeySelector `json:"licenseEndpointPasswordSecretRef,omitempty"`
 
 	// LicenseEndpointToken is the token for authenticating with the license endpoint.
 	// This will be used as a Authorization Bearer token in the Authorization header.
@@ -79,7 +78,7 @@ type LicenseParameters struct {
 	// This allows for secure storage and retrieval of the token from a Kubernetes secret.
 	// This will be used as a Authorization Bearer token in the Authorization header.
 	// +optional
-	LicenseEndpointTokenSecretRef *xpv1.LocalSecretKeySelector `json:"licenseEndpointTokenSecretRef,omitempty"`
+	LicenseEndpointTokenSecretRef *v2.LocalSecretKeySelector `json:"licenseEndpointTokenSecretRef,omitempty"`
 }
 
 // LicenseObservation represents the observed state of an instance License.
@@ -144,7 +143,7 @@ type AddOns struct {
 // This includes the configuration parameters for creating and managing
 // a GitLab License linked to a specific instance.
 type LicenseSpec struct {
-	xpv2.ManagedResourceSpec `json:",inline"`
+	v2.ManagedResourceSpec `json:",inline"`
 	// ForProvider contains the desired state of the License
 	ForProvider LicenseParameters `json:"forProvider"`
 }
@@ -153,7 +152,7 @@ type LicenseSpec struct {
 // This includes the current status and properties of the license as
 // reported by the GitLab API.
 type LicenseStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	v2.ManagedResourceStatus `json:",inline"`
 	// AtProvider contains the observed state of the License
 	AtProvider LicenseObservation `json:"atProvider,omitempty"`
 }

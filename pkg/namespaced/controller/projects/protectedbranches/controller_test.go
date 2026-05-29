@@ -25,7 +25,7 @@ import (
 	"net/http"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
@@ -59,7 +59,7 @@ type args struct {
 
 type protectedBranchModifier func(*v1alpha1.ProtectedBranch)
 
-func withConditions(c ...xpv1.Condition) protectedBranchModifier {
+func withConditions(c ...v2.Condition) protectedBranchModifier {
 	return func(r *v1alpha1.ProtectedBranch) { r.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -292,7 +292,7 @@ func TestObserve(t *testing.T) {
 							AccessLevel: &accessLevel30,
 						},
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.ProtectedBranchObservation{
 						ID:                        protectedBranchID,
 						AllowForcePush:            false,
@@ -362,7 +362,7 @@ func TestObserve(t *testing.T) {
 							GroupID:                ptr.To(int64(0)),
 						},
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.ProtectedBranchObservation{
 						ID:                        protectedBranchID,
 						AllowForcePush:            true,
@@ -461,7 +461,7 @@ func TestCreate(t *testing.T) {
 				cr: protectedBranch(
 					withBranchName(branchName),
 					withProjectID(&projectID),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				result: managed.ExternalCreation{},
 			},
@@ -482,7 +482,7 @@ func TestCreate(t *testing.T) {
 				cr: protectedBranch(
 					withBranchName(branchName),
 					withProjectID(&projectID),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
@@ -688,7 +688,7 @@ func TestDelete(t *testing.T) {
 				cr: protectedBranch(
 					withBranchName(branchName),
 					withProjectID(&projectID),
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
 				result: managed.ExternalDelete{},
 			},
@@ -709,7 +709,7 @@ func TestDelete(t *testing.T) {
 				cr: protectedBranch(
 					withBranchName(branchName),
 					withProjectID(&projectID),
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},

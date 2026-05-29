@@ -17,9 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	auth "github.com/crossplane-contrib/provider-gitlab/pkg/common/auth"
@@ -42,18 +41,18 @@ type ProviderConfigSpec struct {
 type ProviderCredentials struct {
 	// Source of the provider credentials.
 	// +kubebuilder:validation:Enum=None;Secret;InjectedIdentity;Environment;Filesystem
-	Source xpv1.CredentialsSource `json:"source"`
+	Source v2.CredentialsSource `json:"source"`
 
 	// Method of authentification can be BasicAuth, JobToken, OAuthToken or PersonalAccessToken (default)
 	// +optional
 	Method auth.AuthType `json:"method"`
 
-	xpv1.CommonCredentialSelectors `json:",inline"`
+	v2.CommonCredentialSelectors `json:",inline"`
 }
 
 // A ProviderConfigStatus represents the status of a ProviderConfig.
 type ProviderConfigStatus struct {
-	xpv1.ProviderConfigStatus `json:",inline"`
+	v2.ProviderConfigStatus `json:",inline"`
 }
 
 // +kubebuilder:object:root=true
@@ -92,7 +91,7 @@ type ProviderConfigUsage struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	xpv2.TypedProviderConfigUsage `json:",inline"`
+	v2.TypedProviderConfigUsage `json:",inline"`
 }
 
 // +kubebuilder:object:root=true

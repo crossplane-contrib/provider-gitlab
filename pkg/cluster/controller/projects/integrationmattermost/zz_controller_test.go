@@ -24,10 +24,10 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -111,7 +111,7 @@ func withChannel(channel string) mattermostModifier {
 	}
 }
 
-func withConditions(c ...xpv1.Condition) mattermostModifier {
+func withConditions(c ...v2.Condition) mattermostModifier {
 	return func(cr *v1alpha1.IntegrationMattermost) {
 		cr.Status.ConditionedStatus.Conditions = c
 	}
@@ -333,7 +333,7 @@ func TestObserve(t *testing.T) {
 						p.PipelineChannel = ptr.To(testPipelineChannel)
 						p.WikiPageChannel = ptr.To(testWikiPageChannel)
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.IntegrationMattermostObservation{
 						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
 							ID:                             ptr.To(testID),
@@ -426,7 +426,7 @@ func TestObserve(t *testing.T) {
 						p.PipelineEvents = ptr.To(false)
 						p.WikiPageEvents = ptr.To(false)
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.IntegrationMattermostObservation{
 						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
 							ID:                             ptr.To(testID),
@@ -536,7 +536,7 @@ func TestObserve(t *testing.T) {
 						p.PipelineEvents = ptr.To(false)
 						p.WikiPageEvents = ptr.To(false)
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.IntegrationMattermostObservation{
 						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
 							ID:                             ptr.To(testID),
@@ -652,7 +652,7 @@ func TestCreate(t *testing.T) {
 					withProjectID(testProjectID),
 					withWebHook(testWebHook),
 					withUsername(testUsername),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				result: managed.ExternalCreation{},
 			},
@@ -673,7 +673,7 @@ func TestCreate(t *testing.T) {
 				cr: integrationMattermost(
 					withProjectID(testProjectID),
 					withWebHook(testWebHook),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				result: managed.ExternalCreation{},
 				err:    errors.Wrap(errBoom, errCreateFailed),
@@ -748,7 +748,7 @@ func TestUpdate(t *testing.T) {
 					withProjectID(testProjectID),
 					withWebHook(testWebHook),
 					withUsername(testUsername),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				result: managed.ExternalUpdate{},
 			},
@@ -769,7 +769,7 @@ func TestUpdate(t *testing.T) {
 				cr: integrationMattermost(
 					withProjectID(testProjectID),
 					withWebHook(testWebHook),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				result: managed.ExternalUpdate{},
 				err:    errors.Wrap(errBoom, errUpdateFailed),

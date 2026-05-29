@@ -18,7 +18,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -47,11 +48,11 @@ type ProjectShareGroupParameters struct {
 	// GroupRef allows referencing a Group resource by name.
 	// +optional
 	// +immutable
-	GroupRef *xpv1.Reference `json:"groupRef,omitempty"`
+	GroupRef *v2.Reference `json:"groupRef,omitempty"`
 
 	// GroupSelector allows selecting a Group by labels.
 	// +optional
-	GroupSelector *xpv1.Selector `json:"groupSelector,omitempty"`
+	GroupSelector *v2.Selector `json:"groupSelector,omitempty"`
 
 	// ProjectID is the ID of the project being shared.
 	// +crossplane:generate:reference:type=Project
@@ -64,11 +65,11 @@ type ProjectShareGroupParameters struct {
 	// ProjectRef allows referencing a Project resource by name.
 	// +optional
 	// +immutable
-	ProjectRef *xpv1.Reference `json:"projectRef,omitempty"`
+	ProjectRef *v2.Reference `json:"projectRef,omitempty"`
 
 	// ProjectSelector allows selecting a Project by labels.
 	// +optional
-	ProjectSelector *xpv1.Selector `json:"projectSelector,omitempty"`
+	ProjectSelector *v2.Selector `json:"projectSelector,omitempty"`
 }
 
 // ProjectShareGroupObservation are the fields we read back from GitLab (if any).
@@ -79,14 +80,14 @@ type ProjectShareGroupObservation struct {
 
 // ProjectShareGroupSpec defines the desired state.
 type ProjectShareGroupSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       ProjectShareGroupParameters `json:"forProvider"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
+	ForProvider                   ProjectShareGroupParameters `json:"forProvider"`
 }
 
 // ProjectShareGroupStatus defines the observed state.
 type ProjectShareGroupStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          ProjectShareGroupObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               ProjectShareGroupObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -21,7 +21,6 @@ import (
 	"slices"
 	"strconv"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
@@ -29,6 +28,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,7 +59,7 @@ func SetupRunner(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v1alpha1.RunnerGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
-		managed.WithExternalConnecter(&connector{
+		managed.WithExternalConnector(&connector{
 			kube:              mgr.GetClient(),
 			newGitlabClientFn: runners.NewRunnerClient,
 			newRunnerClientFn: users.NewRunnerClient,
@@ -157,7 +157,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	tokenExpiresAt := cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt
 	cr.Status.AtProvider = runners.GenerateGroupRunnerObservation(runner)
 	cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = tokenExpiresAt
-	cr.SetConditions(xpv1.Available())
+	cr.SetConditions(v2.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
@@ -198,7 +198,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = nil
 	}
 
-	cr.SetConditions(xpv1.Creating())
+	cr.SetConditions(v2.Creating())
 
 	return managed.ExternalCreation{
 		ConnectionDetails: managed.ConnectionDetails{

@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	meta "github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -96,7 +96,7 @@ func withSpec(s v1alpha1.BadgeParameters) badgeModifier {
 	return func(r *v1alpha1.Badge) { r.Spec.ForProvider = s }
 }
 
-func withConditions(c ...xpv1.Condition) badgeModifier {
+func withConditions(c ...v2.Condition) badgeModifier {
 	return func(r *v1alpha1.Badge) { r.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -220,7 +220,7 @@ func TestObserve(t *testing.T) {
 				cr.Spec.ForProvider.Name = &name
 				cr.Spec.ForProvider.ImageURL = empty
 				cr.Spec.ForProvider.LinkURL = empty
-				withConditions(xpv1.Available())(cr)
+				withConditions(v2.Available())(cr)
 				cr.Status.AtProvider = v1alpha1.BadgeObservation{ID: 1, Name: "b", LinkURL: empty, RenderedLinkURL: empty, ImageURL: empty, RenderedImageURL: empty}
 				return cr
 			}(), result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true, ResourceLateInitialized: true}},

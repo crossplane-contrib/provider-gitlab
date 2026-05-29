@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -74,7 +74,7 @@ type args struct {
 
 type groupModifier func(*v1alpha1.Group)
 
-func withConditions(c ...xpv1.Condition) groupModifier {
+func withConditions(c ...v2.Condition) groupModifier {
 	return func(cr *v1alpha1.Group) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -338,7 +338,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: group(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withPath(path),
 					withAnnotations(extNameAnnotation),
 					withStatus(v1alpha1.GroupObservation{}),
@@ -404,7 +404,7 @@ func TestObserve(t *testing.T) {
 					withExternalName("0"),
 					withClientDefaultValues(),
 					withPath(path),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withDescription(&description),
 					withVisibility(&v1alpha1VisibilityNew),
 					withProjectCreationLevel(&v1alpha1ProjectCreationLevelNew),
@@ -435,7 +435,7 @@ func TestObserve(t *testing.T) {
 				cr: group(
 					withPath(""),
 					withClientDefaultValues(),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withAnnotations(extNameAnnotation),
 					withExternalName(extName),
 				),
@@ -519,7 +519,7 @@ func TestObserve(t *testing.T) {
 		wantGroupModifier := []groupModifier{
 			withClientDefaultValues(),
 			withExternalName("0"),
-			withConditions(xpv1.Available()),
+			withConditions(v2.Available()),
 			withVisibility(&v1alpha1Visibility),
 			withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
 			withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),

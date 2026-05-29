@@ -17,9 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -42,11 +41,11 @@ type ApprovalRuleParameters struct {
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
 	// +immutable
-	ProjectIDRef *xpv1.NamespacedReference `json:"projectIdRef,omitempty"`
+	ProjectIDRef *v2.NamespacedReference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
 	// +optional
-	ProjectIDSelector *xpv1.NamespacedSelector `json:"projectIdSelector,omitempty"`
+	ProjectIDSelector *v2.NamespacedSelector `json:"projectIdSelector,omitempty"`
 
 	// The number of required approvals for this rule.
 	ApprovalsRequired *int64 `json:"approvalsRequired,omitempty"`
@@ -88,14 +87,14 @@ type ApprovalRuleObservation struct{}
 
 // A ApprovalRuleSpec defines the desired state of a Gitlab Project Member.
 type ApprovalRuleSpec struct {
-	xpv2.ManagedResourceSpec `json:",inline"`
-	ForProvider              ApprovalRuleParameters `json:"forProvider"`
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            ApprovalRuleParameters `json:"forProvider"`
 }
 
 // A ApprovalRuleStatus represents the observed state of a Gitlab Project Member.
 type ApprovalRuleStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          ApprovalRuleObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               ApprovalRuleObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

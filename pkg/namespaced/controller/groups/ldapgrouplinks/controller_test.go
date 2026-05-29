@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -54,7 +54,7 @@ func strPtr(s string) *string {
 
 type LdapGroupLinkModifier func(*v1alpha1.LdapGroupLink)
 
-func withConditions(c ...xpv1.Condition) LdapGroupLinkModifier {
+func withConditions(c ...v2.Condition) LdapGroupLinkModifier {
 	return func(cr *v1alpha1.LdapGroupLink) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -250,7 +250,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: ldapGroupLink(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withGroupID(),
 					withExternalName(cn),
 					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn), GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),
@@ -280,7 +280,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: ldapGroupLink(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withGroupID(),
 					withExternalName(ldapProvider+"/filter:"+filter),
 					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, Filter: strPtr(filter), LdapProvider: ldapProvider, GroupAccess: v1alpha1.AccessLevelValue(groupAccess)}),

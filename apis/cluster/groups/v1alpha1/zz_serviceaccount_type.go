@@ -21,7 +21,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -37,11 +38,11 @@ type ServiceAccountParameters struct {
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
 	// +immutable
-	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
+	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
 	// +optional
-	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
+	GroupIDSelector *v2.Selector `json:"groupIdSelector,omitempty"`
 
 	commonv1alpha1.CommonServiceAccountParameters `json:",inline"`
 }
@@ -53,14 +54,14 @@ type ServiceAccountObservation struct {
 
 // A ServiceAccountSpec defines the desired state of a GitLab group service account.
 type ServiceAccountSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
 	// Defines the desired state of the ServiceAccount.
 	ForProvider ServiceAccountParameters `json:"forProvider"`
 }
 
 // A ServiceAccountStatus represents the observed state of the GitLab group service account.
 type ServiceAccountStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	v2.ManagedResourceStatus `json:",inline"`
 	// Represents the observed state of the ServiceAccount.
 	AtProvider ServiceAccountObservation `json:"atProvider,omitempty"`
 }

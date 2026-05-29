@@ -20,7 +20,7 @@ import (
 	"context"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	"github.com/google/go-cmp/cmp"
@@ -45,7 +45,7 @@ func TestGetTokenValueFromSecret(t *testing.T) {
 	testKey := "token"
 
 	type args struct {
-		selector *xpv1.SecretKeySelector
+		selector *v2.SecretKeySelector
 		kube     client.Client
 	}
 	type want struct {
@@ -59,9 +59,9 @@ func TestGetTokenValueFromSecret(t *testing.T) {
 	}{
 		"SuccessfulTokenRetrieval": {
 			args: args{
-				selector: &xpv1.SecretKeySelector{
+				selector: &v2.SecretKeySelector{
 					Key: testKey,
-					SecretReference: xpv1.SecretReference{
+					SecretReference: v2.SecretReference{
 						Name:      testSecretName,
 						Namespace: testNamespace,
 					},
@@ -84,9 +84,9 @@ func TestGetTokenValueFromSecret(t *testing.T) {
 		},
 		"SecretNotFound": {
 			args: args{
-				selector: &xpv1.SecretKeySelector{
+				selector: &v2.SecretKeySelector{
 					Key: testKey,
-					SecretReference: xpv1.SecretReference{
+					SecretReference: v2.SecretReference{
 						Name:      testSecretName,
 						Namespace: testNamespace,
 					},
@@ -102,9 +102,9 @@ func TestGetTokenValueFromSecret(t *testing.T) {
 		},
 		"KeyNotFoundInSecret": {
 			args: args{
-				selector: &xpv1.SecretKeySelector{
+				selector: &v2.SecretKeySelector{
 					Key: "wrong-key",
-					SecretReference: xpv1.SecretReference{
+					SecretReference: v2.SecretReference{
 						Name:      testSecretName,
 						Namespace: testNamespace,
 					},
@@ -127,9 +127,9 @@ func TestGetTokenValueFromSecret(t *testing.T) {
 		},
 		"EmptySecretData": {
 			args: args{
-				selector: &xpv1.SecretKeySelector{
+				selector: &v2.SecretKeySelector{
 					Key: testKey,
-					SecretReference: xpv1.SecretReference{
+					SecretReference: v2.SecretReference{
 						Name:      testSecretName,
 						Namespace: testNamespace,
 					},
@@ -174,7 +174,7 @@ func TestGetTokenValueFromLocalSecret(t *testing.T) {
 	testKey := "token"
 
 	type args struct {
-		selector *xpv1.LocalSecretKeySelector
+		selector *v2.LocalSecretKeySelector
 		kube     client.Client
 	}
 	type want struct {
@@ -188,9 +188,9 @@ func TestGetTokenValueFromLocalSecret(t *testing.T) {
 	}{
 		"SuccessfulLocalTokenRetrieval": {
 			args: args{
-				selector: &xpv1.LocalSecretKeySelector{
+				selector: &v2.LocalSecretKeySelector{
 					Key: testKey,
-					LocalSecretReference: xpv1.LocalSecretReference{
+					LocalSecretReference: v2.LocalSecretReference{
 						Name: testSecretName,
 					},
 				},
@@ -212,9 +212,9 @@ func TestGetTokenValueFromLocalSecret(t *testing.T) {
 		},
 		"LocalSecretNotFound": {
 			args: args{
-				selector: &xpv1.LocalSecretKeySelector{
+				selector: &v2.LocalSecretKeySelector{
 					Key: testKey,
-					LocalSecretReference: xpv1.LocalSecretReference{
+					LocalSecretReference: v2.LocalSecretReference{
 						Name: testSecretName,
 					},
 				},
@@ -229,9 +229,9 @@ func TestGetTokenValueFromLocalSecret(t *testing.T) {
 		},
 		"LocalKeyNotFound": {
 			args: args{
-				selector: &xpv1.LocalSecretKeySelector{
+				selector: &v2.LocalSecretKeySelector{
 					Key: "wrong-key",
-					LocalSecretReference: xpv1.LocalSecretReference{
+					LocalSecretReference: v2.LocalSecretReference{
 						Name: testSecretName,
 					},
 				},

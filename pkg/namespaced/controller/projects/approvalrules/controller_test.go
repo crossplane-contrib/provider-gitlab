@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -55,7 +55,7 @@ type args struct {
 
 type projectModifier func(*v1alpha1.ApprovalRule)
 
-func withConditions(c ...xpv1.Condition) projectModifier {
+func withConditions(c ...v2.Condition) projectModifier {
 	return func(cr *v1alpha1.ApprovalRule) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -243,7 +243,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: projectApprovalRule(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withProjectID(),
 					withExternalName("123"),
 					withSpec(v1alpha1.ApprovalRuleParameters{
@@ -326,7 +326,7 @@ func TestCreate(t *testing.T) {
 					withProjectID(),
 					withExternalName(fmt.Sprintf("%d", projectID)),
 					withSpec(v1alpha1.ApprovalRuleParameters{ProjectID: &projectID}),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				result: managed.ExternalCreation{},
 			},
@@ -346,7 +346,7 @@ func TestCreate(t *testing.T) {
 				cr: projectApprovalRule(
 					withProjectID(),
 					withSpec(v1alpha1.ApprovalRuleParameters{ProjectID: &projectID}),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},

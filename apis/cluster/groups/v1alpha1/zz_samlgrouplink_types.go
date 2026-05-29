@@ -19,7 +19,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,11 +35,11 @@ type SamlGroupLinkParameters struct {
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
 	// +immutable
-	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
+	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
 	// +optional
-	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
+	GroupIDSelector *v2.Selector `json:"groupIdSelector,omitempty"`
 
 	// name is the name of the saml group to attach to the gitlab group
 	// +immutable
@@ -61,14 +62,14 @@ type SamlGroupLinkObservation struct {
 
 // A SamlGroupLinkSpec defines the desired state of a Gitlab SAML group sync.
 type SamlGroupLinkSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       SamlGroupLinkParameters `json:"forProvider"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
+	ForProvider                   SamlGroupLinkParameters `json:"forProvider"`
 }
 
 // A SamlGroupLinkStatus represents the observed state of a Gitlab SAML group sync.
 type SamlGroupLinkStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          SamlGroupLinkObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               SamlGroupLinkObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

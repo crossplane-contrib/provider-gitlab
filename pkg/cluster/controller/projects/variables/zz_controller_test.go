@@ -23,10 +23,10 @@ import (
 	"net/http"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	corev1 "k8s.io/api/core/v1"
@@ -72,7 +72,7 @@ type args struct {
 
 type variableModifier func(*v1alpha1.Variable)
 
-func withConditions(c ...xpv1.Condition) variableModifier {
+func withConditions(c ...v2.Condition) variableModifier {
 	return func(r *v1alpha1.Variable) { r.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -106,7 +106,7 @@ func withValue(value string) variableModifier {
 	}
 }
 
-func withValueSecretRef(selector *xpv1.SecretKeySelector) variableModifier {
+func withValueSecretRef(selector *v2.SecretKeySelector) variableModifier {
 	return func(r *v1alpha1.Variable) {
 		r.Spec.ForProvider.ValueSecretRef = selector
 	}
@@ -194,7 +194,7 @@ func TestObserve(t *testing.T) {
 				cr: variable(
 					withDefaultValues(),
 					withDescription(variableDescription),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withObservation(v1alpha1.VariableObservation{
 						CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
 							Key:          variableKey,
@@ -232,7 +232,7 @@ func TestObserve(t *testing.T) {
 					withDefaultValues(),
 					withValue("blah"),
 					withDescription(variableDescription),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withObservation(v1alpha1.VariableObservation{
 						CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
 							Key:          variableKey,
@@ -279,7 +279,7 @@ func TestObserve(t *testing.T) {
 					// as it was already set in the existing CR.
 					withVariableType(commonv1alpha1.VariableTypeEnvVar),
 					withDescription(variableDescription),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withObservation(v1alpha1.VariableObservation{
 						CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
 							Key:          variableKey,
@@ -381,7 +381,7 @@ func TestObserve(t *testing.T) {
 					withMasked(true),
 					withRaw(true),
 					withDescription(variableDescription),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withVariableType(commonv1alpha1.VariableTypeEnvVar),
 					withObservation(v1alpha1.VariableObservation{
 						CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
@@ -452,7 +452,7 @@ func TestObserve(t *testing.T) {
 					withKey(variableKey),
 					withValueSecretRef(common.TestCreateSecretKeySelector("", "blah")),
 					withDeletionTimestamp(),
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
 			},
 			want: want{
@@ -461,7 +461,7 @@ func TestObserve(t *testing.T) {
 					withKey(variableKey),
 					withValueSecretRef(common.TestCreateSecretKeySelector("", "blah")),
 					withDeletionTimestamp(),
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
 				result: managed.ExternalObservation{ResourceExists: true},
 			},
@@ -514,7 +514,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: variable(
 					withDefaultValues(),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				result: managed.ExternalCreation{},
 			},
@@ -533,7 +533,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: variable(
 					withDefaultValues(),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
@@ -565,7 +565,7 @@ func TestCreate(t *testing.T) {
 				cr: variable(
 					withProjectID(projectID),
 					withKey(variableKey),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 					withValueSecretRef(common.TestCreateSecretKeySelector("", "blah")),
 					withValue(variableValue),
 					withMasked(true),
@@ -786,13 +786,13 @@ func TestDelete(t *testing.T) {
 				},
 				cr: variable(
 					withProjectID(projectID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 				),
 			},
 			want: want{
 				cr: variable(
 					withProjectID(projectID),
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
 			},
 		},
@@ -805,13 +805,13 @@ func TestDelete(t *testing.T) {
 				},
 				cr: variable(
 					withProjectID(projectID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 				),
 			},
 			want: want{
 				cr: variable(
 					withProjectID(projectID),
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},
@@ -825,13 +825,13 @@ func TestDelete(t *testing.T) {
 				},
 				cr: variable(
 					withProjectID(projectID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 				),
 			},
 			want: want{
 				cr: variable(
 					withProjectID(projectID),
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
 			},
 		},

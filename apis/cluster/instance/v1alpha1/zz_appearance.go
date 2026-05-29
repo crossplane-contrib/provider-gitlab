@@ -21,7 +21,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -101,14 +102,14 @@ type AppearanceObservation struct {
 
 // A AppearanceSpec defines the desired state of a Gitlab Instance Settings.
 type AppearanceSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
 	// Defines the desired state of the Appearance.
 	ForProvider AppearanceParameters `json:"forProvider"`
 }
 
 // A AppearanceStatus represents the observed state of the GitLab Instance Settings.
 type AppearanceStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	v2.ManagedResourceStatus `json:",inline"`
 	// Represents the observed state of the Appearance.
 	AtProvider AppearanceObservation `json:"atProvider,omitempty"`
 }

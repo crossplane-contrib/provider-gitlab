@@ -22,7 +22,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 // ApplicationSettingsParameters defines the desired state for ApplicationSettings
@@ -39,7 +39,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	AkismetAPIKey *string `json:"akismetApiKey,omitempty"`
 	// +optional
-	AkismetAPIKeySecretRef *xpv1.LocalSecretKeySelector `json:"akismetApiKeySecretRef,omitempty"`
+	AkismetAPIKeySecretRef *v2.LocalSecretKeySelector `json:"akismetApiKeySecretRef,omitempty"`
 	// +optional
 	AkismetEnabled *bool `json:"akismetEnabled,omitempty"`
 	// +optional
@@ -69,7 +69,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	AssetProxySecretKey *string `json:"assetProxySecretKey,omitempty"`
 	// +optional
-	AssetProxySecretKeySecretRef *xpv1.LocalSecretKeySelector `json:"assetProxySecretKeySecretRef,omitempty"`
+	AssetProxySecretKeySecretRef *v2.LocalSecretKeySelector `json:"assetProxySecretKeySecretRef,omitempty"`
 	// +optional
 	AssetProxyURL *string `json:"assetProxyUrl,omitempty"`
 	// +optional
@@ -221,7 +221,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	EKSAccessKeyID *string `json:"eksAccessKeyId,omitempty"`
 	// +optional
-	EKSAccessKeyIDSecretRef *xpv1.LocalSecretKeySelector `json:"eksAccessKeyIdSecretRef,omitempty"`
+	EKSAccessKeyIDSecretRef *v2.LocalSecretKeySelector `json:"eksAccessKeyIdSecretRef,omitempty"`
 	// +optional
 	EKSAccountID *string `json:"eksAccountId,omitempty"`
 	// +optional
@@ -229,7 +229,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	EKSSecretAccessKey *string `json:"eksSecretAccessKey,omitempty"`
 	// +optional
-	EKSSecretAccessKeySecretRef *xpv1.LocalSecretKeySelector `json:"eksSecretAccessKeySecretRef,omitempty"`
+	EKSSecretAccessKeySecretRef *v2.LocalSecretKeySelector `json:"eksSecretAccessKeySecretRef,omitempty"`
 	// +optional
 	Ed25519KeyRestriction *int64 `json:"ed25519KeyRestriction,omitempty"`
 	// +optional
@@ -239,13 +239,13 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ElasticsearchAWSAccessKey *string `json:"elasticsearchAwsAccessKey,omitempty"`
 	// +optional
-	ElasticsearchAWSAccessKeySecretRef *xpv1.LocalSecretKeySelector `json:"elasticsearchAwsAccessKeySecretRef,omitempty"`
+	ElasticsearchAWSAccessKeySecretRef *v2.LocalSecretKeySelector `json:"elasticsearchAwsAccessKeySecretRef,omitempty"`
 	// +optional
 	ElasticsearchAWSRegion *string `json:"elasticsearchAwsRegion,omitempty"`
 	// +optional
 	ElasticsearchAWSSecretAccessKey *string `json:"elasticsearchAwsSecretAccessKey,omitempty"`
 	// +optional
-	ElasticsearchAWSSecretAccessKeySecretRef *xpv1.LocalSecretKeySelector `json:"elasticsearchAwsSecretAccessKeySecretRef,omitempty"`
+	ElasticsearchAWSSecretAccessKeySecretRef *v2.LocalSecretKeySelector `json:"elasticsearchAwsSecretAccessKeySecretRef,omitempty"`
 	// +optional
 	ElasticsearchAnalyzersKuromojiEnabled *bool `json:"elasticsearchAnalyzersKuromojiEnabled,omitempty"`
 	// +optional
@@ -275,7 +275,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ElasticsearchPassword *string `json:"elasticsearchPassword,omitempty"`
 	// +optional
-	ElasticsearchPasswordSecretRef *xpv1.LocalSecretKeySelector `json:"elasticsearchPasswordSecretRef,omitempty"`
+	ElasticsearchPasswordSecretRef *v2.LocalSecretKeySelector `json:"elasticsearchPasswordSecretRef,omitempty"`
 	// +optional
 	ElasticsearchPauseIndexing *bool `json:"elasticsearchPauseIndexing,omitempty"`
 	// +optional
@@ -325,7 +325,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ExternalAuthClientKey *string `json:"externalAuthClientKey,omitempty"`
 	// +optional
-	ExternalAuthClientKeySecretRef *xpv1.LocalSecretKeySelector `json:"externalAuthClientKeySecretRef,omitempty"`
+	ExternalAuthClientKeySecretRef *v2.LocalSecretKeySelector `json:"externalAuthClientKeySecretRef,omitempty"`
 	// +optional
 	ExternalAuthClientKeyPass *string `json:"externalAuthClientKeyPass,omitempty"`
 	// +optional
@@ -341,7 +341,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ExternalPipelineValidationServiceToken *string `json:"externalPipelineValidationServiceToken,omitempty"`
 	// +optional
-	ExternalPipelineValidationServiceTokenSecretRef *xpv1.LocalSecretKeySelector `json:"externalPipelineValidationServiceTokenSecretRef,omitempty"`
+	ExternalPipelineValidationServiceTokenSecretRef *v2.LocalSecretKeySelector `json:"externalPipelineValidationServiceTokenSecretRef,omitempty"`
 	// +optional
 	ExternalPipelineValidationServiceURL *string `json:"externalPipelineValidationServiceUrl,omitempty"`
 	// +optional
@@ -437,7 +437,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	JiraConnectApplicationKey *string `json:"jiraConnectApplicationKey,omitempty"`
 	// +optional
-	JiraConnectApplicationKeySecretRef *xpv1.LocalSecretKeySelector `json:"jiraConnectApplicationKeySecretRef,omitempty"`
+	JiraConnectApplicationKeySecretRef *v2.LocalSecretKeySelector `json:"jiraConnectApplicationKeySecretRef,omitempty"`
 	// +optional
 	JiraConnectPublicKeyStorageEnabled *bool `json:"jiraConnectPublicKeyStorageEnabled,omitempty"`
 	// +optional
@@ -463,7 +463,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	MailgunSigningKey *string `json:"mailgunSigningKey,omitempty"`
 	// +optional
-	MailgunSigningKeySecretRef *xpv1.LocalSecretKeySelector `json:"mailgunSigningKeySecretRef,omitempty"`
+	MailgunSigningKeySecretRef *v2.LocalSecretKeySelector `json:"mailgunSigningKeySecretRef,omitempty"`
 	// +optional
 	MaintenanceMode *bool `json:"maintenanceMode,omitempty"`
 	// +optional
@@ -597,11 +597,11 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	RecaptchaPrivateKey *string `json:"recaptchaPrivateKey,omitempty"`
 	// +optional
-	RecaptchaPrivateKeySecretRef *xpv1.LocalSecretKeySelector `json:"recaptchaPrivateKeySecretRef,omitempty"`
+	RecaptchaPrivateKeySecretRef *v2.LocalSecretKeySelector `json:"recaptchaPrivateKeySecretRef,omitempty"`
 	// +optional
 	RecaptchaSiteKey *string `json:"recaptchaSiteKey,omitempty"`
 	// +optional
-	RecaptchaSiteKeySecretRef *xpv1.LocalSecretKeySelector `json:"recaptchaSiteKeySecretRef,omitempty"`
+	RecaptchaSiteKeySecretRef *v2.LocalSecretKeySelector `json:"recaptchaSiteKeySecretRef,omitempty"`
 	// +optional
 	ReceiveMaxInputSize *int64 `json:"receiveMaxInputSize,omitempty"`
 	// +optional
@@ -639,7 +639,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	SecretDetectionTokenRevocationToken *string `json:"secretDetectionTokenRevocationToken,omitempty"`
 	// +optional
-	SecretDetectionTokenRevocationTokenSecretRef *xpv1.LocalSecretKeySelector `json:"secretDetectionTokenRevocationTokenSecretRef,omitempty"`
+	SecretDetectionTokenRevocationTokenSecretRef *v2.LocalSecretKeySelector `json:"secretDetectionTokenRevocationTokenSecretRef,omitempty"`
 	// +optional
 	SecretDetectionTokenRevocationURL *string `json:"secretDetectionTokenRevocationUrl,omitempty"`
 	// +optional
@@ -689,15 +689,15 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	SlackAppSecret *string `json:"slackAppSecret,omitempty"`
 	// +optional
-	SlackAppSecretSecretRef *xpv1.LocalSecretKeySelector `json:"slackAppSecretSecretRef,omitempty"`
+	SlackAppSecretSecretRef *v2.LocalSecretKeySelector `json:"slackAppSecretSecretRef,omitempty"`
 	// +optional
 	SlackAppSigningSecret *string `json:"slackAppSigningSecret,omitempty"`
 	// +optional
-	SlackAppSigningSecretSecretRef *xpv1.LocalSecretKeySelector `json:"slackAppSigningSecretSecretRef,omitempty"`
+	SlackAppSigningSecretSecretRef *v2.LocalSecretKeySelector `json:"slackAppSigningSecretSecretRef,omitempty"`
 	// +optional
 	SlackAppVerificationToken *string `json:"slackAppVerificationToken,omitempty"`
 	// +optional
-	SlackAppVerificationTokenSecretRef *xpv1.LocalSecretKeySelector `json:"slackAppVerificationTokenSecretRef,omitempty"`
+	SlackAppVerificationTokenSecretRef *v2.LocalSecretKeySelector `json:"slackAppVerificationTokenSecretRef,omitempty"`
 	// +optional
 	SnippetSizeLimit *int64 `json:"snippetSizeLimit,omitempty"`
 	// +optional
@@ -719,7 +719,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	SpamCheckAPIKey *string `json:"spamCheckApiKey,omitempty"`
 	// +optional
-	SpamCheckAPIKeySecretRef *xpv1.LocalSecretKeySelector `json:"spamCheckApiKeySecretRef,omitempty"`
+	SpamCheckAPIKeySecretRef *v2.LocalSecretKeySelector `json:"spamCheckApiKeySecretRef,omitempty"`
 	// +optional
 	SpamCheckEndpointEnabled *bool `json:"spamCheckEndpointEnabled,omitempty"`
 	// +optional
@@ -727,7 +727,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	StaticObjectsExternalStorageAuthToken *string `json:"staticObjectsExternalStorageAuthToken,omitempty"`
 	// +optional
-	StaticObjectsExternalStorageAuthTokenSecretRef *xpv1.LocalSecretKeySelector `json:"staticObjectsExternalStorageAuthTokenSecretRef,omitempty"`
+	StaticObjectsExternalStorageAuthTokenSecretRef *v2.LocalSecretKeySelector `json:"staticObjectsExternalStorageAuthTokenSecretRef,omitempty"`
 	// +optional
 	StaticObjectsExternalStorageURL *string `json:"staticObjectsExternalStorageUrl,omitempty"`
 	// +optional

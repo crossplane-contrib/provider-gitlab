@@ -19,7 +19,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -262,7 +263,7 @@ type ProjectParameters struct {
 	// ImportURLSecretRef is a reference to a Kubernetes secret to retrieve the URL to import repository from.
 	// This is preferable to using ImportURL since it allows users to reference a URL that contains sensitive information such as a personal access token.
 	// +optional
-	ImportURLSecretRef *xpv1.SecretKeySelector `json:"importUrlSecretRef,omitempty"`
+	ImportURLSecretRef *v2.SecretKeySelector `json:"importUrlSecretRef,omitempty"`
 
 	// false by default.
 	// +optional
@@ -330,11 +331,11 @@ type ProjectParameters struct {
 	// NamespaceIDRef is a reference to a project to retrieve its namespaceId
 	// +optional
 	// +immutable
-	NamespaceIDRef *xpv1.Reference `json:"namespaceIdRef,omitempty"`
+	NamespaceIDRef *v2.Reference `json:"namespaceIdRef,omitempty"`
 
 	// NamespaceIDSelector selects reference to a project to retrieve its namespaceId.
 	// +optional
-	NamespaceIDSelector *xpv1.Selector `json:"namespaceIdSelector,omitempty"`
+	NamespaceIDSelector *v2.Selector `json:"namespaceIdSelector,omitempty"`
 
 	// Set whether merge requests can only be merged when all the discussions are resolved.
 	// +optional
@@ -653,14 +654,14 @@ type ProjectObservation struct {
 
 // A ProjectSpec defines the desired state of a Gitlab Project.
 type ProjectSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       ProjectParameters `json:"forProvider"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
+	ForProvider                   ProjectParameters `json:"forProvider"`
 }
 
 // A ProjectStatus represents the observed state of a Gitlab Project.
 type ProjectStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          ProjectObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               ProjectObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

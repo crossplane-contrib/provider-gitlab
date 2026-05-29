@@ -19,7 +19,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,11 +34,11 @@ type BadgeParameters struct {
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
 	// +immutable
-	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
+	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
 	// +optional
-	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
+	GroupIDSelector *v2.Selector `json:"groupIdSelector,omitempty"`
 
 	// ID is the ID of an existing badge to import and manage.
 	// If set, the controller will adopt the existing badge instead of creating a new one.
@@ -80,14 +80,14 @@ type BadgeObservation struct {
 
 // A BadgeSpec defines the desired state of a Gitlab Group Badge.
 type BadgeSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       BadgeParameters `json:"forProvider"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
+	ForProvider                   BadgeParameters `json:"forProvider"`
 }
 
 // A BadgeStatus represents the observed state of a Gitlab Group Badge.
 type BadgeStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          BadgeObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               BadgeObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

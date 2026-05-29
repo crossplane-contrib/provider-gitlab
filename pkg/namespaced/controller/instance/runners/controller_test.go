@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -60,7 +60,7 @@ type args struct {
 
 type RunnerModifier func(*v1alpha1.Runner)
 
-func withConditions(c ...xpv1.Condition) RunnerModifier {
+func withConditions(c ...v2.Condition) RunnerModifier {
 	return func(cr *v1alpha1.Runner) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -251,7 +251,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: runner(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withExternalName(extName),
 					withSpec(v1alpha1.RunnerParameters{}),
 					// withStatus(v1alpha1.RunnerObservation{Name: name}),
@@ -283,7 +283,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: runner(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withExternalName(extName),
 					withSpec(v1alpha1.RunnerParameters{
 						CommonRunnerParameters: commonv1alpha1.CommonRunnerParameters{
@@ -480,7 +480,7 @@ func TestCreate(t *testing.T) {
 					withConnectionSecretRef(),
 					withSpec(v1alpha1.RunnerParameters{}),
 					withExternalName(extName),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: nil,
 				result: managed.ExternalCreation{
@@ -508,7 +508,7 @@ func TestCreate(t *testing.T) {
 					withSpec(v1alpha1.RunnerParameters{}),
 					withExternalName(extName),
 					withAtProvider(v1alpha1.RunnerObservation{CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{TokenExpiresAt: func() *metav1.Time { t := metav1.NewTime(expiresAt); return &t }()}}),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: nil,
 				result: managed.ExternalCreation{

@@ -19,7 +19,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -34,7 +35,7 @@ type VariableParameters struct {
 	// have not been set implicitly. Mutually exclusive with Value.
 	// +optional
 	// +nullable
-	ValueSecretRef *xpv1.SecretKeySelector `json:"valueSecretRef,omitempty"`
+	ValueSecretRef *v2.SecretKeySelector `json:"valueSecretRef,omitempty"`
 
 	// GroupID is the ID of the group to create the variable on.
 	// +optional
@@ -44,11 +45,11 @@ type VariableParameters struct {
 	// GroupIDRef is a reference to a group to retrieve its groupId.
 	// +optional
 	// +immutable
-	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
+	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
 	// +optional
-	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
+	GroupIDSelector *v2.Selector `json:"groupIdSelector,omitempty"`
 
 	// EnvironmentScope indicates the environment scope of a variable.
 	// +optional
@@ -65,14 +66,14 @@ type VariableObservation struct {
 // A VariableSpec defines the desired state of a Gitlab Group CI
 // Variable.
 type VariableSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       VariableParameters `json:"forProvider"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
+	ForProvider                   VariableParameters `json:"forProvider"`
 }
 
 // A VariableStatus represents the observed state of a Gitlab Group CI
 // Variable.
 type VariableStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	v2.ManagedResourceStatus `json:",inline"`
 	// AtProvider reflects the observed state of a Gitlab Variable.
 	AtProvider VariableObservation `json:"atProvider,omitempty"`
 }

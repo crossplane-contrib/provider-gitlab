@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -62,7 +62,7 @@ type args struct {
 
 type modifier func(*v1alpha1.ApplicationSettings)
 
-func withConditions(c ...xpv1.Condition) modifier {
+func withConditions(c ...v2.Condition) modifier {
 	return func(cr *v1alpha1.ApplicationSettings) {
 		cr.Status.SetConditions(c...)
 	}
@@ -153,7 +153,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: applicationSettings(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withSpec(v1alpha1.ApplicationSettingsParameters{
 						SignupEnabled: boolPtr(true),
 					}),
@@ -184,7 +184,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: applicationSettings(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withSpec(v1alpha1.ApplicationSettingsParameters{
 						SignupEnabled: boolPtr(true),
 					}),
@@ -268,7 +268,7 @@ func TestCreate(t *testing.T) {
 				cr: applicationSettings(),
 			},
 			want: want{
-				cr:  applicationSettings(withConditions(xpv1.Creating())),
+				cr:  applicationSettings(withConditions(v2.Creating())),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
 		},
@@ -282,7 +282,7 @@ func TestCreate(t *testing.T) {
 				cr: applicationSettings(),
 			},
 			want: want{
-				cr:     applicationSettings(withConditions(xpv1.Creating())),
+				cr:     applicationSettings(withConditions(v2.Creating())),
 				result: managed.ExternalCreation{},
 			},
 		},
@@ -336,7 +336,7 @@ func TestUpdate(t *testing.T) {
 				cr: applicationSettings(),
 			},
 			want: want{
-				cr:  applicationSettings(withConditions(xpv1.Creating())),
+				cr:  applicationSettings(withConditions(v2.Creating())),
 				err: errors.Wrap(errBoom, errUpdateFailed),
 			},
 		},
@@ -350,7 +350,7 @@ func TestUpdate(t *testing.T) {
 				cr: applicationSettings(),
 			},
 			want: want{
-				cr:     applicationSettings(withConditions(xpv1.Creating())),
+				cr:     applicationSettings(withConditions(v2.Creating())),
 				result: managed.ExternalUpdate{},
 			},
 		},

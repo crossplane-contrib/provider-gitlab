@@ -21,10 +21,10 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -70,7 +70,7 @@ func withExpiresAt(s string) projectModifier {
 
 type projectModifier func(*v1alpha1.Member)
 
-func withConditions(c ...xpv1.Condition) projectModifier {
+func withConditions(c ...v2.Condition) projectModifier {
 	return func(cr *v1alpha1.Member) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -258,7 +258,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: projectMember(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withProjectID(),
 					withSpec(v1alpha1.MemberParameters{
 						UserID:    &userID,
@@ -292,7 +292,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: projectMember(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withSpec(v1alpha1.MemberParameters{
 						UserID:    &userID,
 						ProjectID: &projectID,
@@ -325,7 +325,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: projectMember(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withExpiresAt(expiresAtNew.String()),
 					withSpec(v1alpha1.MemberParameters{
 						UserID:    &userID,
@@ -362,7 +362,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: projectMember(
 					withProjectID(),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withSpec(v1alpha1.MemberParameters{
 						UserName:  &username,
 						UserID:    &userID,

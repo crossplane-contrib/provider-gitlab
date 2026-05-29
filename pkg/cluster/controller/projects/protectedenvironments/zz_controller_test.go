@@ -37,10 +37,10 @@ import (
 	"net/http"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -73,7 +73,7 @@ type args struct {
 
 type peModifier func(*v1alpha1.ProtectedEnvironment)
 
-func withConditions(c ...xpv1.Condition) peModifier {
+func withConditions(c ...v2.Condition) peModifier {
 
 	return func(r *v1alpha1.ProtectedEnvironment) { r.Status.Conditions = c }
 
@@ -413,7 +413,7 @@ func TestObserve(t *testing.T) {
 
 					withProjectID(ptr.To(projectID)),
 
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 
 					withStatus(v1alpha1.ProtectedEnvironmentObservation{
 
@@ -470,7 +470,7 @@ func TestObserve(t *testing.T) {
 
 					withRequiredApprovalCount(ptr.To(2)),
 
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 
 					withStatus(v1alpha1.ProtectedEnvironmentObservation{
 
@@ -608,7 +608,7 @@ func TestCreate(t *testing.T) {
 
 					withProjectID(ptr.To(projectID)),
 
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 
 				result: managed.ExternalCreation{},
@@ -644,7 +644,7 @@ func TestCreate(t *testing.T) {
 
 					withProjectID(ptr.To(projectID)),
 
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 
 				err: errors.Wrap(errBoom, errCreateFailed),
@@ -973,7 +973,7 @@ func TestDelete(t *testing.T) {
 
 					withProjectID(ptr.To(projectID)),
 
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
 
 				result: managed.ExternalDelete{},
@@ -1009,7 +1009,7 @@ func TestDelete(t *testing.T) {
 
 					withProjectID(ptr.To(projectID)),
 
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
 
 				result: managed.ExternalDelete{},

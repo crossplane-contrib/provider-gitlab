@@ -19,7 +19,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -42,13 +43,13 @@ type RunnerParameters struct {
 	// This provides a way to reference a project managed by Crossplane.
 	// +optional
 	// +immutable
-	ProjectIDRef *xpv1.Reference `json:"projectIdRef,omitempty"`
+	ProjectIDRef *v2.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects a reference to a Project resource to retrieve its ID.
 	// This provides a way to dynamically select a project based on labels.
 	// +optional
 	// +immutable
-	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
+	ProjectIDSelector *v2.Selector `json:"projectIdSelector,omitempty"`
 
 	// CommonRunnerParameters contains the common runner configuration
 	// parameters shared between group and project runners.
@@ -100,16 +101,16 @@ type RunnerProject struct {
 // This includes the configuration parameters for creating and managing
 // a GitLab Runner linked to a specific project.
 type RunnerSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       RunnerParameters `json:"forProvider"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
+	ForProvider                   RunnerParameters `json:"forProvider"`
 }
 
 // RunnerStatus represents the observed state of a project Runner.
 // This includes the current status and properties of the runner as
 // reported by the GitLab API.
 type RunnerStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          RunnerObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               RunnerObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -19,7 +19,7 @@ package common
 import (
 	"context"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -33,7 +33,7 @@ const (
 	ErrSecretSelectorNil = "Secret selector is nil"
 )
 
-func GetTokenValueFromSecret(ctx context.Context, client client.Client, m resource.Managed, selector *xpv1.SecretKeySelector) (*string, error) {
+func GetTokenValueFromSecret(ctx context.Context, client client.Client, m resource.Managed, selector *v2.SecretKeySelector) (*string, error) {
 	if selector == nil {
 		return nil, errors.Errorf(ErrSecretSelectorNil)
 	}
@@ -54,14 +54,14 @@ func GetTokenValueFromSecret(ctx context.Context, client client.Client, m resour
 
 // GetTokenValueFromLocalSecret is a helper function that retrieves the value of a secret key specified by a LocalSecretKeySelector.
 // It constructs a SecretKeySelector from the LocalSecretKeySelector and calls GetTokenValueFromSecret to fetch the value.
-func GetTokenValueFromLocalSecret(ctx context.Context, client client.Client, m resource.Managed, l *xpv1.LocalSecretKeySelector) (*string, error) {
+func GetTokenValueFromLocalSecret(ctx context.Context, client client.Client, m resource.Managed, l *v2.LocalSecretKeySelector) (*string, error) {
 	if l == nil {
 		return nil, errors.Errorf(ErrSecretSelectorNil)
 	}
 
-	return GetTokenValueFromSecret(ctx, client, m, &xpv1.SecretKeySelector{
+	return GetTokenValueFromSecret(ctx, client, m, &v2.SecretKeySelector{
 		Key: l.Key,
-		SecretReference: xpv1.SecretReference{
+		SecretReference: v2.SecretReference{
 			Name:      l.Name,
 			Namespace: m.GetNamespace(),
 		},
