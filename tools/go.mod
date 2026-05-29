@@ -56,3 +56,6 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+// needed until https://github.com/crossplane/crossplane-tools/pull/128 gets merged
+replace github.com/crossplane/crossplane-tools => github.com/floric/crossplane-tools v0.0.0-20260529090112-242321a25263

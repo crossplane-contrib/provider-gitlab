@@ -20,7 +20,6 @@ import (
 	"context"
 	"strconv"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
@@ -28,6 +27,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -54,7 +54,7 @@ func SetupAccessToken(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v1alpha1.AccessTokenGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
-		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewAccessTokenClient}),
+		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewAccessTokenClient}),
 		managed.WithInitializers(),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
@@ -155,7 +155,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	cr.Status.SetConditions(xpv1.Available())
+	cr.Status.SetConditions(v2.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,

@@ -19,7 +19,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,11 +34,11 @@ type LdapGroupLinkParameters struct {
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
 	// +immutable
-	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
+	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
 	// +optional
-	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
+	GroupIDSelector *v2.Selector `json:"groupIdSelector,omitempty"`
 
 	// GroupAccess is the defined role for members of the LDAP group
 	// +immutable
@@ -69,14 +69,14 @@ type LdapGroupLinkObservation struct {
 
 // A LdapGroupLinkSpec defines the desired state of a Gitlab Ldap group sync.
 type LdapGroupLinkSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       LdapGroupLinkParameters `json:"forProvider"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
+	ForProvider                   LdapGroupLinkParameters `json:"forProvider"`
 }
 
 // A LdapGroupLinkStatus represents the observed state of a Gitlab Ldap group sync.
 type LdapGroupLinkStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          LdapGroupLinkObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               LdapGroupLinkObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

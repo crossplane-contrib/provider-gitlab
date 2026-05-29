@@ -17,9 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -37,11 +35,11 @@ type AccessTokenParameters struct {
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
 	// +immutable
-	GroupIDRef *xpv1.NamespacedReference `json:"groupIdRef,omitempty"`
+	GroupIDRef *v2.NamespacedReference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
 	// +optional
-	GroupIDSelector *xpv1.NamespacedSelector `json:"groupIdSelector,omitempty"`
+	GroupIDSelector *v2.NamespacedSelector `json:"groupIdSelector,omitempty"`
 
 	// ExpiresAt is the expiration date of the access token in ISO 8601 format (2019-03-15T08:00:00Z).
 	// The date cannot be set later than the maximum allowable lifetime of an access token.
@@ -107,14 +105,14 @@ type AccessTokenObservation struct {
 
 // A AccessTokenSpec defines the desired state of a Gitlab group.
 type AccessTokenSpec struct {
-	xpv2.ManagedResourceSpec `json:",inline"`
-	ForProvider              AccessTokenParameters `json:"forProvider"`
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            AccessTokenParameters `json:"forProvider"`
 }
 
 // A AccessTokenStatus represents the observed state of a Gitlab group.
 type AccessTokenStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          AccessTokenObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               AccessTokenObservation `json:"atProvider,omitempty"`
 
 	// RenewAt is the computed time at which the provider will renew
 	// the token. Only populated for renewal-managed tokens.

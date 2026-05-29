@@ -22,7 +22,6 @@ import (
 	"context"
 	"strconv"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
@@ -30,6 +29,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -61,7 +61,7 @@ func SetupLicense(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName("cluster." + v1alpha1.LicenseGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
-		managed.WithExternalConnecter(&connector{
+		managed.WithExternalConnector(&connector{
 			kube:              mgr.GetClient(),
 			newGitlabClientFn: instance.NewLicenseClient,
 		}),
@@ -192,7 +192,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	cr.Status.AtProvider = instance.GenerateLicenseObservation(license)
-	cr.SetConditions(xpv1.Available())
+	cr.SetConditions(v2.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
@@ -234,7 +234,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
-	cr.SetConditions(xpv1.Creating())
+	cr.SetConditions(v2.Creating())
 	meta.SetExternalName(cr, strconv.FormatInt(license.ID, 10))
 
 	return managed.ExternalCreation{
@@ -275,7 +275,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	// Retrieve saved license key from connection secret
-	existingLicenseKey, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, &xpv1.SecretKeySelector{
+	existingLicenseKey, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, &v2.SecretKeySelector{
 		SecretReference: *cr.Spec.WriteConnectionSecretToReference,
 		Key:             keyLicense,
 	})
@@ -369,7 +369,7 @@ func (e *external) verifyLicenseKey(ctx context.Context, mg resource.Managed, co
 	}
 
 	// Retrieve the current license key from the connection secret
-	existingLicenseKey, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, &xpv1.SecretKeySelector{
+	existingLicenseKey, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, &v2.SecretKeySelector{
 		SecretReference: *cr.Spec.WriteConnectionSecretToReference,
 		Key:             keyLicense,
 	})

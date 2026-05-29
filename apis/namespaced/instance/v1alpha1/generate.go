@@ -57,7 +57,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 `
@@ -141,7 +141,7 @@ func generateStruct(out *strings.Builder, name string, t reflect.Type, omitEmpty
 		if fieldType.Kind() == reflect.Pointer && fieldType.Elem().Kind() == reflect.String {
 			for _, keyword := range sensitiveFieldsKeywords {
 				if strings.HasSuffix(lowerFieldName, keyword) {
-					fmt.Fprintf(out, "\t// +optional\n\t%sSecretRef *xpv1.LocalSecretKeySelector `json:\"%sSecretRef,omitempty\"`\n", fieldName, jsonTag)
+					fmt.Fprintf(out, "\t// +optional\n\t%sSecretRef *v2.LocalSecretKeySelector `json:\"%sSecretRef,omitempty\"`\n", fieldName, jsonTag)
 					break
 				}
 			}

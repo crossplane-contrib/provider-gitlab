@@ -19,7 +19,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -40,11 +40,11 @@ type HookParameters struct {
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
 	// +immutable
-	ProjectIDRef *xpv1.Reference `json:"projectIdRef,omitempty"`
+	ProjectIDRef *v2.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
 	// +optional
-	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
+	ProjectIDSelector *v2.Selector `json:"projectIdSelector,omitempty"`
 
 	// PushEvents triggers hook on push events.
 	// +optional
@@ -95,7 +95,7 @@ type HookParameters struct {
 }
 
 type Token struct {
-	SecretRef *xpv1.SecretKeySelector `json:"secretRef"`
+	SecretRef *v2.SecretKeySelector `json:"secretRef"`
 }
 
 // HookObservation represents a project hook.
@@ -112,14 +112,14 @@ type HookObservation struct {
 
 // A HookSpec defines the desired state of a Gitlab Project Hook.
 type HookSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       HookParameters `json:"forProvider"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
+	ForProvider                   HookParameters `json:"forProvider"`
 }
 
 // A HookStatus represents the observed state of a Gitlab Project Hook.
 type HookStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          HookObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               HookObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -24,12 +24,12 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	pkgerrors "github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -92,7 +92,7 @@ func withSpec(p v1alpha1.ServiceAccountParameters) serviceAccountModifier {
 	return func(r *v1alpha1.ServiceAccount) { r.Spec.ForProvider = p }
 }
 
-func withConditions(c ...xpv1.Condition) serviceAccountModifier {
+func withConditions(c ...v2.Condition) serviceAccountModifier {
 	return func(r *v1alpha1.ServiceAccount) { r.Status.SetConditions(c...) }
 }
 
@@ -208,7 +208,7 @@ func TestObserve(t *testing.T) {
 				cr: serviceAccount(
 					withExternalName("123"),
 					withSpec(desired),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withAtProvider(instance.GenerateServiceAccountObservation(&gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail})),
 				),
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true, ResourceLateInitialized: false},
@@ -222,7 +222,7 @@ func TestObserve(t *testing.T) {
 				cr: serviceAccount(
 					withExternalName("123"),
 					withSpec(desired),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withAtProvider(instance.GenerateServiceAccountObservation(&gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: "different@example.org"})),
 				),
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false, ResourceLateInitialized: false},
@@ -268,13 +268,13 @@ func TestCreate(t *testing.T) {
 			args: args{client: &MockClient{MockCreateServiceAccountUser: func(opts *gitlab.CreateServiceAccountUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return nil, nil, errBoom
 			}}, cr: serviceAccount(withSpec(desired))},
-			want: want{cr: serviceAccount(withSpec(desired), withConditions(xpv1.Creating())), err: errors.Wrap(errBoom, errCreateFailed)},
+			want: want{cr: serviceAccount(withSpec(desired), withConditions(v2.Creating())), err: errors.Wrap(errBoom, errCreateFailed)},
 		},
 		"Successful": {
 			args: args{client: &MockClient{MockCreateServiceAccountUser: func(opts *gitlab.CreateServiceAccountUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{}, &gitlab.Response{Response: &http.Response{StatusCode: 201}}, nil
 			}}, cr: serviceAccount(withSpec(desired))},
-			want: want{cr: serviceAccount(withSpec(desired), withConditions(xpv1.Creating()), withExternalName("0")), result: managed.ExternalCreation{}},
+			want: want{cr: serviceAccount(withSpec(desired), withConditions(v2.Creating()), withExternalName("0")), result: managed.ExternalCreation{}},
 		},
 	}
 
@@ -316,25 +316,25 @@ func TestUpdate(t *testing.T) {
 			args: args{client: &MockClient{MockModifyUser: func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{}, &gitlab.Response{}, nil
 			}}, cr: serviceAccount(withSpec(desired))},
-			want: want{cr: serviceAccount(withSpec(desired), withConditions(xpv1.Creating())), err: errors.New(errCreateFailed)},
+			want: want{cr: serviceAccount(withSpec(desired), withConditions(v2.Creating())), err: errors.New(errCreateFailed)},
 		},
 		"NotIDExternalName": {
 			args: args{client: &MockClient{MockModifyUser: func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{}, &gitlab.Response{}, nil
 			}}, cr: serviceAccount(withExternalName("fr"), withSpec(desired))},
-			want: want{cr: serviceAccount(withExternalName("fr"), withSpec(desired), withConditions(xpv1.Creating())), err: errors.New(errIDNotInt)},
+			want: want{cr: serviceAccount(withExternalName("fr"), withSpec(desired), withConditions(v2.Creating())), err: errors.New(errIDNotInt)},
 		},
 		"ErrUpdate": {
 			args: args{client: &MockClient{MockModifyUser: func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return nil, nil, errBoom
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
-			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired), withConditions(xpv1.Creating())), err: errors.Wrap(errBoom, errUpdateFailed)},
+			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired), withConditions(v2.Creating())), err: errors.Wrap(errBoom, errUpdateFailed)},
 		},
 		"Successful": {
 			args: args{client: &MockClient{MockModifyUser: func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{}, &gitlab.Response{}, nil
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
-			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired), withConditions(xpv1.Creating())), result: managed.ExternalUpdate{}},
+			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired), withConditions(v2.Creating())), result: managed.ExternalUpdate{}},
 		},
 	}
 

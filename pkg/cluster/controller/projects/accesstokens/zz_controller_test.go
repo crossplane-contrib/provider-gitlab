@@ -26,11 +26,11 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
@@ -77,7 +77,7 @@ type args struct {
 
 type accessTokenModifier func(*v1alpha1.AccessToken)
 
-func withConditions(c ...xpv1.Condition) accessTokenModifier {
+func withConditions(c ...v2.Condition) accessTokenModifier {
 	return func(r *v1alpha1.AccessToken) { r.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -243,7 +243,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -280,7 +280,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID: &projectID,
 					}),
@@ -386,7 +386,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -419,7 +419,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -451,7 +451,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),

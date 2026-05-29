@@ -19,7 +19,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -40,12 +40,12 @@ type PipelineScheduleParameters struct {
 	// ProjectIDRef is a reference to a project to retrieve its ProjectID.
 	// +optional
 	// +immutable
-	ProjectIDRef *xpv1.Reference `json:"projectIdRef,omitempty"`
+	ProjectIDRef *v2.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its ProjectID.
 	// +optional
 	// +immutable
-	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
+	ProjectIDSelector *v2.Selector `json:"projectIdSelector,omitempty"`
 
 	// Description is a description of the pipeline schedule.
 	// +required
@@ -106,14 +106,14 @@ type PipelineVariable struct {
 
 // PipelineScheduleSpec defines desired state of Gitlab Pipeline Schedule.
 type PipelineScheduleSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       PipelineScheduleParameters `json:"forProvider"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
+	ForProvider                   PipelineScheduleParameters `json:"forProvider"`
 }
 
 // PipelineScheduleStatus represents observed state of Gitlab Pipeline Schedule.
 type PipelineScheduleStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          PipelineScheduleObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               PipelineScheduleObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

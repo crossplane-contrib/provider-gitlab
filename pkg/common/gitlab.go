@@ -22,8 +22,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -133,7 +133,7 @@ func UseLegacyProviderConfig(ctx context.Context, c client.Client, mg resource.L
 	}
 
 	switch s := pc.Spec.Credentials.Source; s {
-	case xpv1.CredentialsSourceSecret:
+	case v2.CredentialsSourceSecret:
 		if pc.Spec.Credentials.SecretRef == nil {
 			return nil, errors.New("no credentials secret referenced")
 		}
@@ -180,7 +180,7 @@ func buildConfigFromSpec(ctx context.Context, c client.Client, mg resource.Moder
 	}
 
 	switch s := spec.Credentials.Source; s {
-	case xpv1.CredentialsSourceSecret:
+	case v2.CredentialsSourceSecret:
 		if spec.Credentials.SecretRef == nil {
 			return nil, errors.New("no credentials secret referenced")
 		}

@@ -23,11 +23,11 @@ import (
 	"net/http"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -50,7 +50,7 @@ var (
 
 type SamlGroupLinkModifier func(*v1alpha1.SamlGroupLink)
 
-func withConditions(c ...xpv1.Condition) SamlGroupLinkModifier {
+func withConditions(c ...v2.Condition) SamlGroupLinkModifier {
 	return func(cr *v1alpha1.SamlGroupLink) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -250,7 +250,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: samlGroupLink(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withGroupID(),
 					withExternalName(name),
 					withSpec(v1alpha1.SamlGroupLinkParameters{GroupID: &groupID, Name: &name}),

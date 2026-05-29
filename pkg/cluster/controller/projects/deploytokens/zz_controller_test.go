@@ -26,11 +26,11 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -70,7 +70,7 @@ type args struct {
 
 type deployTokenModifier func(*v1alpha1.DeployToken)
 
-func withConditions(c ...xpv1.Condition) deployTokenModifier {
+func withConditions(c ...v2.Condition) deployTokenModifier {
 	return func(r *v1alpha1.DeployToken) { r.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -214,7 +214,7 @@ func TestObserve(t *testing.T) {
 						Username:  &username,
 						ExpiresAt: &metav1.Time{Time: expiresAt},
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withExternalName(sDeployTokenID),
 				),
 				result: managed.ExternalObservation{
@@ -247,7 +247,7 @@ func TestObserve(t *testing.T) {
 						Username:  &username,
 						ExpiresAt: &metav1.Time{Time: expiresAt},
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withExternalName(sDeployTokenID),
 				),
 				result: managed.ExternalObservation{

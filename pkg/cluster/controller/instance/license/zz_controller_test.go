@@ -24,12 +24,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	xperrors "github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
@@ -101,7 +101,7 @@ func withExternalName(n string) modifier {
 	return func(cr *v1alpha1.License) { meta.SetExternalName(cr, n) }
 }
 
-func withConditions(c ...xpv1.Condition) modifier {
+func withConditions(c ...v2.Condition) modifier {
 	return func(cr *v1alpha1.License) { cr.Status.SetConditions(c...) }
 }
 
@@ -216,7 +216,7 @@ func TestObserve(t *testing.T) {
 					withExternalName("1"),
 					withSpec(v1alpha1.LicenseParameters{License: strPtr(testLicenseKey)}),
 					withWriteConnectionSecretRef(testSecretName),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withAtProvider(instance.GenerateLicenseObservation(&gitlab.License{ID: 1, Expired: false})),
 				),
 				obs: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true, ResourceLateInitialized: false},
@@ -307,7 +307,7 @@ func TestObserve(t *testing.T) {
 					withExternalName("1"),
 					withSpec(v1alpha1.LicenseParameters{LicenseEndpointURL: strPtr("http://invalid-url")}),
 					withWriteConnectionSecretRef(testSecretName),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withAtProvider(instance.GenerateLicenseObservation(&gitlab.License{ID: 1, Expired: false})),
 				),
 				obs: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true, ResourceLateInitialized: false},
@@ -456,7 +456,7 @@ func TestCreate(t *testing.T) {
 					withNamespace("default"),
 					withWriteConnectionSecretRef("conn"),
 					withSpec(v1alpha1.LicenseParameters{LicenseSecretRef: common.TestCreateSecretKeySelector("src", "license")}),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 					withExternalName("7"),
 				),
 				out: managed.ExternalCreation{ConnectionDetails: managed.ConnectionDetails{keyLicense: []byte(licenseValue)}},

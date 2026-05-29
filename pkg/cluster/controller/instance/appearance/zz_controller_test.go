@@ -24,11 +24,11 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,7 +75,7 @@ type args struct {
 
 type modifier func(*v1alpha1.Appearance)
 
-func withConditions(c ...xpv1.Condition) modifier {
+func withConditions(c ...v2.Condition) modifier {
 	return func(cr *v1alpha1.Appearance) {
 		cr.Status.SetConditions(c...)
 	}
@@ -159,7 +159,7 @@ func TestObserve(t *testing.T) {
 			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
 			want: want{
 				cr: appearance(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}),
 					withAtProvider(instance.GenerateAppearanceObservation(&gitlab.Appearance{Title: upToDateTitle})),
 				),
@@ -172,7 +172,7 @@ func TestObserve(t *testing.T) {
 			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
 			want: want{
 				cr: appearance(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}),
 					withAtProvider(instance.GenerateAppearanceObservation(&gitlab.Appearance{Title: notUpToDateTitle})),
 				),
@@ -223,13 +223,13 @@ func TestCreate(t *testing.T) {
 				}
 				return nil, nil, errBoom
 			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
-			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(xpv1.Creating())), err: errors.Wrap(errBoom, errCreateFailed)},
+			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(v2.Creating())), err: errors.Wrap(errBoom, errCreateFailed)},
 		},
 		"Successful": {
 			args: args{client: &MockClient{MockChangeAppearance: func(opt *gitlab.ChangeAppearanceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
 				return &gitlab.Appearance{}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
-			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(xpv1.Creating())), result: managed.ExternalCreation{}},
+			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(v2.Creating())), result: managed.ExternalCreation{}},
 		},
 	}
 
@@ -272,13 +272,13 @@ func TestUpdate(t *testing.T) {
 			args: args{client: &MockClient{MockChangeAppearance: func(opt *gitlab.ChangeAppearanceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
 				return nil, nil, errBoom
 			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
-			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(xpv1.Creating())), err: errors.Wrap(errBoom, errUpdateFailed)},
+			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(v2.Creating())), err: errors.Wrap(errBoom, errUpdateFailed)},
 		},
 		"Successful": {
 			args: args{client: &MockClient{MockChangeAppearance: func(opt *gitlab.ChangeAppearanceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
 				return &gitlab.Appearance{}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 			}}, cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}))},
-			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(xpv1.Creating())), result: managed.ExternalUpdate{}},
+			want: want{cr: appearance(withSpec(v1alpha1.AppearanceParameters{Title: &upToDateTitle}), withConditions(v2.Creating())), result: managed.ExternalUpdate{}},
 		},
 	}
 

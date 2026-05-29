@@ -24,11 +24,11 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -60,7 +60,7 @@ type args struct {
 
 type projectModifier func(*v1alpha1.Project)
 
-func withConditions(c ...xpv1.Condition) projectModifier {
+func withConditions(c ...v2.Condition) projectModifier {
 	return func(r *v1alpha1.Project) { r.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -294,7 +294,7 @@ func TestObserve(t *testing.T) {
 				cr: project(
 					withClientDefaultValues(),
 					withExternalName(extName),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.ProjectObservation{}),
 				),
 				result: managed.ExternalObservation{
@@ -341,7 +341,7 @@ func TestObserve(t *testing.T) {
 				cr: project(
 					withClientDefaultValues(),
 					withExternalName(extName),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					// No push rules in spec - should NOT be late-initialized
 					withStatus(v1alpha1.ProjectObservation{}),
 				),
@@ -389,7 +389,7 @@ func TestObserve(t *testing.T) {
 				cr: project(
 					withClientDefaultValues(),
 					withExternalName(extName),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.ProjectObservation{}),
 				),
 				result: managed.ExternalObservation{
@@ -449,7 +449,7 @@ func TestObserve(t *testing.T) {
 						RejectUnsignedCommits:      ptr.To(false),
 						RejectNonDCOCommits:        ptr.To(false),
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -492,9 +492,9 @@ func TestObserve(t *testing.T) {
 					withClientDefaultValues(),
 					withExternalName(extName),
 					func(p *v1alpha1.Project) {
-						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+						p.Spec.ForProvider.ImportURLSecretRef = &v2.LocalSecretKeySelector{
 							Key:                  "url",
-							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+							LocalSecretReference: v2.LocalSecretReference{Name: "import-url-secret"},
 						}
 					},
 				),
@@ -503,12 +503,12 @@ func TestObserve(t *testing.T) {
 				cr: project(
 					withClientDefaultValues(),
 					withExternalName(extName),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.ProjectObservation{}),
 					func(p *v1alpha1.Project) {
-						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+						p.Spec.ForProvider.ImportURLSecretRef = &v2.LocalSecretKeySelector{
 							Key:                  "url",
-							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+							LocalSecretReference: v2.LocalSecretReference{Name: "import-url-secret"},
 						}
 					},
 				),
@@ -553,9 +553,9 @@ func TestObserve(t *testing.T) {
 					withClientDefaultValues(),
 					withExternalName(extName),
 					func(p *v1alpha1.Project) {
-						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+						p.Spec.ForProvider.ImportURLSecretRef = &v2.LocalSecretKeySelector{
 							Key:                  "url",
-							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+							LocalSecretReference: v2.LocalSecretReference{Name: "import-url-secret"},
 						}
 					},
 				),
@@ -564,12 +564,12 @@ func TestObserve(t *testing.T) {
 				cr: project(
 					withClientDefaultValues(),
 					withExternalName(extName),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.ProjectObservation{}),
 					func(p *v1alpha1.Project) {
-						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+						p.Spec.ForProvider.ImportURLSecretRef = &v2.LocalSecretKeySelector{
 							Key:                  "url",
-							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+							LocalSecretReference: v2.LocalSecretReference{Name: "import-url-secret"},
 						}
 					},
 				),
@@ -613,9 +613,9 @@ func TestObserve(t *testing.T) {
 					withClientDefaultValues(),
 					withExternalName(extName),
 					func(p *v1alpha1.Project) {
-						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+						p.Spec.ForProvider.ImportURLSecretRef = &v2.LocalSecretKeySelector{
 							Key:                  "url",
-							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+							LocalSecretReference: v2.LocalSecretReference{Name: "import-url-secret"},
 						}
 					},
 				),
@@ -624,12 +624,12 @@ func TestObserve(t *testing.T) {
 				cr: project(
 					withClientDefaultValues(),
 					withExternalName(extName),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.ProjectObservation{}),
 					func(p *v1alpha1.Project) {
-						p.Spec.ForProvider.ImportURLSecretRef = &xpv1.LocalSecretKeySelector{
+						p.Spec.ForProvider.ImportURLSecretRef = &v2.LocalSecretKeySelector{
 							Key:                  "url",
-							LocalSecretReference: xpv1.LocalSecretReference{Name: "import-url-secret"},
+							LocalSecretReference: v2.LocalSecretReference{Name: "import-url-secret"},
 						}
 					},
 				),
@@ -665,7 +665,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: project(
 					withClientDefaultValues(),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withPath(&path),
 					withExternalName(extName),
 					// Push rules should NOT be late-initialized when not specified in spec
@@ -707,7 +707,7 @@ func TestObserve(t *testing.T) {
 				cr: project(
 					withClientDefaultValues(),
 					withMergeTrainSettings(ptr.To(true), ptr.To(true), ptr.To(true)),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withExternalName(extName),
 					withStatus(v1alpha1.ProjectObservation{
 						MergeTrainsEnabled:          true,
@@ -778,7 +778,7 @@ func TestObserve(t *testing.T) {
 						RejectUnsignedCommits:      ptr.To(false),
 						RejectNonDCOCommits:        ptr.To(false),
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -996,7 +996,7 @@ func TestObserve(t *testing.T) {
 				RejectUnsignedCommits:      ptr.To(false),
 				RejectNonDCOCommits:        ptr.To(false),
 			}),
-			withConditions(xpv1.Available()),
+			withConditions(v2.Available()),
 			withStatus(v1alpha1.ProjectObservation{
 				IssuesAccessLevel:        al,
 				BuildsAccessLevel:        al,

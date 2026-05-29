@@ -19,8 +19,8 @@ package variables
 import (
 	"context"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -29,7 +29,7 @@ import (
 )
 
 // UpdateVariableFromSecret updates the Variable parameters with the value from the secret.
-func UpdateVariableFromSecret(kube client.Client, mg resource.Managed, ctx context.Context, selector *xpv1.LocalSecretKeySelector, params *v1alpha1.CommonVariableParameters) error {
+func UpdateVariableFromSecret(kube client.Client, mg resource.Managed, ctx context.Context, selector *v2.LocalSecretKeySelector, params *v1alpha1.CommonVariableParameters) error {
 	value, err := common.GetTokenValueFromLocalSecret(ctx, kube, mg, selector)
 	if err != nil {
 		return err

@@ -19,10 +19,10 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -68,7 +68,7 @@ func withExpiresAt(s string) groupModifier {
 
 type groupModifier func(*v1alpha1.Member)
 
-func withConditions(c ...xpv1.Condition) groupModifier {
+func withConditions(c ...v2.Condition) groupModifier {
 	return func(cr *v1alpha1.Member) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -212,7 +212,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: groupMember(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withGroupID(),
 					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID}),
 				),
@@ -240,7 +240,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: groupMember(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withGroupID(),
 					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID}),
 					withAccessLevel(10),
@@ -267,7 +267,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: groupMember(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withGroupID(),
 					withSpec(v1alpha1.MemberParameters{UserID: &userID, GroupID: &groupID}),
 					withExpiresAt(expiresAtNew.String()),
@@ -325,7 +325,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: groupMember(
 					withGroupID(),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.MemberObservation{}),
 					withSpec(v1alpha1.MemberParameters{
 						UserName: &username,

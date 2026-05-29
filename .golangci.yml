@@ -9,7 +9,6 @@ linters:
     - durationcheck
     - errchkjson
     - errorlint
-    - exhaustive
     - gocheckcompilerdirectives
     - gochecksumtype
     - goconst
@@ -101,6 +100,12 @@ linters:
       - linters:
           - staticcheck
         text: 'QF1008:'
+      - linters:
+          - staticcheck
+        text: 'SA1019: mgr.GetEventRecorderFor is deprecated' # wait for https://github.com/crossplane/crossplane/issues/7152
+      - linters:
+          - staticcheck
+        text: 'SA1019: resource.LegacyManaged is deprecated: new namespace-scoped MRs should implement ModernManaged' # still needed to support
       - linters:
           - gosec
         text: 'G101:'

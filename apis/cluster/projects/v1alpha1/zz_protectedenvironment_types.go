@@ -13,7 +13,7 @@ You may obtain a copy of the License at
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -95,11 +95,11 @@ type ProtectedEnvironmentParameters struct {
 
 	// ProjectIDRef is a reference to a Project to populate projectId.
 	// +optional
-	ProjectIDRef *xpv1.Reference `json:"projectIdRef,omitempty"`
+	ProjectIDRef *v2.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects a reference to a Project to populate projectId.
 	// +optional
-	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
+	ProjectIDSelector *v2.Selector `json:"projectIdSelector,omitempty"`
 
 	// DeployAccessLevels configures who can deploy to this environment.
 	// +optional
@@ -124,13 +124,13 @@ type ProtectedEnvironmentObservation struct {
 }
 
 type ProtectedEnvironmentSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       ProtectedEnvironmentParameters `json:"forProvider"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
+	ForProvider                   ProtectedEnvironmentParameters `json:"forProvider"`
 }
 
 type ProtectedEnvironmentStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          ProtectedEnvironmentObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               ProtectedEnvironmentObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

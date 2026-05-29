@@ -24,7 +24,6 @@ import (
 	"strconv"
 	"strings"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
@@ -32,6 +31,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
@@ -66,7 +66,7 @@ func SetupProject(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName("cluster." + v1alpha1.ProjectGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
-		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProjectClient}),
+		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProjectClient}),
 		managed.WithInitializers(),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
@@ -164,12 +164,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 			if ptr.Deref(cr.Spec.ForProvider.RemoveFinalizerOnPendingDeletion, false) {
 				return managed.ExternalObservation{}, nil
 			}
-			cr.SetConditions(xpv1.Deleting().WithMessage("Project is in pending deletion state"))
+			cr.SetConditions(v2.Deleting().WithMessage("Project is in pending deletion state"))
 		} else {
-			cr.SetConditions(xpv1.Unavailable().WithMessage("Project is in pending deletion state but this managed resource is not"))
+			cr.SetConditions(v2.Unavailable().WithMessage("Project is in pending deletion state but this managed resource is not"))
 		}
 	} else {
-		cr.Status.SetConditions(xpv1.Available())
+		cr.Status.SetConditions(v2.Available())
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()

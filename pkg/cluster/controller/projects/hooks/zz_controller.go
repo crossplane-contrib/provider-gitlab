@@ -22,7 +22,6 @@ import (
 	"context"
 	"strconv"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
@@ -30,6 +29,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -58,7 +58,7 @@ func SetupHook(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName("cluster." + v1alpha1.HookGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
-		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewHookClient}),
+		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewHookClient}),
 		managed.WithInitializers(),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
@@ -149,7 +149,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	projects.LateInitializeHook(&cr.Spec.ForProvider, projecthook)
 
 	cr.Status.AtProvider = projects.GenerateHookObservation(projecthook)
-	cr.Status.SetConditions(xpv1.Available())
+	cr.Status.SetConditions(v2.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
@@ -164,7 +164,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotHook)
 	}
 
-	cr.Status.SetConditions(xpv1.Creating())
+	cr.Status.SetConditions(v2.Creating())
 	token, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, cr.Spec.ForProvider.Token.SecretRef)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errSecretRefInvalid)
@@ -215,7 +215,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotHook)
 	}
 
-	cr.Status.SetConditions(xpv1.Deleting())
+	cr.Status.SetConditions(v2.Deleting())
 
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalDelete{}, errors.New(errProjectIDMissing)

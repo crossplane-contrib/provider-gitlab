@@ -21,10 +21,10 @@ import (
 	"strconv"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -48,7 +48,7 @@ type args struct {
 
 type projectShareGroupModifier func(*v1alpha1.ProjectShareGroup)
 
-func withConditions(c ...xpv1.Condition) projectShareGroupModifier {
+func withConditions(c ...v2.Condition) projectShareGroupModifier {
 	return func(cr *v1alpha1.ProjectShareGroup) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -163,7 +163,7 @@ func TestObserve(t *testing.T) {
 					withProjectID(&projectIDStr),
 					withGroupID(&groupIDStr),
 					withAccessLevel(30),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					func(cr *v1alpha1.ProjectShareGroup) { cr.Status.AtProvider.ID = "0-123" },
 				),
 				result: managed.ExternalObservation{
@@ -194,7 +194,7 @@ func TestObserve(t *testing.T) {
 					withProjectID(&projectIDStr),
 					withGroupID(&groupIDStr),
 					withAccessLevel(30),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					func(cr *v1alpha1.ProjectShareGroup) { cr.Status.AtProvider.ID = "0-123" },
 				),
 				result: managed.ExternalObservation{

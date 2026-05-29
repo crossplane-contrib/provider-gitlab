@@ -19,7 +19,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -35,11 +35,11 @@ type IntegrationMattermostParameters struct {
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
 	// +immutable
-	ProjectIDRef *xpv1.Reference `json:"projectIdRef,omitempty"`
+	ProjectIDRef *v2.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
 	// +optional
-	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
+	ProjectIDSelector *v2.Selector `json:"projectIdSelector,omitempty"`
 
 	// Mattermost notifications webhook (for example, http://mattermost.example.com/hooks/...).
 	// WARNING: This field is NOT reconciled as the GitLab API does not return it as it is a write-only field.
@@ -174,14 +174,14 @@ type IntegrationMattermostObservation struct {
 
 // A IntegrationMattermostSpec defines the desired state of a GitLab Project Mattermost Integration.
 type IntegrationMattermostSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
 	// ForProvider represents the desired state of the mattermost integration
 	ForProvider IntegrationMattermostParameters `json:"forProvider"`
 }
 
 // A IntegrationMattermostStatus represents the observed state of a GitLab Project Mattermost Integration.
 type IntegrationMattermostStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	v2.ManagedResourceStatus `json:",inline"`
 	// AtProvider represents the observed state of the mattermost integration
 	AtProvider IntegrationMattermostObservation `json:"atProvider,omitempty"`
 }

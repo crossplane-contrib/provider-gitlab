@@ -17,9 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -45,11 +43,11 @@ type MemberParameters struct {
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
 	// +immutable
-	GroupIDRef *xpv1.NamespacedReference `json:"groupIdRef,omitempty"`
+	GroupIDRef *v2.NamespacedReference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
 	// +optional
-	GroupIDSelector *xpv1.NamespacedSelector `json:"groupIdSelector,omitempty"`
+	GroupIDSelector *v2.NamespacedSelector `json:"groupIdSelector,omitempty"`
 
 	// The user ID of the member.
 	// +optional
@@ -83,14 +81,14 @@ type MemberObservation struct {
 
 // A MemberSpec defines the desired state of a Gitlab Group Member.
 type MemberSpec struct {
-	xpv2.ManagedResourceSpec `json:",inline"`
-	ForProvider              MemberParameters `json:"forProvider"`
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            MemberParameters `json:"forProvider"`
 }
 
 // A MemberStatus represents the observed state of a Gitlab Group Member.
 type MemberStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          MemberObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               MemberObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
