@@ -102,6 +102,9 @@ linters:
           - staticcheck
         text: 'QF1008:'
       - linters:
+          - staticcheck
+        text: 'SA1019: mgr.GetEventRecorderFor is deprecated' # wait for https://github.com/crossplane/crossplane/issues/7152
+      - linters:
           - gosec
         text: 'G101:'
       - linters:

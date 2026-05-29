@@ -22,8 +22,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go"

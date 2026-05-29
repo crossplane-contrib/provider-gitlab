@@ -29,8 +29,9 @@ import (
 	"strings"
 	"unicode"
 
-	v1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+
+	v1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 )
 
 const outputHeader = `/*
