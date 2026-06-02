@@ -30,7 +30,7 @@ import (
 	"time"
 	"unicode"
 
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 const outputHeader = `/*

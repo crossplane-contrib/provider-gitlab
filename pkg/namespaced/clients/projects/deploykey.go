@@ -17,7 +17,7 @@ limitations under the License.
 package projects
 
 import (
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 // DeployKeyClient is an interface for gitlab DeployKeyClient

@@ -35,7 +35,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -402,7 +402,7 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	in.OperationsAccessLevel = clients.LateInitializeAccessControlValue(in.OperationsAccessLevel, project.OperationsAccessLevel)
 
 	if in.PackagesEnabled == nil {
-		in.PackagesEnabled = &project.PackagesEnabled
+		in.PackagesEnabled = &project.PackagesEnabled //nolint:staticcheck
 	}
 
 	in.PagesAccessLevel = clients.LateInitializeAccessControlValue(in.PagesAccessLevel, project.PagesAccessLevel)
@@ -564,7 +564,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.CIForwardDeploymentEnabled, g.CIForwardDeploymentEnabled) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr(p.ContainerRegistryEnabled, g.ContainerRegistryEnabled) { //nolint:staticcheck
+	if !clients.IsComparableEqualToComparablePtr(p.ContainerRegistryEnabled, g.ContainerRegistryEnabled) { //nolint:staticcheck // deprecated but still needed for backward compatibility
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.ContainerRegistryAccessLevel), string(g.ContainerRegistryAccessLevel)) {
@@ -630,7 +630,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.OperationsAccessLevel), string(g.OperationsAccessLevel)) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr(p.PackagesEnabled, g.PackagesEnabled) {
+	if !clients.IsComparableEqualToComparablePtr(p.PackagesEnabled, g.PackagesEnabled) { //nolint:staticcheck // deprecated but still needed for backward compatibility
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.PagesAccessLevel), string(g.PagesAccessLevel)) {

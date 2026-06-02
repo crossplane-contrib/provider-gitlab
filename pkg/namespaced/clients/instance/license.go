@@ -19,7 +19,7 @@ package instance
 import (
 	"time"
 
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"

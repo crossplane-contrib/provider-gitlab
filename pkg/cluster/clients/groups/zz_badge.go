@@ -20,7 +20,7 @@ package groups
 
 import (
 	"github.com/google/go-cmp/cmp"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"

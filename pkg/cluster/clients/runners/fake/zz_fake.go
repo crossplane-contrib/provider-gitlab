@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 
 	runners "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/runners"
 )

@@ -23,7 +23,7 @@ import (
 	"sync"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"

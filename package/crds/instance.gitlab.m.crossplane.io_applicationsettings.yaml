@@ -106,6 +106,8 @@ spec:
                     items:
                       type: string
                     type: array
+                  anonymousSearchesAllowed:
+                    type: boolean
                   archiveBuildsInHumanReadable:
                     type: string
                   asciiDocMaxIncludes:
@@ -318,6 +320,8 @@ spec:
                   disableFeedToken:
                     type: boolean
                   disableOverridingApproversPerMergeRequest:
+                    type: boolean
+                  disablePasswordAuthenticationForUsersWithSSOIdentities:
                     type: boolean
                   disablePersonalAccessTokens:
                     type: boolean
@@ -701,6 +705,9 @@ spec:
                   inactiveProjectsSendWarningEmailAfterMonths:
                     format: int64
                     type: integer
+                  inactiveResourceAccessTokensDeleteAfterDays:
+                    format: int64
+                    type: integer
                   includeOptionalMetricsInServicePing:
                     type: boolean
                   invisibleCaptchaEnabled:
@@ -744,6 +751,8 @@ spec:
                   lockDuoFeaturesEnabled:
                     type: boolean
                   lockMembershipsToLdap:
+                    type: boolean
+                  lockMembershipsToSAML:
                     type: boolean
                   loginRecaptchaProtectionEnabled:
                     type: boolean
@@ -859,6 +868,8 @@ spec:
                     format: int64
                     type: integer
                   pagesDomainVerificationEnabled:
+                    type: boolean
+                  pagesUniqueDomainDefaultEnabled:
                     type: boolean
                   passwordAuthenticationEnabledForGit:
                     type: boolean
@@ -1034,6 +1045,8 @@ spec:
                     type: object
                   secretDetectionTokenRevocationUrl:
                     type: string
+                  secretPushProtectionAvailable:
+                    type: boolean
                   securityApprovalPoliciesLimit:
                     format: int64
                     type: integer
@@ -1048,7 +1061,7 @@ spec:
                   sentryDSN:
                     type: string
                   sentryEnabled:
-                    type: string
+                    type: boolean
                   sentryEnvironment:
                     type: string
                   serviceAccessTokensExpirationEnforced:
@@ -1056,6 +1069,8 @@ spec:
                   sessionExpireDelay:
                     format: int64
                     type: integer
+                  sessionExpireFromInit:
+                    type: boolean
                   sharedRunnersEnabled:
                     type: boolean
                   sharedRunnersMinutes:
@@ -1472,6 +1487,8 @@ spec:
                     items:
                       type: string
                     type: array
+                  anonymousSearchesAllowed:
+                    type: boolean
                   archiveBuildsInHumanReadable:
                     type: string
                   asciiDocMaxIncludes:
@@ -1669,6 +1686,8 @@ spec:
                   disableFeedToken:
                     type: boolean
                   disableOverridingApproversPerMergeRequest:
+                    type: boolean
+                  disablePasswordAuthenticationForUsersWithSSOIdentities:
                     type: boolean
                   disablePersonalAccessTokens:
                     type: boolean
@@ -1943,6 +1962,9 @@ spec:
                   inactiveProjectsSendWarningEmailAfterMonths:
                     format: int64
                     type: integer
+                  inactiveResourceAccessTokensDeleteAfterDays:
+                    format: int64
+                    type: integer
                   includeOptionalMetricsInServicePing:
                     type: boolean
                   invisibleCaptchaEnabled:
@@ -1970,6 +1992,8 @@ spec:
                   lockDuoFeaturesEnabled:
                     type: boolean
                   lockMembershipsToLdap:
+                    type: boolean
+                  lockMembershipsToSAML:
                     type: boolean
                   loginRecaptchaProtectionEnabled:
                     type: boolean
@@ -2069,6 +2093,8 @@ spec:
                     format: int64
                     type: integer
                   pagesDomainVerificationEnabled:
+                    type: boolean
+                  pagesUniqueDomainDefaultEnabled:
                     type: boolean
                   passwordAuthenticationEnabledForGit:
                     type: boolean
@@ -2196,6 +2222,8 @@ spec:
                     type: boolean
                   secretDetectionTokenRevocationUrl:
                     type: string
+                  secretPushProtectionAvailable:
+                    type: boolean
                   securityApprovalPoliciesLimit:
                     format: int64
                     type: integer
@@ -2218,6 +2246,8 @@ spec:
                   sessionExpireDelay:
                     format: int64
                     type: integer
+                  sessionExpireFromInit:
+                    type: boolean
                   sharedRunnersEnabled:
                     type: boolean
                   sharedRunnersMinutes:

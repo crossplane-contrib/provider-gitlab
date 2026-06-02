@@ -26,7 +26,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 // GenerateUpdateApplicationSettingsOptions generates GitLab Settings update options from the desired state
@@ -50,6 +50,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.AllowLocalRequestsFromWebHooksAndServices = p.AllowLocalRequestsFromWebHooksAndServices
 	o.AllowProjectCreationForGuestAndBelow = p.AllowProjectCreationForGuestAndBelow
 	o.AllowRunnerRegistrationToken = p.AllowRunnerRegistrationToken
+	o.AnonymousSearchesAllowed = p.AnonymousSearchesAllowed
 	o.ArchiveBuildsInHumanReadable = p.ArchiveBuildsInHumanReadable
 	o.ASCIIDocMaxIncludes = p.ASCIIDocMaxIncludes
 	o.AssetProxyAllowlist = p.AssetProxyAllowlist
@@ -128,6 +129,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.DisableFeedToken = p.DisableFeedToken
 	o.DisableAdminOAuthScopes = p.DisableAdminOAuthScopes
 	o.DisableOverridingApproversPerMergeRequest = p.DisableOverridingApproversPerMergeRequest
+	o.DisablePasswordAuthenticationForUsersWithSSOIdentities = p.DisablePasswordAuthenticationForUsersWithSSOIdentities
 	o.DisablePersonalAccessTokens = p.DisablePersonalAccessTokens
 	o.DisabledOauthSignInSources = p.DisabledOauthSignInSources
 	o.DomainAllowlist = p.DomainAllowlist
@@ -234,6 +236,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.InactiveProjectsDeleteAfterMonths = p.InactiveProjectsDeleteAfterMonths
 	o.InactiveProjectsMinSizeMB = p.InactiveProjectsMinSizeMB
 	o.InactiveProjectsSendWarningEmailAfterMonths = p.InactiveProjectsSendWarningEmailAfterMonths
+	o.InactiveResourceAccessTokensDeleteAfterDays = p.InactiveResourceAccessTokensDeleteAfterDays
 	o.IncludeOptionalMetricsInServicePing = p.IncludeOptionalMetricsInServicePing
 	o.InProductMarketingEmailsEnabled = p.InProductMarketingEmailsEnabled
 	o.InvisibleCaptchaEnabled = p.InvisibleCaptchaEnabled
@@ -285,6 +288,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.PackageRegistryAllowAnyoneToPullOption = p.PackageRegistryAllowAnyoneToPullOption
 	o.PackageRegistryCleanupPoliciesWorkerCapacity = p.PackageRegistryCleanupPoliciesWorkerCapacity
 	o.PagesDomainVerificationEnabled = p.PagesDomainVerificationEnabled
+	o.PagesUniqueDomainDefaultEnabled = p.PagesUniqueDomainDefaultEnabled
 	o.PasswordAuthenticationEnabledForGit = p.PasswordAuthenticationEnabledForGit
 	o.PasswordAuthenticationEnabledForWeb = p.PasswordAuthenticationEnabledForWeb
 	o.PasswordNumberRequired = p.PasswordNumberRequired
@@ -337,6 +341,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.SecretDetectionTokenRevocationEnabled = p.SecretDetectionTokenRevocationEnabled
 	o.SecretDetectionTokenRevocationToken = p.SecretDetectionTokenRevocationToken
 	o.SecretDetectionTokenRevocationURL = p.SecretDetectionTokenRevocationURL
+	o.SecretPushProtectionAvailable = p.SecretPushProtectionAvailable
 	o.SecurityApprovalPoliciesLimit = p.SecurityApprovalPoliciesLimit
 	o.SecurityPolicyGlobalGroupApproversEnabled = p.SecurityPolicyGlobalGroupApproversEnabled
 	o.SecurityTXTContent = p.SecurityTXTContent
@@ -347,6 +352,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.SentryEnvironment = p.SentryEnvironment
 	o.ServiceAccessTokensExpirationEnforced = p.ServiceAccessTokensExpirationEnforced
 	o.SessionExpireDelay = p.SessionExpireDelay
+	o.SessionExpireFromInit = p.SessionExpireFromInit
 	o.SharedRunnersEnabled = p.SharedRunnersEnabled
 	o.SharedRunnersMinutes = p.SharedRunnersMinutes
 	o.SharedRunnersText = p.SharedRunnersText
@@ -446,6 +452,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.WebIDEClientsidePreviewEnabled = p.WebIDEClientsidePreviewEnabled
 	o.WhatsNewVariant = p.WhatsNewVariant
 	o.WikiPageMaxContentBytes = p.WikiPageMaxContentBytes
+	o.LockMembershipsToSAML = p.LockMembershipsToSAML
 	o.AdminNotificationEmail = p.AdminNotificationEmail
 	o.AllowLocalRequestsFromHooksAndServices = p.AllowLocalRequestsFromHooksAndServices
 	o.AssetProxyWhitelist = p.AssetProxyWhitelist
@@ -483,6 +490,7 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.AllowLocalRequestsFromWebHooksAndServices = g.AllowLocalRequestsFromWebHooksAndServices
 	o.AllowProjectCreationForGuestAndBelow = g.AllowProjectCreationForGuestAndBelow
 	o.AllowRunnerRegistrationToken = g.AllowRunnerRegistrationToken
+	o.AnonymousSearchesAllowed = g.AnonymousSearchesAllowed
 	o.ArchiveBuildsInHumanReadable = g.ArchiveBuildsInHumanReadable
 	o.ASCIIDocMaxIncludes = g.ASCIIDocMaxIncludes
 	o.AssetProxyAllowlist = g.AssetProxyAllowlist
@@ -555,6 +563,7 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.DisableAdminOAuthScopes = g.DisableAdminOAuthScopes
 	o.DisableFeedToken = g.DisableFeedToken
 	o.DisableOverridingApproversPerMergeRequest = g.DisableOverridingApproversPerMergeRequest
+	o.DisablePasswordAuthenticationForUsersWithSSOIdentities = g.DisablePasswordAuthenticationForUsersWithSSOIdentities
 	o.DisablePersonalAccessTokens = g.DisablePersonalAccessTokens
 	o.DisabledOauthSignInSources = g.DisabledOauthSignInSources
 	o.DomainAllowlist = g.DomainAllowlist
@@ -654,6 +663,7 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.InactiveProjectsDeleteAfterMonths = g.InactiveProjectsDeleteAfterMonths
 	o.InactiveProjectsMinSizeMB = g.InactiveProjectsMinSizeMB
 	o.InactiveProjectsSendWarningEmailAfterMonths = g.InactiveProjectsSendWarningEmailAfterMonths
+	o.InactiveResourceAccessTokensDeleteAfterDays = g.InactiveResourceAccessTokensDeleteAfterDays
 	o.IncludeOptionalMetricsInServicePing = g.IncludeOptionalMetricsInServicePing
 	o.InProductMarketingEmailsEnabled = g.InProductMarketingEmailsEnabled
 	o.InvisibleCaptchaEnabled = g.InvisibleCaptchaEnabled
@@ -703,6 +713,7 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.PackageRegistryAllowAnyoneToPullOption = g.PackageRegistryAllowAnyoneToPullOption
 	o.PackageRegistryCleanupPoliciesWorkerCapacity = g.PackageRegistryCleanupPoliciesWorkerCapacity
 	o.PagesDomainVerificationEnabled = g.PagesDomainVerificationEnabled
+	o.PagesUniqueDomainDefaultEnabled = g.PagesUniqueDomainDefaultEnabled
 	o.PasswordAuthenticationEnabledForGit = g.PasswordAuthenticationEnabledForGit
 	o.PasswordAuthenticationEnabledForWeb = g.PasswordAuthenticationEnabledForWeb
 	o.PasswordNumberRequired = g.PasswordNumberRequired
@@ -752,6 +763,7 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.SecretDetectionRevocationTokenTypesURL = g.SecretDetectionRevocationTokenTypesURL
 	o.SecretDetectionTokenRevocationEnabled = g.SecretDetectionTokenRevocationEnabled
 	o.SecretDetectionTokenRevocationURL = g.SecretDetectionTokenRevocationURL
+	o.SecretPushProtectionAvailable = g.SecretPushProtectionAvailable
 	o.SecurityApprovalPoliciesLimit = g.SecurityApprovalPoliciesLimit
 	o.SecurityPolicyGlobalGroupApproversEnabled = g.SecurityPolicyGlobalGroupApproversEnabled
 	o.SecurityTXTContent = g.SecurityTXTContent
@@ -762,6 +774,7 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.SentryEnvironment = g.SentryEnvironment
 	o.ServiceAccessTokensExpirationEnforced = g.ServiceAccessTokensExpirationEnforced
 	o.SessionExpireDelay = g.SessionExpireDelay
+	o.SessionExpireFromInit = g.SessionExpireFromInit
 	o.SharedRunnersEnabled = g.SharedRunnersEnabled
 	o.SharedRunnersMinutes = g.SharedRunnersMinutes
 	o.SharedRunnersText = g.SharedRunnersText
@@ -856,6 +869,7 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.WebIDEClientsidePreviewEnabled = g.WebIDEClientsidePreviewEnabled
 	o.WhatsNewVariant = g.WhatsNewVariant
 	o.WikiPageMaxContentBytes = g.WikiPageMaxContentBytes
+	o.LockMembershipsToSAML = g.LockMembershipsToSAML
 	o.DefaultBranchProtection = g.DefaultBranchProtection
 	o.HousekeepingBitmapsEnabled = g.HousekeepingBitmapsEnabled
 	o.HousekeepingFullRepackPeriod = g.HousekeepingFullRepackPeriod
@@ -922,6 +936,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.AllowRunnerRegistrationToken, g.AllowRunnerRegistrationToken) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.AnonymousSearchesAllowed, g.AnonymousSearchesAllowed) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ArchiveBuildsInHumanReadable, g.ArchiveBuildsInHumanReadable) {
@@ -1129,6 +1146,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.DisableOverridingApproversPerMergeRequest, g.DisableOverridingApproversPerMergeRequest) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.DisablePasswordAuthenticationForUsersWithSSOIdentities, g.DisablePasswordAuthenticationForUsersWithSSOIdentities) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.DisablePersonalAccessTokens, g.DisablePersonalAccessTokens) {
@@ -1449,6 +1469,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.InactiveProjectsSendWarningEmailAfterMonths, g.InactiveProjectsSendWarningEmailAfterMonths) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.InactiveResourceAccessTokensDeleteAfterDays, g.InactiveResourceAccessTokensDeleteAfterDays) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.IncludeOptionalMetricsInServicePing, g.IncludeOptionalMetricsInServicePing) {
 		return false
 	}
@@ -1600,6 +1623,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.PagesDomainVerificationEnabled, g.PagesDomainVerificationEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.PagesUniqueDomainDefaultEnabled, g.PagesUniqueDomainDefaultEnabled) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.PasswordAuthenticationEnabledForGit, g.PasswordAuthenticationEnabledForGit) {
@@ -1758,6 +1784,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.SecretDetectionTokenRevocationURL, g.SecretDetectionTokenRevocationURL) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.SecretPushProtectionAvailable, g.SecretPushProtectionAvailable) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.SecurityApprovalPoliciesLimit, g.SecurityApprovalPoliciesLimit) {
 		return false
 	}
@@ -1776,7 +1805,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.SentryDSN, g.SentryDSN) {
 		return false
 	}
-	// TODO: Handle field SentryEnabled (*string -> bool) - Type mismatch
+	if !clients.IsComparableEqualToComparablePtr(p.SentryEnabled, g.SentryEnabled) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.SentryEnvironment, g.SentryEnvironment) {
 		return false
 	}
@@ -1784,6 +1815,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.SessionExpireDelay, g.SessionExpireDelay) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.SessionExpireFromInit, g.SessionExpireFromInit) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.SharedRunnersEnabled, g.SharedRunnersEnabled) {
@@ -2081,6 +2115,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.WikiPageMaxContentBytes, g.WikiPageMaxContentBytes) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.LockMembershipsToSAML, g.LockMembershipsToSAML) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.AdminNotificationEmail, g.AdminNotificationEmail) {
