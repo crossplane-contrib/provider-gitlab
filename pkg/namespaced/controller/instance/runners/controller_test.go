@@ -499,7 +499,7 @@ func TestCreate(t *testing.T) {
 				cr: runner(
 					withConnectionSecretRef(),
 					withSpec(v1alpha1.RunnerParameters{}),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},

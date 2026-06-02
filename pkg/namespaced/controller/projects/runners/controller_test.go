@@ -522,7 +522,7 @@ func TestCreate(t *testing.T) {
 					withProjectID(),
 					withConnectionSecretRef(),
 					withSpec(v1alpha1.RunnerParameters{ProjectID: &projectID}),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
