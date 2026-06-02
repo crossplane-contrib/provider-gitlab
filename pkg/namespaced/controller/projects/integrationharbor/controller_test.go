@@ -22,10 +22,10 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
@@ -93,14 +93,14 @@ func withUseInheritedSettings(v bool) harborModifier {
 
 func withPasswordSecretRef(name, key string) harborModifier {
 	return func(r *v1alpha1.IntegrationHarbor) {
-		r.Spec.ForProvider.PasswordSecretRef = xpv1.LocalSecretKeySelector{
-			LocalSecretReference: xpv1.LocalSecretReference{Name: name},
+		r.Spec.ForProvider.PasswordSecretRef = v2.LocalSecretKeySelector{
+			LocalSecretReference: v2.LocalSecretReference{Name: name},
 			Key:                  key,
 		}
 	}
 }
 
-func withConditions(c ...xpv1.Condition) harborModifier {
+func withConditions(c ...v2.Condition) harborModifier {
 	return func(cr *v1alpha1.IntegrationHarbor) {
 		cr.Status.ConditionedStatus.Conditions = c
 	}
@@ -243,7 +243,7 @@ func TestObserve(t *testing.T) {
 					withHarborUsername(testUsername),
 					withUseInheritedSettings(testUseInherited),
 					withDeletionTimestamp(time.Now()),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.IntegrationHarborObservation{
 						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
 							ID:                             ptr.To(testIntegID),
@@ -426,7 +426,7 @@ func TestObserve(t *testing.T) {
 					withProjName(testProjectName),
 					withHarborUsername(testUsername),
 					withUseInheritedSettings(testUseInherited),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.IntegrationHarborObservation{
 						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
 							ID:                             ptr.To(testIntegID),
@@ -498,7 +498,7 @@ func TestObserve(t *testing.T) {
 					withProjName(testProjectName),
 					withHarborUsername(testUsername),
 					withUseInheritedSettings(false),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withStatus(v1alpha1.IntegrationHarborObservation{
 						CommonIntegrationObservation: commonv1alpha1.CommonIntegrationObservation{
 							ID:                             ptr.To(testIntegID),
@@ -614,7 +614,7 @@ func TestCreate(t *testing.T) {
 					withProjectID(testProjectID),
 					withURL(testHarborURL),
 					withPasswordSecretRef("my-secret", "password"),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: errors.Wrap(errors.Wrap(errors.Wrap(errBoom, "Cannot find referenced secret"), errPasswordMissing), errCreateFailed),
 			},
@@ -642,7 +642,7 @@ func TestCreate(t *testing.T) {
 					withProjName(testProjectName),
 					withHarborUsername(testUsername),
 					withPasswordSecretRef("my-secret", "password"),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				result: managed.ExternalCreation{},
 			},
@@ -666,7 +666,7 @@ func TestCreate(t *testing.T) {
 					withProjectID(testProjectID),
 					withURL(testHarborURL),
 					withPasswordSecretRef("my-secret", "password"),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				result: managed.ExternalCreation{},
 				err:    errors.Wrap(errBoom, errCreateFailed),

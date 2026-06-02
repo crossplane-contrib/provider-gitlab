@@ -17,9 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -35,11 +33,11 @@ type IntegrationHarborParameters struct {
 	// ProjectIDRef is a reference to a project to retrieve its projectId.
 	// +optional
 	// +immutable
-	ProjectIDRef *xpv1.NamespacedReference `json:"projectIdRef,omitempty"`
+	ProjectIDRef *v2.NamespacedReference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
 	// +optional
-	ProjectIDSelector *xpv1.NamespacedSelector `json:"projectIdSelector,omitempty"`
+	ProjectIDSelector *v2.NamespacedSelector `json:"projectIdSelector,omitempty"`
 
 	// URL is the base URL of the Harbor instance which is being linked to this GitLab project. For example, https://demo.goharbor.io.
 	// +required
@@ -56,7 +54,7 @@ type IntegrationHarborParameters struct {
 	// PasswordSecretRef is a reference to a secret that contains the password of the Harbor user.
 	// WARNING: This field is NOT reconciled as the GitLab API does not return it as it is a write-only field.
 	// +required
-	PasswordSecretRef xpv1.LocalSecretKeySelector `json:"passwordSecretRef"`
+	PasswordSecretRef v2.LocalSecretKeySelector `json:"passwordSecretRef"`
 
 	// UseInheritedSettings indicates whether to inherit the default Harbor settings from the parent group.
 	// +optional
@@ -79,14 +77,14 @@ type IntegrationHarborObservation struct {
 
 // A IntegrationHarborSpec defines the desired state of a GitLab Project Harbor Integration.
 type IntegrationHarborSpec struct {
-	xpv2.ManagedResourceSpec `json:",inline"`
+	v2.ManagedResourceSpec `json:",inline"`
 	// ForProvider represents the desired state of the harbor integration.
 	ForProvider IntegrationHarborParameters `json:"forProvider"`
 }
 
 // A IntegrationHarborStatus represents the observed state of a GitLab Project Harbor Integration.
 type IntegrationHarborStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	v2.ManagedResourceStatus `json:",inline"`
 	// AtProvider represents the observed state of the harbor integration.
 	AtProvider IntegrationHarborObservation `json:"atProvider,omitempty"`
 }
