@@ -271,52 +271,52 @@ func (mg *Hook) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
 }
 
 // GetCondition of this IntegrationHarbor.
-func (mg *IntegrationHarbor) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
+func (mg *IntegrationHarbor) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)
 }
 
 // GetDeletionPolicy of this IntegrationHarbor.
-func (mg *IntegrationHarbor) GetDeletionPolicy() xpv1.DeletionPolicy {
+func (mg *IntegrationHarbor) GetDeletionPolicy() v2.DeletionPolicy {
 	return mg.Spec.DeletionPolicy
 }
 
 // GetManagementPolicies of this IntegrationHarbor.
-func (mg *IntegrationHarbor) GetManagementPolicies() xpv1.ManagementPolicies {
+func (mg *IntegrationHarbor) GetManagementPolicies() v2.ManagementPolicies {
 	return mg.Spec.ManagementPolicies
 }
 
 // GetProviderConfigReference of this IntegrationHarbor.
-func (mg *IntegrationHarbor) GetProviderConfigReference() *xpv1.Reference {
+func (mg *IntegrationHarbor) GetProviderConfigReference() *v2.Reference {
 	return mg.Spec.ProviderConfigReference
 }
 
 // GetWriteConnectionSecretToReference of this IntegrationHarbor.
-func (mg *IntegrationHarbor) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
+func (mg *IntegrationHarbor) GetWriteConnectionSecretToReference() *v2.SecretReference {
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
 // SetConditions of this IntegrationHarbor.
-func (mg *IntegrationHarbor) SetConditions(c ...xpv1.Condition) {
+func (mg *IntegrationHarbor) SetConditions(c ...v2.Condition) {
 	mg.Status.SetConditions(c...)
 }
 
 // SetDeletionPolicy of this IntegrationHarbor.
-func (mg *IntegrationHarbor) SetDeletionPolicy(r xpv1.DeletionPolicy) {
+func (mg *IntegrationHarbor) SetDeletionPolicy(r v2.DeletionPolicy) {
 	mg.Spec.DeletionPolicy = r
 }
 
 // SetManagementPolicies of this IntegrationHarbor.
-func (mg *IntegrationHarbor) SetManagementPolicies(r xpv1.ManagementPolicies) {
+func (mg *IntegrationHarbor) SetManagementPolicies(r v2.ManagementPolicies) {
 	mg.Spec.ManagementPolicies = r
 }
 
 // SetProviderConfigReference of this IntegrationHarbor.
-func (mg *IntegrationHarbor) SetProviderConfigReference(r *xpv1.Reference) {
+func (mg *IntegrationHarbor) SetProviderConfigReference(r *v2.Reference) {
 	mg.Spec.ProviderConfigReference = r
 }
 
 // SetWriteConnectionSecretToReference of this IntegrationHarbor.
-func (mg *IntegrationHarbor) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
+func (mg *IntegrationHarbor) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
