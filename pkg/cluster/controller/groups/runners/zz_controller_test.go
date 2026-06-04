@@ -569,7 +569,10 @@ func TestCreate(t *testing.T) {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions(),
-				cmpopts.IgnoreFields(commonv1alpha1.CommonRunnerObservation{}, "TokenCreatedAt")); diff != "" {
+				cmpopts.IgnoreFields(commonv1alpha1.CommonRunnerObservation{}, "TokenCreatedAt"),
+				cmpopts.IgnoreMapEntries(func(k, v string) bool {
+					return k == runners.AnnotationKeyTokenCreatedAt || k == runners.AnnotationKeyTokenExpiresAt
+				})); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.result, o); diff != "" {
@@ -771,7 +774,10 @@ func TestUpdate(t *testing.T) {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions(),
-				cmpopts.IgnoreFields(commonv1alpha1.CommonRunnerObservation{}, "TokenCreatedAt")); diff != "" {
+				cmpopts.IgnoreFields(commonv1alpha1.CommonRunnerObservation{}, "TokenCreatedAt"),
+				cmpopts.IgnoreMapEntries(func(k, v string) bool {
+					return k == runners.AnnotationKeyTokenCreatedAt || k == runners.AnnotationKeyTokenExpiresAt
+				})); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.result, o); diff != "" {

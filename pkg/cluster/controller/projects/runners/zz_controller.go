@@ -156,6 +156,9 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
+	// Recover token fields that crossplane-runtime reverted after Create().
+	runners.RestoreTokenFieldsFromAnnotations(cr, &cr.Status.AtProvider.CommonRunnerObservation)
+
 	// Preserve token fields that are not returned by the API.
 	tokenExpiresAt := cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt
 	tokenCreatedAt := cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt
@@ -208,14 +211,18 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	meta.SetExternalName(cr, strconv.FormatInt(runner.ID, 10))
 
-	now := metav1.NewTime(time.Now().UTC())
-	cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt = &now
+	now := time.Now().UTC()
+	nowMeta := metav1.NewTime(now)
+	cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt = &nowMeta
 	if runner.TokenExpiresAt != nil {
 		t := metav1.NewTime(*runner.TokenExpiresAt)
 		cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = &t
 	} else {
 		cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = nil
 	}
+	// Persist token timestamps in annotations because crossplane-runtime v2 reverts
+	// status changes from Create() before they reach Kubernetes.
+	runners.SetRunnerTokenAnnotations(cr, now, runner.TokenExpiresAt)
 
 	return managed.ExternalCreation{
 		ConnectionDetails: managed.ConnectionDetails{
@@ -248,14 +255,16 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		if err != nil {
 			return managed.ExternalUpdate{}, errors.Wrap(err, errResetFailed)
 		}
-		now := metav1.NewTime(time.Now().UTC())
-		cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt = &now
+		now := time.Now().UTC()
+		nowMeta := metav1.NewTime(now)
+		cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt = &nowMeta
 		if authToken.TokenExpiresAt != nil {
 			t := metav1.NewTime(*authToken.TokenExpiresAt)
 			cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = &t
 		} else {
 			cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = nil
 		}
+		runners.SetRunnerTokenAnnotations(cr, now, authToken.TokenExpiresAt)
 		token := ""
 		if authToken.Token != nil {
 			token = *authToken.Token

@@ -36,6 +36,14 @@ import (
 
 const (
 	errRunnerNotFound = "404 Runner Not Found"
+
+	// AnnotationKeyTokenCreatedAt and AnnotationKeyTokenExpiresAt bridge the gap
+	// between Create() and Observe(). crossplane-runtime v2 reverts status changes
+	// made during Create() before they reach Kubernetes, so we store the token
+	// timestamps in annotations (which ARE persisted via UpdateCriticalAnnotations).
+	// Observe() reads these annotations to populate the status fields.
+	AnnotationKeyTokenCreatedAt = "runner.gitlab.crossplane.io/token-created-at"
+	AnnotationKeyTokenExpiresAt = "runner.gitlab.crossplane.io/token-expires-at"
 )
 
 // RunnerClient defines Gitlab Runner service operations
@@ -58,6 +66,49 @@ func IsErrorRunnerNotFound(err error) bool {
 		return false
 	}
 	return strings.Contains(err.Error(), errRunnerNotFound)
+}
+
+// SetRunnerTokenAnnotations writes token creation and expiration times to the CR
+// annotations. Required because crossplane-runtime v2 reverts status changes from
+// Create() before they are persisted; annotations survive that revert.
+func SetRunnerTokenAnnotations(obj metav1.Object, createdAt time.Time, expiresAt *time.Time) {
+	annotations := obj.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[AnnotationKeyTokenCreatedAt] = createdAt.UTC().Format(time.RFC3339)
+	if expiresAt != nil {
+		annotations[AnnotationKeyTokenExpiresAt] = expiresAt.UTC().Format(time.RFC3339)
+	} else {
+		delete(annotations, AnnotationKeyTokenExpiresAt)
+	}
+	obj.SetAnnotations(annotations)
+}
+
+// RestoreTokenFieldsFromAnnotations populates nil token fields in obs from annotations.
+// Called at the start of Observe() to recover values that were lost when
+// crossplane-runtime reverted the status after Create().
+func RestoreTokenFieldsFromAnnotations(obj metav1.Object, obs *commonv1alpha1.CommonRunnerObservation) {
+	annotations := obj.GetAnnotations()
+	if len(annotations) == 0 {
+		return
+	}
+	if obs.TokenCreatedAt == nil {
+		if s, ok := annotations[AnnotationKeyTokenCreatedAt]; ok {
+			if t, err := time.Parse(time.RFC3339, s); err == nil {
+				mt := metav1.NewTime(t)
+				obs.TokenCreatedAt = &mt
+			}
+		}
+	}
+	if obs.TokenExpiresAt == nil {
+		if s, ok := annotations[AnnotationKeyTokenExpiresAt]; ok {
+			if t, err := time.Parse(time.RFC3339, s); err == nil {
+				mt := metav1.NewTime(t)
+				obs.TokenExpiresAt = &mt
+			}
+		}
+	}
 }
 
 // ShouldRotateRunnerToken returns true when the runner token should be rotated.
