@@ -1,0 +1,115 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1alpha1
+
+import (
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// ApplicationParameters defines the desired state of a GitLab instance OAuth Application.
+// Note: GitLab does not provide an update endpoint for applications. If any field is changed,
+// the application must be deleted and recreated.
+//
+// GitLab API docs: https://docs.gitlab.com/api/applications/
+type ApplicationParameters struct {
+	// Name is the name of the application.
+	// +required
+	Name string `json:"name"`
+
+	// RedirectURI is the redirect URI of the application.
+	// +required
+	RedirectURI string `json:"redirectURI"`
+
+	// Scopes is the scopes of the application (space-separated).
+	// WARNING: This field is not updated after creation. To change scopes, you must delete and recreate the application.
+	// +required
+	// +immutable
+	Scopes []string `json:"scopes"`
+
+	// Confidential indicates whether the application is confidential.
+	// +optional
+	Confidential *bool `json:"confidential,omitempty"`
+}
+
+// ApplicationObservation represents the observed state of a GitLab instance OAuth Application.
+type ApplicationObservation struct {
+	// ID is the numeric ID of the application.
+	// +optional
+	ID int64 `json:"id,omitempty"`
+
+	// Name is the name of the application as stored in GitLab.
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// ApplicationID is the OAuth client ID.
+	// +optional
+	ApplicationID string `json:"applicationID,omitempty"`
+
+	// CallbackURL is the callback URL of the application as stored in GitLab.
+	// +optional
+	CallbackURL string `json:"callbackURL,omitempty"`
+
+	// Confidential indicates whether the application is confidential.
+	// +optional
+	Confidential bool `json:"confidential,omitempty"`
+}
+
+// ApplicationSpec defines the desired state of a GitLab instance OAuth Application.
+type ApplicationSpec struct {
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            ApplicationParameters `json:"forProvider"`
+}
+
+// ApplicationStatus represents the observed state of a GitLab instance OAuth Application.
+type ApplicationStatus struct {
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               ApplicationObservation `json:"atProvider,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// An Application is a managed resource that represents a GitLab instance OAuth Application.
+//
+// IMPORTANT: The OAuth client secret is only available at creation time. You MUST specify
+// either writeConnectionSecretToRef or publishConnectionDetailsTo to receive the secret.
+// The connection details will contain:
+//   - "secret": the OAuth client secret
+//   - "application_id": the OAuth client application ID
+//
+// GitLab API docs: https://docs.gitlab.com/api/applications/
+// +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+// +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitlab}
+type Application struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   ApplicationSpec   `json:"spec"`
+	Status ApplicationStatus `json:"status,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// ApplicationList contains a list of Application items.
+type ApplicationList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []Application `json:"items"`
+}
