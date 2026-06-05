@@ -1,0 +1,249 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: applications.instance.gitlab.m.crossplane.io
+spec:
+  group: instance.gitlab.m.crossplane.io
+  names:
+    categories:
+    - crossplane
+    - managed
+    - gitlab
+    kind: Application
+    listKind: ApplicationList
+    plural: applications
+    singular: application
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Synced')].status
+      name: SYNCED
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          An Application is a managed resource that represents a GitLab instance OAuth Application.
+
+          IMPORTANT: The OAuth client secret is only available at creation time. You MUST specify
+          either writeConnectionSecretToRef or publishConnectionDetailsTo to receive the secret.
+          The connection details will contain:
+            - "secret": the OAuth client secret
+            - "application_id": the OAuth client application ID
+
+          GitLab API docs: https://docs.gitlab.com/api/applications/
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ApplicationSpec defines the desired state of a GitLab instance
+              OAuth Application.
+            properties:
+              forProvider:
+                description: |-
+                  ApplicationParameters defines the desired state of a GitLab instance OAuth Application.
+                  Note: GitLab does not provide an update endpoint for applications. If any field is changed,
+                  the application must be deleted and recreated.
+
+                  GitLab API docs: https://docs.gitlab.com/api/applications/
+                properties:
+                  confidential:
+                    description: Confidential indicates whether the application is
+                      confidential.
+                    type: boolean
+                  name:
+                    description: Name is the name of the application.
+                    type: string
+                  redirectURI:
+                    description: RedirectURI is the redirect URI of the application.
+                    type: string
+                  scopes:
+                    description: |-
+                      Scopes is the scopes of the application (space-separated).
+                      WARNING: This field is not updated after creation. To change scopes, you must delete and recreate the application.
+                    items:
+                      type: string
+                    type: array
+                required:
+                - name
+                - redirectURI
+                - scopes
+                type: object
+              managementPolicies:
+                default:
+                - '*'
+                description: |-
+                  THIS IS A BETA FIELD. It is on by default but can be opted out
+                  through a Crossplane feature flag.
+                  ManagementPolicies specify the array of actions Crossplane is allowed to
+                  take on the managed and external resources.
+                  See the design doc for more information: https://github.com/crossplane/crossplane/blob/499895a25d1a1a0ba1604944ef98ac7a1a71f197/design/design-doc-observe-only-resources.md?plain=1#L223
+                  and this one: https://github.com/crossplane/crossplane/blob/444267e84783136daa93568b364a5f01228cacbe/design/one-pager-ignore-changes.md
+                items:
+                  description: |-
+                    A ManagementAction represents an action that the Crossplane controllers
+                    can take on an external resource.
+                  enum:
+                  - Observe
+                  - Create
+                  - Update
+                  - Delete
+                  - LateInitialize
+                  - '*'
+                  type: string
+                type: array
+              providerConfigRef:
+                default:
+                  kind: ClusterProviderConfig
+                  name: default
+                description: |-
+                  ProviderConfigReference specifies how the provider that will be used to
+                  create, observe, update, and delete this managed resource should be
+                  configured.
+                properties:
+                  kind:
+                    description: Kind of the referenced object.
+                    type: string
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+              writeConnectionSecretToRef:
+                description: |-
+                  WriteConnectionSecretToReference specifies the namespace and name of a
+                  Secret to which any connection details for this managed resource should
+                  be written. Connection details frequently include the endpoint, username,
+                  and password required to connect to the managed resource.
+                properties:
+                  name:
+                    description: Name of the secret.
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - forProvider
+            type: object
+          status:
+            description: ApplicationStatus represents the observed state of a GitLab
+              instance OAuth Application.
+            properties:
+              atProvider:
+                description: ApplicationObservation represents the observed state
+                  of a GitLab instance OAuth Application.
+                properties:
+                  applicationID:
+                    description: ApplicationID is the OAuth client ID.
+                    type: string
+                  callbackURL:
+                    description: CallbackURL is the callback URL of the application
+                      as stored in GitLab.
+                    type: string
+                  confidential:
+                    description: Confidential indicates whether the application is
+                      confidential.
+                    type: boolean
+                  id:
+                    description: ID is the numeric ID of the application.
+                    format: int64
+                    type: integer
+                  name:
+                    description: Name is the name of the application as stored in
+                      GitLab.
+                    type: string
+                type: object
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  description: A Condition that may apply to a resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        LastTransitionTime is the last time this condition transitioned from one
+                        status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        A Message containing details about this condition's last transition from
+                        one status to another, if any.
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        ObservedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      type: integer
+                    reason:
+                      description: A Reason for this condition's last transition from
+                        one status to another.
+                      type: string
+                    status:
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
+                      type: string
+                    type:
+                      description: |-
+                        Type of this condition. At most one of each condition type may apply to
+                        a resource at any point in time.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              lastHandledReconcileAt:
+                description: |-
+                  LastHandledReconcileAt holds the value of the most recent
+                  reconcile-requested-at annotation token that the controller has
+                  processed. Users can compare this to the annotation to determine
+                  whether a reconcile request has been handled.
+                type: string
+              observedGeneration:
+                description: |-
+                  ObservedGeneration is the latest metadata.generation
+                  which resulted in either a ready state, or stalled due to error
+                  it can not recover from without human intervention.
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

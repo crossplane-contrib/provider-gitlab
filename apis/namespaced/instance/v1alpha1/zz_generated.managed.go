@@ -60,6 +60,46 @@ func (mg *Appearance) SetWriteConnectionSecretToReference(r *v2.LocalSecretRefer
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this Application.
+func (mg *Application) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetManagementPolicies of this Application.
+func (mg *Application) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this Application.
+func (mg *Application) GetProviderConfigReference() *v2.ProviderConfigReference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this Application.
+func (mg *Application) GetWriteConnectionSecretToReference() *v2.LocalSecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this Application.
+func (mg *Application) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetManagementPolicies of this Application.
+func (mg *Application) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this Application.
+func (mg *Application) SetProviderConfigReference(r *v2.ProviderConfigReference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this Application.
+func (mg *Application) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this ApplicationSettings.
 func (mg *ApplicationSettings) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)

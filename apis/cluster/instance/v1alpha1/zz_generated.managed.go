@@ -70,6 +70,56 @@ func (mg *Appearance) SetWriteConnectionSecretToReference(r *v2.SecretReference)
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this Application.
+func (mg *Application) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetDeletionPolicy of this Application.
+func (mg *Application) GetDeletionPolicy() v2.DeletionPolicy {
+	return mg.Spec.DeletionPolicy
+}
+
+// GetManagementPolicies of this Application.
+func (mg *Application) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this Application.
+func (mg *Application) GetProviderConfigReference() *v2.Reference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this Application.
+func (mg *Application) GetWriteConnectionSecretToReference() *v2.SecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this Application.
+func (mg *Application) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetDeletionPolicy of this Application.
+func (mg *Application) SetDeletionPolicy(r v2.DeletionPolicy) {
+	mg.Spec.DeletionPolicy = r
+}
+
+// SetManagementPolicies of this Application.
+func (mg *Application) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this Application.
+func (mg *Application) SetProviderConfigReference(r *v2.Reference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this Application.
+func (mg *Application) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this ApplicationSettings.
 func (mg *ApplicationSettings) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)

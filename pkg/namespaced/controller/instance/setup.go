@@ -21,6 +21,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/appearance"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/applications"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/license"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/serviceaccountaccesstokens"
@@ -38,6 +39,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		serviceaccountaccesstokens.SetupServiceAccountAccessToken,
 		license.SetupLicense,
 		variables.SetupVariable,
+		applications.SetupApplication,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -57,6 +59,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		serviceaccountaccesstokens.SetupServiceAccountAccessTokenGated,
 		license.SetupLicenseGated,
 		variables.SetupVariableGated,
+		applications.SetupApplicationGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
