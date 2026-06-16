@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests",
+    ":semanticCommits"
+  ],
+  "crossplane": {
+    "managerFilePatterns": ["/(^|/)example/.*\\.ya?ml$/"]
+  },
+  "packageRules": [
+    {
+      "matchManagers": ["crossplane"],
+      "matchFileNames": ["example/**"],
+      "groupName": "examples"
+    }
+  ],
+  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]
+}
