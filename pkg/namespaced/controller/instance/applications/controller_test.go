@@ -480,7 +480,7 @@ func TestUpdate(t *testing.T) {
 				},
 				cr: application(withSpec(testDesiredSpec), withExternalName(testExternalNameID)),
 			},
-			want: want{err: errors.Wrap(errors.Wrap(errBoom, errDeleteFailed), errDeleteFailed)},
+			want: want{err: errors.Wrap(errBoom, errDeleteFailed)},
 		},
 	}
 

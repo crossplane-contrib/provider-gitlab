@@ -35,7 +35,7 @@ spec:
           An Application is a managed resource that represents a GitLab instance OAuth Application.
 
           IMPORTANT: The OAuth client secret is only available at creation time. You MUST specify
-          either writeConnectionSecretToRef or publishConnectionDetailsTo to receive the secret.
+          writeConnectionSecretToRef to receive the secret.
           The connection details will contain:
             - "secret": the OAuth client secret
             - "application_id": the OAuth client application ID

@@ -216,7 +216,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	_, err := e.Delete(ctx, mg)
 	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errDeleteFailed)
+		return managed.ExternalUpdate{}, err
 	}
 
 	return managed.ExternalUpdate{}, nil
