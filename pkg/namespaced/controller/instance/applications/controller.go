@@ -207,19 +207,13 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}, nil
 }
 
-// Update simply deletes the application so Create() will be called to recreate
-// it with the updated parameters, since the GitLab API has no update endpoint for applications.
+// Update always throws an error because GitLab Applications cannot be updated after creation.
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
 	if _, ok := mg.(*v1alpha1.Application); !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotApplication)
 	}
 
-	_, err := e.Delete(ctx, mg)
-	if err != nil {
-		return managed.ExternalUpdate{}, err
-	}
-
-	return managed.ExternalUpdate{}, nil
+	return managed.ExternalUpdate{}, errors.New("GitLab Applications cannot be updated after creation. To change any fields, delete and recreate the resource.")
 }
 
 // Delete removes the GitLab Application.

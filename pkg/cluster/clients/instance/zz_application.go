@@ -53,6 +53,7 @@ func GenerateApplicationObservation(a *gitlab.Application) v1alpha1.ApplicationO
 		ApplicationID: a.ApplicationID,
 		CallbackURL:   a.CallbackURL,
 		Confidential:  a.Confidential,
+		Scopes:        a.Scopes,
 	}
 	return obs
 }
@@ -81,7 +82,8 @@ func IsApplicationUpToDate(p *v1alpha1.ApplicationParameters, a *gitlab.Applicat
 	return a != nil &&
 		p.Name == a.ApplicationName &&
 		p.RedirectURI == a.CallbackURL &&
-		clients.IsComparableEqualToComparablePtr(p.Confidential, a.Confidential)
+		clients.IsComparableEqualToComparablePtr(p.Confidential, a.Confidential) &&
+		clients.AreStringSlicesEqual(p.Scopes, a.Scopes)
 }
 
 // FindApplicationByID returns the application with the given numeric ID from the list,

@@ -31,20 +31,22 @@ import (
 type ApplicationParameters struct {
 	// Name is the name of the application.
 	// +required
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Name is immutable (delete and recreate the resource if you want to change it)."
 	Name string `json:"name"`
 
 	// RedirectURI is the redirect URI of the application.
 	// +required
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="RedirectURI is immutable (delete and recreate the resource if you want to change it)."
 	RedirectURI string `json:"redirectURI"`
 
 	// Scopes is the scopes of the application (space-separated).
-	// WARNING: This field is not updated after creation. To change scopes, you must delete and recreate the application.
 	// +required
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Scopes is immutable (delete and recreate the resource if you want to change it)."
 	Scopes []string `json:"scopes"`
 
 	// Confidential indicates whether the application is confidential.
 	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Confidential is immutable (delete and recreate the resource if you want to change it)."
 	Confidential *bool `json:"confidential,omitempty"`
 }
 
@@ -52,23 +54,27 @@ type ApplicationParameters struct {
 type ApplicationObservation struct {
 	// ID is the numeric ID of the application.
 	// +optional
-	ID int64 `json:"id,omitempty"`
+	ID int64 `json:"id"`
 
 	// Name is the name of the application as stored in GitLab.
 	// +optional
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"`
 
 	// ApplicationID is the OAuth client ID.
 	// +optional
-	ApplicationID string `json:"applicationID,omitempty"`
+	ApplicationID string `json:"applicationID"`
 
 	// CallbackURL is the callback URL of the application as stored in GitLab.
 	// +optional
-	CallbackURL string `json:"callbackURL,omitempty"`
+	CallbackURL string `json:"callbackURL"`
 
 	// Confidential indicates whether the application is confidential.
 	// +optional
-	Confidential bool `json:"confidential,omitempty"`
+	Confidential bool `json:"confidential"`
+
+	// Scopes is the scopes of the application as stored in GitLab
+	// +optional
+	Scopes []string `json:"scopes"`
 }
 
 // ApplicationSpec defines the desired state of a GitLab instance OAuth Application.

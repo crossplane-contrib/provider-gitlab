@@ -57,6 +57,7 @@ func TestGenerateApplicationObservation(t *testing.T) {
 				ApplicationID:   appID,
 				CallbackURL:     callbackURL,
 				Confidential:    false,
+				Scopes:          []string{"api", "read_user"},
 			},
 			want: v1alpha1.ApplicationObservation{
 				ID:            1,
@@ -64,6 +65,7 @@ func TestGenerateApplicationObservation(t *testing.T) {
 				ApplicationID: appID,
 				CallbackURL:   callbackURL,
 				Confidential:  false,
+				Scopes:        []string{"api", "read_user"},
 			},
 		},
 	}
@@ -187,6 +189,32 @@ func TestIsApplicationUpToDate(t *testing.T) {
 				ApplicationName: "app",
 				CallbackURL:     "https://example.com",
 				Confidential:    false,
+			},
+			want: true,
+		},
+		"ScopesDiffers": {
+			params: &v1alpha1.ApplicationParameters{
+				Name:        "app",
+				RedirectURI: "https://example.com",
+				Scopes:      []string{"api", "read_user"},
+			},
+			app: &gitlab.Application{
+				ApplicationName: "app",
+				CallbackURL:     "https://example.com",
+				Scopes:          []string{"api"},
+			},
+			want: false,
+		},
+		"ScopesMatch": {
+			params: &v1alpha1.ApplicationParameters{
+				Name:        "app",
+				RedirectURI: "https://example.com",
+				Scopes:      []string{"read_user", "api"},
+			},
+			app: &gitlab.Application{
+				ApplicationName: "app",
+				CallbackURL:     "https://example.com",
+				Scopes:          []string{"api", "read_user"},
 			},
 			want: true,
 		},
