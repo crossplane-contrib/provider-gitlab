@@ -44,6 +44,51 @@ spec:
 kubectl apply -f examples/providerconfig/provider.yaml
 ```
 
+### Self-rotating service account tokens
+
+The namespaced `groups.gitlab.m.crossplane.io/v1alpha1` `ServiceAccountAccessToken`
+resource can keep a short-lived token alive by rotating it before it expires.
+
+It supports two modes, selected automatically:
+
+* **Owner mode** (default): the `ProviderConfig` is a group owner. The token is
+  created, observed, rotated and revoked through the group service-account
+  endpoints.
+* **Self-managed mode**: the `ProviderConfig` authenticates with the *very token*
+  this resource manages — i.e. the `ProviderConfig.credentials.secretRef` points
+  at the same secret (namespace, name and `token` key) that the resource writes
+  via `writeConnectionSecretToRef`. The provider then acts as the service account
+  itself and uses the self endpoints (`GET/POST /personal_access_tokens/self`).
+  This lets a short-lived token reconcile a whole group and keep itself alive by
+  self-rotating. A `SelfManaged` status condition reports the active mode.
+
+> **Bootstrap secret type.** In self-managed mode the rotated token is written
+> back into the secret the `ProviderConfig` reads. Crossplane only writes
+> connection secrets it controls, so a **hand-created** bootstrap secret must use
+> the connection secret type `connection.crossplane.io/v1alpha1` — a default
+> `Opaque` secret (e.g. from `kubectl create secret generic`, which has no
+> `--type` flag) is rejected with `refusing to modify uncontrolled secret of type
+> "Opaque"`. Create it from a manifest:
+>
+> ```yaml
+> apiVersion: v1
+> kind: Secret
+> metadata:
+>   name: gitlab-self-rotating-token
+>   namespace: default
+> type: connection.crossplane.io/v1alpha1
+> stringData:
+>   # a service account PAT with at least the `api` and `self_rotate` scopes
+>   token: "<PERSONAL_ACCESS_TOKEN>"
+> ```
+>
+> Alternatively, bootstrap in owner mode first (Crossplane then creates and owns
+> a correctly typed connection secret), and switch `providerConfigRef` to the
+> self `ProviderConfig` afterwards.
+
+See [`examples/groups/serviceaccountaccesstoken.yaml`](examples/groups/serviceaccountaccesstoken.yaml)
+for full examples of both modes.
+
 ## Contributing
 
 provider-gitlab is a community driven project and we welcome contributions. See

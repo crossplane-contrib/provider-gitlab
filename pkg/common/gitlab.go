@@ -49,6 +49,12 @@ type Config struct {
 	BaseURL            string
 	InsecureSkipVerify bool
 	AuthMethod         auth.AuthType
+
+	// CredentialsSecretRef is the secret key selector the ProviderConfig used to
+	// source the token (only set when the credentials source is a Secret). It is
+	// used to detect self-referential setups, where a managed resource writes its
+	// token to the very secret its ProviderConfig authenticates with.
+	CredentialsSecretRef *v2.SecretKeySelector
 }
 
 // NewClient creates new Gitlab Client with provided Gitlab Configurations/Credentials.
@@ -191,10 +197,11 @@ func buildConfigFromSpec(ctx context.Context, c client.Client, mg resource.Moder
 		}
 
 		return &Config{
-			BaseURL:            spec.BaseURL,
-			Token:              *token,
-			InsecureSkipVerify: ptr.Deref(spec.InsecureSkipVerify, false),
-			AuthMethod:         spec.Credentials.Method,
+			BaseURL:              spec.BaseURL,
+			Token:                *token,
+			InsecureSkipVerify:   ptr.Deref(spec.InsecureSkipVerify, false),
+			AuthMethod:           spec.Credentials.Method,
+			CredentialsSecretRef: spec.Credentials.SecretRef,
 		}, nil
 	default:
 		return nil, errors.Errorf("credentials source %s is not currently supported", s)
