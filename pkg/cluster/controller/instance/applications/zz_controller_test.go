@@ -117,6 +117,7 @@ var testApp = &gitlab.Application{
 	Secret:          testSecret,
 	CallbackURL:     testRedirectURI,
 	Confidential:    false,
+	Scopes:          []string{"api", "read_user"},
 }
 
 var testDesiredSpec = v1alpha1.ApplicationParameters{
@@ -462,27 +463,11 @@ func TestUpdate(t *testing.T) {
 			args: args{cr: unexpectedItem},
 			want: want{err: errors.New(errNotApplication)},
 		},
-		"DeleteSuccess": {
+		"AlwaysReturnsError": {
 			args: args{
-				client: &MockApplicationClient{
-					MockDeleteApplication: func(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-						return &gitlab.Response{Response: &http.Response{StatusCode: 204}}, nil
-					},
-				},
 				cr: application(withSpec(testDesiredSpec), withExternalName(testExternalNameID)),
 			},
-			want: want{result: managed.ExternalUpdate{}},
-		},
-		"DeleteError": {
-			args: args{
-				client: &MockApplicationClient{
-					MockDeleteApplication: func(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-						return &gitlab.Response{Response: &http.Response{StatusCode: 500}}, errBoom
-					},
-				},
-				cr: application(withSpec(testDesiredSpec), withExternalName(testExternalNameID)),
-			},
-			want: want{err: errors.Wrap(errBoom, errDeleteFailed)},
+			want: want{err: errors.New("GitLab Applications cannot be updated after creation. To change any fields, delete and recreate the resource.")},
 		},
 	}
 

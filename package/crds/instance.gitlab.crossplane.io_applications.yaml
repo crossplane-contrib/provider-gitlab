@@ -89,19 +89,33 @@ spec:
                     description: Confidential indicates whether the application is
                       confidential.
                     type: boolean
+                    x-kubernetes-validations:
+                    - message: Confidential is immutable (delete and recreate the
+                        resource if you want to change it).
+                      rule: self == oldSelf
                   name:
                     description: Name is the name of the application.
                     type: string
+                    x-kubernetes-validations:
+                    - message: Name is immutable (delete and recreate the resource
+                        if you want to change it).
+                      rule: self == oldSelf
                   redirectURI:
                     description: RedirectURI is the redirect URI of the application.
                     type: string
+                    x-kubernetes-validations:
+                    - message: RedirectURI is immutable (delete and recreate the resource
+                        if you want to change it).
+                      rule: self == oldSelf
                   scopes:
-                    description: |-
-                      Scopes is the scopes of the application (space-separated).
-                      WARNING: This field is not updated after creation. To change scopes, you must delete and recreate the application.
+                    description: Scopes is the scopes of the application (space-separated).
                     items:
                       type: string
                     type: array
+                    x-kubernetes-validations:
+                    - message: Scopes is immutable (delete and recreate the resource
+                        if you want to change it).
+                      rule: self == oldSelf
                 required:
                 - name
                 - redirectURI
@@ -220,6 +234,12 @@ spec:
                     description: Name is the name of the application as stored in
                       GitLab.
                     type: string
+                  scopes:
+                    description: Scopes is the scopes of the application as stored
+                      in GitLab
+                    items:
+                      type: string
+                    type: array
                 type: object
               conditions:
                 description: Conditions of the resource.

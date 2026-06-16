@@ -184,6 +184,28 @@ func IsComparableSliceEqualToComparableSlicePtr[T comparable](csp *[]T, cs []T) 
 	return csp == nil || cmp.Equal(*csp, cs)
 }
 
+// AreStringSlicesEqual compares two slices of comparable types for equality
+// This equality is order insensitive, meaning that the order of elements in the slices does not matter for them to be considered equal.
+func AreStringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	counts := make(map[string]int)
+	for _, item := range a {
+		counts[item]++
+	}
+
+	for _, item := range b {
+		if counts[item] == 0 {
+			return false
+		}
+		counts[item]--
+	}
+
+	return true
+}
+
 // IsMapStringToComparableEqualToMapStringToComparablePtr compares a *map[string]T with map[string]T where T is comparable
 func IsMapStringToComparableEqualToMapStringToComparablePtr[T comparable](mp *map[string]T, m map[string]T) bool {
 	return mp == nil || cmp.Equal(*mp, m)
