@@ -150,10 +150,11 @@ func UseLegacyProviderConfig(ctx context.Context, c client.Client, mg resource.L
 		}
 
 		return &Config{
-			BaseURL:            pc.Spec.BaseURL,
-			Token:              *token,
-			InsecureSkipVerify: ptr.Deref(pc.Spec.InsecureSkipVerify, false),
-			AuthMethod:         pc.Spec.Credentials.Method,
+			BaseURL:              pc.Spec.BaseURL,
+			Token:                *token,
+			InsecureSkipVerify:   ptr.Deref(pc.Spec.InsecureSkipVerify, false),
+			AuthMethod:           pc.Spec.Credentials.Method,
+			CredentialsSecretRef: pc.Spec.Credentials.SecretRef,
 		}, nil
 	default:
 		return nil, errors.Errorf("credentials source %s is not currently supported", s)

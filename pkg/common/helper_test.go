@@ -20,12 +20,15 @@ import (
 	"context"
 	"testing"
 
+	clustergroupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
+	legacyv1beta1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/v1beta1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -164,6 +167,56 @@ func TestGetTokenValueFromSecret(t *testing.T) {
 				t.Errorf("GetTokenValueFromSecret() token = %v, want %v\ndiff: %s", got, tc.want.token, diff)
 			}
 		})
+	}
+}
+
+func TestUseLegacyProviderConfigSetsCredentialsSecretRef(t *testing.T) {
+	testToken := "test-token-value"
+	selector := &v2.SecretKeySelector{
+		Key: "token",
+		SecretReference: v2.SecretReference{
+			Name:      "test-secret",
+			Namespace: "default",
+		},
+	}
+
+	mg := &clustergroupsv1alpha1.Group{}
+	mg.SetProviderConfigReference(&v2.Reference{Name: "test-provider-config"})
+
+	kube := &test.MockClient{
+		MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+			switch o := obj.(type) {
+			case *legacyv1beta1.ProviderConfig:
+				*o = legacyv1beta1.ProviderConfig{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-provider-config"},
+					Spec: legacyv1beta1.ProviderConfigSpec{
+						Credentials: legacyv1beta1.ProviderCredentials{
+							Source: v2.CredentialsSourceSecret,
+							CommonCredentialSelectors: v2.CommonCredentialSelectors{
+								SecretRef: selector,
+							},
+						},
+					},
+				}
+			case *corev1.Secret:
+				*o = corev1.Secret{Data: map[string][]byte{"token": []byte(testToken)}}
+			}
+			return nil
+		}),
+		MockCreate: test.NewMockCreateFn(nil),
+	}
+
+	cfg, err := UseLegacyProviderConfig(context.Background(), kube, mg)
+	if err != nil {
+		t.Fatalf("UseLegacyProviderConfig() error = %v", err)
+	}
+
+	if cfg == nil {
+		t.Fatal("UseLegacyProviderConfig() returned nil config")
+	}
+
+	if diff := cmp.Diff(selector, cfg.CredentialsSecretRef); diff != "" {
+		t.Fatalf("CredentialsSecretRef mismatch (-want +got):\n%s", diff)
 	}
 }
 
