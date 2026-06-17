@@ -25,6 +25,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/appearance"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/license"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/runners"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/serviceaccountaccesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/serviceaccounts"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/settings"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/variables"
@@ -36,6 +37,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		runners.SetupRunner,
 		appearance.SetupAppearance,
 		serviceaccounts.SetupServiceAccount,
+		serviceaccountaccesstokens.SetupServiceAccountAccessToken,
 		license.SetupLicense,
 		variables.SetupVariable,
 	} {
@@ -54,6 +56,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		runners.SetupRunnerGated,
 		appearance.SetupAppearanceGated,
 		serviceaccounts.SetupServiceAccountGated,
+		serviceaccountaccesstokens.SetupServiceAccountAccessTokenGated,
 		license.SetupLicenseGated,
 		variables.SetupVariableGated,
 	} {
