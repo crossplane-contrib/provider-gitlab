@@ -89,6 +89,26 @@ It supports two modes, selected automatically:
 See [`examples/groups/serviceaccountaccesstoken.yaml`](examples/groups/serviceaccountaccesstoken.yaml)
 for full examples of both modes.
 
+#### Instance service account tokens
+
+The namespaced `instance.gitlab.m.crossplane.io/v1alpha1` `ServiceAccountAccessToken`
+resource provides the same capability for **instance** service accounts (only
+available on self-managed GitLab with at least a Premium license). It is keyed by
+`serviceAccountId` instead of a group, and supports the same two modes:
+
+* **Owner mode** (default): instance service-account tokens have no dedicated
+  endpoints, so the token is created, observed, rotated and revoked through the
+  **admin** personal access tokens API. This mode therefore requires a
+  `ProviderConfig` that authenticates with an **instance-admin** token.
+* **Self-managed mode**: identical to the group resource — once bootstrapped, the
+  self-rotating loop runs on the service account's own credential and needs **no
+  admin token**. Detection and the `SelfManaged` status condition work the same
+  way.
+
+The bootstrap-secret note above applies unchanged. See
+[`examples/instance/serviceaccountaccesstoken.yaml`](examples/instance/serviceaccountaccesstoken.yaml)
+for full examples of both modes.
+
 ## Contributing
 
 provider-gitlab is a community driven project and we welcome contributions. See
