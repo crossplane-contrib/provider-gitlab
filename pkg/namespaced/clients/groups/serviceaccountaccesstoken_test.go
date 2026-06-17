@@ -318,6 +318,26 @@ func TestShouldRotateServiceAccountAccessToken(t *testing.T) {
 	}
 }
 
+func TestGetServiceAccountAccessTokenFiltersByActiveState(t *testing.T) {
+	var gotState *string
+	c := &stubSAATClient{
+		list: func(_ any, _ int64, opt *gitlab.ListServiceAccountPersonalAccessTokensOptions, _ ...gitlab.RequestOptionFunc) ([]*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+			gotState = opt.State
+			return []*gitlab.PersonalAccessToken{{ID: 1}}, &gitlab.Response{NextPage: 0}, nil
+		},
+	}
+
+	if _, _, err := GetServiceAccountAccessToken(c, 1, 57, 1); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if gotState == nil {
+		t.Fatal("expected list options State to be set, got nil")
+	}
+	if *gotState != "active" {
+		t.Fatalf("expected State=active, got %q", *gotState)
+	}
+}
+
 func TestGetServiceAccountAccessToken(t *testing.T) {
 	errBoom := errors.New("boom")
 

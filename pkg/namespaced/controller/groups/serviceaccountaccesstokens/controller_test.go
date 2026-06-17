@@ -289,6 +289,30 @@ func TestObserveSelf(t *testing.T) {
 				err: errors.Wrap(errBoom, errSelfInformFailed),
 			},
 		},
+		"ServiceAccountMatch": {
+			client: &fake.MockClient{
+				MockGetServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					return &gitlab.PersonalAccessToken{ID: accessTokenID, UserID: saID, Active: true}, &gitlab.Response{}, nil
+				},
+			},
+			cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID})),
+			want: want{
+				result:         managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true},
+				wantExternalID: sAccessTokenID,
+			},
+		},
+		"ServiceAccountMismatchTerminalError": {
+			client: &fake.MockClient{
+				MockGetServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					// The token belongs to a different service account than the spec targets.
+					return &gitlab.PersonalAccessToken{ID: accessTokenID, UserID: saID + 1, Active: true}, &gitlab.Response{}, nil
+				},
+			},
+			cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID})),
+			want: want{
+				err: errors.New(errSelfServiceAccountMismatch),
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -382,6 +406,77 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr:     saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{GroupID: &groupID, ServiceAccountID: &saID}), withExternalName(sAccessTokenID)),
 				result: managed.ExternalCreation{ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)}},
+			},
+		},
+		"OwnerRotate404FallsBackToCreate": {
+			args: args{
+				client: &fake.MockClient{
+					MockRotateServiceAccountPersonalAccessToken: func(_ any, _, _ int64, _ *gitlab.RotateServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+					},
+					MockCreateServiceAccountPersonalAccessToken: func(_ any, _ int64, _ *gitlab.CreateServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+						return &tokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{GroupID: &groupID, ServiceAccountID: &saID}), withExternalName(sAccessTokenID)),
+			},
+			want: want{
+				cr:     saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{GroupID: &groupID, ServiceAccountID: &saID}), withExternalName(sAccessTokenID)),
+				result: managed.ExternalCreation{ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)}},
+			},
+		},
+		"OwnerRotateRevoked400FallsBackToCreate": {
+			args: args{
+				client: &fake.MockClient{
+					MockRotateServiceAccountPersonalAccessToken: func(_ any, _, _ int64, _ *gitlab.RotateServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusBadRequest}}, errors.New("400 Bad request - Token already revoked")
+					},
+					MockCreateServiceAccountPersonalAccessToken: func(_ any, _ int64, _ *gitlab.CreateServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+						return &tokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{GroupID: &groupID, ServiceAccountID: &saID}), withExternalName(sAccessTokenID)),
+			},
+			want: want{
+				cr:     saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{GroupID: &groupID, ServiceAccountID: &saID}), withExternalName(sAccessTokenID)),
+				result: managed.ExternalCreation{ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)}},
+			},
+		},
+		"OwnerRotateGeneric400DoesNotCreate": {
+			args: args{
+				client: &fake.MockClient{
+					MockRotateServiceAccountPersonalAccessToken: func(_ any, _, _ int64, _ *gitlab.RotateServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusBadRequest}}, errBoom
+					},
+					MockCreateServiceAccountPersonalAccessToken: func(_ any, _ int64, _ *gitlab.CreateServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+						t.Error("create must not be called when rotation fails with a non-recoverable error")
+						return &tokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{GroupID: &groupID, ServiceAccountID: &saID}), withExternalName(sAccessTokenID)),
+			},
+			want: want{
+				cr:  saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{GroupID: &groupID, ServiceAccountID: &saID}), withExternalName(sAccessTokenID)),
+				err: errors.Wrap(errBoom, errRotateFailed),
+			},
+		},
+		"OwnerRotateTransientErrorDoesNotCreate": {
+			args: args{
+				client: &fake.MockClient{
+					MockRotateServiceAccountPersonalAccessToken: func(_ any, _, _ int64, _ *gitlab.RotateServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+						// transport error: no response at all
+						return nil, nil, errBoom
+					},
+					MockCreateServiceAccountPersonalAccessToken: func(_ any, _ int64, _ *gitlab.CreateServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+						t.Error("create must not be called when rotation fails with a transient error")
+						return &tokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{GroupID: &groupID, ServiceAccountID: &saID}), withExternalName(sAccessTokenID)),
+			},
+			want: want{
+				cr:  saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{GroupID: &groupID, ServiceAccountID: &saID}), withExternalName(sAccessTokenID)),
+				err: errors.Wrap(errBoom, errRotateFailed),
 			},
 		},
 		"SelfRotateSuccessful": {

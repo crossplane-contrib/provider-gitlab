@@ -81,6 +81,12 @@ func (c *serviceAccountAccessTokenClient) RevokeServiceAccountSelf(options ...gi
 func GetServiceAccountAccessToken(c ServiceAccountAccessTokenClient, gid any, serviceAccount, tokenID int64, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 	opt := &gitlab.ListServiceAccountPersonalAccessTokensOptions{
 		ListOptions: gitlab.ListOptions{PerPage: 100, Page: 1},
+		// Only active tokens are relevant. A revoked or expired token already
+		// surfaces as "not found" (nil result), which the controller treats as
+		// ResourceExists: false. Filtering server-side avoids paginating through
+		// revoked/expired tokens on every Observe poll, reducing latency and API
+		// rate-limit pressure for service accounts with many tokens.
+		State: gitlab.Ptr("active"),
 	}
 
 	var lastRes *gitlab.Response

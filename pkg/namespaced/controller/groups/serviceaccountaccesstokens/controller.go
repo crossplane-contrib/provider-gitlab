@@ -18,7 +18,9 @@ package serviceaccountaccesstokens
 
 import (
 	"context"
+	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
@@ -47,12 +49,14 @@ const (
 	errExternalNameNotInt           = "custom resource external name is not an integer"
 	errFailedParseID                = "cannot parse Access Token ID to int"
 	errCreateFailed                 = "cannot create Gitlab service account access token"
+	errRotateFailed                 = "cannot rotate Gitlab service account access token"
 	errDeleteFailed                 = "cannot delete Gitlab service account access token"
 	errAccessTokenNotFound          = "cannot find Gitlab service account access token"
 	errMissingGroupID               = "missing Spec.ForProvider.GroupID"
 	errMissingServiceAccountID      = "missing Spec.ForProvider.ServiceAccountID"
 	errSelfInformFailed             = "cannot read the self service account access token; the token referenced by the ProviderConfig may be expired or revoked - reseed the credentials secret with a valid token"
 	errSelfRotateFailed             = "cannot self-rotate Gitlab service account access token"
+	errSelfServiceAccountMismatch   = "the token referenced by the ProviderConfig does not belong to spec.forProvider.serviceAccountId; refusing to manage it - check that the credentials secret and serviceAccountId are wired to the same service account"
 
 	// connectionSecretKeyToken is the connection-secret key under which the
 	// token value is published. Self-mode detection requires the ProviderConfig
@@ -207,6 +211,15 @@ func (e *external) observeSelf(ctx context.Context, cr *v1alpha1.ServiceAccountA
 		return managed.ExternalObservation{}, errors.Wrap(err, errSelfInformFailed)
 	}
 
+	// Safety: in self-managed mode we adopt whatever token the ProviderConfig
+	// authenticates with. Refuse to manage it when it does not belong to the
+	// service account this resource targets - otherwise a miswired credentials
+	// secret could make us rotate or revoke the wrong service account's token
+	// while the reconcile still reports success.
+	if cr.Spec.ForProvider.ServiceAccountID != nil && at.UserID != *cr.Spec.ForProvider.ServiceAccountID {
+		return managed.ExternalObservation{}, errors.New(errSelfServiceAccountMismatch)
+	}
+
 	meta.SetExternalName(cr, strconv.FormatInt(at.ID, 10))
 	cr.Status.AtProvider = groups.GenerateServiceAccountAccessTokenObservation(at)
 
@@ -332,7 +345,7 @@ func (e *external) createOwner(ctx context.Context, cr *v1alpha1.ServiceAccountA
 	// If a token ID is already set as the external name, try rotating it first.
 	// Rotation atomically revokes the old token and issues a new one (with a new ID).
 	if existingID, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64); err == nil && existingID > 0 {
-		at, _, rotErr := e.client.RotateServiceAccountPersonalAccessToken(
+		at, res, rotErr := e.client.RotateServiceAccountPersonalAccessToken(
 			*cr.Spec.ForProvider.GroupID,
 			*cr.Spec.ForProvider.ServiceAccountID,
 			existingID,
@@ -345,7 +358,13 @@ func (e *external) createOwner(ctx context.Context, cr *v1alpha1.ServiceAccountA
 				ConnectionDetails: managed.ConnectionDetails{connectionSecretKeyToken: []byte(at.Token)},
 			}, nil
 		}
-		// Rotation failed (e.g. token was already revoked externally); fall through to fresh create.
+		// Only fall through to a fresh create when the existing token is truly
+		// gone. Any other failure (transient error, 403, 5xx, transport error)
+		// must surface rather than silently minting a second token.
+		if !rotateFallsBackToCreate(res, rotErr) {
+			return managed.ExternalCreation{}, errors.Wrap(rotErr, errRotateFailed)
+		}
+		// Token was already revoked or no longer exists; fall through to fresh create.
 	}
 
 	at, _, err := e.client.CreateServiceAccountPersonalAccessToken(
@@ -362,6 +381,26 @@ func (e *external) createOwner(ctx context.Context, cr *v1alpha1.ServiceAccountA
 	return managed.ExternalCreation{
 		ConnectionDetails: managed.ConnectionDetails{connectionSecretKeyToken: []byte(at.Token)},
 	}, nil
+}
+
+// rotateFallsBackToCreate reports whether a failed owner-mode rotation should
+// fall through to creating a fresh token. This is only safe when the existing
+// token is genuinely gone:
+//
+//   - 404: the token id is unknown (deleted out-of-band, or wrong service account)
+//   - 400 "Token already revoked": the token exists but is revoked
+//
+// Any other error (transient, 403, 5xx, transport) must not trigger a create, to
+// avoid minting a second token on failures unrelated to the token's existence.
+func rotateFallsBackToCreate(res *gitlab.Response, err error) bool {
+	if clients.IsResponseNotFound(res) {
+		return true
+	}
+	if res != nil && res.StatusCode == http.StatusBadRequest &&
+		err != nil && strings.Contains(strings.ToLower(err.Error()), "revoked") {
+		return true
+	}
+	return false
 }
 
 // Update is currently a no-op as the only updatable field is expiration, which is handled by rotation in Observe.

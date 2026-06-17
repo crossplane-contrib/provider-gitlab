@@ -255,6 +255,14 @@ func getReplacements() []replacement {
 		{"v2.LocalSecretReference", "v2.SecretReference"},
 		{"LocalSecretReference:", "SecretReference:"},
 		{".LocalSecretReference", ".SecretReference"},
+		// Self-managed-mode detection compares the credential secret's namespace
+		// against the resource's connection-secret namespace. A namespaced
+		// resource writes to a LocalSecretReference and its secret lives in the
+		// CR's own namespace, so it compares against cr.GetNamespace(). A
+		// cluster-scoped resource has no namespace and writes to a full
+		// SecretReference that carries its own namespace, so it must compare
+		// against the write reference's namespace instead.
+		{"ref.Namespace == cr.GetNamespace()", "ref.Namespace == w.Namespace"},
 		{"reference.NewAPINamespacedResolver", "reference.NewAPIResolver"},
 		{"reference.NamespacedResolutionRequest", "reference.ResolutionRequest"},
 		{"reference.NamespacedResolutionResponse", "reference.ResolutionResponse"},
