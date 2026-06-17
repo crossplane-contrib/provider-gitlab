@@ -89,6 +89,26 @@ It supports two modes, selected automatically:
 See [`examples/groups/serviceaccountaccesstoken.yaml`](examples/groups/serviceaccountaccesstoken.yaml)
 for full examples of both modes.
 
+#### Project service account tokens
+
+The namespaced `projects.gitlab.m.crossplane.io/v1alpha1` `ServiceAccountAccessToken`
+resource provides the same capability for **project** service accounts (also
+available with at least a Premium license). It is keyed by `projectId` +
+`serviceAccountId`, and supports the same two modes:
+
+* **Owner mode** (default): the token is created, observed, rotated and revoked
+  through the project service-account endpoints. This mode requires a
+  `ProviderConfig` that is a project owner/maintainer.
+* **Self-managed mode**: identical to the group resource — once bootstrapped, the
+  self-rotating loop runs on the service account's own credential. Detection and
+  the `SelfManaged` status condition work the same way.
+
+A companion `projects.gitlab.m.crossplane.io/v1alpha1` `ServiceAccount` resource
+manages the project service account itself. The bootstrap-secret note above
+applies unchanged. See
+[`examples/projects/serviceaccountaccesstoken.yaml`](examples/projects/serviceaccountaccesstoken.yaml)
+for full examples of both modes.
+
 ## Contributing
 
 provider-gitlab is a community driven project and we welcome contributions. See

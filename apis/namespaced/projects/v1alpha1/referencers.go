@@ -299,3 +299,80 @@ func (mg *IntegrationMattermost) ResolveReferences(ctx context.Context, c client
 
 	return nil
 }
+
+// ResolveReferences of this ServiceAccount
+func (mg *ServiceAccount) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPINamespacedResolver(c, mg)
+
+	// resolve spec.forProvider.projectIdRef
+	rsp, err := r.Resolve(ctx, reference.NamespacedResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.ProjectID),
+		Reference:    mg.Spec.ForProvider.ProjectIDRef,
+		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
+		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
+		Extract:      reference.ExternalName(),
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.projectId")
+	}
+
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.projectId")
+	}
+
+	mg.Spec.ForProvider.ProjectID = resolvedID
+	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
+
+	return nil
+}
+
+// ResolveReferences of this ServiceAccountAccessToken
+func (mg *ServiceAccountAccessToken) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPINamespacedResolver(c, mg)
+
+	// resolve spec.forProvider.projectIdRef
+	rsp, err := r.Resolve(ctx, reference.NamespacedResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.ProjectID),
+		Reference:    mg.Spec.ForProvider.ProjectIDRef,
+		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
+		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
+		Extract:      reference.ExternalName(),
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.projectId")
+	}
+
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.projectId")
+	}
+
+	mg.Spec.ForProvider.ProjectID = resolvedID
+	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
+
+	// resolve spec.forProvider.serviceAccountIdRef
+	rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.ServiceAccountID),
+		Reference:    mg.Spec.ForProvider.ServiceAccountIDRef,
+		Selector:     mg.Spec.ForProvider.ServiceAccountIDSelector,
+		To:           reference.To{Managed: &ServiceAccount{}, List: &ServiceAccountList{}},
+		Extract:      reference.ExternalName(),
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.serviceAccountId")
+	}
+
+	resolvedSAID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.serviceAccountId")
+	}
+
+	mg.Spec.ForProvider.ServiceAccountID = resolvedSAID
+	mg.Spec.ForProvider.ServiceAccountIDRef = rsp.ResolvedReference
+
+	return nil
+}
