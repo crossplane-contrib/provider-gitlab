@@ -20,8 +20,6 @@ import (
 	"context"
 	"testing"
 
-	clustergroupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
-	legacyv1beta1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/v1beta1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
@@ -30,6 +28,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	clustergroupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
+	legacyv1beta1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/v1beta1"
 )
 
 type mockManagedResource struct {
