@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/pkg/errors v0.9.1
 	gitlab.com/gitlab-org/api/client-go/v2 v2.34.0
-	go.uber.org/zap v1.27.1
+	go.uber.org/zap v1.28.0
 	golang.org/x/oauth2 v0.36.0
 	k8s.io/api v0.35.1
 	k8s.io/apiextensions-apiserver v0.35.0
