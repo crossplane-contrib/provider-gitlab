@@ -4,7 +4,7 @@ go 1.25.10
 
 require (
 	github.com/crossplane/crossplane-runtime/v2 v2.3.1
-	github.com/crossplane/crossplane/apis/v2 v2.3.1
+	github.com/crossplane/crossplane/apis/v2 v2.3.2
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/pkg/errors v0.9.1
