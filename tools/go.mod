@@ -3,7 +3,7 @@ module github.com/crossplane-contrib/provider-gitlab/tools
 go 1.24.5
 
 require (
-	github.com/crossplane/crossplane-tools v0.0.0-20250731192036-00d407d8b7ec
+	github.com/crossplane/crossplane-tools v0.0.0-20251017183449-dd4517244339
 	sigs.k8s.io/controller-tools v0.18.0
 )
 
