@@ -23,7 +23,7 @@ env:
 
 jobs:
   check-diff:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -61,7 +61,7 @@ jobs:
         run: make check-diff
 
   detect-noop:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       noop: ${{ steps.noop.outputs.should_skip }}
     steps:
@@ -75,7 +75,7 @@ jobs:
           concurrent_skipping: false
 
   lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
 
@@ -121,7 +121,7 @@ jobs:
           skip-cache: true # We do our own caching.
 
   trivy-scan-fs:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
     steps:
@@ -141,7 +141,7 @@ jobs:
           severity: "CRITICAL,HIGH"
 
   unit-tests:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
 
@@ -190,7 +190,7 @@ jobs:
           files: _output/tests/linux_amd64/coverage.txt
 
   e2e-tests:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
     steps:
@@ -251,7 +251,7 @@ jobs:
         run: make e2e USE_HELM3=true
 
   publish-artifacts:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
 
