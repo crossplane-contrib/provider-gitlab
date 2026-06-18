@@ -53,6 +53,14 @@ type MockClient struct {
 	MockRotateGroupAccessToken func(gid interface{}, accessToken int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
 	MockRotateSelf             func(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 
+	MockListServiceAccountPersonalAccessTokens  func(gid any, serviceAccount int64, opt *gitlab.ListServiceAccountPersonalAccessTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockCreateServiceAccountPersonalAccessToken func(gid any, serviceAccount int64, opt *gitlab.CreateServiceAccountPersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockRevokeServiceAccountPersonalAccessToken func(gid any, serviceAccount, token int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockRotateServiceAccountPersonalAccessToken func(gid any, serviceAccount, token int64, opt *gitlab.RotateServiceAccountPersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockGetServiceAccountSelf                   func(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockRotateServiceAccountSelf                func(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockRevokeServiceAccountSelf                func(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
 	MockListGroupLDAPLinks                func(pid interface{}, options ...gitlab.RequestOptionFunc) ([]*gitlab.LDAPGroupLink, *gitlab.Response, error)
 	MockAddGroupLDAPLink                  func(pid interface{}, opt *gitlab.AddGroupLDAPLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.LDAPGroupLink, *gitlab.Response, error)
 	MockDeleteGroupLDAPLinkWithCNOrFilter func(pid interface{}, opts *gitlab.DeleteGroupLDAPLinkWithCNOrFilterOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
@@ -163,6 +171,41 @@ func (c *MockClient) RotateGroupAccessToken(gid interface{}, accessToken int64, 
 // RotateSelf calls the underlying MockRotateSelf method.
 func (c *MockClient) RotateSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 	return c.MockRotateSelf(opt, options...)
+}
+
+// ListServiceAccountPersonalAccessTokens calls the underlying MockListServiceAccountPersonalAccessTokens method.
+func (c *MockClient) ListServiceAccountPersonalAccessTokens(gid any, serviceAccount int64, opt *gitlab.ListServiceAccountPersonalAccessTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.MockListServiceAccountPersonalAccessTokens(gid, serviceAccount, opt, options...)
+}
+
+// CreateServiceAccountPersonalAccessToken calls the underlying MockCreateServiceAccountPersonalAccessToken method.
+func (c *MockClient) CreateServiceAccountPersonalAccessToken(gid any, serviceAccount int64, opt *gitlab.CreateServiceAccountPersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.MockCreateServiceAccountPersonalAccessToken(gid, serviceAccount, opt, options...)
+}
+
+// RevokeServiceAccountPersonalAccessToken calls the underlying MockRevokeServiceAccountPersonalAccessToken method.
+func (c *MockClient) RevokeServiceAccountPersonalAccessToken(gid any, serviceAccount, token int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockRevokeServiceAccountPersonalAccessToken(gid, serviceAccount, token, options...)
+}
+
+// RotateServiceAccountPersonalAccessToken calls the underlying MockRotateServiceAccountPersonalAccessToken method.
+func (c *MockClient) RotateServiceAccountPersonalAccessToken(gid any, serviceAccount, token int64, opt *gitlab.RotateServiceAccountPersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.MockRotateServiceAccountPersonalAccessToken(gid, serviceAccount, token, opt, options...)
+}
+
+// RotateServiceAccountSelf calls the underlying MockRotateServiceAccountSelf method.
+func (c *MockClient) RotateServiceAccountSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.MockRotateServiceAccountSelf(opt, options...)
+}
+
+// GetServiceAccountSelf calls the underlying MockGetServiceAccountSelf method.
+func (c *MockClient) GetServiceAccountSelf(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.MockGetServiceAccountSelf(options...)
+}
+
+// RevokeServiceAccountSelf calls the underlying MockRevokeServiceAccountSelf method.
+func (c *MockClient) RevokeServiceAccountSelf(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockRevokeServiceAccountSelf(options...)
 }
 
 // ListVariables calls the underlying MockListGroupVariables method.
