@@ -26,6 +26,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/badges"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/hooks"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/ldapgrouplinks"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/runners"
@@ -49,6 +50,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		badges.SetupBadge,
 		serviceaccounts.SetupServiceAccount,
 		serviceaccountaccesstokens.SetupServiceAccountAccessToken,
+		hooks.SetupHook,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -72,6 +74,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		badges.SetupBadgeGated,
 		serviceaccounts.SetupServiceAccountGated,
 		serviceaccountaccesstokens.SetupServiceAccountAccessTokenGated,
+		hooks.SetupHookGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

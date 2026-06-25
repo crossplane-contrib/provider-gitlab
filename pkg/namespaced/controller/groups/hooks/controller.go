@@ -1,0 +1,248 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package hooks
+
+import (
+	"context"
+	"strconv"
+
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups"
+)
+
+const (
+	errNotHook          = "managed resource is not a Gitlab group hook custom resource"
+	errGroupIDMissing   = "GroupID is missing"
+	errGetFailed        = "cannot get Gitlab group hook"
+	errKubeUpdateFailed = "cannot update Gitlab group hook custom resource"
+	errCreateFailed     = "cannot create Gitlab group hook"
+	errUpdateFailed     = "cannot update Gitlab group hook"
+	errDeleteFailed     = "cannot delete Gitlab group hook"
+	errSecretRefInvalid = "invalid token reference"
+)
+
+// SetupHook adds a controller that reconciles Hooks.
+func SetupHook(mgr ctrl.Manager, o controller.Options) error {
+	name := managed.ControllerName(v1alpha1.HookGroupKind)
+
+	reconcilerOpts := []managed.ReconcilerOption{
+		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewHookClient}),
+		managed.WithInitializers(),
+		managed.WithPollInterval(o.PollInterval),
+		managed.WithLogger(o.Logger.WithValues("controller", name)),
+		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
+	}
+
+	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
+		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
+	}
+
+	r := managed.NewReconciler(mgr,
+		resource.ManagedKind(v1alpha1.HookGroupVersionKind),
+		reconcilerOpts...)
+
+	if err := mgr.Add(statemetrics.NewMRStateRecorder(
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.HookList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		return err
+	}
+
+	return ctrl.NewControllerManagedBy(mgr).
+		Named(name).
+		WithOptions(o.ForControllerRuntime()).
+		For(&v1alpha1.Hook{}).
+		Complete(r)
+}
+
+// SetupHookGated adds a controller with CRD gate support.
+func SetupHookGated(mgr ctrl.Manager, o controller.Options) error {
+	o.Gate.Register(func() {
+		if err := SetupHook(mgr, o); err != nil {
+			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.HookGroupVersionKind.String())
+		}
+	}, v1alpha1.HookGroupVersionKind)
+	return nil
+}
+
+type connector struct {
+	kube              client.Client
+	newGitlabClientFn func(cfg common.Config) groups.HookClient
+}
+
+func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
+	cr, ok := mg.(*v1alpha1.Hook)
+	if !ok {
+		return nil, errors.New(errNotHook)
+	}
+	cfg, err := common.GetConfig(ctx, c.kube, cr)
+	if err != nil {
+		return nil, err
+	}
+	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
+}
+
+type external struct {
+	kube   client.Client
+	client groups.HookClient
+}
+
+func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+	cr, ok := mg.(*v1alpha1.Hook)
+	if !ok {
+		return managed.ExternalObservation{}, errors.New(errNotHook)
+	}
+
+	if meta.GetExternalName(cr) == "" {
+		return managed.ExternalObservation{
+			ResourceExists: false,
+		}, nil
+	}
+
+	hookid, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.New(errNotHook)
+	}
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalObservation{}, errors.New(errGroupIDMissing)
+	}
+
+	grouphook, res, err := e.client.GetGroupHook(*cr.Spec.ForProvider.GroupID, hookid)
+	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(groups.IsErrorHookNotFound, err), errGetFailed)
+	}
+
+	current := cr.Spec.ForProvider.DeepCopy()
+	groups.LateInitializeHook(&cr.Spec.ForProvider, grouphook)
+
+	cr.Status.AtProvider = groups.GenerateHookObservation(grouphook)
+	cr.Status.SetConditions(v2.Available())
+
+	return managed.ExternalObservation{
+		ResourceExists:          true,
+		ResourceUpToDate:        groups.IsHookUpToDate(&cr.Spec.ForProvider, grouphook),
+		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
+	}, nil
+}
+
+func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
+	cr, ok := mg.(*v1alpha1.Hook)
+	if !ok {
+		return managed.ExternalCreation{}, errors.New(errNotHook)
+	}
+
+	cr.Status.SetConditions(v2.Creating())
+
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalCreation{}, errors.New(errGroupIDMissing)
+	}
+
+	token, err := tokenValue(ctx, e.kube, cr)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errSecretRefInvalid)
+	}
+	hookOptions := groups.GenerateCreateHookOptions(&cr.Spec.ForProvider, token)
+
+	hook, _, err := e.client.AddGroupHook(*cr.Spec.ForProvider.GroupID, hookOptions, gitlab.WithContext(ctx))
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
+	}
+	err = e.updateExternalName(ctx, cr, hook)
+	return managed.ExternalCreation{}, errors.Wrap(err, errKubeUpdateFailed)
+}
+
+func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
+	cr, ok := mg.(*v1alpha1.Hook)
+	if !ok {
+		return managed.ExternalUpdate{}, errors.New(errNotHook)
+	}
+
+	hookid, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.New(errNotHook)
+	}
+
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalUpdate{}, errors.New(errGroupIDMissing)
+	}
+
+	token, err := tokenValue(ctx, e.kube, cr)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errSecretRefInvalid)
+	}
+
+	editHookOptions := groups.GenerateEditHookOptions(&cr.Spec.ForProvider, token)
+
+	_, _, err = e.client.EditGroupHook(*cr.Spec.ForProvider.GroupID, hookid, editHookOptions, gitlab.WithContext(ctx))
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	}
+
+	return managed.ExternalUpdate{}, nil
+}
+
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+	cr, ok := mg.(*v1alpha1.Hook)
+	if !ok {
+		return managed.ExternalDelete{}, errors.New(errNotHook)
+	}
+
+	cr.Status.SetConditions(v2.Deleting())
+
+	if cr.Spec.ForProvider.GroupID == nil {
+		return managed.ExternalDelete{}, errors.New(errGroupIDMissing)
+	}
+	_, err := e.client.DeleteGroupHook(*cr.Spec.ForProvider.GroupID, cr.Status.AtProvider.ID, gitlab.WithContext(ctx))
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+}
+
+func (e *external) Disconnect(ctx context.Context) error {
+	// Disconnect is not implemented as it is a new method required by the SDK
+	return nil
+}
+
+func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.Hook, grouphook *gitlab.GroupHook) error {
+	meta.SetExternalName(cr, strconv.FormatInt(grouphook.ID, 10))
+	return e.kube.Update(ctx, cr)
+}
+
+// tokenValue resolves the webhook secret token from the referenced secret.
+// The token is optional for group webhooks, so a nil token reference yields a
+// nil value rather than an error.
+func tokenValue(ctx context.Context, kube client.Client, cr *v1alpha1.Hook) (*string, error) {
+	if cr.Spec.ForProvider.Token == nil || cr.Spec.ForProvider.Token.SecretRef == nil {
+		return nil, nil
+	}
+	return common.GetTokenValueFromLocalSecret(ctx, kube, cr, cr.Spec.ForProvider.Token.SecretRef)
+}

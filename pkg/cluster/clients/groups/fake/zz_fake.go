@@ -76,6 +76,11 @@ type MockClient struct {
 	MockRemoveGroupVariable func(gid interface{}, key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
 	MockListUsers func(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error)
+
+	MockGetGroupHook    func(gid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error)
+	MockAddGroupHook    func(gid interface{}, opt *gitlab.AddGroupHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error)
+	MockEditGroupHook   func(gid interface{}, hook int64, opt *gitlab.EditGroupHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error)
+	MockDeleteGroupHook func(gid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetGroup calls the underlying MockGetGroup method.
@@ -266,4 +271,24 @@ func (c *MockClient) AddGroupSAMLLink(pid interface{}, opt *gitlab.AddGroupSAMLL
 // DeleteGroupSAMLLink calls the underlying MockDeleteGroupSAMLLink method.
 func (c *MockClient) DeleteGroupSAMLLink(pid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteGroupSAMLLink(pid, samlGroupName)
+}
+
+// GetGroupHook calls the underlying MockGetGroupHook method.
+func (c *MockClient) GetGroupHook(gid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error) {
+	return c.MockGetGroupHook(gid, hook)
+}
+
+// AddGroupHook calls the underlying MockAddGroupHook method.
+func (c *MockClient) AddGroupHook(gid interface{}, opt *gitlab.AddGroupHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error) {
+	return c.MockAddGroupHook(gid, opt)
+}
+
+// EditGroupHook calls the underlying MockEditGroupHook method.
+func (c *MockClient) EditGroupHook(gid interface{}, hook int64, opt *gitlab.EditGroupHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error) {
+	return c.MockEditGroupHook(gid, hook, opt)
+}
+
+// DeleteGroupHook calls the underlying MockDeleteGroupHook method.
+func (c *MockClient) DeleteGroupHook(gid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteGroupHook(gid, hook)
 }

@@ -124,6 +124,14 @@ var (
 	ServiceAccountAccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountAccessTokenKind)
 )
 
+// Hook type metadata
+var (
+	HookKind             = reflect.TypeOf(Hook{}).Name()
+	HookGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: HookKind}.String()
+	HookKindAPIVersion   = HookKind + "." + SchemeGroupVersion.String()
+	HookGroupVersionKind = SchemeGroupVersion.WithKind(HookKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Group{}, &GroupList{})
 	SchemeBuilder.Register(&Member{}, &MemberList{})
@@ -136,4 +144,5 @@ func init() {
 	SchemeBuilder.Register(&Badge{}, &BadgeList{})
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})
+	SchemeBuilder.Register(&Hook{}, &HookList{})
 }
