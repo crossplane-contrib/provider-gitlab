@@ -510,6 +510,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: grouphook(
 					withGroupID(groupID),
+					withExternalName(groupHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: groupHookID,
 					}),
@@ -519,6 +520,7 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: grouphook(
 					withGroupID(groupID),
+					withExternalName(groupHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: groupHookID,
 					}),
@@ -535,6 +537,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: grouphook(
 					withGroupID(groupID),
+					withExternalName(groupHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: groupHookID,
 					}),
@@ -544,6 +547,7 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: grouphook(
 					withGroupID(groupID),
+					withExternalName(groupHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: groupHookID,
 					}),

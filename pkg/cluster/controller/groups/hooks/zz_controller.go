@@ -245,7 +245,16 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	if cr.Spec.ForProvider.GroupID == nil {
 		return managed.ExternalDelete{}, errors.New(errGroupIDMissing)
 	}
-	_, err := e.client.DeleteGroupHook(*cr.Spec.ForProvider.GroupID, cr.Status.AtProvider.ID, gitlab.WithContext(ctx))
+
+	// The external-name is the authoritative hook id (set on Create and used by
+	// Observe/Update); rely on it rather than status.atProvider.ID, which may be
+	// unset if the resource was never successfully observed.
+	hookid, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64)
+	if err != nil {
+		return managed.ExternalDelete{}, errors.New(errNotHook)
+	}
+
+	_, err = e.client.DeleteGroupHook(*cr.Spec.ForProvider.GroupID, hookid, gitlab.WithContext(ctx))
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 }
 

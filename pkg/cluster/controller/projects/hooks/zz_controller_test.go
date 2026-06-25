@@ -504,6 +504,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: projecthook(
 					withProjectID(projectID),
+					withExternalName(projectHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
@@ -513,6 +514,7 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: projecthook(
 					withProjectID(projectID),
+					withExternalName(projectHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
@@ -529,6 +531,7 @@ func TestDelete(t *testing.T) {
 				},
 				cr: projecthook(
 					withProjectID(projectID),
+					withExternalName(projectHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
@@ -538,6 +541,7 @@ func TestDelete(t *testing.T) {
 			want: want{
 				cr: projecthook(
 					withProjectID(projectID),
+					withExternalName(projectHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
@@ -563,6 +567,7 @@ func TestDelete(t *testing.T) {
 					withProjectID(projectID),
 					withConditions(v2.Deleting()),
 				),
+				err: errors.New(errNotHook),
 			},
 		},
 	}
