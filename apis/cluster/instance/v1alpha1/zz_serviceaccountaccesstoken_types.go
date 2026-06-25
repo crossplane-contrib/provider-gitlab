@@ -139,7 +139,7 @@ type ServiceAccountAccessTokenStatus struct {
 // +kubebuilder:printcolumn:name="EXPIRES-AT",type="string",JSONPath=".status.atProvider.expiresAt"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab}
+// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab},shortName=isaat
 type ServiceAccountAccessToken struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

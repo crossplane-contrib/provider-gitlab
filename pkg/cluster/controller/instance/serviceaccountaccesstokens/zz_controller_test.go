@@ -43,6 +43,7 @@ import (
 
 // mockClient is an inline implementation of instance.ServiceAccountAccessTokenClient.
 type mockClient struct {
+	MockGetUser                          func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	MockCreatePersonalAccessToken        func(user int64, opt *gitlab.CreatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 	MockGetSinglePersonalAccessTokenByID func(token int64, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 	MockRotatePersonalAccessTokenByID    func(token int64, opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
@@ -53,6 +54,10 @@ type mockClient struct {
 }
 
 var _ instance.ServiceAccountAccessTokenClient = &mockClient{}
+
+func (m *mockClient) GetUser(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+	return m.MockGetUser(user, opt, options...)
+}
 
 func (m *mockClient) CreatePersonalAccessToken(user int64, opt *gitlab.CreatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 	return m.MockCreatePersonalAccessToken(user, opt, options...)
@@ -106,6 +111,22 @@ var (
 
 // ownerCond is the SelfManaged condition for owner mode.
 func ownerCond() v2.Condition { return selfManagedCondition(false) }
+
+// mockGetUserServiceAccount returns a GetUser mock reporting a valid service
+// account (bot + external) for serviceAccountId saID.
+func mockGetUserServiceAccount() func(int64, *gitlab.GetUserOptions, ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+	return func(_ int64, _ *gitlab.GetUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+		return &gitlab.User{ID: saID, Bot: true, External: true}, &gitlab.Response{}, nil
+	}
+}
+
+// mockGetOwnedToken returns a GetSinglePersonalAccessTokenByID mock reporting a
+// token owned by serviceAccountId saID (passes the ownership guard).
+func mockGetOwnedToken() func(int64, ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return func(_ int64, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+		return &gitlab.PersonalAccessToken{ID: accessTokenID, UserID: saID, Active: true}, &gitlab.Response{}, nil
+	}
+}
 
 type args struct {
 	client instance.ServiceAccountAccessTokenClient
@@ -390,6 +411,7 @@ func TestCreate(t *testing.T) {
 		"OwnerCreateFailed": {
 			args: args{
 				client: &mockClient{
+					MockGetUser: mockGetUserServiceAccount(),
 					MockCreatePersonalAccessToken: func(_ int64, _ *gitlab.CreatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 						return nil, nil, errBoom
 					},
@@ -401,10 +423,41 @@ func TestCreate(t *testing.T) {
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
 		},
+		"OwnerCreateRejectsNonServiceAccount": {
+			// serviceAccountId points at a human (not bot/external) -> refuse to
+			// mint a PAT for it; no create is attempted.
+			args: args{
+				client: &mockClient{
+					MockGetUser: func(_ int64, _ *gitlab.GetUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+						return &gitlab.User{ID: saID, Bot: false, External: false}, &gitlab.Response{}, nil
+					},
+				},
+				cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID, Name: name, Scopes: []string{"api"}})),
+			},
+			want: want{
+				cr:  saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID, Name: name, Scopes: []string{"api"}})),
+				err: errors.New(errNotServiceAccount),
+			},
+		},
+		"OwnerCreateGetUserFailed": {
+			args: args{
+				client: &mockClient{
+					MockGetUser: func(_ int64, _ *gitlab.GetUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+						return nil, nil, errBoom
+					},
+				},
+				cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID, Name: name, Scopes: []string{"api"}})),
+			},
+			want: want{
+				cr:  saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID, Name: name, Scopes: []string{"api"}})),
+				err: errors.Wrap(errBoom, errGetUserFailed),
+			},
+		},
 		"OwnerCreateSuccessful": {
 			args: args{
 				kube: &test.MockClient{MockUpdate: test.NewMockUpdateFn(nil)},
 				client: &mockClient{
+					MockGetUser: mockGetUserServiceAccount(),
 					MockCreatePersonalAccessToken: func(_ int64, _ *gitlab.CreatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 						return &tokenObj, &gitlab.Response{}, nil
 					},
@@ -419,6 +472,7 @@ func TestCreate(t *testing.T) {
 		"OwnerRotationSuccessful": {
 			args: args{
 				client: &mockClient{
+					MockGetSinglePersonalAccessTokenByID: mockGetOwnedToken(),
 					MockRotatePersonalAccessTokenByID: func(_ int64, _ *gitlab.RotatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 						return &tokenObj, &gitlab.Response{}, nil
 					},
@@ -430,13 +484,54 @@ func TestCreate(t *testing.T) {
 				result: managed.ExternalCreation{ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)}},
 			},
 		},
+		"OwnerForeignExternalNameCreatesFresh": {
+			// external-name drifted to a token owned by a DIFFERENT user (e.g. an
+			// admin). The ownership guard must refuse to rotate it (MockRotate is
+			// nil, so a rotate call would panic) and instead create a fresh token
+			// for the configured service account.
+			args: args{
+				kube: &test.MockClient{MockUpdate: test.NewMockUpdateFn(nil)},
+				client: &mockClient{
+					MockGetSinglePersonalAccessTokenByID: func(_ int64, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+						return &gitlab.PersonalAccessToken{ID: accessTokenID, UserID: 999, Active: true}, &gitlab.Response{}, nil
+					},
+					MockGetUser: mockGetUserServiceAccount(),
+					MockCreatePersonalAccessToken: func(_ int64, _ *gitlab.CreatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+						return &tokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID, Name: name, Scopes: []string{"api"}}), withExternalName("999")),
+			},
+			want: want{
+				cr:     saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID, Name: name, Scopes: []string{"api"}}), withExternalName(sAccessTokenID)),
+				result: managed.ExternalCreation{ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)}},
+			},
+		},
+		"OwnerOwnershipCheckGetError": {
+			// A non-404 error while checking ownership must surface, not silently
+			// create or rotate.
+			args: args{
+				client: &mockClient{
+					MockGetSinglePersonalAccessTokenByID: func(_ int64, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}, errBoom
+					},
+				},
+				cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID}), withExternalName(sAccessTokenID)),
+			},
+			want: want{
+				cr:  saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID}), withExternalName(sAccessTokenID)),
+				err: errors.Wrap(errBoom, errAccessTokenNotFound),
+			},
+		},
 		"OwnerRotate404FreshCreate": {
 			// Rotation returns 404 (token gone) -> fall through to a fresh create.
 			args: args{
 				client: &mockClient{
+					MockGetSinglePersonalAccessTokenByID: mockGetOwnedToken(),
 					MockRotatePersonalAccessTokenByID: func(_ int64, _ *gitlab.RotatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
 					},
+					MockGetUser: mockGetUserServiceAccount(),
 					MockCreatePersonalAccessToken: func(_ int64, _ *gitlab.CreatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 						return &tokenObj, &gitlab.Response{}, nil
 					},
@@ -454,9 +549,11 @@ func TestCreate(t *testing.T) {
 			args: args{
 				kube: &test.MockClient{MockUpdate: test.NewMockUpdateFn(nil)},
 				client: &mockClient{
+					MockGetSinglePersonalAccessTokenByID: mockGetOwnedToken(),
 					MockRotatePersonalAccessTokenByID: func(_ int64, _ *gitlab.RotatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusBadRequest}}, errors.New("400 Bad Request: Token already revoked")
 					},
+					MockGetUser: mockGetUserServiceAccount(),
 					MockCreatePersonalAccessToken: func(_ int64, _ *gitlab.CreatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 						return &tokenObj, &gitlab.Response{}, nil
 					},
@@ -473,6 +570,7 @@ func TestCreate(t *testing.T) {
 			// (tightened fallback: never orphan a possibly-still-valid token).
 			args: args{
 				client: &mockClient{
+					MockGetSinglePersonalAccessTokenByID: mockGetOwnedToken(),
 					MockRotatePersonalAccessTokenByID: func(_ int64, _ *gitlab.RotatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}, errBoom
 					},

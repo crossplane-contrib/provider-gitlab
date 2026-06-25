@@ -55,6 +55,8 @@ const (
 	errDeleteFailed                 = "cannot delete Gitlab service account access token"
 	errAccessTokenNotFound          = "cannot find Gitlab service account access token"
 	errMissingServiceAccountID      = "missing Spec.ForProvider.ServiceAccountID"
+	errGetUserFailed                = "cannot retrieve Gitlab user referenced by spec.forProvider.serviceAccountId"
+	errNotServiceAccount            = "spec.forProvider.serviceAccountId does not reference a Gitlab service account (must be a bot, external user); refusing to mint a personal access token for it"
 	errSelfInformFailed             = "cannot read the self service account access token; the token referenced by the ProviderConfig may be expired or revoked - reseed the credentials secret with a valid token"
 	errSelfRotateFailed             = "cannot self-rotate Gitlab service account access token"
 	errSelfServiceAccountMismatch   = "the token referenced by the ProviderConfig does not belong to spec.forProvider.serviceAccountId; refusing to manage it - check that the credentials secret and serviceAccountId are wired to the same service account"
@@ -321,36 +323,60 @@ func (e *external) createSelf(ctx context.Context, cr *v1alpha1.ServiceAccountAc
 
 // createOwner creates or rotates the token via the admin endpoints.
 func (e *external) createOwner(ctx context.Context, cr *v1alpha1.ServiceAccountAccessToken) (managed.ExternalCreation, error) {
-	// If a token ID is already set as the external name, rotate it. Rotation
-	// atomically revokes the old token and issues a new one (with a new ID).
-	if existingID, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64); err == nil && existingID > 0 {
-		at, rotRes, rotErr := e.client.RotatePersonalAccessTokenByID(
-			existingID,
-			instance.GenerateRotateServiceAccountAccessTokenOptions(&cr.Spec.ForProvider),
-			gitlab.WithContext(ctx),
-		)
-		if rotErr == nil {
-			meta.SetExternalName(cr, strconv.FormatInt(at.ID, 10))
-			return managed.ExternalCreation{
-				ConnectionDetails: managed.ConnectionDetails{connectionSecretKeyToken: []byte(at.Token)},
-			}, nil
-		}
-		// Only fall through to a fresh create when the existing token is truly
-		// gone. Any other failure (transient error, 403, 5xx, transport error)
-		// must surface rather than silently minting a second token (which would
-		// orphan the still-valid token on the GitLab side).
-		if !rotateFallsBackToCreate(rotRes, rotErr) {
-			return managed.ExternalCreation{}, errors.Wrap(rotErr, errRotateFailed)
-		}
-		// Token was already revoked or no longer exists; fall through to fresh create.
-	}
-
 	if cr.Spec.ForProvider.ServiceAccountID == nil {
 		return managed.ExternalCreation{}, errors.New(errMissingServiceAccountID)
 	}
+	serviceAccountID := *cr.Spec.ForProvider.ServiceAccountID
+
+	// If a token ID is already set as the external name, rotate it - but only
+	// after confirming the token actually belongs to the configured service
+	// account. RotatePersonalAccessTokenByID is an unscoped instance-admin
+	// endpoint, so rotating blindly would let a drifted or hand-edited
+	// external-name rotate an arbitrary user's token (including an admin's) and
+	// write the resulting value into this resource's connection secret. On
+	// mismatch or absence, drop the external name and create a fresh token for
+	// the configured service account instead. Rotation atomically revokes the
+	// old token and issues a new one (with a new ID).
+	if existingID, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64); err == nil && existingID > 0 {
+		owned, ownErr := e.ownsServiceAccountToken(ctx, existingID, serviceAccountID)
+		if ownErr != nil {
+			return managed.ExternalCreation{}, ownErr
+		}
+		if owned {
+			at, rotRes, rotErr := e.client.RotatePersonalAccessTokenByID(
+				existingID,
+				instance.GenerateRotateServiceAccountAccessTokenOptions(&cr.Spec.ForProvider),
+				gitlab.WithContext(ctx),
+			)
+			if rotErr == nil {
+				meta.SetExternalName(cr, strconv.FormatInt(at.ID, 10))
+				return managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{connectionSecretKeyToken: []byte(at.Token)},
+				}, nil
+			}
+			// Only fall through to a fresh create when the existing token is truly
+			// gone. Any other failure (transient error, 403, 5xx, transport error)
+			// must surface rather than silently minting a second token (which would
+			// orphan the still-valid token on the GitLab side).
+			if !rotateFallsBackToCreate(rotRes, rotErr) {
+				return managed.ExternalCreation{}, errors.Wrap(rotErr, errRotateFailed)
+			}
+			// Token was already revoked or no longer exists; fall through to fresh create.
+		}
+		// Token is owned by a different account (drifted/forged external name)
+		// or no longer exists: do not rotate it, create a fresh token instead.
+	}
+
+	// Reject targets that are not service accounts before minting a token.
+	// CreatePersonalAccessToken is an instance-admin endpoint that will happily
+	// mint a PAT for any user id, including a human admin; issuing one for a
+	// non-service-account would let a tenant harvest that user's credentials.
+	if err := e.validateServiceAccount(ctx, serviceAccountID); err != nil {
+		return managed.ExternalCreation{}, err
+	}
 
 	at, _, err := e.client.CreatePersonalAccessToken(
-		*cr.Spec.ForProvider.ServiceAccountID,
+		serviceAccountID,
 		instance.GenerateCreateServiceAccountAccessTokenOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
@@ -362,6 +388,37 @@ func (e *external) createOwner(ctx context.Context, cr *v1alpha1.ServiceAccountA
 	return managed.ExternalCreation{
 		ConnectionDetails: managed.ConnectionDetails{connectionSecretKeyToken: []byte(at.Token)},
 	}, nil
+}
+
+// validateServiceAccount rejects a serviceAccountId that does not reference a
+// GitLab service account. Service accounts are bot users flagged external;
+// the GitLab user_type field is unreliable across versions (null even for a
+// service account on 18.11), so we rely on the bot + external flags, which the
+// instance-admin GET /users/:id endpoint reports reliably.
+func (e *external) validateServiceAccount(ctx context.Context, serviceAccountID int64) error {
+	u, _, err := e.client.GetUser(serviceAccountID, &gitlab.GetUserOptions{}, gitlab.WithContext(ctx))
+	if err != nil {
+		return errors.Wrap(err, errGetUserFailed)
+	}
+	if u == nil || !u.Bot || !u.External {
+		return errors.New(errNotServiceAccount)
+	}
+	return nil
+}
+
+// ownsServiceAccountToken reports whether the personal access token with the
+// given id exists and belongs to the expected service account. A token that no
+// longer exists (404) returns (false, nil) so the caller can create a fresh
+// one; any other API error is returned.
+func (e *external) ownsServiceAccountToken(ctx context.Context, tokenID, serviceAccountID int64) (bool, error) {
+	at, res, err := e.client.GetSinglePersonalAccessTokenByID(tokenID, gitlab.WithContext(ctx))
+	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return false, nil
+		}
+		return false, errors.Wrap(err, errAccessTokenNotFound)
+	}
+	return at != nil && at.UserID == serviceAccountID, nil
 }
 
 // rotateFallsBackToCreate reports whether a failed owner-mode rotation should

@@ -37,6 +37,7 @@ import (
 // tokens by ID), while self-managed mode uses the generic self endpoints.
 type ServiceAccountAccessTokenClient interface {
 	// Owner-authenticated endpoints (the ProviderConfig is an instance admin).
+	GetUser(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	CreatePersonalAccessToken(user int64, opt *gitlab.CreatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 	GetSinglePersonalAccessTokenByID(token int64, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 	RotatePersonalAccessTokenByID(token int64, opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
