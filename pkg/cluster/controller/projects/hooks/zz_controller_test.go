@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects/fake"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
@@ -47,12 +48,22 @@ var (
 	createTime    = time.Now()
 	projectID     = int64(5678)
 	projectHookID = int64(1234)
-	tokenValue    = "test"
+	tokenValueT   = "test"
+	tokenHashT    = clients.TokenHash(&tokenValueT)
 	tokenSecret   = corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
 		Data: map[string][]byte{
-			"token": []byte(tokenValue),
+			"token": []byte(tokenValueT),
 		},
+	}
+	// kubeWithSecret returns the token secret so Observe/Create/Update can
+	// resolve the referenced webhook token.
+	kubeWithSecret = &test.MockClient{
+		MockUpdate: test.NewMockUpdateFn(nil),
+		MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+			*obj.(*corev1.Secret) = tokenSecret
+			return nil
+		}),
 	}
 )
 
@@ -111,6 +122,10 @@ func withStatus(s v1alpha1.HookObservation) projectHookModifier {
 	return func(r *v1alpha1.Hook) { r.Status.AtProvider = s }
 }
 
+func withTokenHash(h string) projectHookModifier {
+	return func(r *v1alpha1.Hook) { r.Status.AtProvider.TokenHash = h }
+}
+
 func withExternalName(projectHookID int64) projectHookModifier {
 	return func(r *v1alpha1.Hook) { meta.SetExternalName(r, fmt.Sprint(projectHookID)) }
 }
@@ -136,6 +151,7 @@ func TestObserve(t *testing.T) {
 	}{
 		"SuccessfulAvailable": {
 			args: args{
+				kube: kubeWithSecret,
 				projecthook: &fake.MockClient{
 					MockGetHook: func(pid interface{}, projectHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
@@ -148,17 +164,47 @@ func TestObserve(t *testing.T) {
 						ID:        projectHookID,
 						CreatedAt: &metav1.Time{Time: createTime},
 					}),
+					withTokenHash(tokenHashT),
 				),
 			},
 			want: want{
 				cr: projecthook(
 					withDefaultValues(),
 					withExternalName(projectHookID),
+					withTokenHash(tokenHashT),
 					withConditions(v2.Available()),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:   true,
 					ResourceUpToDate: true,
+				},
+			},
+		},
+		"TokenRotated": {
+			args: args{
+				kube: kubeWithSecret,
+				projecthook: &fake.MockClient{
+					MockGetHook: func(pid interface{}, projectHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: projecthook(
+					withDefaultValues(),
+					withExternalName(projectHookID),
+					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
+					withTokenHash("stale-hash"),
+				),
+			},
+			want: want{
+				cr: projecthook(
+					withDefaultValues(),
+					withExternalName(projectHookID),
+					withTokenHash("stale-hash"),
+					withConditions(v2.Available()),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:   true,
+					ResourceUpToDate: false,
 				},
 			},
 		},
@@ -194,6 +240,7 @@ func TestObserve(t *testing.T) {
 		},
 		"LateInitSuccess": {
 			args: args{
+				kube: kubeWithSecret,
 				projecthook: &fake.MockClient{
 					MockGetHook: func(pid interface{}, projectHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
@@ -207,12 +254,14 @@ func TestObserve(t *testing.T) {
 						ID:        projectHookID,
 						CreatedAt: &metav1.Time{Time: createTime},
 					}),
+					withTokenHash(tokenHashT),
 				),
 			},
 			want: want{
 				cr: projecthook(
 					withDefaultValues(),
 					withExternalName(projectHookID),
+					withTokenHash(tokenHashT),
 					withConditions(v2.Available()),
 				),
 				result: managed.ExternalObservation{
@@ -382,6 +431,7 @@ func TestUpdate(t *testing.T) {
 					withTokenRef(),
 					withProjectID(projectID),
 					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
+					withTokenHash(tokenHashT),
 				),
 			},
 		},

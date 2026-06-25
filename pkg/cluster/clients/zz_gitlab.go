@@ -19,6 +19,8 @@ limitations under the License.
 package clients
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -246,4 +248,17 @@ func IsResponseNotFound(res *gitlab.Response) bool {
 		return true
 	}
 	return false
+}
+
+// TokenHash returns a stable hex-encoded SHA-256 digest of the supplied token
+// value, or an empty string when no token is set. GitLab never returns webhook
+// secret tokens, so the digest is stored in status.atProvider to detect when a
+// referenced secret has been rotated on the desired side and must be re-pushed.
+// Only the digest is ever persisted, never the raw token.
+func TokenHash(token *string) string {
+	if token == nil {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(*token))
+	return hex.EncodeToString(sum[:])
 }

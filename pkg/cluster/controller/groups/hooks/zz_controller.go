@@ -148,12 +148,28 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	current := cr.Spec.ForProvider.DeepCopy()
 	groups.LateInitializeHook(&cr.Spec.ForProvider, grouphook)
 
+	// GenerateHookObservation rebuilds atProvider from the GitLab response,
+	// which never includes the secret token; preserve the stored token hash.
+	storedTokenHash := cr.Status.AtProvider.TokenHash
 	cr.Status.AtProvider = groups.GenerateHookObservation(grouphook)
+	cr.Status.AtProvider.TokenHash = storedTokenHash
 	cr.Status.SetConditions(v2.Available())
+
+	upToDate := groups.IsHookUpToDate(&cr.Spec.ForProvider, grouphook)
+	if upToDate {
+		// Only resolve the secret when every other field already matches:
+		// GitLab never returns the token, so we detect rotation on the desired
+		// side by comparing the current secret's hash to the stored one.
+		token, err := tokenValue(ctx, e.kube, cr)
+		if err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, errSecretRefInvalid)
+		}
+		upToDate = clients.TokenHash(token) == storedTokenHash
+	}
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        groups.IsHookUpToDate(&cr.Spec.ForProvider, grouphook),
+		ResourceUpToDate:        upToDate,
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 	}, nil
 }
@@ -210,6 +226,10 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}
+
+	// Record the hash of the token we just pushed so Observe can detect future
+	// rotations of the referenced secret.
+	cr.Status.AtProvider.TokenHash = clients.TokenHash(token)
 
 	return managed.ExternalUpdate{}, nil
 }

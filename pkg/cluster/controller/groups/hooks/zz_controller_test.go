@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups/fake"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
@@ -48,11 +49,21 @@ var (
 	groupID     = int64(5678)
 	groupHookID = int64(1234)
 	tokenValueT = "test"
+	tokenHashT  = clients.TokenHash(&tokenValueT)
 	tokenSecret = corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
 		Data: map[string][]byte{
 			"token": []byte(tokenValueT),
 		},
+	}
+	// kubeWithSecret returns the token secret so Observe/Create/Update can
+	// resolve the referenced webhook token.
+	kubeWithSecret = &test.MockClient{
+		MockUpdate: test.NewMockUpdateFn(nil),
+		MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+			*obj.(*corev1.Secret) = tokenSecret
+			return nil
+		}),
 	}
 )
 
@@ -116,6 +127,10 @@ func withStatus(s v1alpha1.HookObservation) groupHookModifier {
 	return func(r *v1alpha1.Hook) { r.Status.AtProvider = s }
 }
 
+func withTokenHash(h string) groupHookModifier {
+	return func(r *v1alpha1.Hook) { r.Status.AtProvider.TokenHash = h }
+}
+
 func withExternalName(groupHookID int64) groupHookModifier {
 	return func(r *v1alpha1.Hook) { meta.SetExternalName(r, fmt.Sprint(groupHookID)) }
 }
@@ -141,6 +156,7 @@ func TestObserve(t *testing.T) {
 	}{
 		"SuccessfulAvailable": {
 			args: args{
+				kube: kubeWithSecret,
 				grouphook: &fake.MockClient{
 					MockGetGroupHook: func(gid interface{}, groupHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error) {
 						return &gitlab.GroupHook{}, &gitlab.Response{}, nil
@@ -153,17 +169,47 @@ func TestObserve(t *testing.T) {
 						ID:        groupHookID,
 						CreatedAt: &metav1.Time{Time: createTime},
 					}),
+					withTokenHash(tokenHashT),
 				),
 			},
 			want: want{
 				cr: grouphook(
 					withDefaultValues(),
 					withExternalName(groupHookID),
+					withTokenHash(tokenHashT),
 					withConditions(v2.Available()),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:   true,
 					ResourceUpToDate: true,
+				},
+			},
+		},
+		"TokenRotated": {
+			args: args{
+				kube: kubeWithSecret,
+				grouphook: &fake.MockClient{
+					MockGetGroupHook: func(gid interface{}, groupHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error) {
+						return &gitlab.GroupHook{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: grouphook(
+					withDefaultValues(),
+					withExternalName(groupHookID),
+					withStatus(v1alpha1.HookObservation{ID: groupHookID}),
+					withTokenHash("stale-hash"),
+				),
+			},
+			want: want{
+				cr: grouphook(
+					withDefaultValues(),
+					withExternalName(groupHookID),
+					withTokenHash("stale-hash"),
+					withConditions(v2.Available()),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:   true,
+					ResourceUpToDate: false,
 				},
 			},
 		},
@@ -199,6 +245,7 @@ func TestObserve(t *testing.T) {
 		},
 		"LateInitSuccess": {
 			args: args{
+				kube: kubeWithSecret,
 				grouphook: &fake.MockClient{
 					MockGetGroupHook: func(gid interface{}, groupHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error) {
 						return &gitlab.GroupHook{}, &gitlab.Response{}, nil
@@ -212,12 +259,14 @@ func TestObserve(t *testing.T) {
 						ID:        groupHookID,
 						CreatedAt: &metav1.Time{Time: createTime},
 					}),
+					withTokenHash(tokenHashT),
 				),
 			},
 			want: want{
 				cr: grouphook(
 					withDefaultValues(),
 					withExternalName(groupHookID),
+					withTokenHash(tokenHashT),
 					withConditions(v2.Available()),
 				),
 				result: managed.ExternalObservation{
@@ -387,6 +436,7 @@ func TestUpdate(t *testing.T) {
 					withTokenRef(),
 					withGroupID(groupID),
 					withStatus(v1alpha1.HookObservation{ID: groupHookID}),
+					withTokenHash(tokenHashT),
 				),
 			},
 		},

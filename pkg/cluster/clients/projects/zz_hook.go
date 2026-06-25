@@ -19,8 +19,6 @@ limitations under the License.
 package projects
 
 import (
-	"strings"
-
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,10 +26,6 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-)
-
-const (
-	errHookNotFound = "404 Not found"
 )
 
 // HookClient defines Gitlab Hook service operations
@@ -46,14 +40,6 @@ type HookClient interface {
 func NewHookClient(cfg common.Config) HookClient {
 	git := common.NewClient(cfg)
 	return git.Projects
-}
-
-// IsErrorHookNotFound helper function to test for errProjectNotFound error.
-func IsErrorHookNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errHookNotFound)
 }
 
 // LateInitializeHook fills the empty fields in the hook spec with the

@@ -35,6 +35,7 @@ type HookParameters struct {
 	// ProjectID is the ID of the project.
 	// +optional
 	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
@@ -108,6 +109,13 @@ type HookObservation struct {
 
 	// CreatedAt specifies the time the project hook was created
 	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
+
+	// TokenHash is a SHA-256 digest of the secret token last pushed to GitLab.
+	// GitLab never returns the token, so this fingerprint is used to detect
+	// rotation of the referenced secret and trigger an update. It is never the
+	// raw token.
+	// +optional
+	TokenHash string `json:"tokenHash,omitempty"`
 }
 
 // A HookSpec defines the desired state of a Gitlab Project Hook.

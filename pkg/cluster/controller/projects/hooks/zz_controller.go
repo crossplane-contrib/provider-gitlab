@@ -142,18 +142,34 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
 		}
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorHookNotFound, err), errGetFailed)
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
 	projects.LateInitializeHook(&cr.Spec.ForProvider, projecthook)
 
+	// GenerateHookObservation rebuilds atProvider from the GitLab response,
+	// which never includes the secret token; preserve the stored token hash.
+	storedTokenHash := cr.Status.AtProvider.TokenHash
 	cr.Status.AtProvider = projects.GenerateHookObservation(projecthook)
+	cr.Status.AtProvider.TokenHash = storedTokenHash
 	cr.Status.SetConditions(v2.Available())
+
+	upToDate := projects.IsHookUpToDate(&cr.Spec.ForProvider, projecthook)
+	if upToDate {
+		// Only resolve the secret when every other field already matches:
+		// GitLab never returns the token, so we detect rotation on the desired
+		// side by comparing the current secret's hash to the stored one.
+		token, err := tokenValue(ctx, e.kube, cr)
+		if err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, errSecretRefInvalid)
+		}
+		upToDate = clients.TokenHash(token) == storedTokenHash
+	}
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        projects.IsHookUpToDate(&cr.Spec.ForProvider, projecthook),
+		ResourceUpToDate:        upToDate,
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 	}, nil
 }
@@ -194,7 +210,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errProjectIDMissing)
 	}
 
-	token, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, cr.Spec.ForProvider.Token.SecretRef)
+	token, err := tokenValue(ctx, e.kube, cr)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errSecretRefInvalid)
 	}
@@ -205,6 +221,10 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}
+
+	// Record the hash of the token we just pushed so Observe can detect future
+	// rotations of the referenced secret.
+	cr.Status.AtProvider.TokenHash = clients.TokenHash(token)
 
 	return managed.ExternalUpdate{}, nil
 }
@@ -232,4 +252,13 @@ func (e *external) Disconnect(ctx context.Context) error {
 func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.Hook, projecthook *gitlab.ProjectHook) error {
 	meta.SetExternalName(cr, strconv.FormatInt(projecthook.ID, 10))
 	return e.kube.Update(ctx, cr)
+}
+
+// tokenValue resolves the webhook secret token from the referenced secret.
+// A nil token reference yields a nil value rather than an error.
+func tokenValue(ctx context.Context, kube client.Client, cr *v1alpha1.Hook) (*string, error) {
+	if cr.Spec.ForProvider.Token == nil || cr.Spec.ForProvider.Token.SecretRef == nil {
+		return nil, nil
+	}
+	return common.GetTokenValueFromSecret(ctx, kube, cr, cr.Spec.ForProvider.Token.SecretRef)
 }
