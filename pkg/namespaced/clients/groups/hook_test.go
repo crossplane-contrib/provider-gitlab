@@ -1,0 +1,351 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package groups
+
+import (
+	"testing"
+	"time"
+
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
+)
+
+var (
+	hookURL                  = "https://my-group.example.com"
+	pushEvents               = true
+	pushEventsBranchFilter   = "foo"
+	issuesEvents             = true
+	confidentialIssuesEvents = true
+	mergeRequestsEvents      = true
+	tagPushEvents            = true
+	noteEvents               = true
+	confidentialNoteEvents   = true
+	jobEvents                = true
+	pipelineEvents           = true
+	wikiPageEvents           = true
+	deploymentEvents         = true
+	releasesEvents           = true
+	subGroupEvents           = true
+	emojiEvents              = true
+	memberEvents             = true
+	enableSSLVerification    = true
+	hookToken                = v1alpha1.Token{}
+
+	hookTokenValue = "84B9C651-9025-47D2-9124-DD951BD268E8"
+)
+
+func TestGenerateHookObservation(t *testing.T) {
+	id := int64(0)
+	createdAt := time.Now()
+
+	type args struct {
+		gh *gitlab.GroupHook
+	}
+
+	cases := map[string]struct {
+		args args
+		want v1alpha1.HookObservation
+	}{
+		"Full": {
+			args: args{
+				gh: &gitlab.GroupHook{
+					ID:        id,
+					CreatedAt: &createdAt,
+				},
+			},
+			want: v1alpha1.HookObservation{
+				ID:        id,
+				CreatedAt: &metav1.Time{Time: createdAt},
+			},
+		},
+		"Nil": {
+			args: args{gh: nil},
+			want: v1alpha1.HookObservation{},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateHookObservation(tc.args.gh)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestLateInitializeHook(t *testing.T) {
+	cases := map[string]struct {
+		parameters *v1alpha1.HookParameters
+		grouphook  *gitlab.GroupHook
+		want       *v1alpha1.HookParameters
+	}{
+		"AllOptionalFields": {
+			parameters: &v1alpha1.HookParameters{},
+			grouphook: &gitlab.GroupHook{
+				PushEvents:               pushEvents,
+				PushEventsBranchFilter:   pushEventsBranchFilter,
+				IssuesEvents:             issuesEvents,
+				ConfidentialIssuesEvents: confidentialIssuesEvents,
+				MergeRequestsEvents:      mergeRequestsEvents,
+				TagPushEvents:            tagPushEvents,
+				NoteEvents:               noteEvents,
+				ConfidentialNoteEvents:   confidentialNoteEvents,
+				JobEvents:                jobEvents,
+				PipelineEvents:           pipelineEvents,
+				WikiPageEvents:           wikiPageEvents,
+				DeploymentEvents:         deploymentEvents,
+				ReleasesEvents:           releasesEvents,
+				SubGroupEvents:           subGroupEvents,
+				EmojiEvents:              emojiEvents,
+				MemberEvents:             memberEvents,
+				EnableSSLVerification:    enableSSLVerification,
+			},
+			want: &v1alpha1.HookParameters{
+				PushEvents:               &pushEvents,
+				PushEventsBranchFilter:   &pushEventsBranchFilter,
+				IssuesEvents:             &issuesEvents,
+				ConfidentialIssuesEvents: &confidentialIssuesEvents,
+				MergeRequestsEvents:      &mergeRequestsEvents,
+				TagPushEvents:            &tagPushEvents,
+				NoteEvents:               &noteEvents,
+				ConfidentialNoteEvents:   &confidentialNoteEvents,
+				JobEvents:                &jobEvents,
+				PipelineEvents:           &pipelineEvents,
+				WikiPageEvents:           &wikiPageEvents,
+				DeploymentEvents:         &deploymentEvents,
+				ReleasesEvents:           &releasesEvents,
+				SubGroupEvents:           &subGroupEvents,
+				EmojiEvents:              &emojiEvents,
+				MemberEvents:             &memberEvents,
+				EnableSSLVerification:    &enableSSLVerification,
+			},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			LateInitializeHook(tc.parameters, tc.grouphook)
+			if diff := cmp.Diff(tc.want, tc.parameters); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGenerateCreateHookOptions(t *testing.T) {
+	cases := map[string]struct {
+		parameters *v1alpha1.HookParameters
+		want       *gitlab.AddGroupHookOptions
+	}{
+		"AllFields": {
+			parameters: &v1alpha1.HookParameters{
+				URL:                      &hookURL,
+				PushEvents:               &pushEvents,
+				PushEventsBranchFilter:   &pushEventsBranchFilter,
+				IssuesEvents:             &issuesEvents,
+				ConfidentialIssuesEvents: &confidentialIssuesEvents,
+				MergeRequestsEvents:      &mergeRequestsEvents,
+				TagPushEvents:            &tagPushEvents,
+				NoteEvents:               &noteEvents,
+				ConfidentialNoteEvents:   &confidentialNoteEvents,
+				JobEvents:                &jobEvents,
+				PipelineEvents:           &pipelineEvents,
+				WikiPageEvents:           &wikiPageEvents,
+				DeploymentEvents:         &deploymentEvents,
+				ReleasesEvents:           &releasesEvents,
+				SubGroupEvents:           &subGroupEvents,
+				EmojiEvents:              &emojiEvents,
+				MemberEvents:             &memberEvents,
+				EnableSSLVerification:    &enableSSLVerification,
+				Token:                    &hookToken,
+			},
+			want: &gitlab.AddGroupHookOptions{
+				URL:                      &hookURL,
+				PushEvents:               &pushEvents,
+				PushEventsBranchFilter:   &pushEventsBranchFilter,
+				IssuesEvents:             &issuesEvents,
+				ConfidentialIssuesEvents: &confidentialIssuesEvents,
+				MergeRequestsEvents:      &mergeRequestsEvents,
+				TagPushEvents:            &tagPushEvents,
+				NoteEvents:               &noteEvents,
+				ConfidentialNoteEvents:   &confidentialNoteEvents,
+				JobEvents:                &jobEvents,
+				PipelineEvents:           &pipelineEvents,
+				WikiPageEvents:           &wikiPageEvents,
+				DeploymentEvents:         &deploymentEvents,
+				ReleasesEvents:           &releasesEvents,
+				SubGroupEvents:           &subGroupEvents,
+				EmojiEvents:              &emojiEvents,
+				MemberEvents:             &memberEvents,
+				EnableSSLVerification:    &enableSSLVerification,
+				Token:                    &hookTokenValue,
+			},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateCreateHookOptions(tc.parameters, &hookTokenValue)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGenerateEditHookOptions(t *testing.T) {
+	cases := map[string]struct {
+		parameters *v1alpha1.HookParameters
+		want       *gitlab.EditGroupHookOptions
+	}{
+		"AllFields": {
+			parameters: &v1alpha1.HookParameters{
+				URL:                      &hookURL,
+				PushEvents:               &pushEvents,
+				PushEventsBranchFilter:   &pushEventsBranchFilter,
+				IssuesEvents:             &issuesEvents,
+				ConfidentialIssuesEvents: &confidentialIssuesEvents,
+				MergeRequestsEvents:      &mergeRequestsEvents,
+				TagPushEvents:            &tagPushEvents,
+				NoteEvents:               &noteEvents,
+				ConfidentialNoteEvents:   &confidentialNoteEvents,
+				JobEvents:                &jobEvents,
+				PipelineEvents:           &pipelineEvents,
+				WikiPageEvents:           &wikiPageEvents,
+				DeploymentEvents:         &deploymentEvents,
+				ReleasesEvents:           &releasesEvents,
+				SubGroupEvents:           &subGroupEvents,
+				EmojiEvents:              &emojiEvents,
+				MemberEvents:             &memberEvents,
+				EnableSSLVerification:    &enableSSLVerification,
+				Token:                    &hookToken,
+			},
+			want: &gitlab.EditGroupHookOptions{
+				URL:                      &hookURL,
+				PushEvents:               &pushEvents,
+				PushEventsBranchFilter:   &pushEventsBranchFilter,
+				IssuesEvents:             &issuesEvents,
+				ConfidentialIssuesEvents: &confidentialIssuesEvents,
+				MergeRequestsEvents:      &mergeRequestsEvents,
+				TagPushEvents:            &tagPushEvents,
+				NoteEvents:               &noteEvents,
+				ConfidentialNoteEvents:   &confidentialNoteEvents,
+				JobEvents:                &jobEvents,
+				PipelineEvents:           &pipelineEvents,
+				WikiPageEvents:           &wikiPageEvents,
+				DeploymentEvents:         &deploymentEvents,
+				ReleasesEvents:           &releasesEvents,
+				SubGroupEvents:           &subGroupEvents,
+				EmojiEvents:              &emojiEvents,
+				MemberEvents:             &memberEvents,
+				EnableSSLVerification:    &enableSSLVerification,
+				Token:                    &hookTokenValue,
+			},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateEditHookOptions(tc.parameters, &hookTokenValue)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestIsHookUpToDate(t *testing.T) {
+	type args struct {
+		grouphook *gitlab.GroupHook
+		p         *v1alpha1.HookParameters
+	}
+
+	cases := map[string]struct {
+		args args
+		want bool
+	}{
+		"SameFields": {
+			args: args{
+				p: &v1alpha1.HookParameters{
+					URL:                      &hookURL,
+					PushEvents:               &pushEvents,
+					PushEventsBranchFilter:   &pushEventsBranchFilter,
+					IssuesEvents:             &issuesEvents,
+					ConfidentialIssuesEvents: &confidentialIssuesEvents,
+					MergeRequestsEvents:      &mergeRequestsEvents,
+					TagPushEvents:            &tagPushEvents,
+					NoteEvents:               &noteEvents,
+					ConfidentialNoteEvents:   &confidentialNoteEvents,
+					JobEvents:                &jobEvents,
+					PipelineEvents:           &pipelineEvents,
+					WikiPageEvents:           &wikiPageEvents,
+					DeploymentEvents:         &deploymentEvents,
+					ReleasesEvents:           &releasesEvents,
+					SubGroupEvents:           &subGroupEvents,
+					EmojiEvents:              &emojiEvents,
+					MemberEvents:             &memberEvents,
+					EnableSSLVerification:    &enableSSLVerification,
+					Token:                    &hookToken,
+				},
+				grouphook: &gitlab.GroupHook{
+					URL:                      hookURL,
+					PushEvents:               pushEvents,
+					PushEventsBranchFilter:   pushEventsBranchFilter,
+					IssuesEvents:             issuesEvents,
+					ConfidentialIssuesEvents: confidentialIssuesEvents,
+					MergeRequestsEvents:      mergeRequestsEvents,
+					TagPushEvents:            tagPushEvents,
+					NoteEvents:               noteEvents,
+					ConfidentialNoteEvents:   confidentialNoteEvents,
+					JobEvents:                jobEvents,
+					PipelineEvents:           pipelineEvents,
+					WikiPageEvents:           wikiPageEvents,
+					DeploymentEvents:         deploymentEvents,
+					ReleasesEvents:           releasesEvents,
+					SubGroupEvents:           subGroupEvents,
+					EmojiEvents:              emojiEvents,
+					MemberEvents:             memberEvents,
+					EnableSSLVerification:    enableSSLVerification,
+				},
+			},
+			want: true,
+		},
+		"DifferentFields": {
+			args: args{
+				p: &v1alpha1.HookParameters{
+					URL:                 &hookURL,
+					PushEvents:          &pushEvents,
+					MergeRequestsEvents: &mergeRequestsEvents,
+				},
+				grouphook: &gitlab.GroupHook{
+					URL:                 "http://some.other.url",
+					PushEvents:          false,
+					MergeRequestsEvents: false,
+				},
+			},
+			want: false,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsHookUpToDate(tc.args.p, tc.args.grouphook)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
