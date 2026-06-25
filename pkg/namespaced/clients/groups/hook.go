@@ -17,8 +17,6 @@ limitations under the License.
 package groups
 
 import (
-	"strings"
-
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,10 +24,6 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
-)
-
-const (
-	errHookNotFound = "404 Not found"
 )
 
 // HookClient defines Gitlab Group Hook service operations
@@ -44,14 +38,6 @@ type HookClient interface {
 func NewHookClient(cfg common.Config) HookClient {
 	git := common.NewClient(cfg)
 	return git.Groups
-}
-
-// IsErrorHookNotFound helper function to test for errHookNotFound error.
-func IsErrorHookNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errHookNotFound)
 }
 
 // LateInitializeHook fills the empty fields in the hook spec with the
