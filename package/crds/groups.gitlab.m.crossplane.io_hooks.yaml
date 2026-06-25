@@ -82,6 +82,9 @@ spec:
                     description: GroupID is the ID of the group.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: groupId is immutable
+                      rule: self == oldSelf
                   groupIdRef:
                     description: GroupIDRef is a reference to a group to retrieve
                       its groupId
