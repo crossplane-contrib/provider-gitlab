@@ -1,0 +1,226 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package groups
+
+import (
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+// HookClient defines Gitlab Group Hook service operations
+type HookClient interface {
+	GetGroupHook(gid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error)
+	AddGroupHook(gid interface{}, opt *gitlab.AddGroupHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error)
+	EditGroupHook(gid interface{}, hook int64, opt *gitlab.EditGroupHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error)
+	DeleteGroupHook(gid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// NewHookClient returns a new Gitlab Group Hook service
+func NewHookClient(cfg common.Config) HookClient {
+	git := common.NewClient(cfg)
+	return git.Groups
+}
+
+// LateInitializeHook fills the empty fields in the hook spec with the
+// values seen in gitlab.GroupHook.
+func LateInitializeHook(in *v1alpha1.HookParameters, hook *gitlab.GroupHook) { //nolint:gocyclo
+	if hook == nil {
+		return
+	}
+
+	if in.PushEvents == nil {
+		in.PushEvents = &hook.PushEvents
+	}
+	in.PushEventsBranchFilter = clients.LateInitializeStringPtr(in.PushEventsBranchFilter, hook.PushEventsBranchFilter)
+	if in.IssuesEvents == nil {
+		in.IssuesEvents = &hook.IssuesEvents
+	}
+	if in.ConfidentialIssuesEvents == nil {
+		in.ConfidentialIssuesEvents = &hook.ConfidentialIssuesEvents
+	}
+	if in.MergeRequestsEvents == nil {
+		in.MergeRequestsEvents = &hook.MergeRequestsEvents
+	}
+	if in.TagPushEvents == nil {
+		in.TagPushEvents = &hook.TagPushEvents
+	}
+	if in.NoteEvents == nil {
+		in.NoteEvents = &hook.NoteEvents
+	}
+	if in.ConfidentialNoteEvents == nil {
+		in.ConfidentialNoteEvents = &hook.ConfidentialNoteEvents
+	}
+	if in.JobEvents == nil {
+		in.JobEvents = &hook.JobEvents
+	}
+	if in.PipelineEvents == nil {
+		in.PipelineEvents = &hook.PipelineEvents
+	}
+	if in.WikiPageEvents == nil {
+		in.WikiPageEvents = &hook.WikiPageEvents
+	}
+	if in.DeploymentEvents == nil {
+		in.DeploymentEvents = &hook.DeploymentEvents
+	}
+	if in.ReleasesEvents == nil {
+		in.ReleasesEvents = &hook.ReleasesEvents
+	}
+	if in.SubGroupEvents == nil {
+		in.SubGroupEvents = &hook.SubGroupEvents
+	}
+	if in.EmojiEvents == nil {
+		in.EmojiEvents = &hook.EmojiEvents
+	}
+	if in.MemberEvents == nil {
+		in.MemberEvents = &hook.MemberEvents
+	}
+	if in.EnableSSLVerification == nil {
+		in.EnableSSLVerification = &hook.EnableSSLVerification
+	}
+}
+
+// GenerateHookObservation is used to produce v1alpha1.HookObservation from
+// gitlab.GroupHook.
+func GenerateHookObservation(hook *gitlab.GroupHook) v1alpha1.HookObservation {
+	if hook == nil {
+		return v1alpha1.HookObservation{}
+	}
+
+	o := v1alpha1.HookObservation{
+		ID: hook.ID,
+	}
+
+	if hook.CreatedAt != nil {
+		o.CreatedAt = &metav1.Time{Time: *hook.CreatedAt}
+	}
+	return o
+}
+
+// GenerateCreateHookOptions generates group hook creation options
+func GenerateCreateHookOptions(p *v1alpha1.HookParameters, token *string) *gitlab.AddGroupHookOptions {
+	return &gitlab.AddGroupHookOptions{
+		URL:                      p.URL,
+		PushEvents:               p.PushEvents,
+		PushEventsBranchFilter:   p.PushEventsBranchFilter,
+		IssuesEvents:             p.IssuesEvents,
+		ConfidentialIssuesEvents: p.ConfidentialIssuesEvents,
+		MergeRequestsEvents:      p.MergeRequestsEvents,
+		TagPushEvents:            p.TagPushEvents,
+		NoteEvents:               p.NoteEvents,
+		ConfidentialNoteEvents:   p.ConfidentialNoteEvents,
+		JobEvents:                p.JobEvents,
+		PipelineEvents:           p.PipelineEvents,
+		WikiPageEvents:           p.WikiPageEvents,
+		DeploymentEvents:         p.DeploymentEvents,
+		ReleasesEvents:           p.ReleasesEvents,
+		SubGroupEvents:           p.SubGroupEvents,
+		EmojiEvents:              p.EmojiEvents,
+		MemberEvents:             p.MemberEvents,
+		EnableSSLVerification:    p.EnableSSLVerification,
+		Token:                    token,
+	}
+}
+
+// GenerateEditHookOptions generates group hook edit options
+func GenerateEditHookOptions(p *v1alpha1.HookParameters, token *string) *gitlab.EditGroupHookOptions {
+	return &gitlab.EditGroupHookOptions{
+		URL:                      p.URL,
+		PushEvents:               p.PushEvents,
+		PushEventsBranchFilter:   p.PushEventsBranchFilter,
+		IssuesEvents:             p.IssuesEvents,
+		ConfidentialIssuesEvents: p.ConfidentialIssuesEvents,
+		MergeRequestsEvents:      p.MergeRequestsEvents,
+		TagPushEvents:            p.TagPushEvents,
+		NoteEvents:               p.NoteEvents,
+		ConfidentialNoteEvents:   p.ConfidentialNoteEvents,
+		JobEvents:                p.JobEvents,
+		PipelineEvents:           p.PipelineEvents,
+		WikiPageEvents:           p.WikiPageEvents,
+		DeploymentEvents:         p.DeploymentEvents,
+		ReleasesEvents:           p.ReleasesEvents,
+		SubGroupEvents:           p.SubGroupEvents,
+		EmojiEvents:              p.EmojiEvents,
+		MemberEvents:             p.MemberEvents,
+		EnableSSLVerification:    p.EnableSSLVerification,
+		Token:                    token,
+	}
+}
+
+// IsHookUpToDate checks whether there is a change in any of the modifiable fields.
+func IsHookUpToDate(p *v1alpha1.HookParameters, g *gitlab.GroupHook) bool { //nolint:gocyclo
+	if !cmp.Equal(p.URL, clients.StringToPtr(g.URL)) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.PushEvents, g.PushEvents) {
+		return false
+	}
+	if !cmp.Equal(p.PushEventsBranchFilter, clients.StringToPtr(g.PushEventsBranchFilter)) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.IssuesEvents, g.IssuesEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.ConfidentialIssuesEvents, g.ConfidentialIssuesEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.MergeRequestsEvents, g.MergeRequestsEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.TagPushEvents, g.TagPushEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.NoteEvents, g.NoteEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.ConfidentialNoteEvents, g.ConfidentialNoteEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.JobEvents, g.JobEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.PipelineEvents, g.PipelineEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.WikiPageEvents, g.WikiPageEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.DeploymentEvents, g.DeploymentEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.ReleasesEvents, g.ReleasesEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.SubGroupEvents, g.SubGroupEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.EmojiEvents, g.EmojiEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.MemberEvents, g.MemberEvents) {
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.EnableSSLVerification, g.EnableSSLVerification) {
+		return false
+	}
+
+	return true
+}

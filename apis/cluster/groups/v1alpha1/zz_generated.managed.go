@@ -220,6 +220,56 @@ func (mg *Group) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this Hook.
+func (mg *Hook) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetDeletionPolicy of this Hook.
+func (mg *Hook) GetDeletionPolicy() v2.DeletionPolicy {
+	return mg.Spec.DeletionPolicy
+}
+
+// GetManagementPolicies of this Hook.
+func (mg *Hook) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this Hook.
+func (mg *Hook) GetProviderConfigReference() *v2.Reference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this Hook.
+func (mg *Hook) GetWriteConnectionSecretToReference() *v2.SecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this Hook.
+func (mg *Hook) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetDeletionPolicy of this Hook.
+func (mg *Hook) SetDeletionPolicy(r v2.DeletionPolicy) {
+	mg.Spec.DeletionPolicy = r
+}
+
+// SetManagementPolicies of this Hook.
+func (mg *Hook) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this Hook.
+func (mg *Hook) SetProviderConfigReference(r *v2.Reference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this Hook.
+func (mg *Hook) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this LdapGroupLink.
 func (mg *LdapGroupLink) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)
