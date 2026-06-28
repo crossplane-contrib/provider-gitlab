@@ -77,6 +77,11 @@ type MockClient struct {
 
 	MockListUsers func(opt *gitlab.ListUsersOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.User, *gitlab.Response, error)
 
+	MockGetGroupHook    func(gid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error)
+	MockAddGroupHook    func(gid interface{}, opt *gitlab.AddGroupHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error)
+	MockEditGroupHook   func(gid interface{}, hook int64, opt *gitlab.EditGroupHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error)
+	MockDeleteGroupHook func(gid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
 	MockGetGroupHarborSettings func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error)
 	MockSetUpGroupHarbor       func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error)
 	MockDisableGroupHarbor     func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
