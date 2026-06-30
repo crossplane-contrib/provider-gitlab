@@ -107,6 +107,15 @@ spec:
                     - message: RedirectURI is immutable (delete and recreate the resource
                         if you want to change it).
                       rule: self == oldSelf
+                  renewalPeriodDays:
+                    description: |-
+                      RenewalPeriodDays specifies how often (in days) the OAuth client secret should
+                      be rotated. When set, the controller records the next renewal date in an
+                      annotation and triggers a secret renewal via the GitLab API when that date is
+                      reached. The renewed secret is written back to the connection secret.
+                    format: int64
+                    minimum: 1
+                    type: integer
                   scopes:
                     description: Scopes is the scopes of the application (space-separated).
                     items:
@@ -233,6 +242,12 @@ spec:
                   name:
                     description: Name is the name of the application as stored in
                       GitLab.
+                    type: string
+                  nextRenewalAt:
+                    description: |-
+                      NextRenewalAt is the time at which the OAuth client secret will next be
+                      rotated by the controller. Set when RenewalPeriodDays is configured.
+                    format: date-time
                     type: string
                   scopes:
                     description: Scopes is the scopes of the application as stored

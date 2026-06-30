@@ -21,6 +21,7 @@ import (
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func intPtr(v int) *int { return &v }
@@ -231,5 +232,57 @@ func TestGenerateRenewalExpiration(t *testing.T) {
 	gotDay := gotTime.UTC().Truncate(24 * time.Hour)
 	if !expected.Equal(gotDay) {
 		t.Errorf("want ~%v, got %v", expected, gotDay)
+	}
+}
+
+func TestIsSecretRenewalDue(t *testing.T) {
+	period := int64(30)
+	pastTime := &metav1.Time{Time: time.Now().UTC().Add(-24 * time.Hour)}
+	futureTime := &metav1.Time{Time: time.Now().UTC().Add(24 * time.Hour)}
+
+	cases := map[string]struct {
+		renewalPeriodDays *int64
+		nextRenewalAt     *metav1.Time
+		want              bool
+	}{
+		"NilPeriod": {
+			renewalPeriodDays: nil,
+			want:              false,
+		},
+		"NilNextRenewalAt": {
+			renewalPeriodDays: &period,
+			want:              true,
+		},
+		"NextRenewalAtInPast": {
+			renewalPeriodDays: &period,
+			nextRenewalAt:     pastTime,
+			want:              true,
+		},
+		"NextRenewalAtInFuture": {
+			renewalPeriodDays: &period,
+			nextRenewalAt:     futureTime,
+			want:              false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsSecretRenewalDue(tc.renewalPeriodDays, tc.nextRenewalAt)
+			if got != tc.want {
+				t.Errorf("IsSecretRenewalDue() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestNextSecretRenewalTime(t *testing.T) {
+	before := time.Now().UTC()
+	got := NextSecretRenewalTime(7)
+	after := time.Now().UTC()
+
+	earliest := before.AddDate(0, 0, 7)
+	latest := after.AddDate(0, 0, 7)
+	if got.Before(earliest) || got.After(latest) {
+		t.Errorf("NextSecretRenewalTime(7) = %v, want between %v and %v", got, earliest, latest)
 	}
 }

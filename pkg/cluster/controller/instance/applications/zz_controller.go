@@ -32,6 +32,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -45,8 +46,10 @@ const (
 	errGetFailed       = "cannot list GitLab Applications"
 	errCreateFailed    = "cannot create GitLab Application"
 	errDeleteFailed    = "cannot delete GitLab Application"
+	errRenewFailed     = "cannot renew GitLab Application secret"
 	errIDNotInt        = "external name is not a valid integer ID"
 	errNoConnectionRef = "writeConnectionSecretToRef must be specified to receive the application secret"
+	errCannotUpdate    = "GitLab Applications cannot be updated after creation. To change any fields, delete and recreate the resource."
 )
 
 // SetupApplication adds a controller that reconciles GitLab OAuth Applications.
@@ -107,12 +110,11 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if err != nil {
 		return nil, err
 	}
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
+	return &external{client: c.newGitlabClientFn(*cfg)}, nil
 }
 
 // external is the external client for GitLab Applications.
 type external struct {
-	kube   client.Client
 	client instance.ApplicationClient
 }
 
@@ -143,12 +145,17 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
+	nextRenewalAt := cr.Status.AtProvider.NextRenewalAt
 	cr.Status.AtProvider = instance.GenerateApplicationObservation(app)
+	cr.Status.AtProvider.NextRenewalAt = nextRenewalAt
 	cr.Status.SetConditions(v2.Available())
+
+	upToDate := instance.IsApplicationUpToDate(&cr.Spec.ForProvider, app) &&
+		!instance.IsApplicationRenewalDue(&cr.Spec.ForProvider, cr.Status.AtProvider.NextRenewalAt)
 
 	return managed.ExternalObservation{
 		ResourceExists:   true,
-		ResourceUpToDate: instance.IsApplicationUpToDate(&cr.Spec.ForProvider, app),
+		ResourceUpToDate: upToDate,
 	}, nil
 }
 
@@ -201,6 +208,10 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	meta.SetExternalName(cr, strconv.FormatInt(app.ID, 10))
 	cr.Status.AtProvider = instance.GenerateApplicationObservation(app)
 
+	if cr.Spec.ForProvider.RenewalPeriodDays != nil {
+		cr.Status.AtProvider.NextRenewalAt = &metav1.Time{Time: instance.NextRenewalTime(*cr.Spec.ForProvider.RenewalPeriodDays)}
+	}
+
 	return managed.ExternalCreation{
 		ConnectionDetails: managed.ConnectionDetails{
 			"secret":         []byte(app.Secret),
@@ -209,13 +220,38 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}, nil
 }
 
-// Update always throws an error because GitLab Applications cannot be updated after creation.
+// Update renews the OAuth client secret when a renewal period is configured and
+// due. GitLab Applications have no general update endpoint, so any other
+// up-to-date discrepancy (e.g. field drift) returns an error.
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	if _, ok := mg.(*v1alpha1.Application); !ok {
+	cr, ok := mg.(*v1alpha1.Application)
+	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotApplication)
 	}
 
-	return managed.ExternalUpdate{}, errors.New("GitLab Applications cannot be updated after creation. To change any fields, delete and recreate the resource.")
+	if !instance.IsApplicationRenewalDue(&cr.Spec.ForProvider, cr.Status.AtProvider.NextRenewalAt) {
+		return managed.ExternalUpdate{}, errors.New(errCannotUpdate)
+	}
+
+	externalName := meta.GetExternalName(cr)
+	appID, err := strconv.ParseInt(externalName, 10, 64)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
+	}
+
+	app, _, err := e.client.RenewApplicationSecret(appID, gitlab.WithContext(ctx))
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errRenewFailed)
+	}
+
+	cr.Status.AtProvider.NextRenewalAt = &metav1.Time{Time: instance.NextRenewalTime(*cr.Spec.ForProvider.RenewalPeriodDays)}
+
+	return managed.ExternalUpdate{
+		ConnectionDetails: managed.ConnectionDetails{
+			"secret":         []byte(app.Secret),
+			"application_id": []byte(app.ApplicationID),
+		},
+	}, nil
 }
 
 // Delete removes the GitLab Application.
