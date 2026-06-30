@@ -22,6 +22,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
@@ -32,6 +33,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	pkgerrors "github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
@@ -53,9 +56,10 @@ const (
 
 // MockApplicationClient is a mock implementation of instance.ApplicationClient.
 type MockApplicationClient struct {
-	MockCreateApplication func(opt *gitlab.CreateApplicationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error)
-	MockListApplications  func(opt *gitlab.ListApplicationsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Application, *gitlab.Response, error)
-	MockDeleteApplication func(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockCreateApplication      func(opt *gitlab.CreateApplicationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error)
+	MockListApplications       func(opt *gitlab.ListApplicationsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Application, *gitlab.Response, error)
+	MockDeleteApplication      func(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockRenewApplicationSecret func(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error)
 }
 
 func (m *MockApplicationClient) CreateApplication(opt *gitlab.CreateApplicationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error) {
@@ -68,6 +72,10 @@ func (m *MockApplicationClient) ListApplications(opt *gitlab.ListApplicationsOpt
 
 func (m *MockApplicationClient) DeleteApplication(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return m.MockDeleteApplication(application, options...)
+}
+
+func (m *MockApplicationClient) RenewApplicationSecret(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error) {
+	return m.MockRenewApplicationSecret(application, options...)
 }
 
 type args struct {
@@ -98,6 +106,10 @@ func withConnectionSecretRef(name string) applicationModifier {
 	return func(r *v1alpha1.Application) {
 		r.Spec.WriteConnectionSecretToReference = &v2.SecretReference{Name: name}
 	}
+}
+
+func withNextRenewalAt(t *metav1.Time) applicationModifier {
+	return func(r *v1alpha1.Application) { r.Status.AtProvider.NextRenewalAt = t }
 }
 
 func application(m ...applicationModifier) *v1alpha1.Application {
@@ -158,6 +170,9 @@ func TestConnect(t *testing.T) {
 }
 
 func TestObserve(t *testing.T) {
+	pastTime := &metav1.Time{Time: time.Now().UTC().Add(-24 * time.Hour)}
+	futureTime := &metav1.Time{Time: time.Now().UTC().Add(24 * time.Hour)}
+
 	type want struct {
 		cr     resource.Managed
 		result managed.ExternalObservation
@@ -350,11 +365,111 @@ func TestObserve(t *testing.T) {
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false},
 			},
 		},
+		"RenewalDue": {
+			args: args{
+				client: &MockApplicationClient{
+					MockListApplications: func(opt *gitlab.ListApplicationsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Application, *gitlab.Response, error) {
+						return []*gitlab.Application{testApp}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+					},
+				},
+				cr: application(
+					withExternalName(testExternalNameID),
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+					withNextRenewalAt(pastTime),
+				),
+			},
+			want: want{
+				cr: application(
+					withExternalName(testExternalNameID),
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+					withConditions(v2.Available()),
+					withAtProvider(instanceclient.GenerateApplicationObservation(testApp)),
+					withNextRenewalAt(pastTime),
+				),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false},
+			},
+		},
+		"RenewalNotDue": {
+			args: args{
+				client: &MockApplicationClient{
+					MockListApplications: func(opt *gitlab.ListApplicationsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Application, *gitlab.Response, error) {
+						return []*gitlab.Application{testApp}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+					},
+				},
+				cr: application(
+					withExternalName(testExternalNameID),
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+					withNextRenewalAt(futureTime),
+				),
+			},
+			want: want{
+				cr: application(
+					withExternalName(testExternalNameID),
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+					withConditions(v2.Available()),
+					withAtProvider(instanceclient.GenerateApplicationObservation(testApp)),
+					withNextRenewalAt(futureTime),
+				),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true},
+			},
+		},
+		"RenewalPeriodSetButStatusMissing": {
+			args: args{
+				client: &MockApplicationClient{
+					MockListApplications: func(opt *gitlab.ListApplicationsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Application, *gitlab.Response, error) {
+						return []*gitlab.Application{testApp}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+					},
+				},
+				cr: application(
+					withExternalName(testExternalNameID),
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+				),
+			},
+			want: want{
+				cr: application(
+					withExternalName(testExternalNameID),
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+					withConditions(v2.Available()),
+					withAtProvider(instanceclient.GenerateApplicationObservation(testApp)),
+				),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false},
+			},
+		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{kube: tc.args.kube, client: tc.args.client}
+			e := &external{client: tc.args.client}
 			got, err := e.Observe(context.Background(), tc.args.cr)
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("Observe(): -want error, +got error:\n%s", diff)
@@ -430,17 +545,63 @@ func TestCreate(t *testing.T) {
 				},
 			},
 		},
+		"SuccessfulWithRenewalPeriod": {
+			args: args{
+				client: &MockApplicationClient{
+					MockCreateApplication: func(opt *gitlab.CreateApplicationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error) {
+						return testApp, &gitlab.Response{Response: &http.Response{StatusCode: 201}}, nil
+					},
+				},
+				cr: application(
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+					withConnectionSecretRef("test-secret"),
+				),
+			},
+			want: want{
+				cr: application(
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+					withConnectionSecretRef("test-secret"),
+					withExternalName(testExternalNameID),
+					withConditions(v2.Creating()),
+					withAtProvider(instanceclient.GenerateApplicationObservation(testApp)),
+					// NextRenewalAt is set but checked separately below
+				),
+				result: managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{
+						"secret":         []byte(testSecret),
+						"application_id": []byte(testApplicationID),
+					},
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{kube: tc.args.kube, client: tc.args.client}
+			e := &external{client: tc.args.client}
 			got, err := e.Create(context.Background(), tc.args.cr)
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("Create(): -want error, +got error:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.result, got); diff != "" {
 				t.Errorf("Create(): -want result, +got result:\n%s", diff)
+			}
+			if name == "SuccessfulWithRenewalPeriod" {
+				cr := tc.args.cr.(*v1alpha1.Application)
+				if cr.Status.AtProvider.NextRenewalAt == nil {
+					t.Errorf("Create(): expected NextRenewalAt to be set in status")
+				}
+				return
 			}
 			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
 				t.Errorf("Create(): -want cr, +got cr:\n%s", diff)
@@ -450,6 +611,17 @@ func TestCreate(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	pastTime := &metav1.Time{Time: time.Now().UTC().Add(-24 * time.Hour)}
+	futureTime := &metav1.Time{Time: time.Now().UTC().Add(48 * time.Hour)}
+	newSecret := "newlyrenewedsecret"
+	renewedApp := &gitlab.Application{
+		ID:              42,
+		ApplicationID:   testApplicationID,
+		ApplicationName: testAppName,
+		Secret:          newSecret,
+		CallbackURL:     testRedirectURI,
+	}
+
 	type want struct {
 		result managed.ExternalUpdate
 		err    error
@@ -463,23 +635,135 @@ func TestUpdate(t *testing.T) {
 			args: args{cr: unexpectedItem},
 			want: want{err: errors.New(errNotApplication)},
 		},
-		"AlwaysReturnsError": {
+		"NoRenewalPeriodReturnsError": {
 			args: args{
 				cr: application(withSpec(testDesiredSpec), withExternalName(testExternalNameID)),
 			},
-			want: want{err: errors.New("GitLab Applications cannot be updated after creation. To change any fields, delete and recreate the resource.")},
+			want: want{err: errors.New(errCannotUpdate)},
+		},
+		"RenewalNotDueReturnsError": {
+			args: args{
+				cr: application(
+					withExternalName(testExternalNameID),
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+					withNextRenewalAt(futureTime),
+				),
+			},
+			want: want{err: errors.New(errCannotUpdate)},
+		},
+		"RenewSecretError": {
+			args: args{
+				client: &MockApplicationClient{
+					MockRenewApplicationSecret: func(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 500}}, errBoom
+					},
+				},
+				cr: application(
+					withExternalName(testExternalNameID),
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+					withNextRenewalAt(pastTime),
+				),
+			},
+			want: want{err: errors.Wrap(errBoom, errRenewFailed)},
+		},
+		"RenewalDueAndSuccessful": {
+			args: args{
+				client: &MockApplicationClient{
+					MockRenewApplicationSecret: func(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error) {
+						return renewedApp, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+					},
+				},
+				cr: application(
+					withExternalName(testExternalNameID),
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+					withNextRenewalAt(pastTime),
+				),
+			},
+			want: want{
+				result: managed.ExternalUpdate{
+					ConnectionDetails: managed.ConnectionDetails{
+						"secret":         []byte(newSecret),
+						"application_id": []byte(testApplicationID),
+					},
+				},
+			},
+		},
+		"RenewalWithMissingStatus": {
+			args: args{
+				client: &MockApplicationClient{
+					MockRenewApplicationSecret: func(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error) {
+						return renewedApp, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+					},
+				},
+				cr: application(
+					withExternalName(testExternalNameID),
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+				),
+			},
+			want: want{
+				result: managed.ExternalUpdate{
+					ConnectionDetails: managed.ConnectionDetails{
+						"secret":         []byte(newSecret),
+						"application_id": []byte(testApplicationID),
+					},
+				},
+			},
+		},
+		"NonIntegerExternalNameWithRenewalDue": {
+			args: args{
+				cr: application(
+					withExternalName("not-an-int"),
+					withSpec(v1alpha1.ApplicationParameters{
+						Name:              testAppName,
+						RedirectURI:       testRedirectURI,
+						Scopes:            []string{"api", "read_user"},
+						RenewalPeriodDays: ptr.To(int64(30)),
+					}),
+					withNextRenewalAt(pastTime),
+				),
+			},
+			want: want{err: errors.New(errIDNotInt)},
 		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{kube: tc.args.kube, client: tc.args.client}
+			e := &external{client: tc.args.client}
 			got, err := e.Update(context.Background(), tc.args.cr)
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("Update(): -want error, +got error:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.result, got); diff != "" {
 				t.Errorf("Update(): -want result, +got result:\n%s", diff)
+			}
+			// After a successful renewal, NextRenewalAt must be set to a future time.
+			if err == nil && name != "InvalidInput" {
+				cr := tc.args.cr.(*v1alpha1.Application)
+				if cr.Status.AtProvider.NextRenewalAt == nil {
+					t.Errorf("Update(): expected NextRenewalAt to be set in status after renewal")
+				} else if !cr.Status.AtProvider.NextRenewalAt.After(time.Now().UTC()) {
+					t.Errorf("Update(): expected NextRenewalAt to be in the future, got %v", cr.Status.AtProvider.NextRenewalAt)
+				}
 			}
 		})
 	}
@@ -544,7 +828,7 @@ func TestDelete(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{kube: tc.args.kube, client: tc.args.client}
+			e := &external{client: tc.args.client}
 			got, err := e.Delete(context.Background(), tc.args.cr)
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("Delete(): -want error, +got error:\n%s", diff)
@@ -563,7 +847,6 @@ func TestDisconnect(t *testing.T) {
 	}
 }
 
-// TestDeleteWithCondition verifies the Deleting condition is set before deletion.
 func TestDeleteWithCondition(t *testing.T) {
 	cr := application(withSpec(testDesiredSpec), withExternalName(testExternalNameID))
 	e := &external{
@@ -583,8 +866,6 @@ func TestDeleteWithCondition(t *testing.T) {
 	}
 }
 
-// TestObserveWithConfidentialMismatch verifies that a confidential field mismatch
-// is detected as not up-to-date.
 func TestObserveWithConfidentialMismatch(t *testing.T) {
 	confTrue := true
 	specWithConf := v1alpha1.ApplicationParameters{
@@ -597,7 +878,6 @@ func TestObserveWithConfidentialMismatch(t *testing.T) {
 	e := &external{
 		client: &MockApplicationClient{
 			MockListApplications: func(opt *gitlab.ListApplicationsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Application, *gitlab.Response, error) {
-				// returns app with Confidential=false but spec wants true
 				return []*gitlab.Application{testApp}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 			},
 		},

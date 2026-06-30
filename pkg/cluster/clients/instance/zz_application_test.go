@@ -21,9 +21,11 @@ package instance
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
@@ -286,5 +288,62 @@ func TestFindApplicationByID(t *testing.T) {
 				t.Errorf("FindApplicationByID(): -want, +got:\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestIsRenewalDue(t *testing.T) {
+	period := int64(30)
+	past := &metav1.Time{Time: time.Now().UTC().Add(-24 * time.Hour)}
+	future := &metav1.Time{Time: time.Now().UTC().Add(24 * time.Hour)}
+
+	cases := map[string]struct {
+		params        *v1alpha1.ApplicationParameters
+		nextRenewalAt *metav1.Time
+		want          bool
+	}{
+		"NilParams": {
+			params: nil,
+			want:   false,
+		},
+		"NoPeriodSet": {
+			params: &v1alpha1.ApplicationParameters{Name: "app"},
+			want:   false,
+		},
+		"PeriodSetRenewalAtNil": {
+			params: &v1alpha1.ApplicationParameters{RenewalPeriodDays: &period},
+			want:   true,
+		},
+		"PeriodSetRenewalAtInPast": {
+			params:        &v1alpha1.ApplicationParameters{RenewalPeriodDays: &period},
+			nextRenewalAt: past,
+			want:          true,
+		},
+		"PeriodSetRenewalAtInFuture": {
+			params:        &v1alpha1.ApplicationParameters{RenewalPeriodDays: &period},
+			nextRenewalAt: future,
+			want:          false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsApplicationRenewalDue(tc.params, tc.nextRenewalAt)
+			if got != tc.want {
+				t.Errorf("IsApplicationRenewalDue() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestNextRenewalTime(t *testing.T) {
+	before := time.Now().UTC()
+	result := NextRenewalTime(30)
+	after := time.Now().UTC()
+
+	expectedMin := before.AddDate(0, 0, 30)
+	expectedMax := after.AddDate(0, 0, 30)
+
+	if result.Before(expectedMin) || result.After(expectedMax) {
+		t.Errorf("NextRenewalTime(30) = %v, want between %v and %v", result, expectedMin, expectedMax)
 	}
 }

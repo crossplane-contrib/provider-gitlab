@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Crossplane Authors.
+Copyright 2021 Crossplane Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package instance
 
 import (
 	"strings"
+	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
@@ -27,20 +29,21 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 )
 
-// ApplicationClient defines the GitLab Applications service operations used by the controller.
+// ApplicationClient defines GitLab Applications service operations used by controller.
 type ApplicationClient interface {
 	CreateApplication(opt *gitlab.CreateApplicationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error)
 	ListApplications(opt *gitlab.ListApplicationsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Application, *gitlab.Response, error)
 	DeleteApplication(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	RenewApplicationSecret(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error)
 }
 
-// NewApplicationClient returns a new GitLab Applications client.
+// NewApplicationClient returns new GitLab Applications client.
 func NewApplicationClient(cfg common.Config) ApplicationClient {
 	git := common.NewClient(cfg)
 	return git.Applications
 }
 
-// GenerateApplicationObservation creates ApplicationObservation from a gitlab.Application.
+// GenerateApplicationObservation creates ApplicationObservation from gitlab.Application.
 func GenerateApplicationObservation(a *gitlab.Application) v1alpha1.ApplicationObservation {
 	if a == nil {
 		return v1alpha1.ApplicationObservation{}
@@ -84,7 +87,21 @@ func IsApplicationUpToDate(p *v1alpha1.ApplicationParameters, a *gitlab.Applicat
 		clients.AreStringSlicesEqual(p.Scopes, a.Scopes)
 }
 
-// FindApplicationByID returns the application with the given numeric ID from the list,
+// IsApplicationRenewalDue returns true when RenewalPeriodDays is configured and the next
+// renewal time stored in status has been reached (or is nil, meaning not yet initialised).
+func IsApplicationRenewalDue(p *v1alpha1.ApplicationParameters, nextRenewalAt *metav1.Time) bool {
+	if p == nil {
+		return false
+	}
+	return common.IsSecretRenewalDue(p.RenewalPeriodDays, nextRenewalAt)
+}
+
+// NextRenewalTime returns the UTC time that is periodDays days from now.
+func NextRenewalTime(periodDays int64) time.Time {
+	return common.NextSecretRenewalTime(periodDays)
+}
+
+// FindApplicationByID returns application with given numeric ID from list,
 // or nil if not found.
 func FindApplicationByID(apps []*gitlab.Application, id int64) *gitlab.Application {
 	for _, a := range apps {

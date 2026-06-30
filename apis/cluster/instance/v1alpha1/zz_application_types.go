@@ -48,6 +48,14 @@ type ApplicationParameters struct {
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Confidential is immutable (delete and recreate the resource if you want to change it)."
 	Confidential *bool `json:"confidential,omitempty"`
+
+	// RenewalPeriodDays specifies how often (in days) the OAuth client secret should
+	// be rotated. When set, the controller records the next renewal date in an
+	// annotation and triggers a secret renewal via the GitLab API when that date is
+	// reached. The renewed secret is written back to the connection secret.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	RenewalPeriodDays *int64 `json:"renewalPeriodDays,omitempty"`
 }
 
 // ApplicationObservation represents the observed state of a GitLab instance OAuth Application.
@@ -75,6 +83,11 @@ type ApplicationObservation struct {
 	// Scopes is the scopes of the application as stored in GitLab
 	// +optional
 	Scopes []string `json:"scopes"`
+
+	// NextRenewalAt is the time at which the OAuth client secret will next be
+	// rotated by the controller. Set when RenewalPeriodDays is configured.
+	// +optional
+	NextRenewalAt *metav1.Time `json:"nextRenewalAt,omitempty"`
 }
 
 // ApplicationSpec defines the desired state of a GitLab instance OAuth Application.
