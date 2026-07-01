@@ -108,8 +108,25 @@ func withConnectionSecretRef(name string) applicationModifier {
 	}
 }
 
-func withNextRenewalAt(t *metav1.Time) applicationModifier {
-	return func(r *v1alpha1.Application) { r.Status.AtProvider.NextRenewalAt = t }
+func withNextRenewalAtStr(s string) applicationModifier {
+	return func(r *v1alpha1.Application) {
+		t, _ := time.Parse(time.RFC3339, s)
+		mt := metav1.NewTime(t)
+		r.Status.AtProvider.NextRenewalAt = &mt
+	}
+}
+
+func withAnnotations(a map[string]string) applicationModifier {
+	return func(r *v1alpha1.Application) {
+		existing := r.GetAnnotations()
+		if existing == nil {
+			existing = map[string]string{}
+		}
+		for k, v := range a {
+			existing[k] = v
+		}
+		r.SetAnnotations(existing)
+	}
 }
 
 func application(m ...applicationModifier) *v1alpha1.Application {
@@ -170,8 +187,8 @@ func TestConnect(t *testing.T) {
 }
 
 func TestObserve(t *testing.T) {
-	pastTime := &metav1.Time{Time: time.Now().UTC().Add(-24 * time.Hour)}
-	futureTime := &metav1.Time{Time: time.Now().UTC().Add(24 * time.Hour)}
+	pastDate := time.Now().UTC().Add(-24 * time.Hour).Format(time.RFC3339)
+	futureDate := time.Now().UTC().Add(24 * time.Hour).Format(time.RFC3339)
 
 	type want struct {
 		cr     resource.Managed
@@ -380,7 +397,7 @@ func TestObserve(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withNextRenewalAt(pastTime),
+					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: pastDate}),
 				),
 			},
 			want: want{
@@ -392,9 +409,10 @@ func TestObserve(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
+					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: pastDate}),
 					withConditions(v2.Available()),
 					withAtProvider(instanceclient.GenerateApplicationObservation(testApp)),
-					withNextRenewalAt(pastTime),
+					withNextRenewalAtStr(pastDate),
 				),
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false},
 			},
@@ -414,7 +432,7 @@ func TestObserve(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withNextRenewalAt(futureTime),
+					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: futureDate}),
 				),
 			},
 			want: want{
@@ -426,9 +444,10 @@ func TestObserve(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
+					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: futureDate}),
 					withConditions(v2.Available()),
 					withAtProvider(instanceclient.GenerateApplicationObservation(testApp)),
-					withNextRenewalAt(futureTime),
+					withNextRenewalAtStr(futureDate),
 				),
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true},
 			},
@@ -574,7 +593,7 @@ func TestCreate(t *testing.T) {
 					withExternalName(testExternalNameID),
 					withConditions(v2.Creating()),
 					withAtProvider(instanceclient.GenerateApplicationObservation(testApp)),
-					// NextRenewalAt is set but checked separately below
+					// renewal annotation is set but checked separately below
 				),
 				result: managed.ExternalCreation{
 					ConnectionDetails: managed.ConnectionDetails{
@@ -598,8 +617,8 @@ func TestCreate(t *testing.T) {
 			}
 			if name == "SuccessfulWithRenewalPeriod" {
 				cr := tc.args.cr.(*v1alpha1.Application)
-				if cr.Status.AtProvider.NextRenewalAt == nil {
-					t.Errorf("Create(): expected NextRenewalAt to be set in status")
+				if cr.GetAnnotations()[instanceclient.AnnotationKeySecretRenewalDate] == "" {
+					t.Errorf("Create(): expected renewal annotation to be set")
 				}
 				return
 			}
@@ -611,8 +630,8 @@ func TestCreate(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	pastTime := &metav1.Time{Time: time.Now().UTC().Add(-24 * time.Hour)}
-	futureTime := &metav1.Time{Time: time.Now().UTC().Add(48 * time.Hour)}
+	pastDate := time.Now().UTC().Add(-24 * time.Hour).Format(time.RFC3339)
+	futureDate := time.Now().UTC().Add(48 * time.Hour).Format(time.RFC3339)
 	newSecret := "newlyrenewedsecret"
 	renewedApp := &gitlab.Application{
 		ID:              42,
@@ -651,7 +670,7 @@ func TestUpdate(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withNextRenewalAt(futureTime),
+					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: futureDate}),
 				),
 			},
 			want: want{err: errors.New(errCannotUpdate)},
@@ -671,7 +690,7 @@ func TestUpdate(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withNextRenewalAt(pastTime),
+					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: pastDate}),
 				),
 			},
 			want: want{err: errors.Wrap(errBoom, errRenewFailed)},
@@ -691,7 +710,7 @@ func TestUpdate(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withNextRenewalAt(pastTime),
+					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: pastDate}),
 				),
 			},
 			want: want{
@@ -739,7 +758,7 @@ func TestUpdate(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withNextRenewalAt(pastTime),
+					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: pastDate}),
 				),
 			},
 			want: want{err: errors.New(errIDNotInt)},
@@ -756,13 +775,17 @@ func TestUpdate(t *testing.T) {
 			if diff := cmp.Diff(tc.want.result, got); diff != "" {
 				t.Errorf("Update(): -want result, +got result:\n%s", diff)
 			}
-			// After a successful renewal, NextRenewalAt must be set to a future time.
+			// After a successful renewal, the renewal annotation must be set to a future time.
 			if err == nil && name != "InvalidInput" {
 				cr := tc.args.cr.(*v1alpha1.Application)
-				if cr.Status.AtProvider.NextRenewalAt == nil {
-					t.Errorf("Update(): expected NextRenewalAt to be set in status after renewal")
-				} else if !cr.Status.AtProvider.NextRenewalAt.After(time.Now().UTC()) {
-					t.Errorf("Update(): expected NextRenewalAt to be in the future, got %v", cr.Status.AtProvider.NextRenewalAt)
+				renewalDate := cr.GetAnnotations()[instanceclient.AnnotationKeySecretRenewalDate]
+				if renewalDate == "" {
+					t.Errorf("Update(): expected renewal annotation to be set after renewal")
+				} else {
+					parsed, parseErr := time.Parse(time.RFC3339, renewalDate)
+					if parseErr != nil || !parsed.After(time.Now().UTC()) {
+						t.Errorf("Update(): expected renewal annotation to be a future time, got %v", renewalDate)
+					}
 				}
 			}
 		})

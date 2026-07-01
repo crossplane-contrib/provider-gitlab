@@ -21,7 +21,6 @@ import (
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func intPtr(v int) *int { return &v }
@@ -237,37 +236,48 @@ func TestGenerateRenewalExpiration(t *testing.T) {
 
 func TestIsSecretRenewalDue(t *testing.T) {
 	period := int64(30)
-	pastTime := &metav1.Time{Time: time.Now().UTC().Add(-24 * time.Hour)}
-	futureTime := &metav1.Time{Time: time.Now().UTC().Add(24 * time.Hour)}
+	const key = "test.crossplane.io/renewal-date"
+	pastDate := time.Now().UTC().Add(-24 * time.Hour).Format(time.RFC3339)
+	futureDate := time.Now().UTC().Add(24 * time.Hour).Format(time.RFC3339)
 
 	cases := map[string]struct {
 		renewalPeriodDays *int64
-		nextRenewalAt     *metav1.Time
+		annotations       map[string]string
 		want              bool
 	}{
 		"NilPeriod": {
 			renewalPeriodDays: nil,
 			want:              false,
 		},
-		"NilNextRenewalAt": {
+		"NoAnnotation": {
+			renewalPeriodDays: &period,
+			annotations:       map[string]string{},
+			want:              true,
+		},
+		"MissingAnnotation": {
 			renewalPeriodDays: &period,
 			want:              true,
 		},
-		"NextRenewalAtInPast": {
+		"AnnotationInPast": {
 			renewalPeriodDays: &period,
-			nextRenewalAt:     pastTime,
+			annotations:       map[string]string{key: pastDate},
 			want:              true,
 		},
-		"NextRenewalAtInFuture": {
+		"AnnotationInFuture": {
 			renewalPeriodDays: &period,
-			nextRenewalAt:     futureTime,
+			annotations:       map[string]string{key: futureDate},
 			want:              false,
+		},
+		"MalformedAnnotation": {
+			renewalPeriodDays: &period,
+			annotations:       map[string]string{key: "not-a-date"},
+			want:              true,
 		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := IsSecretRenewalDue(tc.renewalPeriodDays, tc.nextRenewalAt)
+			got := IsSecretRenewalDue(tc.renewalPeriodDays, key, tc.annotations)
 			if got != tc.want {
 				t.Errorf("IsSecretRenewalDue() = %v, want %v", got, tc.want)
 			}

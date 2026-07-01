@@ -29,6 +29,10 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 )
 
+// AnnotationKeySecretRenewalDate is the annotation key used to store the next
+// scheduled secret renewal date (RFC3339) for a GitLab Application.
+const AnnotationKeySecretRenewalDate = "instance.gitlab.crossplane.io/secret-renewal-date"
+
 // ApplicationClient defines GitLab Applications service operations used by controller.
 type ApplicationClient interface {
 	CreateApplication(opt *gitlab.CreateApplicationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error)
@@ -87,18 +91,46 @@ func IsApplicationUpToDate(p *v1alpha1.ApplicationParameters, a *gitlab.Applicat
 		clients.AreStringSlicesEqual(p.Scopes, a.Scopes)
 }
 
-// IsApplicationRenewalDue returns true when RenewalPeriodDays is configured and the next
-// renewal time stored in status has been reached (or is nil, meaning not yet initialised).
-func IsApplicationRenewalDue(p *v1alpha1.ApplicationParameters, nextRenewalAt *metav1.Time) bool {
+// IsApplicationRenewalDue returns true when RenewalPeriodDays is configured and the
+// renewal date in the CR annotations has been reached, is absent, or is malformed.
+func IsApplicationRenewalDue(p *v1alpha1.ApplicationParameters, annotations map[string]string) bool {
 	if p == nil {
 		return false
 	}
-	return common.IsSecretRenewalDue(p.RenewalPeriodDays, nextRenewalAt)
+	return common.IsSecretRenewalDue(p.RenewalPeriodDays, AnnotationKeySecretRenewalDate, annotations)
 }
 
 // NextRenewalTime returns the UTC time that is periodDays days from now.
 func NextRenewalTime(periodDays int64) time.Time {
 	return common.NextSecretRenewalTime(periodDays)
+}
+
+// GetNextRenewalAt parses the renewal annotation and returns it as a *metav1.Time,
+// or nil if the annotation is absent or malformed.
+func GetNextRenewalAt(annotations map[string]string) *metav1.Time {
+	if annotations == nil {
+		return nil
+	}
+	dateStr, ok := annotations[AnnotationKeySecretRenewalDate]
+	if !ok {
+		return nil
+	}
+	t, err := time.Parse(time.RFC3339, dateStr)
+	if err != nil {
+		return nil
+	}
+	mt := metav1.NewTime(t)
+	return &mt
+}
+
+// SetRenewalAnnotation writes the next renewal date (RFC3339) into the CR annotations.
+func SetRenewalAnnotation(cr *v1alpha1.Application, periodDays int64) {
+	annotations := cr.GetAnnotations()
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
+	annotations[AnnotationKeySecretRenewalDate] = NextRenewalTime(periodDays).Format(time.RFC3339)
+	cr.SetAnnotations(annotations)
 }
 
 // FindApplicationByID returns application with given numeric ID from list,

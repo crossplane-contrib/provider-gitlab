@@ -14,5 +14,6 @@ spec:
     scopes:
       - read_user
     confidential: true
+    renewalPeriodDays: 1
   writeConnectionSecretToRef:
     name: gitlab-example-instance-application
