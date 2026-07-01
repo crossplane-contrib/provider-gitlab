@@ -32,7 +32,6 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -145,13 +144,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	nextRenewalAt := cr.Status.AtProvider.NextRenewalAt
 	cr.Status.AtProvider = instance.GenerateApplicationObservation(app)
-	cr.Status.AtProvider.NextRenewalAt = nextRenewalAt
+	cr.Status.AtProvider.NextRenewalAt = instance.GetNextRenewalAt(cr.GetAnnotations())
 	cr.Status.SetConditions(v2.Available())
 
 	upToDate := instance.IsApplicationUpToDate(&cr.Spec.ForProvider, app) &&
-		!instance.IsApplicationRenewalDue(&cr.Spec.ForProvider, cr.Status.AtProvider.NextRenewalAt)
+		!instance.IsApplicationRenewalDue(&cr.Spec.ForProvider, cr.GetAnnotations())
 
 	return managed.ExternalObservation{
 		ResourceExists:   true,
@@ -209,7 +207,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	cr.Status.AtProvider = instance.GenerateApplicationObservation(app)
 
 	if cr.Spec.ForProvider.RenewalPeriodDays != nil {
-		cr.Status.AtProvider.NextRenewalAt = &metav1.Time{Time: instance.NextRenewalTime(*cr.Spec.ForProvider.RenewalPeriodDays)}
+		instance.SetRenewalAnnotation(cr, *cr.Spec.ForProvider.RenewalPeriodDays)
 	}
 
 	return managed.ExternalCreation{
@@ -229,7 +227,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotApplication)
 	}
 
-	if !instance.IsApplicationRenewalDue(&cr.Spec.ForProvider, cr.Status.AtProvider.NextRenewalAt) {
+	if !instance.IsApplicationRenewalDue(&cr.Spec.ForProvider, cr.GetAnnotations()) {
 		return managed.ExternalUpdate{}, errors.New(errCannotUpdate)
 	}
 
@@ -244,7 +242,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.Wrap(err, errRenewFailed)
 	}
 
-	cr.Status.AtProvider.NextRenewalAt = &metav1.Time{Time: instance.NextRenewalTime(*cr.Spec.ForProvider.RenewalPeriodDays)}
+	instance.SetRenewalAnnotation(cr, *cr.Spec.ForProvider.RenewalPeriodDays)
 
 	return managed.ExternalUpdate{
 		ConnectionDetails: managed.ConnectionDetails{

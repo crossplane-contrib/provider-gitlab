@@ -48,9 +48,9 @@ type ApplicationParameters struct {
 	Confidential *bool `json:"confidential,omitempty"`
 
 	// RenewalPeriodDays specifies how often (in days) the OAuth client secret should
-	// be rotated. When set, the controller records the next renewal date in an
-	// annotation and triggers a secret renewal via the GitLab API when that date is
-	// reached. The renewed secret is written back to the connection secret.
+	// be rotated. When set, the controller records the next renewal date in an annotation
+	// and triggers a secret renewal via the GitLab API when that date is reached.
+	// The renewed secret is written back to the connection secret.
 	// +optional
 	// +kubebuilder:validation:Minimum=1
 	RenewalPeriodDays *int64 `json:"renewalPeriodDays,omitempty"`
@@ -82,8 +82,8 @@ type ApplicationObservation struct {
 	// +optional
 	Scopes []string `json:"scopes"`
 
-	// NextRenewalAt is the time at which the OAuth client secret will next be
-	// rotated by the controller. Set when RenewalPeriodDays is configured.
+	// NextRenewalAt is the next scheduled secret renewal time, derived from the
+	// instance.gitlab.crossplane.io/secret-renewal-date annotation. Read-only.
 	// +optional
 	NextRenewalAt *metav1.Time `json:"nextRenewalAt,omitempty"`
 }
@@ -114,6 +114,7 @@ type ApplicationStatus struct {
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="NEXT-RENEWAL",type="string",JSONPath=".status.atProvider.nextRenewalAt",priority=1
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitlab}
 type Application struct {

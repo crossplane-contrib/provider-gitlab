@@ -28,6 +28,10 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
+    - jsonPath: .status.atProvider.nextRenewalAt
+      name: NEXT-RENEWAL
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -110,9 +114,9 @@ spec:
                   renewalPeriodDays:
                     description: |-
                       RenewalPeriodDays specifies how often (in days) the OAuth client secret should
-                      be rotated. When set, the controller records the next renewal date in an
-                      annotation and triggers a secret renewal via the GitLab API when that date is
-                      reached. The renewed secret is written back to the connection secret.
+                      be rotated. When set, the controller records the next renewal date in an annotation
+                      and triggers a secret renewal via the GitLab API when that date is reached.
+                      The renewed secret is written back to the connection secret.
                     format: int64
                     minimum: 1
                     type: integer
@@ -245,8 +249,8 @@ spec:
                     type: string
                   nextRenewalAt:
                     description: |-
-                      NextRenewalAt is the time at which the OAuth client secret will next be
-                      rotated by the controller. Set when RenewalPeriodDays is configured.
+                      NextRenewalAt is the next scheduled secret renewal time, derived from the
+                      instance.gitlab.crossplane.io/secret-renewal-date annotation. Read-only.
                     format: date-time
                     type: string
                   scopes:

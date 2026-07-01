@@ -25,7 +25,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
@@ -293,13 +292,13 @@ func TestFindApplicationByID(t *testing.T) {
 
 func TestIsRenewalDue(t *testing.T) {
 	period := int64(30)
-	past := &metav1.Time{Time: time.Now().UTC().Add(-24 * time.Hour)}
-	future := &metav1.Time{Time: time.Now().UTC().Add(24 * time.Hour)}
+	pastDate := time.Now().UTC().Add(-24 * time.Hour).Format(time.RFC3339)
+	futureDate := time.Now().UTC().Add(24 * time.Hour).Format(time.RFC3339)
 
 	cases := map[string]struct {
-		params        *v1alpha1.ApplicationParameters
-		nextRenewalAt *metav1.Time
-		want          bool
+		params      *v1alpha1.ApplicationParameters
+		annotations map[string]string
+		want        bool
 	}{
 		"NilParams": {
 			params: nil,
@@ -309,25 +308,25 @@ func TestIsRenewalDue(t *testing.T) {
 			params: &v1alpha1.ApplicationParameters{Name: "app"},
 			want:   false,
 		},
-		"PeriodSetRenewalAtNil": {
+		"PeriodSetNoAnnotation": {
 			params: &v1alpha1.ApplicationParameters{RenewalPeriodDays: &period},
 			want:   true,
 		},
-		"PeriodSetRenewalAtInPast": {
-			params:        &v1alpha1.ApplicationParameters{RenewalPeriodDays: &period},
-			nextRenewalAt: past,
-			want:          true,
+		"PeriodSetAnnotationInPast": {
+			params:      &v1alpha1.ApplicationParameters{RenewalPeriodDays: &period},
+			annotations: map[string]string{AnnotationKeySecretRenewalDate: pastDate},
+			want:        true,
 		},
-		"PeriodSetRenewalAtInFuture": {
-			params:        &v1alpha1.ApplicationParameters{RenewalPeriodDays: &period},
-			nextRenewalAt: future,
-			want:          false,
+		"PeriodSetAnnotationInFuture": {
+			params:      &v1alpha1.ApplicationParameters{RenewalPeriodDays: &period},
+			annotations: map[string]string{AnnotationKeySecretRenewalDate: futureDate},
+			want:        false,
 		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := IsApplicationRenewalDue(tc.params, tc.nextRenewalAt)
+			got := IsApplicationRenewalDue(tc.params, tc.annotations)
 			if got != tc.want {
 				t.Errorf("IsApplicationRenewalDue() = %v, want %v", got, tc.want)
 			}

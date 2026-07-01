@@ -116,14 +116,22 @@ func SameDay(a, b time.Time) bool {
 
 // IsSecretRenewalDue returns true when renewalPeriodDays is set and the renewal
 // date stored in annotations[annotationKey] has been reached, is absent, or is malformed.
-func IsSecretRenewalDue(renewalPeriodDays *int64, nextRenewalAt *metav1.Time) bool {
+func IsSecretRenewalDue(renewalPeriodDays *int64, annotationKey string, annotations map[string]string) bool {
 	if renewalPeriodDays == nil {
 		return false
 	}
-	if nextRenewalAt == nil {
+	if annotations == nil {
 		return true
 	}
-	return !time.Now().Before(nextRenewalAt.Time)
+	dateStr, ok := annotations[annotationKey]
+	if !ok {
+		return true
+	}
+	renewalDate, err := time.Parse(time.RFC3339, dateStr)
+	if err != nil {
+		return true
+	}
+	return !time.Now().Before(renewalDate)
 }
 
 // NextSecretRenewalTime returns the UTC time that is periodDays days from now.
