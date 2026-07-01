@@ -79,6 +79,25 @@ type MockClient struct {
 	MockAddGroupHook    func(gid interface{}, opt *gitlab.AddGroupHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error)
 	MockEditGroupHook   func(gid interface{}, hook int64, opt *gitlab.EditGroupHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error)
 	MockDeleteGroupHook func(gid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockGetGroupHarborSettings func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error)
+	MockSetUpGroupHarbor       func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error)
+	MockDisableGroupHarbor     func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// GetGroupHarborSettings calls the underlying MockGetGroupHarborSettings method.
+func (c *MockClient) GetGroupHarborSettings(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
+	return c.MockGetGroupHarborSettings(gid, options...)
+}
+
+// SetUpGroupHarbor calls the underlying MockSetUpGroupHarbor method.
+func (c *MockClient) SetUpGroupHarbor(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error) {
+	return c.MockSetUpGroupHarbor(gid, opt, options...)
+}
+
+// DisableGroupHarbor calls the underlying MockDisableGroupHarbor method.
+func (c *MockClient) DisableGroupHarbor(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDisableGroupHarbor(gid, options...)
 }
 
 // GetGroup calls the underlying MockGetGroup method.
