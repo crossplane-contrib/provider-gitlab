@@ -105,6 +105,9 @@ spec:
                     description: ProjectID is the ID of the project.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: projectId is immutable
+                      rule: self == oldSelf
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
                       its projectId
@@ -331,6 +334,13 @@ spec:
                     description: ID of the project hook at gitlab
                     format: int64
                     type: integer
+                  tokenHash:
+                    description: |-
+                      TokenHash is a SHA-256 digest of the secret token last pushed to GitLab.
+                      GitLab never returns the token, so this fingerprint is used to detect
+                      rotation of the referenced secret and trigger an update. It is never the
+                      raw token.
+                    type: string
                 type: object
               conditions:
                 description: Conditions of the resource.
