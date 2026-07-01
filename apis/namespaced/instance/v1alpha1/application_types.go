@@ -1,0 +1,135 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1alpha1
+
+import (
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// ApplicationParameters defines the desired state of a GitLab instance OAuth Application.
+// Note: GitLab does not provide an update endpoint for applications. If any field is changed,
+// the application must be deleted and recreated.
+//
+// GitLab API docs: https://docs.gitlab.com/api/applications/
+type ApplicationParameters struct {
+	// Name is the name of the application.
+	// +required
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Name is immutable (delete and recreate the resource if you want to change it)."
+	Name string `json:"name"`
+
+	// RedirectURI is the redirect URI of the application.
+	// +required
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="RedirectURI is immutable (delete and recreate the resource if you want to change it)."
+	RedirectURI string `json:"redirectURI"`
+
+	// Scopes is the scopes of the application (space-separated).
+	// +required
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Scopes is immutable (delete and recreate the resource if you want to change it)."
+	Scopes []string `json:"scopes"`
+
+	// Confidential indicates whether the application is confidential.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Confidential is immutable (delete and recreate the resource if you want to change it)."
+	Confidential *bool `json:"confidential,omitempty"`
+
+	// RenewalPeriodDays specifies how often (in days) the OAuth client secret should
+	// be rotated. When set, the controller records the next renewal date in an annotation
+	// and triggers a secret renewal via the GitLab API when that date is reached.
+	// The renewed secret is written back to the connection secret.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	RenewalPeriodDays *int64 `json:"renewalPeriodDays,omitempty"`
+}
+
+// ApplicationObservation represents the observed state of a GitLab instance OAuth Application.
+type ApplicationObservation struct {
+	// ID is the numeric ID of the application.
+	// +optional
+	ID int64 `json:"id"`
+
+	// Name is the name of the application as stored in GitLab.
+	// +optional
+	Name string `json:"name"`
+
+	// ApplicationID is the OAuth client ID.
+	// +optional
+	ApplicationID string `json:"applicationID"`
+
+	// CallbackURL is the callback URL of the application as stored in GitLab.
+	// +optional
+	CallbackURL string `json:"callbackURL"`
+
+	// Confidential indicates whether the application is confidential.
+	// +optional
+	Confidential bool `json:"confidential"`
+
+	// Scopes is the scopes of the application as stored in GitLab
+	// +optional
+	Scopes []string `json:"scopes"`
+
+	// NextRenewalAt is the next scheduled secret renewal time, derived from the
+	// instance.gitlab.crossplane.io/secret-renewal-date annotation. Read-only.
+	// +optional
+	NextRenewalAt *metav1.Time `json:"nextRenewalAt,omitempty"`
+}
+
+// ApplicationSpec defines the desired state of a GitLab instance OAuth Application.
+type ApplicationSpec struct {
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            ApplicationParameters `json:"forProvider"`
+}
+
+// ApplicationStatus represents the observed state of a GitLab instance OAuth Application.
+type ApplicationStatus struct {
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               ApplicationObservation `json:"atProvider,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// An Application is a managed resource that represents a GitLab instance OAuth Application.
+//
+// IMPORTANT: The OAuth client secret is only available at creation time. You MUST specify
+// writeConnectionSecretToRef to receive the secret.
+// The connection details will contain:
+//   - "secret": the OAuth client secret
+//   - "application_id": the OAuth client application ID
+//
+// GitLab API docs: https://docs.gitlab.com/api/applications/
+// +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+// +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="NEXT-RENEWAL",type="string",JSONPath=".status.atProvider.nextRenewalAt",priority=1
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitlab}
+type Application struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   ApplicationSpec   `json:"spec"`
+	Status ApplicationStatus `json:"status,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// ApplicationList contains a list of Application items.
+type ApplicationList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []Application `json:"items"`
+}

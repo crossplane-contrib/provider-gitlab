@@ -1,0 +1,145 @@
+/*
+Copyright 2021 Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package instance
+
+import (
+	"strings"
+	"time"
+
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+// AnnotationKeySecretRenewalDate is the annotation key used to store the next
+// scheduled secret renewal date (RFC3339) for a GitLab Application.
+const AnnotationKeySecretRenewalDate = "instance.gitlab.crossplane.io/secret-renewal-date"
+
+// ApplicationClient defines GitLab Applications service operations used by controller.
+type ApplicationClient interface {
+	CreateApplication(opt *gitlab.CreateApplicationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error)
+	ListApplications(opt *gitlab.ListApplicationsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Application, *gitlab.Response, error)
+	DeleteApplication(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	RenewApplicationSecret(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error)
+}
+
+// NewApplicationClient returns new GitLab Applications client.
+func NewApplicationClient(cfg common.Config) ApplicationClient {
+	git := common.NewClient(cfg)
+	return git.Applications
+}
+
+// GenerateApplicationObservation creates ApplicationObservation from gitlab.Application.
+func GenerateApplicationObservation(a *gitlab.Application) v1alpha1.ApplicationObservation {
+	if a == nil {
+		return v1alpha1.ApplicationObservation{}
+	}
+	obs := v1alpha1.ApplicationObservation{
+		ID:            a.ID,
+		Name:          a.ApplicationName,
+		ApplicationID: a.ApplicationID,
+		CallbackURL:   a.CallbackURL,
+		Confidential:  a.Confidential,
+		Scopes:        a.Scopes,
+	}
+	return obs
+}
+
+// GenerateCreateApplicationOptions produces CreateApplicationOptions from ApplicationParameters.
+func GenerateCreateApplicationOptions(p *v1alpha1.ApplicationParameters) *gitlab.CreateApplicationOptions {
+	options := &gitlab.CreateApplicationOptions{
+		Name:         &p.Name,
+		RedirectURI:  &p.RedirectURI,
+		Confidential: p.Confidential,
+	}
+
+	if len(p.Scopes) > 0 {
+		options.Scopes = ptr.To(strings.Join(p.Scopes, " "))
+	}
+
+	return options
+}
+
+// IsApplicationUpToDate checks whether the ApplicationParameters are in sync with a gitlab.Application.
+// Since GitLab has no update endpoint for applications, this compares observable fields only.
+func IsApplicationUpToDate(p *v1alpha1.ApplicationParameters, a *gitlab.Application) bool {
+	if p == nil {
+		return true
+	}
+	return a != nil &&
+		p.Name == a.ApplicationName &&
+		p.RedirectURI == a.CallbackURL &&
+		clients.IsComparableEqualToComparablePtr(p.Confidential, a.Confidential) &&
+		clients.AreStringSlicesEqual(p.Scopes, a.Scopes)
+}
+
+// IsApplicationRenewalDue returns true when RenewalPeriodDays is configured and the
+// renewal date in the CR annotations has been reached, is absent, or is malformed.
+func IsApplicationRenewalDue(p *v1alpha1.ApplicationParameters, annotations map[string]string) bool {
+	if p == nil {
+		return false
+	}
+	return common.IsSecretRenewalDue(p.RenewalPeriodDays, AnnotationKeySecretRenewalDate, annotations)
+}
+
+// NextRenewalTime returns the UTC time that is periodDays days from now.
+func NextRenewalTime(periodDays int64) time.Time {
+	return common.NextSecretRenewalTime(periodDays)
+}
+
+// GetNextRenewalAt parses the renewal annotation and returns it as a *metav1.Time,
+// or nil if the annotation is absent or malformed.
+func GetNextRenewalAt(annotations map[string]string) *metav1.Time {
+	if annotations == nil {
+		return nil
+	}
+	dateStr, ok := annotations[AnnotationKeySecretRenewalDate]
+	if !ok {
+		return nil
+	}
+	t, err := time.Parse(time.RFC3339, dateStr)
+	if err != nil {
+		return nil
+	}
+	mt := metav1.NewTime(t)
+	return &mt
+}
+
+// SetRenewalAnnotation writes the next renewal date (RFC3339) into the CR annotations.
+func SetRenewalAnnotation(cr *v1alpha1.Application, periodDays int64) {
+	annotations := cr.GetAnnotations()
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
+	annotations[AnnotationKeySecretRenewalDate] = NextRenewalTime(periodDays).Format(time.RFC3339)
+	cr.SetAnnotations(annotations)
+}
+
+// FindApplicationByID returns application with given numeric ID from list,
+// or nil if not found.
+func FindApplicationByID(apps []*gitlab.Application, id int64) *gitlab.Application {
+	for _, a := range apps {
+		if a != nil && a.ID == id {
+			return a
+		}
+	}
+	return nil
+}
