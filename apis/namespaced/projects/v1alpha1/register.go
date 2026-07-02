@@ -156,6 +156,22 @@ var (
 	ProjectShareGroupGroupVersionKind = SchemeGroupVersion.WithKind(ProjectShareGroupKind)
 )
 
+// ServiceAccount type metadata
+var (
+	ServiceAccountKind             = reflect.TypeOf(ServiceAccount{}).Name()
+	ServiceAccountGroupKind        = schema.GroupKind{Group: Group, Kind: ServiceAccountKind}.String()
+	ServiceAccountKindAPIVersion   = ServiceAccountKind + "." + SchemeGroupVersion.String()
+	ServiceAccountGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountKind)
+)
+
+// ServiceAccountAccessToken type metadata
+var (
+	ServiceAccountAccessTokenKind             = reflect.TypeOf(ServiceAccountAccessToken{}).Name()
+	ServiceAccountAccessTokenGroupKind        = schema.GroupKind{Group: Group, Kind: ServiceAccountAccessTokenKind}.String()
+	ServiceAccountAccessTokenKindAPIVersion   = ServiceAccountAccessTokenKind + "." + SchemeGroupVersion.String()
+	ServiceAccountAccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountAccessTokenKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
@@ -174,4 +190,6 @@ func init() {
 	// Mattermost
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
 	SchemeBuilder.Register(&ProjectShareGroup{}, &ProjectShareGroupList{})
+	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
+	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})
 }

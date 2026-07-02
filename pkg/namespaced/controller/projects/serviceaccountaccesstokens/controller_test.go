@@ -1,0 +1,406 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package serviceaccountaccesstokens
+
+import (
+	"context"
+	"net/http"
+	"strconv"
+	"testing"
+	"time"
+
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/pkg/errors"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects"
+)
+
+// mockClient is an inline implementation of projects.ServiceAccountAccessTokenClient.
+type mockClient struct {
+	MockList       func(pid any, sa int64, opt *gitlab.ListProjectServiceAccountPersonalAccessTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockCreate     func(pid any, sa int64, opt *gitlab.CreateProjectServiceAccountPersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockRevoke     func(pid any, sa, token int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockRotate     func(pid any, sa, token int64, opt *gitlab.RotateProjectServiceAccountPersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockGetSelf    func(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockRotateSelf func(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockRevokeSelf func(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+var _ projects.ServiceAccountAccessTokenClient = &mockClient{}
+
+func (m *mockClient) ListProjectServiceAccountPersonalAccessTokens(pid any, sa int64, opt *gitlab.ListProjectServiceAccountPersonalAccessTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return m.MockList(pid, sa, opt, options...)
+}
+func (m *mockClient) CreateProjectServiceAccountPersonalAccessToken(pid any, sa int64, opt *gitlab.CreateProjectServiceAccountPersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return m.MockCreate(pid, sa, opt, options...)
+}
+func (m *mockClient) RevokeProjectServiceAccountPersonalAccessToken(pid any, sa, token int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return m.MockRevoke(pid, sa, token, options...)
+}
+func (m *mockClient) RotateProjectServiceAccountPersonalAccessToken(pid any, sa, token int64, opt *gitlab.RotateProjectServiceAccountPersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return m.MockRotate(pid, sa, token, opt, options...)
+}
+func (m *mockClient) GetServiceAccountSelf(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return m.MockGetSelf(options...)
+}
+func (m *mockClient) RotateServiceAccountSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return m.MockRotateSelf(opt, options...)
+}
+func (m *mockClient) RevokeServiceAccountSelf(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return m.MockRevokeSelf(options...)
+}
+
+var (
+	errBoom        = errors.New("boom")
+	projectID      = int64(42)
+	saID           = int64(57)
+	wrongIDstr     = "fr"
+	accessTokenID  = int64(1234)
+	sAccessTokenID = strconv.FormatInt(accessTokenID, 10)
+	invalidInput   resource.Managed
+	expiresAt      = time.Now().AddDate(0, 6, 0)
+	name           = "Access Token Name"
+	token          = "Token"
+	tokenObj       = gitlab.PersonalAccessToken{
+		ID: accessTokenID, Name: name, UserID: saID,
+		ExpiresAt: (*gitlab.ISOTime)(&expiresAt), Token: token, Active: true,
+		Scopes: []string{"api"},
+	}
+)
+
+func ownerCond() v2.Condition { return selfManagedCondition(false) }
+
+type tokenModifier func(*v1alpha1.ServiceAccountAccessToken)
+
+func withConditions(c ...v2.Condition) tokenModifier {
+	return func(r *v1alpha1.ServiceAccountAccessToken) { r.Status.ConditionedStatus.Conditions = c }
+}
+func withSpec(fp v1alpha1.ServiceAccountAccessTokenParameters) tokenModifier {
+	return func(r *v1alpha1.ServiceAccountAccessToken) { r.Spec.ForProvider = fp }
+}
+func withExternalName(n string) tokenModifier {
+	return func(r *v1alpha1.ServiceAccountAccessToken) { meta.SetExternalName(r, n) }
+}
+func saToken(m ...tokenModifier) *v1alpha1.ServiceAccountAccessToken {
+	cr := &v1alpha1.ServiceAccountAccessToken{}
+	for _, f := range m {
+		f(cr)
+	}
+	return cr
+}
+func ownerSpec() v1alpha1.ServiceAccountAccessTokenParameters {
+	return v1alpha1.ServiceAccountAccessTokenParameters{
+		ProjectID: &projectID, ServiceAccountID: &saID, ExpiresAt: &v1.Time{Time: expiresAt},
+	}
+}
+func listReturning(tokens ...*gitlab.PersonalAccessToken) func(any, int64, *gitlab.ListProjectServiceAccountPersonalAccessTokensOptions, ...gitlab.RequestOptionFunc) ([]*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return func(_ any, _ int64, _ *gitlab.ListProjectServiceAccountPersonalAccessTokensOptions, _ ...gitlab.RequestOptionFunc) ([]*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+		return tokens, &gitlab.Response{}, nil
+	}
+}
+
+func TestObserve(t *testing.T) {
+	type want struct {
+		cr     resource.Managed
+		result managed.ExternalObservation
+		err    error
+	}
+	cases := map[string]struct {
+		client projects.ServiceAccountAccessTokenClient
+		cr     resource.Managed
+		want   want
+	}{
+		"InvalidInput": {cr: invalidInput, want: want{cr: invalidInput, err: errors.New(errNotServiceAccountAccessToken)}},
+		"NoExternalName": {
+			cr:   saToken(),
+			want: want{cr: saToken(withConditions(ownerCond())), result: managed.ExternalObservation{}},
+		},
+		"ExternalNameNotID": {
+			cr:   saToken(withExternalName(wrongIDstr)),
+			want: want{cr: saToken(withExternalName(wrongIDstr), withConditions(ownerCond())), err: errors.Wrap(getConversionError(), errFailedParseID)},
+		},
+		"NoProjectID": {
+			cr:   saToken(withExternalName(sAccessTokenID)),
+			want: want{cr: saToken(withExternalName(sAccessTokenID), withConditions(ownerCond())), err: errors.New(errMissingProjectID)},
+		},
+		"ErrList": {
+			client: &mockClient{MockList: func(_ any, _ int64, _ *gitlab.ListProjectServiceAccountPersonalAccessTokensOptions, _ ...gitlab.RequestOptionFunc) ([]*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, nil, errBoom
+			}},
+			cr:   saToken(withExternalName(sAccessTokenID), withSpec(ownerSpec())),
+			want: want{cr: saToken(withExternalName(sAccessTokenID), withSpec(ownerSpec()), withConditions(ownerCond())), err: errors.Wrap(errBoom, errAccessTokenNotFound)},
+		},
+		"TokenNotInList": {
+			client: &mockClient{MockList: listReturning(&gitlab.PersonalAccessToken{ID: 999, Active: true})},
+			cr:     saToken(withExternalName(sAccessTokenID), withSpec(ownerSpec())),
+			want:   want{cr: saToken(withExternalName(sAccessTokenID), withSpec(ownerSpec()), withConditions(ownerCond())), result: managed.ExternalObservation{ResourceExists: false}},
+		},
+		"UpToDate": {
+			client: &mockClient{MockList: listReturning(&gitlab.PersonalAccessToken{ID: accessTokenID, Active: true, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)})},
+			cr:     saToken(withExternalName(sAccessTokenID), withSpec(ownerSpec())),
+			want:   want{cr: saToken(withExternalName(sAccessTokenID), withSpec(ownerSpec()), withConditions(ownerCond(), v2.Available())), result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: tc.client}
+			o, err := e.Observe(context.Background(), tc.cr)
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.cr, tc.cr, test.EquateConditions(), cmpopts.IgnoreFields(v1alpha1.ServiceAccountAccessTokenStatus{}, "AtProvider", "RenewAt")); diff != "" {
+				t.Errorf("cr: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("result: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestObserveSelf(t *testing.T) {
+	cases := map[string]struct {
+		client         projects.ServiceAccountAccessTokenClient
+		cr             *v1alpha1.ServiceAccountAccessToken
+		result         managed.ExternalObservation
+		err            error
+		wantExternalID string
+	}{
+		"UpToDateAutoAdopt": {
+			client: &mockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return &gitlab.PersonalAccessToken{ID: accessTokenID, Active: true}, &gitlab.Response{}, nil
+			}},
+			cr:             saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{})),
+			result:         managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true},
+			wantExternalID: sAccessTokenID,
+		},
+		"RotationDue": {
+			client: &mockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return &gitlab.PersonalAccessToken{ID: accessTokenID, Active: false}, &gitlab.Response{}, nil
+			}},
+			cr:             saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{})),
+			result:         managed.ExternalObservation{ResourceExists: false},
+			wantExternalID: sAccessTokenID,
+		},
+		"DeadToken": {
+			client: &mockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusUnauthorized}}, errBoom
+			}},
+			cr:  saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{})),
+			err: errors.Wrap(errBoom, errSelfInformFailed),
+		},
+		"ServiceAccountIDMatchUpToDate": {
+			// serviceAccountId set and matches the self token's owner -> adopt it.
+			client: &mockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return &gitlab.PersonalAccessToken{ID: accessTokenID, UserID: saID, Active: true}, &gitlab.Response{}, nil
+			}},
+			cr:             saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID})),
+			result:         managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true},
+			wantExternalID: sAccessTokenID,
+		},
+		"ServiceAccountIDMismatchTerminalError": {
+			// serviceAccountId set but the self token belongs to a different
+			// service account -> refuse to manage it (miswired credentials).
+			client: &mockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return &gitlab.PersonalAccessToken{ID: accessTokenID, UserID: saID + 1, Active: true}, &gitlab.Response{}, nil
+			}},
+			cr:  saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ServiceAccountID: &saID})),
+			err: errors.New(errSelfServiceAccountMismatch),
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: tc.client, self: true}
+			o, err := e.Observe(context.Background(), tc.cr)
+			if diff := cmp.Diff(tc.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.result, o); diff != "" {
+				t.Errorf("result: -want, +got:\n%s", diff)
+			}
+			if c := tc.cr.Status.GetCondition(TypeSelfManaged); c.Reason != ReasonProviderConfigReferencesManagedToken {
+				t.Errorf("expected SelfManaged reason %q, got %q", ReasonProviderConfigReferencesManagedToken, c.Reason)
+			}
+			if tc.wantExternalID != "" && meta.GetExternalName(tc.cr) != tc.wantExternalID {
+				t.Errorf("external-name: want %q got %q", tc.wantExternalID, meta.GetExternalName(tc.cr))
+			}
+		})
+	}
+}
+
+func TestCreate(t *testing.T) {
+	cases := map[string]struct {
+		client   projects.ServiceAccountAccessTokenClient
+		kube     client.Client
+		self     bool
+		cr       resource.Managed
+		wantConn managed.ConnectionDetails
+		wantErr  error
+	}{
+		"OwnerNoProjectID": {cr: saToken(withExternalName(sAccessTokenID)), wantErr: errors.New(errMissingProjectID)},
+		"OwnerNoServiceAccountID": {
+			cr:      saToken(withExternalName(sAccessTokenID), withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ProjectID: &projectID})),
+			wantErr: errors.New(errMissingServiceAccountID),
+		},
+		"OwnerCreateSuccess": {
+			kube: &test.MockClient{MockUpdate: test.NewMockUpdateFn(nil)},
+			client: &mockClient{MockCreate: func(_ any, _ int64, _ *gitlab.CreateProjectServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return &tokenObj, &gitlab.Response{}, nil
+			}},
+			cr:       saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ProjectID: &projectID, ServiceAccountID: &saID, Name: name, Scopes: []string{"api"}})),
+			wantConn: managed.ConnectionDetails{"token": []byte(token)},
+		},
+		"OwnerRotationSuccess": {
+			client: &mockClient{MockRotate: func(_ any, _, _ int64, _ *gitlab.RotateProjectServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return &tokenObj, &gitlab.Response{}, nil
+			}},
+			cr:       saToken(withExternalName(sAccessTokenID), withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ProjectID: &projectID, ServiceAccountID: &saID})),
+			wantConn: managed.ConnectionDetails{"token": []byte(token)},
+		},
+		"OwnerRotate404FreshCreate": {
+			client: &mockClient{
+				MockRotate: func(_ any, _, _ int64, _ *gitlab.RotateProjectServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+				},
+				MockCreate: func(_ any, _ int64, _ *gitlab.CreateProjectServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					return &tokenObj, &gitlab.Response{}, nil
+				},
+			},
+			cr:       saToken(withExternalName(sAccessTokenID), withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ProjectID: &projectID, ServiceAccountID: &saID, Name: name, Scopes: []string{"api"}})),
+			wantConn: managed.ConnectionDetails{"token": []byte(token)},
+		},
+		"OwnerRotate400RevokedFreshCreate": {
+			// Rotation returns 400 "token already revoked" -> token is gone,
+			// fall through to a fresh create.
+			client: &mockClient{
+				MockRotate: func(_ any, _, _ int64, _ *gitlab.RotateProjectServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusBadRequest}}, errors.New("400 Bad Request: Token already revoked")
+				},
+				MockCreate: func(_ any, _ int64, _ *gitlab.CreateProjectServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					return &tokenObj, &gitlab.Response{}, nil
+				},
+			},
+			cr:       saToken(withExternalName(sAccessTokenID), withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ProjectID: &projectID, ServiceAccountID: &saID, Name: name, Scopes: []string{"api"}})),
+			wantConn: managed.ConnectionDetails{"token": []byte(token)},
+		},
+		"OwnerRotateOtherErrorSurfaced": {
+			client: &mockClient{MockRotate: func(_ any, _, _ int64, _ *gitlab.RotateProjectServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}, errBoom
+			}},
+			cr:      saToken(withExternalName(sAccessTokenID), withSpec(v1alpha1.ServiceAccountAccessTokenParameters{ProjectID: &projectID, ServiceAccountID: &saID, Name: name, Scopes: []string{"api"}})),
+			wantErr: errors.Wrap(errBoom, errRotateFailed),
+		},
+		"SelfRotateSuccess": {
+			self: true,
+			client: &mockClient{MockRotateSelf: func(_ *gitlab.RotatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return &tokenObj, &gitlab.Response{}, nil
+			}},
+			cr:       saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{})),
+			wantConn: managed.ConnectionDetails{"token": []byte(token)},
+		},
+		"SelfRotateFailed": {
+			self: true,
+			client: &mockClient{MockRotateSelf: func(_ *gitlab.RotatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, nil, errBoom
+			}},
+			cr:      saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{})),
+			wantErr: errors.Wrap(errBoom, errSelfRotateFailed),
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: tc.kube, client: tc.client, self: tc.self}
+			o, err := e.Create(context.Background(), tc.cr)
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+			if tc.wantConn != nil {
+				if diff := cmp.Diff(tc.wantConn, o.ConnectionDetails); diff != "" {
+					t.Errorf("conn: -want, +got:\n%s", diff)
+				}
+			}
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	e := &external{}
+	o, err := e.Update(context.Background(), saToken())
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if diff := cmp.Diff(managed.ExternalUpdate{}, o); diff != "" {
+		t.Errorf("-want, +got:\n%s", diff)
+	}
+}
+
+func TestDelete(t *testing.T) {
+	cases := map[string]struct {
+		client  projects.ServiceAccountAccessTokenClient
+		self    bool
+		cr      resource.Managed
+		wantErr error
+	}{
+		"InvalidInput": {cr: invalidInput, wantErr: errors.New(errNotServiceAccountAccessToken)},
+		"OwnerExternalNameNotInt": {
+			client:  &mockClient{},
+			cr:      saToken(withSpec(ownerSpec()), withExternalName("test")),
+			wantErr: errors.New(errExternalNameNotInt),
+		},
+		"OwnerSuccess": {
+			client: &mockClient{MockRevoke: func(_ any, _, _ int64, _ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				return &gitlab.Response{}, nil
+			}},
+			cr: saToken(withSpec(ownerSpec()), withExternalName(sAccessTokenID)),
+		},
+		"SelfSuccess": {
+			self:   true,
+			client: &mockClient{MockRevokeSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) { return &gitlab.Response{}, nil }},
+			cr:     saToken(withExternalName(sAccessTokenID)),
+		},
+		"SelfFailed": {
+			self:    true,
+			client:  &mockClient{MockRevokeSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) { return &gitlab.Response{}, errBoom }},
+			cr:      saToken(withExternalName(sAccessTokenID)),
+			wantErr: errors.Wrap(errBoom, errDeleteFailed),
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: tc.client, self: tc.self}
+			_, err := e.Delete(context.Background(), tc.cr)
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func getConversionError() error {
+	_, err := strconv.Atoi(wrongIDstr)
+	return err
+}

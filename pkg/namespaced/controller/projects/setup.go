@@ -34,6 +34,8 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedbranches"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedenvironments"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/runners"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/serviceaccountaccesstokens"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/serviceaccounts"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/variables"
 )
 
@@ -55,6 +57,8 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		integrationmattermost.SetupIntegrationMattermost,
 		protectedenvironments.SetupProtectedEnvironment,
 		projectsharegroups.SetupProjectShareGroup,
+		serviceaccounts.SetupServiceAccount,
+		serviceaccountaccesstokens.SetupServiceAccountAccessToken,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -82,6 +86,8 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		integrationmattermost.SetupIntegrationMattermostGated,
 		protectedenvironments.SetupProtectedEnvironmentGated,
 		projectsharegroups.SetupProjectShareGroupGated,
+		serviceaccounts.SetupServiceAccountGated,
+		serviceaccountaccesstokens.SetupServiceAccountAccessTokenGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
