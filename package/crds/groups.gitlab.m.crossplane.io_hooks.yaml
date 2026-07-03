@@ -311,6 +311,13 @@ spec:
                     description: ID of the group hook at gitlab
                     format: int64
                     type: integer
+                  tokenHash:
+                    description: |-
+                      TokenHash is a SHA-256 digest of the secret token last pushed to GitLab.
+                      GitLab never returns the token, so this fingerprint is used to detect
+                      rotation of the referenced secret and trigger an update. It is never the
+                      raw token.
+                    type: string
                 type: object
               conditions:
                 description: Conditions of the resource.
