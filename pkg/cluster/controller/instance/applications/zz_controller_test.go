@@ -116,19 +116,6 @@ func withNextRenewalAtStr(s string) applicationModifier {
 	}
 }
 
-func withAnnotations(a map[string]string) applicationModifier {
-	return func(r *v1alpha1.Application) {
-		existing := r.GetAnnotations()
-		if existing == nil {
-			existing = map[string]string{}
-		}
-		for k, v := range a {
-			existing[k] = v
-		}
-		r.SetAnnotations(existing)
-	}
-}
-
 func application(m ...applicationModifier) *v1alpha1.Application {
 	cr := &v1alpha1.Application{}
 	for _, f := range m {
@@ -397,7 +384,7 @@ func TestObserve(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: pastDate}),
+					withNextRenewalAtStr(pastDate),
 				),
 			},
 			want: want{
@@ -409,7 +396,6 @@ func TestObserve(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: pastDate}),
 					withConditions(v2.Available()),
 					withAtProvider(instanceclient.GenerateApplicationObservation(testApp)),
 					withNextRenewalAtStr(pastDate),
@@ -432,7 +418,7 @@ func TestObserve(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: futureDate}),
+					withNextRenewalAtStr(futureDate),
 				),
 			},
 			want: want{
@@ -444,44 +430,11 @@ func TestObserve(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: futureDate}),
 					withConditions(v2.Available()),
 					withAtProvider(instanceclient.GenerateApplicationObservation(testApp)),
 					withNextRenewalAtStr(futureDate),
 				),
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true},
-			},
-		},
-		"RenewalPeriodSetButStatusMissing": {
-			args: args{
-				client: &MockApplicationClient{
-					MockListApplications: func(opt *gitlab.ListApplicationsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Application, *gitlab.Response, error) {
-						return []*gitlab.Application{testApp}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
-					},
-				},
-				cr: application(
-					withExternalName(testExternalNameID),
-					withSpec(v1alpha1.ApplicationParameters{
-						Name:              testAppName,
-						RedirectURI:       testRedirectURI,
-						Scopes:            []string{"api", "read_user"},
-						RenewalPeriodDays: ptr.To(int64(30)),
-					}),
-				),
-			},
-			want: want{
-				cr: application(
-					withExternalName(testExternalNameID),
-					withSpec(v1alpha1.ApplicationParameters{
-						Name:              testAppName,
-						RedirectURI:       testRedirectURI,
-						Scopes:            []string{"api", "read_user"},
-						RenewalPeriodDays: ptr.To(int64(30)),
-					}),
-					withConditions(v2.Available()),
-					withAtProvider(instanceclient.GenerateApplicationObservation(testApp)),
-				),
-				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false},
 			},
 		},
 	}
@@ -500,6 +453,45 @@ func TestObserve(t *testing.T) {
 				t.Errorf("Observe(): -want cr, +got cr:\n%s", diff)
 			}
 		})
+	}
+}
+
+// TestObserveSeedsRenewalSchedule verifies that when renewal is configured but no
+// schedule has been persisted yet, Observe lazily seeds status.atProvider.nextRenewalAt
+// to a future time (now+period) and reports the resource as up to date, rather than
+// treating the unset schedule as "due now" and triggering an immediate rotation.
+func TestObserveSeedsRenewalSchedule(t *testing.T) {
+	e := &external{client: &MockApplicationClient{
+		MockListApplications: func(opt *gitlab.ListApplicationsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Application, *gitlab.Response, error) {
+			return []*gitlab.Application{testApp}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+		},
+	}}
+
+	cr := application(
+		withExternalName(testExternalNameID),
+		withSpec(v1alpha1.ApplicationParameters{
+			Name:              testAppName,
+			RedirectURI:       testRedirectURI,
+			Scopes:            []string{"api", "read_user"},
+			RenewalPeriodDays: ptr.To(int64(30)),
+		}),
+	)
+
+	got, err := e.Observe(context.Background(), cr)
+	if err != nil {
+		t.Fatalf("Observe(): unexpected error: %v", err)
+	}
+
+	if !got.ResourceUpToDate {
+		t.Errorf("Observe(): expected ResourceUpToDate to be true after seeding the schedule, got false")
+	}
+
+	next := cr.Status.AtProvider.NextRenewalAt
+	if next == nil {
+		t.Fatalf("Observe(): expected status.atProvider.nextRenewalAt to be seeded, got nil")
+	}
+	if !next.Time.After(time.Now().UTC()) {
+		t.Errorf("Observe(): expected seeded nextRenewalAt to be in the future, got %v", next.Time)
 	}
 }
 
@@ -593,7 +585,6 @@ func TestCreate(t *testing.T) {
 					withExternalName(testExternalNameID),
 					withConditions(v2.Creating()),
 					withAtProvider(instanceclient.GenerateApplicationObservation(testApp)),
-					// renewal annotation is set but checked separately below
 				),
 				result: managed.ExternalCreation{
 					ConnectionDetails: managed.ConnectionDetails{
@@ -614,13 +605,6 @@ func TestCreate(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want.result, got); diff != "" {
 				t.Errorf("Create(): -want result, +got result:\n%s", diff)
-			}
-			if name == "SuccessfulWithRenewalPeriod" {
-				cr := tc.args.cr.(*v1alpha1.Application)
-				if cr.GetAnnotations()[instanceclient.AnnotationKeySecretRenewalDate] == "" {
-					t.Errorf("Create(): expected renewal annotation to be set")
-				}
-				return
 			}
 			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
 				t.Errorf("Create(): -want cr, +got cr:\n%s", diff)
@@ -670,7 +654,7 @@ func TestUpdate(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: futureDate}),
+					withNextRenewalAtStr(futureDate),
 				),
 			},
 			want: want{err: errors.New(errCannotUpdate)},
@@ -690,7 +674,7 @@ func TestUpdate(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: pastDate}),
+					withNextRenewalAtStr(pastDate),
 				),
 			},
 			want: want{err: errors.Wrap(errBoom, errRenewFailed)},
@@ -710,7 +694,7 @@ func TestUpdate(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: pastDate}),
+					withNextRenewalAtStr(pastDate),
 				),
 			},
 			want: want{
@@ -722,13 +706,11 @@ func TestUpdate(t *testing.T) {
 				},
 			},
 		},
-		"RenewalWithMissingStatus": {
+		"RenewalWithMissingScheduleReturnsError": {
+			// When no renewal schedule has been persisted yet, renewal is not due
+			// (the schedule is seeded lazily during Observe), so Update must not
+			// rotate the secret and instead returns errCannotUpdate.
 			args: args{
-				client: &MockApplicationClient{
-					MockRenewApplicationSecret: func(application int64, options ...gitlab.RequestOptionFunc) (*gitlab.Application, *gitlab.Response, error) {
-						return renewedApp, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
-					},
-				},
 				cr: application(
 					withExternalName(testExternalNameID),
 					withSpec(v1alpha1.ApplicationParameters{
@@ -739,14 +721,7 @@ func TestUpdate(t *testing.T) {
 					}),
 				),
 			},
-			want: want{
-				result: managed.ExternalUpdate{
-					ConnectionDetails: managed.ConnectionDetails{
-						"secret":         []byte(newSecret),
-						"application_id": []byte(testApplicationID),
-					},
-				},
-			},
+			want: want{err: errors.New(errCannotUpdate)},
 		},
 		"NonIntegerExternalNameWithRenewalDue": {
 			args: args{
@@ -758,7 +733,7 @@ func TestUpdate(t *testing.T) {
 						Scopes:            []string{"api", "read_user"},
 						RenewalPeriodDays: ptr.To(int64(30)),
 					}),
-					withAnnotations(map[string]string{instanceclient.AnnotationKeySecretRenewalDate: pastDate}),
+					withNextRenewalAtStr(pastDate),
 				),
 			},
 			want: want{err: errors.New(errIDNotInt)},
@@ -775,17 +750,16 @@ func TestUpdate(t *testing.T) {
 			if diff := cmp.Diff(tc.want.result, got); diff != "" {
 				t.Errorf("Update(): -want result, +got result:\n%s", diff)
 			}
-			// After a successful renewal, the renewal annotation must be set to a future time.
+			// After a successful renewal, the persisted renewal schedule must be
+			// advanced to a future time so the secret is not rotated again on the
+			// next reconcile.
 			if err == nil && name != "InvalidInput" {
 				cr := tc.args.cr.(*v1alpha1.Application)
-				renewalDate := cr.GetAnnotations()[instanceclient.AnnotationKeySecretRenewalDate]
-				if renewalDate == "" {
-					t.Errorf("Update(): expected renewal annotation to be set after renewal")
-				} else {
-					parsed, parseErr := time.Parse(time.RFC3339, renewalDate)
-					if parseErr != nil || !parsed.After(time.Now().UTC()) {
-						t.Errorf("Update(): expected renewal annotation to be a future time, got %v", renewalDate)
-					}
+				next := cr.Status.AtProvider.NextRenewalAt
+				if next == nil {
+					t.Errorf("Update(): expected status.atProvider.nextRenewalAt to be set after renewal")
+				} else if !next.Time.After(time.Now().UTC()) {
+					t.Errorf("Update(): expected nextRenewalAt to be a future time, got %v", next.Time)
 				}
 			}
 		})

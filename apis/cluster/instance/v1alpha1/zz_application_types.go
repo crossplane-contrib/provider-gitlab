@@ -84,8 +84,9 @@ type ApplicationObservation struct {
 	// +optional
 	Scopes []string `json:"scopes"`
 
-	// NextRenewalAt is the next scheduled secret renewal time, derived from the
-	// instance.gitlab.crossplane.io/secret-renewal-date annotation. Read-only.
+	// NextRenewalAt is the next scheduled secret renewal time. It is managed by
+	// the provider and used to determine when the OAuth client secret is due for
+	// renewal. Read-only.
 	// +optional
 	NextRenewalAt *metav1.Time `json:"nextRenewalAt,omitempty"`
 }

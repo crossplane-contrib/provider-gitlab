@@ -142,12 +142,24 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
+	// Preserve the renewal schedule persisted in status before rebuilding
+	// atProvider from the GitLab response, which does not carry it.
+	nextRenewalAt := cr.Status.AtProvider.NextRenewalAt
+
 	cr.Status.AtProvider = instance.GenerateApplicationObservation(app)
-	cr.Status.AtProvider.NextRenewalAt = instance.GetNextRenewalAt(cr.GetAnnotations())
+
+	// Lazily initialise the renewal schedule when renewal is configured but no
+	// schedule has been persisted yet. Seeding to now+period avoids treating an
+	// unset schedule as "due now", which would rotate the secret on first observe.
+	if cr.Spec.ForProvider.RenewalPeriodDays != nil && nextRenewalAt == nil {
+		nextRenewalAt = instance.NextRenewalAt(*cr.Spec.ForProvider.RenewalPeriodDays)
+	}
+	cr.Status.AtProvider.NextRenewalAt = nextRenewalAt
+
 	cr.Status.SetConditions(v2.Available())
 
 	upToDate := instance.IsApplicationUpToDate(&cr.Spec.ForProvider, app) &&
-		!instance.IsApplicationRenewalDue(&cr.Spec.ForProvider, cr.GetAnnotations())
+		!instance.IsApplicationRenewalDue(&cr.Spec.ForProvider, nextRenewalAt)
 
 	return managed.ExternalObservation{
 		ResourceExists:   true,
@@ -204,10 +216,6 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	meta.SetExternalName(cr, strconv.FormatInt(app.ID, 10))
 	cr.Status.AtProvider = instance.GenerateApplicationObservation(app)
 
-	if cr.Spec.ForProvider.RenewalPeriodDays != nil {
-		instance.SetRenewalAnnotation(cr, *cr.Spec.ForProvider.RenewalPeriodDays)
-	}
-
 	return managed.ExternalCreation{
 		ConnectionDetails: managed.ConnectionDetails{
 			"secret":         []byte(app.Secret),
@@ -225,7 +233,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotApplication)
 	}
 
-	if !instance.IsApplicationRenewalDue(&cr.Spec.ForProvider, cr.GetAnnotations()) {
+	if !instance.IsApplicationRenewalDue(&cr.Spec.ForProvider, cr.Status.AtProvider.NextRenewalAt) {
 		return managed.ExternalUpdate{}, errors.New(errCannotUpdate)
 	}
 
@@ -240,7 +248,10 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.Wrap(err, errRenewFailed)
 	}
 
-	instance.SetRenewalAnnotation(cr, *cr.Spec.ForProvider.RenewalPeriodDays)
+	// Advance the persisted renewal schedule. Status is written back on the
+	// Update path, so the new schedule survives and prevents a rotation storm
+	// where the secret would be renewed on every subsequent reconcile.
+	cr.Status.AtProvider.NextRenewalAt = instance.NextRenewalAt(*cr.Spec.ForProvider.RenewalPeriodDays)
 
 	return managed.ExternalUpdate{
 		ConnectionDetails: managed.ConnectionDetails{
