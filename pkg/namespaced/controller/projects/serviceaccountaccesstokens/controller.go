@@ -199,8 +199,15 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 // token is whatever the ProviderConfig authenticates with, so the external name
 // is auto-adopted from the response.
 func (e *external) observeSelf(ctx context.Context, cr *v1alpha1.ServiceAccountAccessToken) (managed.ExternalObservation, error) {
-	at, _, err := e.client.GetServiceAccountSelf(gitlab.WithContext(ctx))
+	at, res, err := e.client.GetServiceAccountSelf(gitlab.WithContext(ctx))
 	if err != nil {
+		// During deletion the self-revoke has already run, so the self
+		// endpoints reject the (now revoked) credential with 401/403. That is
+		// the expected terminal state: report the resource gone so the
+		// finalizer is removed instead of wedging the delete in a retry loop.
+		if meta.WasDeleted(cr) && clients.IsResponseUnauthorized(res) {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
 		// A dead self-credential is unrecoverable by the provider: surface a
 		// clear error rather than masquerading as "does not exist".
 		return managed.ExternalObservation{}, errors.Wrap(err, errSelfInformFailed)
@@ -414,8 +421,18 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		// Revoke the token the ProviderConfig authenticates with. This breaks
 		// every resource using that ProviderConfig; use deletionPolicy: Orphan
 		// to keep the token.
-		_, err := e.client.RevokeServiceAccountSelf(gitlab.WithContext(ctx))
-		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+		res, err := e.client.RevokeServiceAccountSelf(gitlab.WithContext(ctx))
+		if err != nil {
+			// A second reconcile hitting an already-revoked token can no longer
+			// authenticate and gets 401/403. Treat that as an idempotent
+			// success so the delete does not wedge on an already-completed
+			// revoke.
+			if clients.IsResponseUnauthorized(res) {
+				return managed.ExternalDelete{}, nil
+			}
+			return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
+		}
+		return managed.ExternalDelete{}, nil
 	}
 
 	accessTokenID, err := strconv.Atoi(meta.GetExternalName(cr))

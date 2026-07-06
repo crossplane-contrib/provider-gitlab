@@ -148,6 +148,13 @@ func withExternalName(n string) tokenModifier {
 	return func(r *v1alpha1.ServiceAccountAccessToken) { meta.SetExternalName(r, n) }
 }
 
+func withDeletionTimestamp() tokenModifier {
+	return func(r *v1alpha1.ServiceAccountAccessToken) {
+		now := v1.Now()
+		r.SetDeletionTimestamp(&now)
+	}
+}
+
 func saToken(m ...tokenModifier) *v1alpha1.ServiceAccountAccessToken {
 	cr := &v1alpha1.ServiceAccountAccessToken{}
 	for _, f := range m {
@@ -331,6 +338,43 @@ func TestObserveSelf(t *testing.T) {
 				},
 			},
 			cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{})),
+			want: want{
+				err: errors.Wrap(errBoom, errSelfInformFailed),
+			},
+		},
+		// During deletion the self-token is already revoked, so self-inform gets
+		// 401. Report gone so the finalizer is removed instead of wedging delete.
+		"DeletedAfterRevoke401ReportsGone": {
+			client: &mockClient{
+				MockGetServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusUnauthorized}}, errBoom
+				},
+			},
+			cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{}), withDeletionTimestamp()),
+			want: want{
+				result: managed.ExternalObservation{ResourceExists: false},
+			},
+		},
+		// Repeated unauthorized polls escalate to 403; treat as gone during deletion too.
+		"DeletedAfterRevoke403ReportsGone": {
+			client: &mockClient{
+				MockGetServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusForbidden}}, errBoom
+				},
+			},
+			cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{}), withDeletionTimestamp()),
+			want: want{
+				result: managed.ExternalObservation{ResourceExists: false},
+			},
+		},
+		// A transient failure during deletion must still surface as an error.
+		"DeletedTransientErrorStillFails": {
+			client: &mockClient{
+				MockGetServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}, errBoom
+				},
+			},
+			cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{}), withDeletionTimestamp()),
 			want: want{
 				err: errors.Wrap(errBoom, errSelfInformFailed),
 			},
@@ -718,6 +762,33 @@ func TestDelete(t *testing.T) {
 				cr: saToken(withExternalName(sAccessTokenID)),
 			},
 			want: want{cr: saToken(withExternalName(sAccessTokenID)), err: errors.Wrap(errBoom, errDeleteFailed)},
+		},
+		// A second reconcile hitting an already-revoked self-token gets 401;
+		// revoke is idempotent, so this must succeed.
+		"SelfRevoke401Idempotent": {
+			self: true,
+			args: args{
+				client: &mockClient{
+					MockRevokeServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusUnauthorized}}, errBoom
+					},
+				},
+				cr: saToken(withExternalName(sAccessTokenID)),
+			},
+			want: want{cr: saToken(withExternalName(sAccessTokenID))},
+		},
+		// Rate-limited self-revoke (403) is likewise idempotent success.
+		"SelfRevoke403Idempotent": {
+			self: true,
+			args: args{
+				client: &mockClient{
+					MockRevokeServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusForbidden}}, errBoom
+					},
+				},
+				cr: saToken(withExternalName(sAccessTokenID)),
+			},
+			want: want{cr: saToken(withExternalName(sAccessTokenID))},
 		},
 	}
 	for name, tc := range cases {
