@@ -233,3 +233,66 @@ func TestGenerateRenewalExpiration(t *testing.T) {
 		t.Errorf("want ~%v, got %v", expected, gotDay)
 	}
 }
+
+func TestIsSecretRenewalDue(t *testing.T) {
+	period := int64(30)
+	const key = "test.crossplane.io/renewal-date"
+	pastDate := time.Now().UTC().Add(-24 * time.Hour).Format(time.RFC3339)
+	futureDate := time.Now().UTC().Add(24 * time.Hour).Format(time.RFC3339)
+
+	cases := map[string]struct {
+		renewalPeriodDays *int64
+		annotations       map[string]string
+		want              bool
+	}{
+		"NilPeriod": {
+			renewalPeriodDays: nil,
+			want:              false,
+		},
+		"NoAnnotation": {
+			renewalPeriodDays: &period,
+			annotations:       map[string]string{},
+			want:              true,
+		},
+		"MissingAnnotation": {
+			renewalPeriodDays: &period,
+			want:              true,
+		},
+		"AnnotationInPast": {
+			renewalPeriodDays: &period,
+			annotations:       map[string]string{key: pastDate},
+			want:              true,
+		},
+		"AnnotationInFuture": {
+			renewalPeriodDays: &period,
+			annotations:       map[string]string{key: futureDate},
+			want:              false,
+		},
+		"MalformedAnnotation": {
+			renewalPeriodDays: &period,
+			annotations:       map[string]string{key: "not-a-date"},
+			want:              true,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsSecretRenewalDue(tc.renewalPeriodDays, key, tc.annotations)
+			if got != tc.want {
+				t.Errorf("IsSecretRenewalDue() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestNextSecretRenewalTime(t *testing.T) {
+	before := time.Now().UTC()
+	got := NextSecretRenewalTime(7)
+	after := time.Now().UTC()
+
+	earliest := before.AddDate(0, 0, 7)
+	latest := after.AddDate(0, 0, 7)
+	if got.Before(earliest) || got.After(latest) {
+		t.Errorf("NextSecretRenewalTime(7) = %v, want between %v and %v", got, earliest, latest)
+	}
+}
