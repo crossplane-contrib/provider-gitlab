@@ -232,7 +232,7 @@ func TestObserve(t *testing.T) {
 		},
 		"SuccessfulBaselinePermissionsSortsStatus": {
 			args: args{
-				client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 					return &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 				}},
 				cr: serviceAccount(withExternalName("123"), withSpec(v1alpha1.ServiceAccountParameters{
@@ -247,7 +247,7 @@ func TestObserve(t *testing.T) {
 						CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
 						BaselinePermissions:            ptr.To(accessLevelDeveloper),
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					func(r *v1alpha1.ServiceAccount) {
 						r.Status.AtProvider = instance.GenerateServiceAccountObservation(&gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail})
 						r.Status.AtProvider.MissingMemberShipGroups = []int64{1, 3}
