@@ -20,37 +20,26 @@ package serviceaccounts
 
 import (
 	"context"
+	"sort"
 	"sync"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	"golang.org/x/sync/errgroup"
 	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 )
 
+const baselinePermissionsMaxConcurrentRequests = 16
+
 // addServiceAccountToGroups is a helper function that adds the service account to the specified groups with the specified access level. This is used to satisfy the BaselinePermissions field by adding the service account to all groups that have at least the specified access level.
 func (e *external) addServiceAccountToGroups(ctx context.Context, serviceAccountID int64, groupIDs []int64, accessLevel int) error {
-	var addToGroupsWaitGroup sync.WaitGroup
-	var requestErr error
-	var requestErrMu sync.Mutex
-
-	setRequestErr := func(err error) {
-		if err == nil {
-			return
-		}
-		requestErrMu.Lock()
-		if requestErr == nil {
-			requestErr = err
-		}
-		requestErrMu.Unlock()
-	}
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(baselinePermissionsMaxConcurrentRequests)
 
 	for _, groupID := range groupIDs {
-		addToGroupsWaitGroup.Add(1)
-		go func(groupID int64) {
-			defer addToGroupsWaitGroup.Done()
-
+		g.Go(func() error {
 			_, _, err := e.groupMemberClient.AddGroupMember(
 				groupID,
 				&gitlab.AddGroupMemberOptions{
@@ -60,38 +49,22 @@ func (e *external) addServiceAccountToGroups(ctx context.Context, serviceAccount
 				gitlab.WithContext(ctx),
 			)
 			if err != nil {
-				setRequestErr(errors.Wrapf(err, "cannot add service account to Gitlab group with ID %d", groupID))
-				return
+				return errors.Wrapf(err, "cannot add service account to Gitlab group with ID %d", groupID)
 			}
-		}(groupID)
+			return nil
+		})
 	}
 
-	addToGroupsWaitGroup.Wait()
-	return requestErr
+	return g.Wait()
 }
 
 // updateServiceAccountGroupPermissions is a helper function that updates the service account's permissions for the specified groups to the specified access level. This is used to satisfy the BaselinePermissions field by updating the service account's permissions for all groups that have at least the specified access level.
 func (e *external) updateServiceAccountGroupPermissions(ctx context.Context, serviceAccountID int64, groupIDs []int64, accessLevel int) error {
-	var updateGroupsWaitGroup sync.WaitGroup
-	var requestErr error
-	var requestErrMu sync.Mutex
-
-	setRequestErr := func(err error) {
-		if err == nil {
-			return
-		}
-		requestErrMu.Lock()
-		if requestErr == nil {
-			requestErr = err
-		}
-		requestErrMu.Unlock()
-	}
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(baselinePermissionsMaxConcurrentRequests)
 
 	for _, groupID := range groupIDs {
-		updateGroupsWaitGroup.Add(1)
-		go func(groupID int64) {
-			defer updateGroupsWaitGroup.Done()
-
+		g.Go(func() error {
 			_, _, err := e.groupMemberClient.EditGroupMember(
 				groupID,
 				serviceAccountID,
@@ -101,37 +74,23 @@ func (e *external) updateServiceAccountGroupPermissions(ctx context.Context, ser
 				gitlab.WithContext(ctx),
 			)
 			if err != nil {
-				setRequestErr(errors.Wrapf(err, "cannot update service account permissions for Gitlab group with ID %d", groupID))
-				return
+				return errors.Wrapf(err, "cannot update service account permissions for Gitlab group with ID %d", groupID)
 			}
-		}(groupID)
+			return nil
+		})
 	}
 
-	updateGroupsWaitGroup.Wait()
-	return requestErr
+	return g.Wait()
 }
 
 // fetchTopLevelGroupsMissingPermissions is a helper function that returns a list of top level group IDs that the service account is missing permissions for, based on the specified minimum permission level. This is used to determine which groups the service account needs to be added to in order to satisfy the BaselinePermissions field.
-//
-//nolint:gocyclo
-func (e *external) fetchTopLevelGroupsMissingPermissions(minPermission int, serviceAccountID int64) (notInGroups []int64, wrongPermsGroups []int64, err error) {
+func (e *external) fetchTopLevelGroupsMissingPermissions(ctx context.Context, minPermission int, serviceAccountID int64) (notInGroups []int64, wrongPermsGroups []int64, err error) {
 	var (
-		permissionsCheckWaitGroup  sync.WaitGroup
 		groupsMissingPermissionsMu sync.Mutex
-		requestErr                 error
-		requestErrMu               sync.Mutex
 	)
 
-	setRequestErr := func(err error) {
-		if err == nil {
-			return
-		}
-		requestErrMu.Lock()
-		if requestErr == nil {
-			requestErr = err
-		}
-		requestErrMu.Unlock()
-	}
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(baselinePermissionsMaxConcurrentRequests)
 
 	for page := int64(1); ; {
 		groups, resp, err := e.fetchTopLevelGroupsPage(page)
@@ -140,14 +99,11 @@ func (e *external) fetchTopLevelGroupsMissingPermissions(minPermission int, serv
 		}
 
 		for _, group := range groups {
-			permissionsCheckWaitGroup.Add(1)
-			go func(groupID int64) {
-				defer permissionsCheckWaitGroup.Done()
-
-				isMissingMembership, hasInsufficientPermissions, err := e.getGroupPermissionStatus(groupID, serviceAccountID, minPermission)
+			groupID := group.ID
+			g.Go(func() error {
+				isMissingMembership, hasInsufficientPermissions, err := e.getGroupPermissionStatus(ctx, groupID, serviceAccountID, minPermission)
 				if err != nil {
-					setRequestErr(err)
-					return
+					return err
 				}
 
 				groupsMissingPermissionsMu.Lock()
@@ -158,7 +114,8 @@ func (e *external) fetchTopLevelGroupsMissingPermissions(minPermission int, serv
 					wrongPermsGroups = append(wrongPermsGroups, groupID)
 				}
 				groupsMissingPermissionsMu.Unlock()
-			}(group.ID)
+				return nil
+			})
 		}
 
 		if resp.NextPage == 0 {
@@ -167,10 +124,12 @@ func (e *external) fetchTopLevelGroupsMissingPermissions(minPermission int, serv
 		page = resp.NextPage
 	}
 
-	permissionsCheckWaitGroup.Wait()
-	if requestErr != nil {
-		return nil, nil, requestErr
+	if err := g.Wait(); err != nil {
+		return nil, nil, err
 	}
+
+	sort.Slice(notInGroups, func(i, j int) bool { return notInGroups[i] < notInGroups[j] })
+	sort.Slice(wrongPermsGroups, func(i, j int) bool { return wrongPermsGroups[i] < wrongPermsGroups[j] })
 
 	return notInGroups, wrongPermsGroups, nil
 }
@@ -193,8 +152,8 @@ func (e *external) fetchTopLevelGroupsPage(page int64) ([]*gitlab.Group, *gitlab
 	return groups, resp, nil
 }
 
-func (e *external) getGroupPermissionStatus(groupID int64, serviceAccountID int64, minPermission int) (isMissingMembership bool, hasInsufficientPermissions bool, err error) {
-	groupMember, resp, err := e.groupMemberClient.GetGroupMember(groupID, serviceAccountID)
+func (e *external) getGroupPermissionStatus(ctx context.Context, groupID int64, serviceAccountID int64, minPermission int) (isMissingMembership bool, hasInsufficientPermissions bool, err error) {
+	groupMember, resp, err := e.groupMemberClient.GetGroupMember(groupID, serviceAccountID, gitlab.WithContext(ctx))
 	if err != nil {
 		if clients.IsResponseNotFound(resp) {
 			return true, false, nil

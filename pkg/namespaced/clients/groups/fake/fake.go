@@ -118,17 +118,17 @@ func (c *MockClient) ListGroups(opt *gitlab.ListGroupsOptions, options ...gitlab
 
 // GetGroupMember calls the underlying MockGetMember method.
 func (c *MockClient) GetGroupMember(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
-	return c.MockGetMember(gid, user)
+	return c.MockGetMember(gid, user, options...)
 }
 
 // AddGroupMember calls the underlying MockAddMember method.
 func (c *MockClient) AddGroupMember(gid interface{}, opt *gitlab.AddGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
-	return c.MockAddMember(gid, opt)
+	return c.MockAddMember(gid, opt, options...)
 }
 
 // EditGroupMember calls the underlying MockEditMember method.
 func (c *MockClient) EditGroupMember(gid interface{}, user int64, opt *gitlab.EditGroupMemberOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
-	return c.MockEditMember(gid, user, opt)
+	return c.MockEditMember(gid, user, opt, options...)
 }
 
 // RemoveGroupMember calls the underlying MockRemoveMember method.
