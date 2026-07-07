@@ -19,6 +19,7 @@ package clients
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"net/http"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -268,6 +269,16 @@ func IsResponseNotFound(res *gitlab.Response) bool {
 		return true
 	}
 	return false
+}
+
+// IsResponseUnauthorized reports whether the GitLab response indicates the
+// credential itself was rejected: 401 Unauthorized or 403 Forbidden. GitLab
+// returns 401 when a token is revoked or expired, and escalates repeated
+// unauthorized requests from the same IP to 403. Both mean the token can no
+// longer authenticate (as opposed to a missing resource or transient failure).
+func IsResponseUnauthorized(res *gitlab.Response) bool {
+	return res != nil && res.Response != nil &&
+		(res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden)
 }
 
 // TokenHash returns a stable hex-encoded SHA-256 digest of the supplied token
