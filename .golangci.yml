@@ -49,6 +49,7 @@ linters:
     goconst:
       min-len: 3
       min-occurrences: 5
+      ignore-tests: true
     gocritic:
       enabled-tags:
         - performance
@@ -106,6 +107,9 @@ linters:
       - linters:
           - staticcheck
         text: 'SA1019: resource.LegacyManaged is deprecated: new namespace-scoped MRs should implement ModernManaged' # still needed to support
+      - linters:
+          - staticcheck
+        text: 'SA1019: scheme.Builder is deprecated' # crossplane scaffolding pattern; upstream has not migrated the api register.go helpers
       - linters:
           - gosec
         text: 'G101:'
