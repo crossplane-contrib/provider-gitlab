@@ -165,7 +165,7 @@ type LicenseStatus struct {
 // WARNING: This resource should not be used multiple times for the same GitLab instance.
 //
 // IMPORTANT: If you choose to use a LicenseSecretRef OR a LicenseEndpointURL / LicenseEndpointURLSecretRef,
-// You must configure the writeConnectionSecretToRef or publishConnectionDetailsTo to receive the license key.
+// You must configure the writeConnectionSecretToRef to receive the license key.
 //
 // Example usage:
 //

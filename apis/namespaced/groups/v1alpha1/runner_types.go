@@ -111,7 +111,7 @@ type RunnerStatus struct {
 // Group runners can execute CI/CD jobs for all projects within the associated group
 // and provide a way to share runner resources across multiple projects.
 //
-// IMPORTANT: You MUST specify either writeConnectionSecretToRef or publishConnectionDetailsTo
+// IMPORTANT: You MUST specify writeConnectionSecretToRef
 // to receive the runner token. Without the token, the runner cannot be registered and is unusable.
 // The token is required to configure the actual GitLab Runner agent.
 //

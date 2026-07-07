@@ -55,7 +55,7 @@ const (
 	errResetFailed             = "cannot reset Gitlab Runner authentication token"
 	errMissingGroupID          = "missing Spec.ForProvider.GroupID"
 	errMissingExternalName     = "external name annotation not found"
-	errMissingConnectionSecret = "writeConnectionSecretToRef or publishConnectionDetailsTo must be specified to receive the runner token"
+	errMissingConnectionSecret = "writeConnectionSecretToRef must be specified to receive the runner token"
 )
 
 // SetupRunner adds a controller that reconciles runners.
