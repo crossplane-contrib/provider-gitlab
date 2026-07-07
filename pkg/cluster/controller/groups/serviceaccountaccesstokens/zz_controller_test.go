@@ -87,6 +87,13 @@ func withExternalName(n string) tokenModifier {
 	return func(r *v1alpha1.ServiceAccountAccessToken) { meta.SetExternalName(r, n) }
 }
 
+func withDeletionTimestamp() tokenModifier {
+	return func(r *v1alpha1.ServiceAccountAccessToken) {
+		now := v1.Now()
+		r.SetDeletionTimestamp(&now)
+	}
+}
+
 func saToken(m ...tokenModifier) *v1alpha1.ServiceAccountAccessToken {
 	cr := &v1alpha1.ServiceAccountAccessToken{}
 	for _, f := range m {
@@ -287,6 +294,48 @@ func TestObserveSelf(t *testing.T) {
 				},
 			},
 			cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{})),
+			want: want{
+				err: errors.Wrap(errBoom, errSelfInformFailed),
+			},
+		},
+		// Once the self-token is revoked during deletion, self-inform can no
+		// longer authenticate (401). While the resource is being deleted this is
+		// the expected terminal state, so report it gone to let the finalizer be
+		// removed instead of wedging the delete forever.
+		"DeletedAfterRevoke401ReportsGone": {
+			client: &fake.MockClient{
+				MockGetServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusUnauthorized}}, errBoom
+				},
+			},
+			cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{}), withDeletionTimestamp()),
+			want: want{
+				result: managed.ExternalObservation{ResourceExists: false},
+			},
+		},
+		// GitLab escalates repeated unauthorized requests from the same IP to
+		// 403; a wedged delete poll would produce these, so treat 403 during
+		// deletion as gone too.
+		"DeletedAfterRevoke403ReportsGone": {
+			client: &fake.MockClient{
+				MockGetServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusForbidden}}, errBoom
+				},
+			},
+			cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{}), withDeletionTimestamp()),
+			want: want{
+				result: managed.ExternalObservation{ResourceExists: false},
+			},
+		},
+		// A transient (non-auth) failure during deletion must still surface as an
+		// error rather than dropping the finalizer prematurely.
+		"DeletedTransientErrorStillFails": {
+			client: &fake.MockClient{
+				MockGetServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}, errBoom
+				},
+			},
+			cr: saToken(withSpec(v1alpha1.ServiceAccountAccessTokenParameters{}), withDeletionTimestamp()),
 			want: want{
 				err: errors.Wrap(errBoom, errSelfInformFailed),
 			},
@@ -617,6 +666,33 @@ func TestDelete(t *testing.T) {
 				cr: saToken(withExternalName(sAccessTokenID)),
 			},
 			want: want{cr: saToken(withExternalName(sAccessTokenID)), err: errors.Wrap(errBoom, errDeleteFailed)},
+		},
+		// A second reconcile hitting an already-revoked self-token gets 401.
+		// Revoke is idempotent, so this must succeed rather than wedge the delete.
+		"SelfRevoke401Idempotent": {
+			self: true,
+			args: args{
+				client: &fake.MockClient{
+					MockRevokeServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusUnauthorized}}, errBoom
+					},
+				},
+				cr: saToken(withExternalName(sAccessTokenID)),
+			},
+			want: want{cr: saToken(withExternalName(sAccessTokenID))},
+		},
+		// Rate-limited self-revoke (403) is likewise treated as an idempotent success.
+		"SelfRevoke403Idempotent": {
+			self: true,
+			args: args{
+				client: &fake.MockClient{
+					MockRevokeServiceAccountSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusForbidden}}, errBoom
+					},
+				},
+				cr: saToken(withExternalName(sAccessTokenID)),
+			},
+			want: want{cr: saToken(withExternalName(sAccessTokenID))},
 		},
 	}
 	for name, tc := range cases {

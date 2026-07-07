@@ -131,6 +131,13 @@ type HookObservation struct {
 
 	// CreatedAt specifies the time the group hook was created
 	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
+
+	// TokenHash is a SHA-256 digest of the secret token last pushed to GitLab.
+	// GitLab never returns the token, so this fingerprint is used to detect
+	// rotation of the referenced secret and trigger an update. It is never the
+	// raw token.
+	// +optional
+	TokenHash string `json:"tokenHash,omitempty"`
 }
 
 // A HookSpec defines the desired state of a Gitlab Group Hook.

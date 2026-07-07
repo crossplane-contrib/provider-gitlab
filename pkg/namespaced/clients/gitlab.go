@@ -17,6 +17,9 @@ limitations under the License.
 package clients
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"net/http"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -182,6 +185,28 @@ func IsComparableSliceEqualToComparableSlicePtr[T comparable](csp *[]T, cs []T) 
 	return csp == nil || cmp.Equal(*csp, cs)
 }
 
+// AreStringSlicesEqual compares two slices of comparable types for equality
+// This equality is order insensitive, meaning that the order of elements in the slices does not matter for them to be considered equal.
+func AreStringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	counts := make(map[string]int)
+	for _, item := range a {
+		counts[item]++
+	}
+
+	for _, item := range b {
+		if counts[item] == 0 {
+			return false
+		}
+		counts[item]--
+	}
+
+	return true
+}
+
 // IsMapStringToComparableEqualToMapStringToComparablePtr compares a *map[string]T with map[string]T where T is comparable
 func IsMapStringToComparableEqualToMapStringToComparablePtr[T comparable](mp *map[string]T, m map[string]T) bool {
 	return mp == nil || cmp.Equal(*mp, m)
@@ -244,4 +269,27 @@ func IsResponseNotFound(res *gitlab.Response) bool {
 		return true
 	}
 	return false
+}
+
+// IsResponseUnauthorized reports whether the GitLab response indicates the
+// credential itself was rejected: 401 Unauthorized or 403 Forbidden. GitLab
+// returns 401 when a token is revoked or expired, and escalates repeated
+// unauthorized requests from the same IP to 403. Both mean the token can no
+// longer authenticate (as opposed to a missing resource or transient failure).
+func IsResponseUnauthorized(res *gitlab.Response) bool {
+	return res != nil && res.Response != nil &&
+		(res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden)
+}
+
+// TokenHash returns a stable hex-encoded SHA-256 digest of the supplied token
+// value, or an empty string when no token is set. GitLab never returns webhook
+// secret tokens, so the digest is stored in status.atProvider to detect when a
+// referenced secret has been rotated on the desired side and must be re-pushed.
+// Only the digest is ever persisted, never the raw token.
+func TokenHash(token *string) string {
+	if token == nil {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(*token))
+	return hex.EncodeToString(sum[:])
 }
