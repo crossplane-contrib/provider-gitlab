@@ -43,15 +43,15 @@ spec:
         description: "A Runner is a managed resource that represents a GitLab Runner
           linked to a group.\nGroup runners can execute CI/CD jobs for all projects
           within the associated group\nand provide a way to share runner resources
-          across multiple projects.\n\nIMPORTANT: You MUST specify either writeConnectionSecretToRef
-          or publishConnectionDetailsTo\nto receive the runner token. Without the
-          token, the runner cannot be registered and is unusable.\nThe token is required
-          to configure the actual GitLab Runner agent.\n\nExample usage:\n\n\tspec:\n\t
-          \ writeConnectionSecretToRef:\n\t    name: my-runner-token\n\t    namespace:
-          default\n\nWhen a Runner is created, it generates a runner token that must
-          be used\nto register the actual GitLab Runner agent with the GitLab instance.\nThe
-          runner token is made available through Kubernetes secrets via connection
-          details.\n\nGitLab API docs:\nhttps://docs.gitlab.com/ee/api/users.html#create-a-runner\nhttps://docs.gitlab.com/ee/api/runners.html"
+          across multiple projects.\n\nIMPORTANT: You MUST specify writeConnectionSecretToRef\nto
+          receive the runner token. Without the token, the runner cannot be registered
+          and is unusable.\nThe token is required to configure the actual GitLab Runner
+          agent.\n\nExample usage:\n\n\tspec:\n\t  writeConnectionSecretToRef:\n\t
+          \   name: my-runner-token\n\t    namespace: default\n\nWhen a Runner is
+          created, it generates a runner token that must be used\nto register the
+          actual GitLab Runner agent with the GitLab instance.\nThe runner token is
+          made available through Kubernetes secrets via connection details.\n\nGitLab
+          API docs:\nhttps://docs.gitlab.com/ee/api/users.html#create-a-runner\nhttps://docs.gitlab.com/ee/api/runners.html"
         properties:
           apiVersion:
             description: |-

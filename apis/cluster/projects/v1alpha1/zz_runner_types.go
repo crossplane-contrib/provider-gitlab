@@ -123,7 +123,7 @@ type RunnerStatus struct {
 // Project runners can execute CI/CD jobs exclusively for the associated project
 // and provide dedicated runner resources for a single project.
 //
-// IMPORTANT: You MUST specify either writeConnectionSecretToRef or publishConnectionDetailsTo
+// IMPORTANT: You MUST specify writeConnectionSecretToRef
 // to receive the runner token. Without the token, the runner cannot be registered and is unusable.
 // The token is required to configure the actual GitLab Runner agent.
 //
