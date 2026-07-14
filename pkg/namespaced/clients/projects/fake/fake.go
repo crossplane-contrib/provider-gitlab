@@ -58,6 +58,8 @@ type MockClient struct {
 	MockRevokeProjectAccessToken func(pid any, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockRotateProjectAccessToken func(pid any, id int64, opt *gitlab.RotateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
 	MockRotateSelf               func(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockGetSelf                  func(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockRevokeSelf               func(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
 	MockAddDeployKey    func(pid any, opt *gitlab.AddDeployKeyOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error)
 	MockDeleteDeployKey func(pid any, deployKey int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
@@ -278,6 +280,16 @@ func (c *MockClient) RotateProjectAccessToken(pid any, id int64, opt *gitlab.Rot
 // RotateSelf calls the underlying MockRotateSelf method.
 func (c *MockClient) RotateSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 	return c.MockRotateSelf(opt, options...)
+}
+
+// GetSelf calls the underlying MockGetSelf method.
+func (c *MockClient) GetSelf(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.MockGetSelf(options...)
+}
+
+// RevokeSelf calls the underlying MockRevokeSelf method.
+func (c *MockClient) RevokeSelf(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockRevokeSelf(options...)
 }
 
 // ListUsers calls the underlying MockListUsers method.
