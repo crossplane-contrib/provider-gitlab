@@ -150,6 +150,14 @@ var (
 	IntegrationMattermostGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationMattermostKind)
 )
 
+// IntegrationHarbor type metadata
+var (
+	IntegrationHarborKind             = reflect.TypeOf(IntegrationHarbor{}).Name()
+	IntegrationHarborGroupKind        = schema.GroupKind{Group: Group, Kind: IntegrationHarborKind}.String()
+	IntegrationHarborKindAPIVersion   = IntegrationHarborKind + "." + SchemeGroupVersion.String()
+	IntegrationHarborGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationHarborKind)
+)
+
 // ProjectShareGroup type metadata
 var (
 	ProjectShareGroupKind             = reflect.TypeOf(ProjectShareGroup{}).Name()
@@ -191,6 +199,8 @@ func init() {
 
 	// Mattermost
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
+	// Harbor
+	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
 	SchemeBuilder.Register(&ProjectShareGroup{}, &ProjectShareGroupList{})
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})

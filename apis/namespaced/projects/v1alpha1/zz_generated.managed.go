@@ -260,6 +260,46 @@ func (mg *Hook) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) 
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this IntegrationHarbor.
+func (mg *IntegrationHarbor) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetManagementPolicies of this IntegrationHarbor.
+func (mg *IntegrationHarbor) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationHarbor.
+func (mg *IntegrationHarbor) GetProviderConfigReference() *v2.ProviderConfigReference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationHarbor.
+func (mg *IntegrationHarbor) GetWriteConnectionSecretToReference() *v2.LocalSecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationHarbor.
+func (mg *IntegrationHarbor) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetManagementPolicies of this IntegrationHarbor.
+func (mg *IntegrationHarbor) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationHarbor.
+func (mg *IntegrationHarbor) SetProviderConfigReference(r *v2.ProviderConfigReference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationHarbor.
+func (mg *IntegrationHarbor) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this IntegrationMattermost.
 func (mg *IntegrationMattermost) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)

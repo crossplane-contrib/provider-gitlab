@@ -93,6 +93,10 @@ type MockClient struct {
 	MockSetMattermostService    func(pid any, opt *gitlab.SetMattermostServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
 	MockDeleteMattermostService func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
+	MockGetHarborService    func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborService, *gitlab.Response, error)
+	MockSetHarborService    func(pid any, opt *gitlab.SetHarborServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborService, *gitlab.Response, error)
+	MockDeleteHarborService func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
 	MockShareProjectWithGroup        func(pid any, opt *gitlab.ShareWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockDeleteSharedProjectFromGroup func(pid any, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
@@ -346,6 +350,21 @@ func (c *MockClient) SetMattermostService(pid any, opt *gitlab.SetMattermostServ
 // DeleteMattermostService calls the underlying MockDeleteMattermostService method.
 func (c *MockClient) DeleteMattermostService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteMattermostService(pid, options...)
+}
+
+// GetHarborService calls the underlying MockGetHarborService method.
+func (c *MockClient) GetHarborService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborService, *gitlab.Response, error) {
+	return c.MockGetHarborService(pid, options...)
+}
+
+// SetHarborService calls the underlying MockSetHarborService method.
+func (c *MockClient) SetHarborService(pid any, opt *gitlab.SetHarborServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborService, *gitlab.Response, error) {
+	return c.MockSetHarborService(pid, opt, options...)
+}
+
+// DeleteHarborService calls the underlying MockDeleteHarborService method.
+func (c *MockClient) DeleteHarborService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteHarborService(pid, options...)
 }
 
 // ShareProjectWithGroup calls the underlying MockShareProjectWithGroup method.
