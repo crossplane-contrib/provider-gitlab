@@ -3,7 +3,7 @@ module github.com/crossplane-contrib/provider-gitlab/tools
 go 1.26.0
 
 require (
-	github.com/crossplane/crossplane-tools v0.0.0-20251017183449-dd4517244339
+	github.com/crossplane/crossplane-tools v0.0.0-20260719180100-659f1dc036c5
 	sigs.k8s.io/controller-tools v0.21.0
 )
 
@@ -69,4 +69,4 @@ require (
 )
 
 // needed until https://github.com/crossplane/crossplane-tools/pull/128 gets merged
-replace github.com/crossplane/crossplane-tools => github.com/floric/crossplane-tools v0.0.0-20260529090112-242321a25263
+replace github.com/crossplane/crossplane-tools => github.com/floric/crossplane-tools v0.0.0-20251017183449-dd4517244339
