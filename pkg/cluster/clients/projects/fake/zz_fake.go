@@ -80,6 +80,9 @@ type MockClient struct {
 	MockAddProjectPushRule  func(pid any, opt *gitlab.AddProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 	MockEditProjectPushRule func(pid any, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 
+	MockGetApprovalConfiguration    func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovals, *gitlab.Response, error)
+	MockChangeApprovalConfiguration func(pid any, opt *gitlab.ChangeApprovalConfigurationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovals, *gitlab.Response, error)
+
 	MockGetProjectApprovalRule    func(pid any, ruleID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
 	MockCreateProjectApprovalRule func(pid any, opt *gitlab.CreateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
 	MockUpdateProjectApprovalRule func(pid any, approvalRule int64, opt *gitlab.UpdateProjectLevelRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error)
@@ -300,6 +303,16 @@ func (c *MockClient) AddProjectPushRule(pid any, opt *gitlab.AddProjectPushRuleO
 // EditProjectPushRule calls the underlying MockEditProjectPushRule method.
 func (c *MockClient) EditProjectPushRule(pid any, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
 	return c.MockEditProjectPushRule(pid, opt, options...)
+}
+
+// GetApprovalConfiguration calls the underlying MockGetApprovalConfiguration method.
+func (c *MockClient) GetApprovalConfiguration(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovals, *gitlab.Response, error) {
+	return c.MockGetApprovalConfiguration(pid, options...)
+}
+
+// ChangeApprovalConfiguration calls the underlying MockChangeApprovalConfiguration method.
+func (c *MockClient) ChangeApprovalConfiguration(pid any, opt *gitlab.ChangeApprovalConfigurationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovals, *gitlab.Response, error) {
+	return c.MockChangeApprovalConfiguration(pid, opt, options...)
 }
 
 func (c *MockClient) GetProjectApprovalRule(pid any, ruleID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {

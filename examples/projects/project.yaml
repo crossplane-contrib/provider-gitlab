@@ -11,6 +11,15 @@ spec:
       name: example-group
     description: "example project description"
     buildGitStrategy: "fetch"
+    # Merge request approval configuration for the project. Fields left
+    # unset here are not managed by this provider.
+    approvals:
+      resetApprovalsOnPush: true
+      disableOverridingApproversPerMergeRequest: false
+      mergeRequestsAuthorApproval: false
+      mergeRequestsDisableCommittersApproval: true
+      requireReauthenticationToApprove: true
+      selectiveCodeOwnerRemovals: false
   providerConfigRef:
     name: gitlab-provider
     kind: ProviderConfig

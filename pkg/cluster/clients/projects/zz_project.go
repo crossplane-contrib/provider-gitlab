@@ -45,6 +45,9 @@ type Client interface {
 	AddProjectPushRule(pid interface{}, opt *gitlab.AddProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 	EditProjectPushRule(pid interface{}, opt *gitlab.EditProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 
+	GetApprovalConfiguration(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovals, *gitlab.Response, error)
+	ChangeApprovalConfiguration(pid interface{}, opt *gitlab.ChangeApprovalConfigurationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovals, *gitlab.Response, error)
+
 	ShareProjectWithGroup(pid any, opt *gitlab.ShareWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	DeleteSharedProjectFromGroup(pid any, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
@@ -459,6 +462,22 @@ func GenerateAddPushRulesOptions(p *v1alpha1.ProjectParameters) *gitlab.AddProje
 		o.RejectNonDCOCommits = p.PushRules.RejectNonDCOCommits
 		o.RejectUnsignedCommits = p.PushRules.RejectUnsignedCommits
 	}
+	return o
+}
+
+// GenerateChangeApprovalConfigurationOptions generates options to update a
+// project's merge request approval configuration.
+func GenerateChangeApprovalConfigurationOptions(p *v1alpha1.Approvals) *gitlab.ChangeApprovalConfigurationOptions {
+	o := &gitlab.ChangeApprovalConfigurationOptions{}
+	if p == nil {
+		return o
+	}
+	o.ResetApprovalsOnPush = p.ResetApprovalsOnPush
+	o.DisableOverridingApproversPerMergeRequest = p.DisableOverridingApproversPerMergeRequest
+	o.MergeRequestsAuthorApproval = p.MergeRequestsAuthorApproval
+	o.MergeRequestsDisableCommittersApproval = p.MergeRequestsDisableCommittersApproval
+	o.RequireReauthenticationToApprove = p.RequireReauthenticationToApprove
+	o.SelectiveCodeOwnerRemovals = p.SelectiveCodeOwnerRemovals
 	return o
 }
 
