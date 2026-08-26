@@ -5,15 +5,28 @@
     "helpers:pinGitHubActionDigests",
     ":semanticCommits"
   ],
-  "crossplane": {
-    "managerFilePatterns": ["/(^|/)example/.*\\.ya?ml$/"]
-  },
+  "automergeStrategy": "squash",
+  "rebaseWhen": "auto",
+  "minimumReleaseAge": "1 day",
+  "enabledManagers": ["gomod", "github-actions", "dockerfile", "crossplane"],
   "packageRules": [
     {
-      "matchManagers": ["crossplane"],
-      "matchFileNames": ["example/**"],
-      "groupName": "examples"
+      "matchUpdateTypes": ["patch", "minor", "digest", "pinDigest"],
+      "groupName": "all minor and patch",
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "groupName": "all major",
+      "automerge": false
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["indirect"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ],
-  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]
+  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
+  "pinDigests": true
 }

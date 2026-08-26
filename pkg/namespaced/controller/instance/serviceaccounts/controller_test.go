@@ -32,10 +32,12 @@ import (
 	pkgerrors "github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	groupsfake "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups/fake"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
 )
 
@@ -226,11 +228,57 @@ func TestObserve(t *testing.T) {
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false, ResourceLateInitialized: false},
 			},
 		},
+		"SuccessfulBaselinePermissionsSortsStatus": {
+			args: args{
+				client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+					return &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+				}},
+				cr: serviceAccount(withExternalName("123"), withSpec(v1alpha1.ServiceAccountParameters{
+					CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+					BaselinePermissions:            ptr.To(accessLevelDeveloper),
+				})),
+			},
+			want: want{
+				cr: serviceAccount(
+					withExternalName("123"),
+					withSpec(v1alpha1.ServiceAccountParameters{
+						CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+						BaselinePermissions:            ptr.To(accessLevelDeveloper),
+					}),
+					withConditions(v2.Available()),
+					func(r *v1alpha1.ServiceAccount) {
+						r.Status.AtProvider = instance.GenerateServiceAccountObservation(&gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail})
+						r.Status.AtProvider.MissingMemberShipGroups = []int64{1, 3}
+						r.Status.AtProvider.WrongPermissionsGroups = []int64{2, 4}
+					},
+				),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false, ResourceLateInitialized: false},
+			},
+		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			e := &external{kube: tc.args.kube, client: tc.args.client}
+			if name == "SuccessfulBaselinePermissionsSortsStatus" {
+				e.groupsClient = &groupsfake.MockClient{MockListGroups: func(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error) {
+					return []*gitlab.Group{{ID: 4}, {ID: 1}, {ID: 2}, {ID: 3}}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}, NextPage: 0}, nil
+				}}
+				e.groupMemberClient = &groupsfake.MockClient{MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					switch gid.(int64) {
+					case 4:
+						return &gitlab.GroupMember{AccessLevel: gitlab.AccessLevelValue(accessLevelReporterValue)}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}}, nil
+					case 1:
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, pkgerrors.New("not found")
+					case 2:
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}}, nil
+					case 3:
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, pkgerrors.New("not found")
+					default:
+						return nil, nil, pkgerrors.New("unexpected group")
+					}
+				}}
+			}
 			got, err := e.Observe(context.Background(), tc.args.cr)
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("Observe(): -want error, +got error:\n%s", diff)

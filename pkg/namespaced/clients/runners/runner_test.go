@@ -72,6 +72,139 @@ func TestIsErrorRunnerNotFound(t *testing.T) {
 	}
 }
 
+func TestShouldRotateRunnerToken(t *testing.T) {
+	// Use fixed dates to keep tests deterministic.
+	createdAt := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	expiresAt := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC) // 90 days lifetime
+
+	// 2/3 of 90 days = 60 days → renewAt = 2026-03-02
+	renewAt2Third := createdAt.Add(expiresAt.Sub(createdAt) * 2 / 3)
+
+	intPtr := func(i int) *int { return &i }
+
+	cases := map[string]struct {
+		obs             commonv1alpha1.CommonRunnerObservation
+		renewBeforeDays *int
+		now             time.Time
+		want            bool
+	}{
+		"NilExpiresAt": {
+			obs:  commonv1alpha1.CommonRunnerObservation{},
+			now:  createdAt.Add(80 * 24 * time.Hour),
+			want: false,
+		},
+		"NoCreatedAtBeforeExpiry": {
+			obs:  commonv1alpha1.CommonRunnerObservation{TokenExpiresAt: &metav1.Time{Time: expiresAt}},
+			now:  expiresAt.Add(-1 * time.Hour),
+			want: false,
+		},
+		"NoCreatedAtAfterExpiry": {
+			obs:  commonv1alpha1.CommonRunnerObservation{TokenExpiresAt: &metav1.Time{Time: expiresAt}},
+			now:  expiresAt.Add(1 * time.Second),
+			want: true,
+		},
+		"TwoThirdsThresholdNotReached": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: createdAt},
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			now:  renewAt2Third.Add(-1 * time.Hour),
+			want: false,
+		},
+		"TwoThirdsThresholdReached": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: createdAt},
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			now:  renewAt2Third,
+			want: true,
+		},
+		"RenewBeforeDaysNotReached": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			renewBeforeDays: intPtr(14),
+			now:             expiresAt.Add(-15 * 24 * time.Hour),
+			want:            false,
+		},
+		"RenewBeforeDaysReached": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			renewBeforeDays: intPtr(14),
+			now:             expiresAt.Add(-13 * 24 * time.Hour),
+			want:            true,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := ShouldRotateRunnerToken(&tc.obs, tc.renewBeforeDays, tc.now)
+			if got != tc.want {
+				t.Errorf("ShouldRotateRunnerToken() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestComputeNextRunnerTokenRotation(t *testing.T) {
+	createdAt := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	expiresAt := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC) // 90 days
+
+	renewAt2Third := createdAt.Add(expiresAt.Sub(createdAt) * 2 / 3)
+	renewAt14Days := expiresAt.AddDate(0, 0, -14)
+
+	intPtr := func(i int) *int { return &i }
+
+	cases := map[string]struct {
+		obs             commonv1alpha1.CommonRunnerObservation
+		renewBeforeDays *int
+		wantNil         bool
+		wantTime        time.Time
+	}{
+		"NilExpiresAt": {
+			obs:     commonv1alpha1.CommonRunnerObservation{},
+			wantNil: true,
+		},
+		"NilCreatedAtNoRenewBefore": {
+			obs:     commonv1alpha1.CommonRunnerObservation{TokenExpiresAt: &metav1.Time{Time: expiresAt}},
+			wantNil: true,
+		},
+		"WithCreatedAt": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: createdAt},
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			wantTime: renewAt2Third,
+		},
+		"WithRenewBeforeDays": {
+			obs: commonv1alpha1.CommonRunnerObservation{
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+			renewBeforeDays: intPtr(14),
+			wantTime:        renewAt14Days,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := ComputeNextRunnerTokenRotation(&tc.obs, tc.renewBeforeDays)
+			if tc.wantNil {
+				if got != nil {
+					t.Errorf("ComputeNextRunnerTokenRotation() = %v, want nil", got)
+				}
+				return
+			}
+			if got == nil {
+				t.Fatalf("ComputeNextRunnerTokenRotation() = nil, want %v", tc.wantTime)
+			}
+			if !got.Time.Equal(tc.wantTime) {
+				t.Errorf("ComputeNextRunnerTokenRotation() = %v, want %v", got.Time, tc.wantTime)
+			}
+		})
+	}
+}
+
 func TestGenerateCommonRunnerObservation(t *testing.T) {
 	contactedAt := time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC)
 
@@ -234,6 +367,211 @@ func TestGenerateEditRunnerOptions(t *testing.T) {
 
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("GenerateEditRunnerOptions() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// testObj is a minimal metav1.Object used to test annotation helpers without
+// depending on a specific Crossplane resource type.
+type testObj struct {
+	metav1.ObjectMeta
+}
+
+func TestSetRunnerTokenAnnotations(t *testing.T) {
+	createdAt := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	expiresAt := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
+
+	cases := map[string]struct {
+		initial   map[string]string
+		createdAt time.Time
+		expiresAt *time.Time
+		want      map[string]string
+	}{
+		"NilAnnotationsWithExpiry": {
+			initial:   nil,
+			createdAt: createdAt,
+			expiresAt: &expiresAt,
+			want: map[string]string{
+				AnnotationKeyTokenCreatedAt: "2026-01-01T12:00:00Z",
+				AnnotationKeyTokenExpiresAt: "2026-03-01T12:00:00Z",
+			},
+		},
+		"NilExpiryDeletesExpiresAtKey": {
+			initial: map[string]string{
+				AnnotationKeyTokenCreatedAt: "old",
+				AnnotationKeyTokenExpiresAt: "old",
+			},
+			createdAt: createdAt,
+			expiresAt: nil,
+			want: map[string]string{
+				AnnotationKeyTokenCreatedAt: "2026-01-01T12:00:00Z",
+			},
+		},
+		"PreservesUnrelatedAnnotations": {
+			initial: map[string]string{
+				"crossplane.io/external-name": "42",
+			},
+			createdAt: createdAt,
+			expiresAt: &expiresAt,
+			want: map[string]string{
+				"crossplane.io/external-name": "42",
+				AnnotationKeyTokenCreatedAt:   "2026-01-01T12:00:00Z",
+				AnnotationKeyTokenExpiresAt:   "2026-03-01T12:00:00Z",
+			},
+		},
+		"OverwritesExistingTokenAnnotations": {
+			initial: map[string]string{
+				AnnotationKeyTokenCreatedAt: "stale",
+				AnnotationKeyTokenExpiresAt: "stale",
+			},
+			createdAt: createdAt,
+			expiresAt: &expiresAt,
+			want: map[string]string{
+				AnnotationKeyTokenCreatedAt: "2026-01-01T12:00:00Z",
+				AnnotationKeyTokenExpiresAt: "2026-03-01T12:00:00Z",
+			},
+		},
+		"TimesAreNormalisedToUTC": {
+			initial:   nil,
+			createdAt: time.Date(2026, 6, 1, 10, 30, 0, 0, time.FixedZone("CEST", 2*3600)),
+			expiresAt: nil,
+			want: map[string]string{
+				AnnotationKeyTokenCreatedAt: "2026-06-01T08:30:00Z",
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			obj := &testObj{}
+			obj.SetAnnotations(tc.initial)
+
+			SetRunnerTokenAnnotations(obj, tc.createdAt, tc.expiresAt)
+
+			got := obj.GetAnnotations()
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("SetRunnerTokenAnnotations() annotations mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestRestoreTokenFieldsFromAnnotations(t *testing.T) {
+	createdAt := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	expiresAt := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
+
+	cases := map[string]struct {
+		annotations map[string]string
+		initial     commonv1alpha1.CommonRunnerObservation
+		want        commonv1alpha1.CommonRunnerObservation
+	}{
+		"NoAnnotationsLeavesObsUnchanged": {
+			annotations: nil,
+			initial:     commonv1alpha1.CommonRunnerObservation{},
+			want:        commonv1alpha1.CommonRunnerObservation{},
+		},
+		"EmptyAnnotationsLeavesObsUnchanged": {
+			annotations: map[string]string{},
+			initial:     commonv1alpha1.CommonRunnerObservation{},
+			want:        commonv1alpha1.CommonRunnerObservation{},
+		},
+		"PopulatesBothFieldsWhenNil": {
+			annotations: map[string]string{
+				AnnotationKeyTokenCreatedAt: "2026-01-01T12:00:00Z",
+				AnnotationKeyTokenExpiresAt: "2026-03-01T12:00:00Z",
+			},
+			initial: commonv1alpha1.CommonRunnerObservation{},
+			want: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: createdAt},
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+		},
+		"PopulatesOnlyCreatedAtWhenExpiresAtAnnotationMissing": {
+			annotations: map[string]string{
+				AnnotationKeyTokenCreatedAt: "2026-01-01T12:00:00Z",
+			},
+			initial: commonv1alpha1.CommonRunnerObservation{},
+			want: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: createdAt},
+			},
+		},
+		"DoesNotOverwriteExistingCreatedAt": {
+			annotations: map[string]string{
+				AnnotationKeyTokenCreatedAt: "2026-01-01T12:00:00Z",
+				AnnotationKeyTokenExpiresAt: "2026-03-01T12:00:00Z",
+			},
+			initial: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC)},
+			},
+			want: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC)},
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+		},
+		"DoesNotOverwriteExistingExpiresAt": {
+			annotations: map[string]string{
+				AnnotationKeyTokenCreatedAt: "2026-01-01T12:00:00Z",
+				AnnotationKeyTokenExpiresAt: "2026-03-01T12:00:00Z",
+			},
+			initial: commonv1alpha1.CommonRunnerObservation{
+				TokenExpiresAt: &metav1.Time{Time: time.Date(2025, 12, 1, 0, 0, 0, 0, time.UTC)},
+			},
+			want: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: createdAt},
+				TokenExpiresAt: &metav1.Time{Time: time.Date(2025, 12, 1, 0, 0, 0, 0, time.UTC)},
+			},
+		},
+		"IgnoresMalformedCreatedAtAnnotation": {
+			annotations: map[string]string{
+				AnnotationKeyTokenCreatedAt: "not-a-time",
+				AnnotationKeyTokenExpiresAt: "2026-03-01T12:00:00Z",
+			},
+			initial: commonv1alpha1.CommonRunnerObservation{},
+			want: commonv1alpha1.CommonRunnerObservation{
+				TokenExpiresAt: &metav1.Time{Time: expiresAt},
+			},
+		},
+		"IgnoresMalformedExpiresAtAnnotation": {
+			annotations: map[string]string{
+				AnnotationKeyTokenCreatedAt: "2026-01-01T12:00:00Z",
+				AnnotationKeyTokenExpiresAt: "not-a-time",
+			},
+			initial: commonv1alpha1.CommonRunnerObservation{},
+			want: commonv1alpha1.CommonRunnerObservation{
+				TokenCreatedAt: &metav1.Time{Time: createdAt},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			obj := &testObj{}
+			obj.SetAnnotations(tc.annotations)
+			obs := tc.initial
+
+			RestoreTokenFieldsFromAnnotations(obj, &obs)
+
+			if diff := cmp.Diff(tc.want, obs); diff != "" {
+				t.Errorf("RestoreTokenFieldsFromAnnotations() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestAnnotationRoundTrip(t *testing.T) {
+	createdAt := time.Date(2026, 2, 15, 9, 0, 0, 0, time.UTC)
+	expiresAt := time.Date(2026, 4, 15, 9, 0, 0, 0, time.UTC)
+
+	obj := &testObj{}
+	SetRunnerTokenAnnotations(obj, createdAt, &expiresAt)
+
+	obs := commonv1alpha1.CommonRunnerObservation{}
+	RestoreTokenFieldsFromAnnotations(obj, &obs)
+
+	if obs.TokenCreatedAt == nil || !obs.TokenCreatedAt.Time.Equal(createdAt) {
+		t.Errorf("round-trip TokenCreatedAt = %v, want %v", obs.TokenCreatedAt, createdAt)
+	}
+	if obs.TokenExpiresAt == nil || !obs.TokenExpiresAt.Time.Equal(expiresAt) {
+		t.Errorf("round-trip TokenExpiresAt = %v, want %v", obs.TokenExpiresAt, expiresAt)
 	}
 }
 

@@ -20,9 +20,11 @@ package users
 
 import (
 	"strings"
+	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
 	instancev1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
@@ -34,6 +36,14 @@ import (
 
 const (
 	errRunnerNotFound = "404 Runner Not Found"
+
+	// AnnotationKeyTokenCreatedAt and AnnotationKeyTokenExpiresAt bridge the gap
+	// between Create() and Observe(). crossplane-runtime v2 reverts status changes
+	// made during Create() before they reach Kubernetes, so we store the token
+	// timestamps in annotations (which ARE persisted via UpdateCriticalAnnotations).
+	// Observe() reads these annotations to populate the status fields.
+	AnnotationKeyTokenCreatedAt = "runner.gitlab.crossplane.io/token-created-at"
+	AnnotationKeyTokenExpiresAt = "runner.gitlab.crossplane.io/token-expires-at"
 )
 
 // RunnerClient defines Gitlab Runner service operations
@@ -56,6 +66,109 @@ func IsErrorRunnerNotFound(err error) bool {
 		return false
 	}
 	return strings.Contains(err.Error(), errRunnerNotFound)
+}
+
+// SetRunnerTokenAnnotations writes token creation and expiration times to the CR
+// annotations. Required because crossplane-runtime v2 reverts status changes from
+// Create() before they are persisted; annotations survive that revert.
+func SetRunnerTokenAnnotations(obj metav1.Object, createdAt time.Time, expiresAt *time.Time) {
+	annotations := obj.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[AnnotationKeyTokenCreatedAt] = createdAt.UTC().Format(time.RFC3339)
+	if expiresAt != nil {
+		annotations[AnnotationKeyTokenExpiresAt] = expiresAt.UTC().Format(time.RFC3339)
+	} else {
+		delete(annotations, AnnotationKeyTokenExpiresAt)
+	}
+	obj.SetAnnotations(annotations)
+}
+
+// RestoreTokenFieldsFromAnnotations populates nil token fields in obs from annotations.
+// Called at the start of Observe() to recover values that were lost when
+// crossplane-runtime reverted the status after Create().
+func RestoreTokenFieldsFromAnnotations(obj metav1.Object, obs *commonv1alpha1.CommonRunnerObservation) {
+	annotations := obj.GetAnnotations()
+	if len(annotations) == 0 {
+		return
+	}
+	if obs.TokenCreatedAt == nil {
+		if s, ok := annotations[AnnotationKeyTokenCreatedAt]; ok {
+			if t, err := time.Parse(time.RFC3339, s); err == nil {
+				mt := metav1.NewTime(t)
+				obs.TokenCreatedAt = &mt
+			}
+		}
+	}
+	if obs.TokenExpiresAt == nil {
+		if s, ok := annotations[AnnotationKeyTokenExpiresAt]; ok {
+			if t, err := time.Parse(time.RFC3339, s); err == nil {
+				mt := metav1.NewTime(t)
+				obs.TokenExpiresAt = &mt
+			}
+		}
+	}
+}
+
+// ShouldRotateRunnerToken returns true when the runner token should be rotated.
+// It uses a proactive 2/3-lifetime threshold by default, or TokenRenewBeforeDays
+// when set. Falls back to checking expiry when TokenCreatedAt is not tracked.
+func ShouldRotateRunnerToken(obs *commonv1alpha1.CommonRunnerObservation, renewBeforeDays *int, now time.Time) bool {
+	if obs.TokenExpiresAt == nil {
+		return false
+	}
+
+	if renewBeforeDays != nil {
+		createdAt := time.Time{}
+		if obs.TokenCreatedAt != nil {
+			createdAt = obs.TokenCreatedAt.Time
+		}
+
+		renewAt, ok := common.RotationTime(createdAt, obs.TokenExpiresAt.Time, renewBeforeDays)
+		if !ok {
+			return false
+		}
+
+		// if renewBeforeDays exceeds the token lifetime, renewAt ends up before or at
+		// createdAt. Resetting would immediately be due again, causing perpetual rotation.
+		if !createdAt.IsZero() && !renewAt.After(createdAt) {
+			return false
+		}
+		return !now.UTC().Before(renewAt)
+	}
+
+	if obs.TokenCreatedAt == nil {
+		return !now.UTC().Before(obs.TokenExpiresAt.Time)
+	}
+
+	return common.HasReachedRenewalTime(obs.TokenCreatedAt.Time, obs.TokenExpiresAt.Time, now, nil)
+}
+
+// ComputeNextRunnerTokenRotation returns the time at which the provider will
+// next rotate the runner token, or nil when it cannot be determined.
+func ComputeNextRunnerTokenRotation(obs *commonv1alpha1.CommonRunnerObservation, renewBeforeDays *int) *metav1.Time {
+	if obs.TokenExpiresAt == nil {
+		return nil
+	}
+
+	var createdAt time.Time
+	if obs.TokenCreatedAt != nil {
+		createdAt = obs.TokenCreatedAt.Time
+	} else if renewBeforeDays == nil {
+		return nil
+	}
+
+	t, ok := common.RotationTime(createdAt, obs.TokenExpiresAt.Time, renewBeforeDays)
+	if !ok {
+		return nil
+	}
+
+	if renewBeforeDays != nil && !createdAt.IsZero() && !t.After(createdAt) {
+		return nil
+	}
+
+	return ptr.To(metav1.NewTime(t))
 }
 
 // GenerateInstanceRunnerObservation is used to produce v1alpha1.RunnerObservation from
@@ -183,23 +296,13 @@ func IsRunnerUpToDate(spec *commonv1alpha1.CommonRunnerParameters, observed *git
 	if observed == nil {
 		return false
 	}
-	// Convert observed.MaximumTimeout from int64 to int for comparison
-	observedMaxTimeout := observed.MaximumTimeout
-	// Use a compact list to keep cyclomatic complexity low
-	checks := []bool{
-		clients.IsComparableEqualToComparablePtr(spec.Description, observed.Description),
-		clients.IsComparableEqualToComparablePtr(spec.Paused, observed.Paused),
-		clients.IsComparableEqualToComparablePtr(spec.Locked, observed.Locked),
-		clients.IsComparableEqualToComparablePtr(spec.RunUntagged, observed.RunUntagged),
-		clients.IsComparableSliceEqualToComparableSlicePtr(spec.TagList, observed.TagList),
-		clients.IsComparableEqualToComparablePtr(spec.AccessLevel, observed.AccessLevel),
-		clients.IsComparableEqualToComparablePtr(spec.MaximumTimeout, observedMaxTimeout),
-		clients.IsComparableEqualToComparablePtr(spec.MaintenanceNote, observed.MaintenanceNote),
-	}
-	for _, ok := range checks {
-		if !ok {
-			return false
-		}
-	}
-	return true
+
+	return clients.IsComparableEqualToComparablePtr(spec.Description, observed.Description) &&
+		clients.IsComparableEqualToComparablePtr(spec.Paused, observed.Paused) &&
+		clients.IsComparableEqualToComparablePtr(spec.Locked, observed.Locked) &&
+		clients.IsComparableEqualToComparablePtr(spec.RunUntagged, observed.RunUntagged) &&
+		clients.IsComparableSliceEqualToComparableSlicePtr(spec.TagList, observed.TagList) &&
+		clients.IsComparableEqualToComparablePtr(spec.AccessLevel, observed.AccessLevel) &&
+		clients.IsComparableEqualToComparablePtr(spec.MaximumTimeout, observed.MaximumTimeout) &&
+		clients.IsComparableEqualToComparablePtr(spec.MaintenanceNote, observed.MaintenanceNote)
 }

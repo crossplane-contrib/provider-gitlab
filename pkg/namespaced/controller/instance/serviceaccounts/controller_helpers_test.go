@@ -25,7 +25,7 @@ import (
 
 	xerrors "github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/hashicorp/go-retryablehttp"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 
 	groupsfake "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups/fake"
@@ -57,6 +57,25 @@ func TestGetAccessLevelValue(t *testing.T) {
 		})
 	}
 }
+
+func requestContext(t *testing.T, options []gitlab.RequestOptionFunc) context.Context {
+	t.Helper()
+	if len(options) == 0 {
+		t.Fatal("expected request option")
+	}
+	req, err := retryablehttp.NewRequest(http.MethodGet, "https://example.com", nil)
+	if err != nil {
+		t.Fatalf("NewRequest() error: %v", err)
+	}
+	for _, option := range options {
+		if err := option(req); err != nil {
+			t.Fatalf("request option error: %v", err)
+		}
+	}
+	return req.Context()
+}
+
+type observeContextKey struct{}
 
 func TestFetchTopLevelGroupsPage(t *testing.T) {
 	client := &groupsfake.MockClient{
@@ -132,7 +151,7 @@ func TestGetGroupPermissionStatus(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			e := &external{groupMemberClient: tc.memberClient}
-			missing, wrong, err := e.getGroupPermissionStatus(42, 99, accessLevelDeveloperValue)
+			missing, wrong, err := e.getGroupPermissionStatus(context.Background(), 42, 99, accessLevelDeveloperValue)
 			if tc.wantErr == nil {
 				if err != nil {
 					t.Fatalf("getGroupPermissionStatus() unexpected error: %v", err)
@@ -174,12 +193,12 @@ func TestFetchTopLevelGroupsMissingPermissions(t *testing.T) {
 		},
 		MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
 			switch gid.(int64) {
-			case 1:
-				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errors.New("not found")
-			case 2:
-				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}}, nil
 			case 3:
 				return &gitlab.GroupMember{AccessLevel: gitlab.AccessLevelValue(accessLevelReporterValue)}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}}, nil
+			case 2:
+				return &gitlab.GroupMember{AccessLevel: gitlab.AccessLevelValue(accessLevelReporterValue)}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}}, nil
+			case 1:
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errors.New("not found")
 			default:
 				t.Fatalf("unexpected group id %v", gid)
 				return nil, nil, nil
@@ -189,14 +208,14 @@ func TestFetchTopLevelGroupsMissingPermissions(t *testing.T) {
 
 	e := &external{groupsClient: client, groupMemberClient: client}
 
-	notIn, wrong, err := e.fetchTopLevelGroupsMissingPermissions(accessLevelDeveloperValue, 99)
+	notIn, wrong, err := e.fetchTopLevelGroupsMissingPermissions(context.Background(), accessLevelDeveloperValue, 99)
 	if err != nil {
 		t.Fatalf("fetchTopLevelGroupsMissingPermissions() unexpected error: %v", err)
 	}
-	if diff := cmp.Diff([]int64{1}, notIn, cmpopts.SortSlices(func(a, b int64) bool { return a < b })); diff != "" {
+	if diff := cmp.Diff([]int64{1}, notIn); diff != "" {
 		t.Fatalf("fetchTopLevelGroupsMissingPermissions() notInGroups mismatch (-want +got):\n%s", diff)
 	}
-	if diff := cmp.Diff([]int64{2, 3}, wrong, cmpopts.SortSlices(func(a, b int64) bool { return a < b })); diff != "" {
+	if diff := cmp.Diff([]int64{2, 3}, wrong); diff != "" {
 		t.Fatalf("fetchTopLevelGroupsMissingPermissions() wrongPermsGroups mismatch (-want +got):\n%s", diff)
 	}
 
@@ -204,6 +223,29 @@ func TestFetchTopLevelGroupsMissingPermissions(t *testing.T) {
 	defer pagesMu.Unlock()
 	if diff := cmp.Diff([]int64{1, 2}, pages); diff != "" {
 		t.Fatalf("fetchTopLevelGroupsMissingPermissions() page sequence mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestGetGroupPermissionStatusUsesContext(t *testing.T) {
+	ctxKey := observeContextKey{}
+	ctxValue := "observe-context"
+	client := &groupsfake.MockClient{
+		MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+			if got := requestContext(t, options).Value(ctxKey); got != ctxValue {
+				t.Fatalf("getGroupPermissionStatus() context value = %v, want %v", got, ctxValue)
+			}
+			return &gitlab.GroupMember{AccessLevel: gitlab.AccessLevelValue(accessLevelMaintainerValue)}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}}, nil
+		},
+	}
+	e := &external{groupMemberClient: client}
+	ctx := context.WithValue(context.Background(), ctxKey, ctxValue)
+
+	missing, wrong, err := e.getGroupPermissionStatus(ctx, 42, 99, accessLevelDeveloperValue)
+	if err != nil {
+		t.Fatalf("getGroupPermissionStatus() unexpected error: %v", err)
+	}
+	if missing || wrong {
+		t.Fatalf("getGroupPermissionStatus() = (%v, %v), want (false, false)", missing, wrong)
 	}
 }
 
