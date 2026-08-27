@@ -18,7 +18,6 @@ package accesstokens
 
 import (
 	"context"
-	"net/http"
 	"strconv"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -334,7 +333,7 @@ func (e *external) createOwner(ctx context.Context, cr *v1alpha1.AccessToken) (m
 	// If a token ID is already set as the external name, try rotating it first.
 	// Rotation atomically revokes the old token and issues a new one.
 	if existingID, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64); err == nil && existingID > 0 {
-		at, res, rotErr := e.client.RotateGroupAccessToken(
+		at, _, rotErr := e.client.RotateGroupAccessToken(
 			*cr.Spec.ForProvider.GroupID,
 			existingID,
 			groups.GenerateRotateGroupAccessTokenOptions(&cr.Spec.ForProvider),
@@ -345,19 +344,6 @@ func (e *external) createOwner(ctx context.Context, cr *v1alpha1.AccessToken) (m
 			return managed.ExternalCreation{
 				ConnectionDetails: managed.ConnectionDetails{connectionSecretKeyToken: []byte(at.Token)},
 			}, nil
-		}
-		// If 401, try self-rotation (token with self_rotate scope can only rotate itself).
-		if res != nil && res.StatusCode == http.StatusUnauthorized {
-			pat, _, selfErr := e.client.RotateSelf(
-				groups.GenerateRotateSelfOptions(&cr.Spec.ForProvider),
-				gitlab.WithContext(ctx),
-			)
-			if selfErr == nil {
-				meta.SetExternalName(cr, strconv.FormatInt(pat.ID, 10))
-				return managed.ExternalCreation{
-					ConnectionDetails: managed.ConnectionDetails{connectionSecretKeyToken: []byte(pat.Token)},
-				}, nil
-			}
 		}
 		// Rotation failed (e.g. token was already revoked externally); fall through to fresh create.
 	}
