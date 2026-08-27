@@ -25,6 +25,9 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='Synced')].status
       name: SYNCED
       type: string
+    - jsonPath: .status.conditions[?(@.type=='SelfManaged')].status
+      name: SELF
+      type: string
     - jsonPath: .status.renewAt
       name: RENEW-AT
       type: string

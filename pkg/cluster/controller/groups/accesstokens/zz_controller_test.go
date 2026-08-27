@@ -101,6 +101,10 @@ func accessToken(m ...accessTokenModifier) *v1alpha1.AccessToken {
 	return cr
 }
 
+// ownerCond is the SelfManaged condition for owner mode, asserted on every
+// non-self reconcile path.
+func ownerCond() v2.Condition { return selfManagedCondition(false) }
+
 func TestObserve(t *testing.T) {
 	type want struct {
 		cr     resource.Managed
@@ -126,7 +130,7 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(),
 			},
 			want: want{
-				cr:     accessToken(),
+				cr:     accessToken(withConditions(ownerCond())),
 				result: managed.ExternalObservation{},
 				err:    nil,
 			},
@@ -136,7 +140,7 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(withExternalName(wrongIDstr)),
 			},
 			want: want{
-				cr:     accessToken(withExternalName(wrongIDstr)),
+				cr:     accessToken(withExternalName(wrongIDstr), withConditions(ownerCond())),
 				result: managed.ExternalObservation{},
 				err:    errors.Wrap(getConversionError(), errFailedParseID),
 			},
@@ -146,7 +150,7 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(withExternalName(sAccessTokenID)),
 			},
 			want: want{
-				cr:     accessToken(withExternalName(sAccessTokenID)),
+				cr:     accessToken(withExternalName(sAccessTokenID), withConditions(ownerCond())),
 				result: managed.ExternalObservation{},
 				err:    errors.New(errMissingGroupID),
 			},
@@ -171,6 +175,7 @@ func TestObserve(t *testing.T) {
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID: &id,
 					}),
+					withConditions(ownerCond()),
 				),
 				result: managed.ExternalObservation{},
 				err:    errors.Wrap(errBoom, errAccessTokenNotFound),
@@ -194,6 +199,7 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{GroupID: &id}),
+					withConditions(ownerCond()),
 				),
 				result: managed.ExternalObservation{ResourceExists: false},
 				err:    nil,
@@ -219,6 +225,7 @@ func TestObserve(t *testing.T) {
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID: &id,
 					}),
+					withConditions(ownerCond()),
 				),
 				result: managed.ExternalObservation{},
 				err:    errors.Wrap(errBoom, errAccessTokenNotFound),
@@ -243,7 +250,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(v2.Available()),
+					withConditions(ownerCond(), v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID:     &id,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -280,7 +287,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(v2.Available()),
+					withConditions(ownerCond(), v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID: &id,
 					}),
@@ -317,7 +324,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(),
+					withConditions(ownerCond()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID:     &id,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -358,6 +365,7 @@ func TestObserve(t *testing.T) {
 						AccessLevel:       (*v1alpha1.AccessLevelValue)(&accessLevel),
 						RenewalPeriodDays: func() *int { v := 30; return &v }(),
 					}),
+					withConditions(ownerCond()),
 				),
 				result: managed.ExternalObservation{ResourceExists: false},
 			},
@@ -382,7 +390,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(v2.Available()),
+					withConditions(ownerCond(), v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID:     &id,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -415,7 +423,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(v2.Available()),
+					withConditions(ownerCond(), v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID:     &id,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -447,7 +455,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(v2.Available()),
+					withConditions(ownerCond(), v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID:     &id,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -481,7 +489,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(),
+					withConditions(ownerCond()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID:     &id,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -518,7 +526,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(),
+					withConditions(ownerCond()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						GroupID:     &id,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -1037,4 +1045,196 @@ func TestDelete(t *testing.T) {
 func getConversionError() error {
 	_, err := strconv.Atoi(wrongIDstr)
 	return err
+}
+
+func withDeletionTimestamp() accessTokenModifier {
+	return func(r *v1alpha1.AccessToken) {
+		now := v1.Now()
+		r.SetDeletionTimestamp(&now)
+	}
+}
+
+// selfPAT builds a self-inform / self-rotate PersonalAccessToken response.
+func selfPAT(active bool) *gitlab.PersonalAccessToken {
+	return &gitlab.PersonalAccessToken{ID: accessTokenID, Name: name, Token: token, Active: active}
+}
+
+// ---- self-mode Observe ----
+
+func TestObserveSelf(t *testing.T) {
+	selfSpec := v1alpha1.AccessTokenParameters{Name: name}
+
+	type want struct {
+		result         managed.ExternalObservation
+		err            error
+		wantExternalID string
+	}
+
+	cases := map[string]struct {
+		client groups.AccessTokenClient
+		cr     *v1alpha1.AccessToken
+		want   want
+	}{
+		"UpToDateAutoAdopt": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return selfPAT(true), &gitlab.Response{}, nil
+			}},
+			cr:   accessToken(withSpec(selfSpec)),
+			want: want{result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, wantExternalID: sAccessTokenID},
+		},
+		"RotationDue": {
+			// inactive => ShouldRotate true
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return selfPAT(false), &gitlab.Response{}, nil
+			}},
+			cr:   accessToken(withSpec(selfSpec)),
+			want: want{result: managed.ExternalObservation{ResourceExists: false}, wantExternalID: sAccessTokenID},
+		},
+		"DeadTokenTerminalError": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusUnauthorized}}, errBoom
+			}},
+			cr:   accessToken(withSpec(selfSpec)),
+			want: want{err: errors.Wrap(errBoom, errSelfInformFailed)},
+		},
+		// Once the self-token is revoked during deletion, self-inform can no
+		// longer authenticate (401). While deleting, report gone so the finalizer
+		// is removed instead of wedging the delete forever.
+		"DeletedAfterRevoke401ReportsGone": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusUnauthorized}}, errBoom
+			}},
+			cr:   accessToken(withSpec(selfSpec), withDeletionTimestamp()),
+			want: want{result: managed.ExternalObservation{ResourceExists: false}},
+		},
+		// Repeated unauthorized polls escalate to 403; treat as gone during deletion too.
+		"DeletedAfterRevoke403ReportsGone": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusForbidden}}, errBoom
+			}},
+			cr:   accessToken(withSpec(selfSpec), withDeletionTimestamp()),
+			want: want{result: managed.ExternalObservation{ResourceExists: false}},
+		},
+		// A transient (non-auth) failure during deletion must still surface.
+		"DeletedTransientErrorStillFails": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}, errBoom
+			}},
+			cr:   accessToken(withSpec(selfSpec), withDeletionTimestamp()),
+			want: want{err: errors.Wrap(errBoom, errSelfInformFailed)},
+		},
+		// The self-token's name must match spec.forProvider.name, else refuse to
+		// adopt it (miswired credentials secret).
+		"NameMismatchTerminalError": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return &gitlab.PersonalAccessToken{ID: accessTokenID, Name: "some-other-token", Active: true}, &gitlab.Response{}, nil
+			}},
+			cr:   accessToken(withSpec(selfSpec)),
+			want: want{err: errors.New(errSelfNameMismatch)},
+		},
+	}
+
+	for tname, tc := range cases {
+		t.Run(tname, func(t *testing.T) {
+			e := &external{client: tc.client, self: true}
+			o, err := e.Observe(context.Background(), tc.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("result: -want, +got:\n%s", diff)
+			}
+			// SelfManaged condition must be set true in all self-mode paths.
+			if c := tc.cr.Status.GetCondition(TypeSelfManaged); c.Reason != ReasonProviderConfigReferencesManagedToken {
+				t.Errorf("expected SelfManaged condition reason %q, got %q", ReasonProviderConfigReferencesManagedToken, c.Reason)
+			}
+			if tc.want.wantExternalID != "" {
+				if got := meta.GetExternalName(tc.cr); got != tc.want.wantExternalID {
+					t.Errorf("external-name: want %q, got %q (auto-adopt)", tc.want.wantExternalID, got)
+				}
+			}
+		})
+	}
+}
+
+// ---- self-mode Create ----
+
+func TestCreateSelf(t *testing.T) {
+	cases := map[string]struct {
+		client   groups.AccessTokenClient
+		cr       *v1alpha1.AccessToken
+		wantConn managed.ConnectionDetails
+		wantErr  error
+	}{
+		"SelfRotateSuccessful": {
+			client: &fake.MockClient{MockRotateSelf: func(_ *gitlab.RotatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return selfPAT(true), &gitlab.Response{}, nil
+			}},
+			cr:       accessToken(withSpec(v1alpha1.AccessTokenParameters{Name: name})),
+			wantConn: managed.ConnectionDetails{"token": []byte(token)},
+		},
+		"SelfRotateFailed": {
+			client: &fake.MockClient{MockRotateSelf: func(_ *gitlab.RotatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, nil, errBoom
+			}},
+			cr:      accessToken(withSpec(v1alpha1.AccessTokenParameters{Name: name})),
+			wantErr: errors.Wrap(errBoom, errSelfRotateFailed),
+		},
+	}
+	for tname, tc := range cases {
+		t.Run(tname, func(t *testing.T) {
+			e := &external{client: tc.client, self: true}
+			o, err := e.Create(context.Background(), tc.cr)
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.wantConn, o.ConnectionDetails); diff != "" {
+				t.Errorf("conn: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+// ---- self-mode Delete ----
+
+func TestDeleteSelf(t *testing.T) {
+	cases := map[string]struct {
+		client  groups.AccessTokenClient
+		wantErr error
+	}{
+		"SelfSuccessfulRevoke": {
+			client: &fake.MockClient{MockRevokeSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				return &gitlab.Response{}, nil
+			}},
+		},
+		"SelfRevokeFailed": {
+			client: &fake.MockClient{MockRevokeSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				return &gitlab.Response{}, errBoom
+			}},
+			wantErr: errors.Wrap(errBoom, errDeleteFailed),
+		},
+		// A second reconcile hitting an already-revoked self-token gets 401;
+		// revoke is idempotent, so this must succeed.
+		"SelfRevoke401Idempotent": {
+			client: &fake.MockClient{MockRevokeSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusUnauthorized}}, errBoom
+			}},
+		},
+		// Rate-limited self-revoke (403) is likewise idempotent success.
+		"SelfRevoke403Idempotent": {
+			client: &fake.MockClient{MockRevokeSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusForbidden}}, errBoom
+			}},
+		},
+	}
+	for tname, tc := range cases {
+		t.Run(tname, func(t *testing.T) {
+			e := &external{client: tc.client, self: true}
+			_, err := e.Delete(context.Background(), accessToken(withExternalName(sAccessTokenID)))
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+		})
+	}
 }

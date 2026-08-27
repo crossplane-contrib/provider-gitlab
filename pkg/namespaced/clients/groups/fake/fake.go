@@ -50,6 +50,8 @@ type MockClient struct {
 	MockRevokeGroupAccessToken func(gid interface{}, accessToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockRotateGroupAccessToken func(gid interface{}, accessToken int64, opt *gitlab.RotateGroupAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupAccessToken, *gitlab.Response, error)
 	MockRotateSelf             func(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockGetSelf                func(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	MockRevokeSelf             func(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
 	MockListServiceAccountPersonalAccessTokens  func(gid any, serviceAccount int64, opt *gitlab.ListServiceAccountPersonalAccessTokensOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.PersonalAccessToken, *gitlab.Response, error)
 	MockCreateServiceAccountPersonalAccessToken func(gid any, serviceAccount int64, opt *gitlab.CreateServiceAccountPersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
@@ -174,6 +176,16 @@ func (c *MockClient) RotateGroupAccessToken(gid interface{}, accessToken int64, 
 // RotateSelf calls the underlying MockRotateSelf method.
 func (c *MockClient) RotateSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 	return c.MockRotateSelf(opt, options...)
+}
+
+// GetSelf calls the underlying MockGetSelf method.
+func (c *MockClient) GetSelf(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.MockGetSelf(options...)
+}
+
+// RevokeSelf calls the underlying MockRevokeSelf method.
+func (c *MockClient) RevokeSelf(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockRevokeSelf(options...)
 }
 
 // ListServiceAccountPersonalAccessTokens calls the underlying MockListServiceAccountPersonalAccessTokens method.

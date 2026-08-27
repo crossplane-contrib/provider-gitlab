@@ -129,6 +129,39 @@ The bootstrap-secret note above applies unchanged. See
 [`examples/instance/serviceaccountaccesstoken.yaml`](examples/instance/serviceaccountaccesstoken.yaml)
 for full examples of both modes.
 
+### Self-rotating group and project access tokens
+
+The namespaced `groups.gitlab.m.crossplane.io/v1alpha1` and
+`projects.gitlab.m.crossplane.io/v1alpha1` `AccessToken` resources support the
+same self-rotation capability. A group or project access token is backed by a
+bot-user personal access token, so the generic self endpoints
+(`GET/POST/DELETE /personal_access_tokens/self`) apply. Both modes are selected
+automatically:
+
+* **Owner mode** (default): the `ProviderConfig` is a group/project owner or
+  maintainer. The token is created, observed, rotated and revoked through the
+  group/project access-token endpoints. The `groupId`/`projectId` scopes every
+  call server-side, so there is no cross-scope reach and no additional identity
+  check is required.
+* **Self-managed mode**: the `ProviderConfig` authenticates with the *very token*
+  this resource manages — i.e. its `credentials.secretRef` points at the same
+  secret (namespace, name and `token` key) that the resource writes via
+  `writeConnectionSecretToRef`. The provider then acts as the token's bot user
+  and uses the self endpoints, keeping the token alive by self-rotating before
+  expiry. A `SelfManaged` status condition reports the active mode.
+
+> **Identity guard.** In self-managed mode the provider adopts whatever token the
+> credential authenticates as. The self-inform response does not expose the
+> token's group/project binding, so the only spec-derived identity signal is the
+> token name: the resource refuses to manage a token whose name does not match
+> `spec.forProvider.name`. Include the `self_rotate` scope (plus `api`) so the
+> token can rotate itself.
+
+The bootstrap-secret note above applies unchanged. See
+[`examples/groups/accesstoken.yaml`](examples/groups/accesstoken.yaml) and
+[`examples/projects/accesstoken.yaml`](examples/projects/accesstoken.yaml) for
+full examples of both modes.
+
 ## Contributing
 
 provider-gitlab is a community driven project and we welcome contributions. See
