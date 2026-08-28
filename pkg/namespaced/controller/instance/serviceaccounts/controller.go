@@ -49,6 +49,7 @@ const (
 	errUpdateFailed      = "cannot update Gitlab service account"
 	errDeleteFailed      = "cannot delete Gitlab service account"
 	errIDNotInt          = "specified ID is not an integer"
+	errInvalidFilter     = "invalid baseline permissions filter %q"
 
 	accessLevelNoAccess             = "no-access"
 	accessLevelNoAccessValue        = 0
@@ -174,21 +175,9 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.Status.AtProvider = instance.GenerateServiceAccountObservation(serviceAccount)
 	cr.Status.SetConditions(v2.Available())
 
-	minPermission := ptr.Deref(cr.Spec.ForProvider.BaselinePermissions, accessLevelNoAccess)
-
-	groupsUpToDate := true
-
-	if minPermission != accessLevelNoAccess {
-		minPermissionValue := getAccessLevelValue(minPermission)
-
-		notInGroups, wrongPermsGroups, err := e.fetchTopLevelGroupsMissingPermissions(ctx, minPermissionValue, serviceAccount.ID)
-		if err != nil {
-			return managed.ExternalObservation{}, errors.Wrap(err, "cannot fetch Gitlab groups missing permissions for service account")
-		}
-
-		groupsUpToDate = len(notInGroups) == 0 && len(wrongPermsGroups) == 0
-		cr.Status.AtProvider.MissingMemberShipGroups = notInGroups
-		cr.Status.AtProvider.WrongPermissionsGroups = wrongPermsGroups
+	groupsUpToDate, err := e.observeBaselinePermissions(ctx, cr, serviceAccount.ID)
+	if err != nil {
+		return managed.ExternalObservation{}, err
 	}
 
 	return managed.ExternalObservation{
