@@ -98,3 +98,67 @@ func TestGenerateProtectRepositoryBranchesOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestIsProtectedBranchUpToDate(t *testing.T) {
+	accessLevel40 := v1alpha1.AccessLevelValue(40)
+
+	cases := map[string]struct {
+		params *v1alpha1.ProtectedBranchParameters
+		pb     *gitlab.ProtectedBranch
+		want   bool
+	}{
+		"UserIDOnlyRuleMatchesRegardlessOfObservedAccessLevel": {
+			// Regression test for #267: GitLab reports a real accessLevel value
+			// (e.g. 40/Maintainer) alongside a user-scoped push rule even though
+			// the spec never asked for a role match, so a userId-only spec entry
+			// must be considered up to date once UserID matches - it must not
+			// require AccessLevel to match too, or it can never converge.
+			params: &v1alpha1.ProtectedBranchParameters{
+				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
+					{UserID: ptr.To(int64(30584717))},
+				},
+			},
+			pb: &gitlab.ProtectedBranch{
+				PushAccessLevels: []*gitlab.BranchAccessDescription{
+					{AccessLevel: gitlab.AccessLevelValue(40), UserID: 30584717},
+				},
+			},
+			want: true,
+		},
+		"UserIDOnlyRuleDoesNotMatchDifferentUser": {
+			params: &v1alpha1.ProtectedBranchParameters{
+				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
+					{UserID: ptr.To(int64(30584717))},
+				},
+			},
+			pb: &gitlab.ProtectedBranch{
+				PushAccessLevels: []*gitlab.BranchAccessDescription{
+					{AccessLevel: gitlab.AccessLevelValue(40), UserID: 1},
+				},
+			},
+			want: false,
+		},
+		"AccessLevelOnlyRuleStillRequiresAccessLevelMatch": {
+			params: &v1alpha1.ProtectedBranchParameters{
+				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
+					{AccessLevel: &accessLevel40},
+				},
+			},
+			pb: &gitlab.ProtectedBranch{
+				PushAccessLevels: []*gitlab.BranchAccessDescription{
+					{AccessLevel: gitlab.AccessLevelValue(30)},
+				},
+			},
+			want: false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsProtectedBranchUpToDate(tc.params, tc.pb)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("IsProtectedBranchUpToDate() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
