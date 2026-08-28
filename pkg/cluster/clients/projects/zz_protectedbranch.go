@@ -171,24 +171,45 @@ func GenerateProtectRepositoryBranchesOptions(name string, p *v1alpha1.Protected
 		opt.CodeOwnerApprovalRequired = p.CodeOwnerApprovalRequired
 	}
 
-	// For GitLab API, access levels are typically set as simple access level values
-	// rather than arrays of complex permissions
-	if len(p.PushAccessLevels) > 0 && p.PushAccessLevels[0].AccessLevel != nil {
-		accessLevel := gitlab.AccessLevelValue(*p.PushAccessLevels[0].AccessLevel)
-		opt.PushAccessLevel = &accessLevel
+	// Use the array-based allowed_to_* options so UserID/GroupID entries aren't silently dropped (#267).
+	if levels := branchPermissionOptions(p.PushAccessLevels); levels != nil {
+		opt.AllowedToPush = &levels
 	}
-
-	if len(p.MergeAccessLevels) > 0 && p.MergeAccessLevels[0].AccessLevel != nil {
-		accessLevel := gitlab.AccessLevelValue(*p.MergeAccessLevels[0].AccessLevel)
-		opt.MergeAccessLevel = &accessLevel
+	if levels := branchPermissionOptions(p.MergeAccessLevels); levels != nil {
+		opt.AllowedToMerge = &levels
 	}
-
-	if len(p.UnprotectAccessLevels) > 0 && p.UnprotectAccessLevels[0].AccessLevel != nil {
-		accessLevel := gitlab.AccessLevelValue(*p.UnprotectAccessLevels[0].AccessLevel)
-		opt.UnprotectAccessLevel = &accessLevel
+	if levels := branchPermissionOptions(p.UnprotectAccessLevels); levels != nil {
+		opt.AllowedToUnprotect = &levels
 	}
 
 	return opt
+}
+
+// branchPermissionOptions preserves AccessLevel, UserID, and GroupID for every entry, instead of collapsing to the first entry's AccessLevel.
+func branchPermissionOptions(descs []*v1alpha1.BranchAccessDescription) []*gitlab.BranchPermissionOptions {
+	if len(descs) == 0 {
+		return nil
+	}
+
+	opts := make([]*gitlab.BranchPermissionOptions, 0, len(descs))
+	for _, d := range descs {
+		if d == nil {
+			continue
+		}
+		bp := &gitlab.BranchPermissionOptions{
+			UserID:  d.UserID,
+			GroupID: d.GroupID,
+		}
+		if d.AccessLevel != nil {
+			al := gitlab.AccessLevelValue(*d.AccessLevel)
+			bp.AccessLevel = &al
+		}
+		opts = append(opts, bp)
+	}
+	if len(opts) == 0 {
+		return nil
+	}
+	return opts
 }
 
 // IsProtectedBranchUpToDate checks whether there is a change in any of the modifiable fields.
