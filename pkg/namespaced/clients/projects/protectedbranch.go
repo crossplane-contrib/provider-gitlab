@@ -237,17 +237,8 @@ func IsProtectedBranchUpToDate(p *v1alpha1.ProtectedBranchParameters, pb *gitlab
 	return true
 }
 
-// isAccessLevelsUpToDate compares access levels between spec and GitLab.
-//
-// Each desired entry must be paired with a distinct observed entry, which
-// makes this a bipartite matching problem rather than a simple lookup: an
-// unconstrained desired entry (no AccessLevel/UserID/GroupID set) can be
-// compatible with several observed entries, so a greedy "take the first
-// compatible slot" assignment can grab a slot that a later, more specific
-// desired entry needed, and incorrectly report a valid state as not up to
-// date. tryAssign resolves this with the standard augmenting-path approach:
-// if a desired entry's only compatible slots are taken, it tries to bump the
-// entry currently holding one of them into a different slot first.
+// isAccessLevelsUpToDate compares access levels between spec and GitLab using
+// bipartite matching, so the result never depends on entry order.
 func isAccessLevelsUpToDate(specLevels []*v1alpha1.BranchAccessDescription, gitlabLevels []*gitlab.BranchAccessDescription) bool {
 	filteredSpecLevels := make([]*v1alpha1.BranchAccessDescription, 0, len(specLevels))
 	for _, specLevel := range specLevels {
@@ -274,10 +265,8 @@ func isAccessLevelsUpToDate(specLevels []*v1alpha1.BranchAccessDescription, gitl
 	return true
 }
 
-// tryAssign attempts to give filteredSpecLevels[specIdx] a compatible,
-// distinct slot in gitlabLevels, following an augmenting path through
-// matchOfObserved (which desired index currently holds each observed slot, or
-// -1) when every immediately compatible slot is already taken.
+// tryAssign gives filteredSpecLevels[specIdx] a compatible slot in
+// gitlabLevels, reassigning an existing match via an augmenting path if needed.
 func tryAssign(specIdx int, filteredSpecLevels []*v1alpha1.BranchAccessDescription, gitlabLevels []*gitlab.BranchAccessDescription, matchOfObserved []int, visited []bool) bool {
 	for i, gitlabLevel := range gitlabLevels {
 		if visited[i] || gitlabLevel == nil || !accessLevelDescriptionMatches(filteredSpecLevels[specIdx], gitlabLevel) {
@@ -292,10 +281,8 @@ func tryAssign(specIdx int, filteredSpecLevels []*v1alpha1.BranchAccessDescripti
 	return false
 }
 
-// accessLevelDescriptionMatches reports whether a desired access-level entry
-// is satisfied by an observed one. AccessLevel is only compared when the spec
-// sets it; a userId/groupId-only rule must match on identity alone, or it can
-// never be considered up to date.
+// accessLevelDescriptionMatches reports whether an observed entry satisfies a
+// desired one; AccessLevel is only compared when the spec sets it.
 func accessLevelDescriptionMatches(specLevel *v1alpha1.BranchAccessDescription, gitlabLevel *gitlab.BranchAccessDescription) bool {
 	accessMatch := specLevel.AccessLevel == nil || int64(*specLevel.AccessLevel) == int64(gitlabLevel.AccessLevel)
 	userMatch := (specLevel.UserID == nil && gitlabLevel.UserID == 0) || (specLevel.UserID != nil && *specLevel.UserID == gitlabLevel.UserID)

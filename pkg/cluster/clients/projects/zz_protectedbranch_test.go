@@ -109,11 +109,8 @@ func TestIsProtectedBranchUpToDate(t *testing.T) {
 		want   bool
 	}{
 		"UserIDOnlyRuleMatchesRegardlessOfObservedAccessLevel": {
-			// Regression test for #267: GitLab reports a real accessLevel value
-			// (e.g. 40/Maintainer) alongside a user-scoped push rule even though
-			// the spec never asked for a role match, so a userId-only spec entry
-			// must be considered up to date once UserID matches - it must not
-			// require AccessLevel to match too, or it can never converge.
+			// Regression test for #267: GitLab reports a real AccessLevel alongside
+			// a UserID-scoped rule, so it must not be required to match too.
 			params: &v1alpha1.ProtectedBranchParameters{
 				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
 					{UserID: ptr.To(int64(30584717))},
@@ -153,11 +150,7 @@ func TestIsProtectedBranchUpToDate(t *testing.T) {
 			want: false,
 		},
 		"DuplicateDesiredRulesDoNotShareOneObservedMatch": {
-			// Regression test: two identical desired entries must each claim a
-			// distinct observed entry. Without cardinality tracking, both
-			// duplicates could match the same observed UserID:100 rule, hiding
-			// the fact that the other observed rule (UserID:200) has no desired
-			// counterpart.
+			// Two identical desired entries must each claim a distinct observed entry.
 			params: &v1alpha1.ProtectedBranchParameters{
 				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
 					{UserID: ptr.To(int64(100))},
@@ -173,9 +166,7 @@ func TestIsProtectedBranchUpToDate(t *testing.T) {
 			want: false,
 		},
 		"NilDesiredEntriesAreFilteredWithoutPanic": {
-			// Regression test: a nil desired entry must be filtered out before
-			// the cardinality check instead of being dereferenced, which would
-			// panic.
+			// A nil desired entry must be filtered out rather than dereferenced.
 			params: &v1alpha1.ProtectedBranchParameters{
 				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
 					nil,
@@ -190,12 +181,7 @@ func TestIsProtectedBranchUpToDate(t *testing.T) {
 			want: true,
 		},
 		"UnconstrainedRuleDoesNotStealSlotNeededByMoreSpecificRule": {
-			// Regression test: an unconstrained desired entry (no AccessLevel,
-			// UserID, or GroupID set) is compatible with any role-based observed
-			// entry. A greedy "first compatible slot wins" assignment lets it
-			// grab the slot a later, more specific entry needed, and wrongly
-			// reports drift even though a valid pairing exists (unconstrained
-			// entry -> access level 40, accessLevel30 entry -> access level 30).
+			// An unconstrained entry must not grab the slot a more specific entry needs.
 			params: &v1alpha1.ProtectedBranchParameters{
 				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
 					{},
@@ -211,8 +197,7 @@ func TestIsProtectedBranchUpToDate(t *testing.T) {
 			want: true,
 		},
 		"UnconstrainedRuleOrderReversedGivesSameAnswer": {
-			// Same desired/observed state as above with the entries reordered:
-			// the result must not depend on input ordering.
+			// Same state as above, reordered: the result must not depend on input order.
 			params: &v1alpha1.ProtectedBranchParameters{
 				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
 					{AccessLevel: &accessLevel30},
