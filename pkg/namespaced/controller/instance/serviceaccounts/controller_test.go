@@ -19,6 +19,7 @@ package serviceaccounts
 import (
 	"context"
 	"net/http"
+	"regexp"
 	"testing"
 	"time"
 
@@ -45,6 +46,14 @@ var (
 	unexpectedItem resource.Managed
 	errBoom        = errors.New("boom")
 )
+
+const invalidBaselinePermissionsFilter = "["
+
+// compileError returns the error raised by the standard library when compiling the given regular expression.
+func compileError(pattern string) error {
+	_, err := regexp.Compile(pattern)
+	return err
+}
 
 const (
 	testServiceAccountName     = "sa"
@@ -255,11 +264,75 @@ func TestObserve(t *testing.T) {
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false, ResourceLateInitialized: false},
 			},
 		},
+		"SuccessfulBaselinePermissionsFiltersGroups": {
+			args: args{
+				client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+					return &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+				}},
+				cr: serviceAccount(withExternalName("123"), withSpec(v1alpha1.ServiceAccountParameters{
+					CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+					BaselinePermissions:            ptr.To(accessLevelDeveloper),
+					BaselinePermissionsFilters:     []string{"^platform-"},
+				})),
+			},
+			want: want{
+				cr: serviceAccount(
+					withExternalName("123"),
+					withSpec(v1alpha1.ServiceAccountParameters{
+						CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+						BaselinePermissions:            ptr.To(accessLevelDeveloper),
+						BaselinePermissionsFilters:     []string{"^platform-"},
+					}),
+					withConditions(v2.Available()),
+					func(r *v1alpha1.ServiceAccount) {
+						r.Status.AtProvider = instance.GenerateServiceAccountObservation(&gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail})
+						r.Status.AtProvider.MissingMemberShipGroups = []int64{1}
+					},
+				),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false, ResourceLateInitialized: false},
+			},
+		},
+		"BaselinePermissionsInvalidFilter": {
+			args: args{
+				client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+					return &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+				}},
+				cr: serviceAccount(withExternalName("123"), withSpec(v1alpha1.ServiceAccountParameters{
+					CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+					BaselinePermissions:            ptr.To(accessLevelDeveloper),
+					BaselinePermissionsFilters:     []string{invalidBaselinePermissionsFilter},
+				})),
+			},
+			want: want{
+				cr: serviceAccount(
+					withExternalName("123"),
+					withSpec(v1alpha1.ServiceAccountParameters{
+						CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+						BaselinePermissions:            ptr.To(accessLevelDeveloper),
+						BaselinePermissionsFilters:     []string{invalidBaselinePermissionsFilter},
+					}),
+					withConditions(v2.Available()),
+					withAtProvider(instance.GenerateServiceAccountObservation(&gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail})),
+				),
+				err: errors.Wrapf(compileError(invalidBaselinePermissionsFilter), errInvalidFilter, invalidBaselinePermissionsFilter),
+			},
+		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			e := &external{kube: tc.args.kube, client: tc.args.client}
+			if name == "SuccessfulBaselinePermissionsFiltersGroups" {
+				e.groupsClient = &groupsfake.MockClient{MockListGroups: func(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error) {
+					return []*gitlab.Group{{ID: 1, Path: "platform-tooling"}, {ID: 2, Path: "customers"}}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}, NextPage: 0}, nil
+				}}
+				e.groupMemberClient = &groupsfake.MockClient{MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					if gid.(int64) != 1 {
+						t.Fatalf("Observe() checked membership of filtered out group %v", gid)
+					}
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, pkgerrors.New("not found")
+				}}
+			}
 			if name == "SuccessfulBaselinePermissionsSortsStatus" {
 				e.groupsClient = &groupsfake.MockClient{MockListGroups: func(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error) {
 					return []*gitlab.Group{{ID: 4}, {ID: 1}, {ID: 2}, {ID: 3}}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}, NextPage: 0}, nil

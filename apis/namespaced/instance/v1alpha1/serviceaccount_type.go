@@ -41,6 +41,12 @@ type ServiceAccountParameters struct {
 	// +optional
 	// +kubebuilder:validation:Enum=no-access;minimal-access;guest;planner;reporter;security-manager;developer;maintainer;owner
 	BaselinePermissions *string `json:"baselinePermissions,omitempty"`
+	// BaselinePermissionsFilters is a list of regular expressions matched against the path of the top level groups.
+	// The BaselinePermissions access level is only granted on a top level group if at least one of the expressions matches its path.
+	// When the list is empty, no filtering is applied and every top level group is selected.
+	// This field has no effect if BaselinePermissions is unset or set to "no-access".
+	// +optional
+	BaselinePermissionsFilters []string `json:"baselinePermissionsFilters,omitempty"`
 }
 
 // ServiceAccountObservation represents the observed state of the Gitlab Instance ServiceAccount

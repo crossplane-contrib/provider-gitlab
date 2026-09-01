@@ -18,6 +18,7 @@ package serviceaccounts
 
 import (
 	"context"
+	"regexp"
 	"sort"
 	"sync"
 
@@ -26,6 +27,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"k8s.io/utils/ptr"
 
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 )
 
@@ -81,8 +83,8 @@ func (e *external) updateServiceAccountGroupPermissions(ctx context.Context, ser
 	return g.Wait()
 }
 
-// fetchTopLevelGroupsMissingPermissions is a helper function that returns a list of top level group IDs that the service account is missing permissions for, based on the specified minimum permission level. This is used to determine which groups the service account needs to be added to in order to satisfy the BaselinePermissions field.
-func (e *external) fetchTopLevelGroupsMissingPermissions(ctx context.Context, minPermission int, serviceAccountID int64) (notInGroups []int64, wrongPermsGroups []int64, err error) {
+// fetchTopLevelGroupsMissingPermissions is a helper function that returns a list of top level group IDs that the service account is missing permissions for, based on the specified minimum permission level. This is used to determine which groups the service account needs to be added to in order to satisfy the BaselinePermissions field. Top level groups whose path does not match the given filters are ignored.
+func (e *external) fetchTopLevelGroupsMissingPermissions(ctx context.Context, minPermission int, serviceAccountID int64, filters []*regexp.Regexp) (notInGroups []int64, wrongPermsGroups []int64, err error) {
 	var (
 		groupsMissingPermissionsMu sync.Mutex
 	)
@@ -97,6 +99,9 @@ func (e *external) fetchTopLevelGroupsMissingPermissions(ctx context.Context, mi
 		}
 
 		for _, group := range groups {
+			if !matchesBaselinePermissionsFilters(filters, group.Path) {
+				continue
+			}
 			groupID := group.ID
 			g.Go(func() error {
 				isMissingMembership, hasInsufficientPermissions, err := e.getGroupPermissionStatus(ctx, groupID, serviceAccountID, minPermission)
@@ -168,6 +173,57 @@ func (e *external) getGroupPermissionStatus(ctx context.Context, groupID int64, 
 	}
 
 	return false, false, nil
+}
+
+// observeBaselinePermissions is a helper function that records in the resource status the top level groups the service account is missing permissions for, and reports whether they are all up to date. It is a no-op when the BaselinePermissions field is unset or set to "no-access".
+func (e *external) observeBaselinePermissions(ctx context.Context, cr *v1alpha1.ServiceAccount, serviceAccountID int64) (bool, error) {
+	minPermission := ptr.Deref(cr.Spec.ForProvider.BaselinePermissions, accessLevelNoAccess)
+	if minPermission == accessLevelNoAccess {
+		return true, nil
+	}
+
+	filters, err := compileBaselinePermissionsFilters(cr.Spec.ForProvider.BaselinePermissionsFilters)
+	if err != nil {
+		return false, err
+	}
+
+	notInGroups, wrongPermsGroups, err := e.fetchTopLevelGroupsMissingPermissions(ctx, getAccessLevelValue(minPermission), serviceAccountID, filters)
+	if err != nil {
+		return false, errors.Wrap(err, "cannot fetch Gitlab groups missing permissions for service account")
+	}
+
+	cr.Status.AtProvider.MissingMemberShipGroups = notInGroups
+	cr.Status.AtProvider.WrongPermissionsGroups = wrongPermsGroups
+
+	return len(notInGroups) == 0 && len(wrongPermsGroups) == 0, nil
+}
+
+// compileBaselinePermissionsFilters is a helper function that compiles the regular expressions of the BaselinePermissionsFilters field. It returns an error as soon as one of the expressions is invalid.
+func compileBaselinePermissionsFilters(filters []string) ([]*regexp.Regexp, error) {
+	compiledFilters := make([]*regexp.Regexp, 0, len(filters))
+	for _, filter := range filters {
+		compiledFilter, err := regexp.Compile(filter)
+		if err != nil {
+			return nil, errors.Wrapf(err, errInvalidFilter, filter)
+		}
+		compiledFilters = append(compiledFilters, compiledFilter)
+	}
+	return compiledFilters, nil
+}
+
+// matchesBaselinePermissionsFilters is a helper function that reports whether the given top level group path matches at least one of the BaselinePermissionsFilters expressions. An empty list of filters matches every group path.
+func matchesBaselinePermissionsFilters(filters []*regexp.Regexp, groupPath string) bool {
+	if len(filters) == 0 {
+		return true
+	}
+
+	for _, filter := range filters {
+		if filter.MatchString(groupPath) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // getAccessLevelValue is a helper function that returns the integer value of the given access level string. This is used to convert the BaselinePermissions field from a string to an integer that can be used with the Gitlab API.

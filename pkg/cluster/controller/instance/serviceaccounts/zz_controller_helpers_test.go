@@ -22,6 +22,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"regexp"
+	"sort"
 	"sync"
 	"testing"
 
@@ -210,7 +212,7 @@ func TestFetchTopLevelGroupsMissingPermissions(t *testing.T) {
 
 	e := &external{groupsClient: client, groupMemberClient: client}
 
-	notIn, wrong, err := e.fetchTopLevelGroupsMissingPermissions(context.Background(), accessLevelDeveloperValue, 99)
+	notIn, wrong, err := e.fetchTopLevelGroupsMissingPermissions(context.Background(), accessLevelDeveloperValue, 99, nil)
 	if err != nil {
 		t.Fatalf("fetchTopLevelGroupsMissingPermissions() unexpected error: %v", err)
 	}
@@ -225,6 +227,109 @@ func TestFetchTopLevelGroupsMissingPermissions(t *testing.T) {
 	defer pagesMu.Unlock()
 	if diff := cmp.Diff([]int64{1, 2}, pages); diff != "" {
 		t.Fatalf("fetchTopLevelGroupsMissingPermissions() page sequence mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestCompileBaselinePermissionsFilters(t *testing.T) {
+	tests := map[string]struct {
+		filters []string
+		wantLen int
+		wantErr bool
+	}{
+		"Nil":        {filters: nil, wantLen: 0},
+		"Empty":      {filters: []string{}, wantLen: 0},
+		"Valid":      {filters: []string{"^platform-", "infra"}, wantLen: 2},
+		"Invalid":    {filters: []string{"^platform-", "["}, wantErr: true},
+		"MatchesAll": {filters: []string{".*"}, wantLen: 1},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := compileBaselinePermissionsFilters(tc.filters)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatal("compileBaselinePermissionsFilters() expected an error")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("compileBaselinePermissionsFilters() unexpected error: %v", err)
+			}
+			if len(got) != tc.wantLen {
+				t.Fatalf("compileBaselinePermissionsFilters() returned %d filters, want %d", len(got), tc.wantLen)
+			}
+		})
+	}
+}
+
+func TestMatchesBaselinePermissionsFilters(t *testing.T) {
+	tests := map[string]struct {
+		filters   []string
+		groupPath string
+		want      bool
+	}{
+		"NoFilterMatchesEverything":    {filters: nil, groupPath: "any-group", want: true},
+		"EmptyFilterMatchesEverything": {filters: []string{}, groupPath: "any-group", want: true},
+		"SingleFilterMatches":          {filters: []string{"^platform-"}, groupPath: "platform-tooling", want: true},
+		"SingleFilterDoesNotMatch":     {filters: []string{"^platform-"}, groupPath: "customers", want: false},
+		"AnyFilterMatches":             {filters: []string{"^platform-", "^infra$"}, groupPath: "infra", want: true},
+		"NoFilterMatches":              {filters: []string{"^platform-", "^infra$"}, groupPath: "customers", want: false},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			filters, err := compileBaselinePermissionsFilters(tc.filters)
+			if err != nil {
+				t.Fatalf("compileBaselinePermissionsFilters() unexpected error: %v", err)
+			}
+			if got := matchesBaselinePermissionsFilters(filters, tc.groupPath); got != tc.want {
+				t.Fatalf("matchesBaselinePermissionsFilters(%v, %q) = %v, want %v", tc.filters, tc.groupPath, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestFetchTopLevelGroupsMissingPermissionsFiltersGroups(t *testing.T) {
+	var (
+		checkedMu sync.Mutex
+		checked   []int64
+	)
+
+	client := &groupsfake.MockClient{
+		MockListGroups: func(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error) {
+			return []*gitlab.Group{
+				{ID: 1, Path: "platform-tooling"},
+				{ID: 2, Path: "customers"},
+				{ID: 3, Path: "infra"},
+			}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}, NextPage: 0}, nil
+		},
+		MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+			checkedMu.Lock()
+			checked = append(checked, gid.(int64))
+			checkedMu.Unlock()
+			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errors.New("not found")
+		},
+	}
+
+	e := &external{groupsClient: client, groupMemberClient: client}
+	filters := []*regexp.Regexp{regexp.MustCompile("^platform-"), regexp.MustCompile("^infra$")}
+
+	notIn, wrong, err := e.fetchTopLevelGroupsMissingPermissions(context.Background(), accessLevelDeveloperValue, 99, filters)
+	if err != nil {
+		t.Fatalf("fetchTopLevelGroupsMissingPermissions() unexpected error: %v", err)
+	}
+	if diff := cmp.Diff([]int64{1, 3}, notIn); diff != "" {
+		t.Fatalf("fetchTopLevelGroupsMissingPermissions() notInGroups mismatch (-want +got):\n%s", diff)
+	}
+	if len(wrong) != 0 {
+		t.Fatalf("fetchTopLevelGroupsMissingPermissions() wrongPermsGroups = %v, want empty", wrong)
+	}
+
+	checkedMu.Lock()
+	defer checkedMu.Unlock()
+	sort.Slice(checked, func(i, j int) bool { return checked[i] < checked[j] })
+	if diff := cmp.Diff([]int64{1, 3}, checked); diff != "" {
+		t.Fatalf("fetchTopLevelGroupsMissingPermissions() checked groups mismatch (-want +got):\n%s", diff)
 	}
 }
 
