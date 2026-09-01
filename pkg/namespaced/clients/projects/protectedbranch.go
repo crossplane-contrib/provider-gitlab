@@ -239,14 +239,24 @@ func IsProtectedBranchUpToDate(p *v1alpha1.ProtectedBranchParameters, pb *gitlab
 
 // isAccessLevelsUpToDate compares access levels between spec and GitLab
 func isAccessLevelsUpToDate(specLevels []*v1alpha1.BranchAccessDescription, gitlabLevels []*gitlab.BranchAccessDescription) bool { //nolint:gocyclo
-	if len(specLevels) != len(gitlabLevels) {
+	filteredSpecLevels := make([]*v1alpha1.BranchAccessDescription, 0, len(specLevels))
+	for _, specLevel := range specLevels {
+		if specLevel != nil {
+			filteredSpecLevels = append(filteredSpecLevels, specLevel)
+		}
+	}
+	if len(filteredSpecLevels) != len(gitlabLevels) {
 		return false
 	}
 
-	// Simple comparison - if lengths match and all access levels match
-	for _, specLevel := range specLevels {
+	matched := make([]bool, len(gitlabLevels))
+	for _, specLevel := range filteredSpecLevels {
 		found := false
-		for _, gitlabLevel := range gitlabLevels {
+		for i, gitlabLevel := range gitlabLevels {
+			if matched[i] || gitlabLevel == nil {
+				continue
+			}
+
 			// AccessLevel is only compared when the spec sets it; a userId/groupId-only
 			// rule must match on identity alone, or it can never be considered up to date.
 			accessMatch := specLevel.AccessLevel == nil || int64(*specLevel.AccessLevel) == int64(gitlabLevel.AccessLevel)
@@ -254,6 +264,7 @@ func isAccessLevelsUpToDate(specLevels []*v1alpha1.BranchAccessDescription, gitl
 			groupMatch := (specLevel.GroupID == nil && gitlabLevel.GroupID == 0) || (specLevel.GroupID != nil && *specLevel.GroupID == gitlabLevel.GroupID)
 
 			if accessMatch && userMatch && groupMatch {
+				matched[i] = true
 				found = true
 				break
 			}

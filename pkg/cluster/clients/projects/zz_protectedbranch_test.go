@@ -151,6 +151,43 @@ func TestIsProtectedBranchUpToDate(t *testing.T) {
 			},
 			want: false,
 		},
+		"DuplicateDesiredRulesDoNotShareOneObservedMatch": {
+			// Regression test: two identical desired entries must each claim a
+			// distinct observed entry. Without cardinality tracking, both
+			// duplicates could match the same observed UserID:100 rule, hiding
+			// the fact that the other observed rule (UserID:200) has no desired
+			// counterpart.
+			params: &v1alpha1.ProtectedBranchParameters{
+				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
+					{UserID: ptr.To(int64(100))},
+					{UserID: ptr.To(int64(100))},
+				},
+			},
+			pb: &gitlab.ProtectedBranch{
+				PushAccessLevels: []*gitlab.BranchAccessDescription{
+					{AccessLevel: gitlab.AccessLevelValue(40), UserID: 100},
+					{AccessLevel: gitlab.AccessLevelValue(40), UserID: 200},
+				},
+			},
+			want: false,
+		},
+		"NilDesiredEntriesAreFilteredWithoutPanic": {
+			// Regression test: a nil desired entry must be filtered out before
+			// the cardinality check instead of being dereferenced, which would
+			// panic.
+			params: &v1alpha1.ProtectedBranchParameters{
+				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
+					nil,
+					{UserID: ptr.To(int64(300))},
+				},
+			},
+			pb: &gitlab.ProtectedBranch{
+				PushAccessLevels: []*gitlab.BranchAccessDescription{
+					{AccessLevel: gitlab.AccessLevelValue(40), UserID: 300},
+				},
+			},
+			want: true,
+		},
 	}
 
 	for name, tc := range cases {
