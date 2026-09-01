@@ -100,6 +100,7 @@ func TestGenerateProtectRepositoryBranchesOptions(t *testing.T) {
 }
 
 func TestIsProtectedBranchUpToDate(t *testing.T) {
+	accessLevel30 := v1alpha1.AccessLevelValue(30)
 	accessLevel40 := v1alpha1.AccessLevelValue(40)
 
 	cases := map[string]struct {
@@ -184,6 +185,44 @@ func TestIsProtectedBranchUpToDate(t *testing.T) {
 			pb: &gitlab.ProtectedBranch{
 				PushAccessLevels: []*gitlab.BranchAccessDescription{
 					{AccessLevel: gitlab.AccessLevelValue(40), UserID: 300},
+				},
+			},
+			want: true,
+		},
+		"UnconstrainedRuleDoesNotStealSlotNeededByMoreSpecificRule": {
+			// Regression test: an unconstrained desired entry (no AccessLevel,
+			// UserID, or GroupID set) is compatible with any role-based observed
+			// entry. A greedy "first compatible slot wins" assignment lets it
+			// grab the slot a later, more specific entry needed, and wrongly
+			// reports drift even though a valid pairing exists (unconstrained
+			// entry -> access level 40, accessLevel30 entry -> access level 30).
+			params: &v1alpha1.ProtectedBranchParameters{
+				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
+					{},
+					{AccessLevel: &accessLevel30},
+				},
+			},
+			pb: &gitlab.ProtectedBranch{
+				PushAccessLevels: []*gitlab.BranchAccessDescription{
+					{AccessLevel: gitlab.AccessLevelValue(30)},
+					{AccessLevel: gitlab.AccessLevelValue(40)},
+				},
+			},
+			want: true,
+		},
+		"UnconstrainedRuleOrderReversedGivesSameAnswer": {
+			// Same desired/observed state as above with the entries reordered:
+			// the result must not depend on input ordering.
+			params: &v1alpha1.ProtectedBranchParameters{
+				PushAccessLevels: []*v1alpha1.BranchAccessDescription{
+					{AccessLevel: &accessLevel30},
+					{},
+				},
+			},
+			pb: &gitlab.ProtectedBranch{
+				PushAccessLevels: []*gitlab.BranchAccessDescription{
+					{AccessLevel: gitlab.AccessLevelValue(30)},
+					{AccessLevel: gitlab.AccessLevelValue(40)},
 				},
 			},
 			want: true,

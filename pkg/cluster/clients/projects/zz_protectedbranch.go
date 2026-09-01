@@ -239,8 +239,18 @@ func IsProtectedBranchUpToDate(p *v1alpha1.ProtectedBranchParameters, pb *gitlab
 	return true
 }
 
-// isAccessLevelsUpToDate compares access levels between spec and GitLab
-func isAccessLevelsUpToDate(specLevels []*v1alpha1.BranchAccessDescription, gitlabLevels []*gitlab.BranchAccessDescription) bool { //nolint:gocyclo
+// isAccessLevelsUpToDate compares access levels between spec and GitLab.
+//
+// Each desired entry must be paired with a distinct observed entry, which
+// makes this a bipartite matching problem rather than a simple lookup: an
+// unconstrained desired entry (no AccessLevel/UserID/GroupID set) can be
+// compatible with several observed entries, so a greedy "take the first
+// compatible slot" assignment can grab a slot that a later, more specific
+// desired entry needed, and incorrectly report a valid state as not up to
+// date. tryAssign resolves this with the standard augmenting-path approach:
+// if a desired entry's only compatible slots are taken, it tries to bump the
+// entry currently holding one of them into a different slot first.
+func isAccessLevelsUpToDate(specLevels []*v1alpha1.BranchAccessDescription, gitlabLevels []*gitlab.BranchAccessDescription) bool {
 	filteredSpecLevels := make([]*v1alpha1.BranchAccessDescription, 0, len(specLevels))
 	for _, specLevel := range specLevels {
 		if specLevel != nil {
@@ -251,30 +261,46 @@ func isAccessLevelsUpToDate(specLevels []*v1alpha1.BranchAccessDescription, gitl
 		return false
 	}
 
-	matched := make([]bool, len(gitlabLevels))
-	for _, specLevel := range filteredSpecLevels {
-		found := false
-		for i, gitlabLevel := range gitlabLevels {
-			if matched[i] || gitlabLevel == nil {
-				continue
-			}
+	matchOfObserved := make([]int, len(gitlabLevels))
+	for i := range matchOfObserved {
+		matchOfObserved[i] = -1
+	}
 
-			// AccessLevel is only compared when the spec sets it; a userId/groupId-only
-			// rule must match on identity alone, or it can never be considered up to date.
-			accessMatch := specLevel.AccessLevel == nil || int64(*specLevel.AccessLevel) == int64(gitlabLevel.AccessLevel)
-			userMatch := (specLevel.UserID == nil && gitlabLevel.UserID == 0) || (specLevel.UserID != nil && *specLevel.UserID == gitlabLevel.UserID)
-			groupMatch := (specLevel.GroupID == nil && gitlabLevel.GroupID == 0) || (specLevel.GroupID != nil && *specLevel.GroupID == gitlabLevel.GroupID)
-
-			if accessMatch && userMatch && groupMatch {
-				matched[i] = true
-				found = true
-				break
-			}
-		}
-		if !found {
+	for specIdx := range filteredSpecLevels {
+		visited := make([]bool, len(gitlabLevels))
+		if !tryAssign(specIdx, filteredSpecLevels, gitlabLevels, matchOfObserved, visited) {
 			return false
 		}
 	}
 
 	return true
+}
+
+// tryAssign attempts to give filteredSpecLevels[specIdx] a compatible,
+// distinct slot in gitlabLevels, following an augmenting path through
+// matchOfObserved (which desired index currently holds each observed slot, or
+// -1) when every immediately compatible slot is already taken.
+func tryAssign(specIdx int, filteredSpecLevels []*v1alpha1.BranchAccessDescription, gitlabLevels []*gitlab.BranchAccessDescription, matchOfObserved []int, visited []bool) bool {
+	for i, gitlabLevel := range gitlabLevels {
+		if visited[i] || gitlabLevel == nil || !accessLevelDescriptionMatches(filteredSpecLevels[specIdx], gitlabLevel) {
+			continue
+		}
+		visited[i] = true
+		if matchOfObserved[i] == -1 || tryAssign(matchOfObserved[i], filteredSpecLevels, gitlabLevels, matchOfObserved, visited) {
+			matchOfObserved[i] = specIdx
+			return true
+		}
+	}
+	return false
+}
+
+// accessLevelDescriptionMatches reports whether a desired access-level entry
+// is satisfied by an observed one. AccessLevel is only compared when the spec
+// sets it; a userId/groupId-only rule must match on identity alone, or it can
+// never be considered up to date.
+func accessLevelDescriptionMatches(specLevel *v1alpha1.BranchAccessDescription, gitlabLevel *gitlab.BranchAccessDescription) bool {
+	accessMatch := specLevel.AccessLevel == nil || int64(*specLevel.AccessLevel) == int64(gitlabLevel.AccessLevel)
+	userMatch := (specLevel.UserID == nil && gitlabLevel.UserID == 0) || (specLevel.UserID != nil && *specLevel.UserID == gitlabLevel.UserID)
+	groupMatch := (specLevel.GroupID == nil && gitlabLevel.GroupID == 0) || (specLevel.GroupID != nil && *specLevel.GroupID == gitlabLevel.GroupID)
+	return accessMatch && userMatch && groupMatch
 }
