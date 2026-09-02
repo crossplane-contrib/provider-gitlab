@@ -170,17 +170,17 @@ func UseProvicerConfig(ctx context.Context, c client.Client, mg resource.ModernM
 		if err := c.Get(ctx, types.NamespacedName{Name: pcRef.Name}, cpc); err != nil {
 			return nil, errors.Wrap(err, "cannot get referenced ClusterProviderConfig")
 		}
-		return buildConfigFromSpec(ctx, c, mg, cpc.Spec)
+		return buildConfigFromSpec(ctx, c, mg, cpc.Spec, nil)
 	default: // "ProviderConfig" or empty (default)
 		pc := &namespacedV1Beta1.ProviderConfig{}
 		if err := c.Get(ctx, types.NamespacedName{Name: pcRef.Name, Namespace: mg.GetNamespace()}, pc); err != nil {
 			return nil, errors.Wrap(err, "cannot get referenced ProviderConfig")
 		}
-		return buildConfigFromSpec(ctx, c, mg, pc.Spec)
+		return buildConfigFromSpec(ctx, c, mg, pc.Spec, &pc.Namespace)
 	}
 }
 
-func buildConfigFromSpec(ctx context.Context, c client.Client, mg resource.ModernManaged, spec namespacedV1Beta1.ProviderConfigSpec) (*Config, error) {
+func buildConfigFromSpec(ctx context.Context, c client.Client, mg resource.ModernManaged, spec namespacedV1Beta1.ProviderConfigSpec, secretNamespace *string) (*Config, error) {
 	t := resource.NewProviderConfigUsageTracker(c, &namespacedV1Beta1.ProviderConfigUsage{})
 	if err := t.Track(ctx, mg); err != nil {
 		return nil, errors.Wrap(err, "cannot track ProviderConfig usage")
@@ -192,7 +192,12 @@ func buildConfigFromSpec(ctx context.Context, c client.Client, mg resource.Moder
 			return nil, errors.New("no credentials secret referenced")
 		}
 
-		token, err := GetTokenValueFromSecret(ctx, c, mg, spec.Credentials.SecretRef)
+		secretRef := spec.Credentials.SecretRef.DeepCopy()
+		if secretNamespace != nil {
+			secretRef.SecretReference.Namespace = *secretNamespace
+		}
+
+		token, err := GetTokenValueFromSecret(ctx, c, mg, secretRef)
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +207,7 @@ func buildConfigFromSpec(ctx context.Context, c client.Client, mg resource.Moder
 			Token:                *token,
 			InsecureSkipVerify:   ptr.Deref(spec.InsecureSkipVerify, false),
 			AuthMethod:           spec.Credentials.Method,
-			CredentialsSecretRef: spec.Credentials.SecretRef,
+			CredentialsSecretRef: secretRef,
 		}, nil
 	default:
 		return nil, errors.Errorf("credentials source %s is not currently supported", s)
