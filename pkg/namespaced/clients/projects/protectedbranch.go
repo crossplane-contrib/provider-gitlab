@@ -169,24 +169,45 @@ func GenerateProtectRepositoryBranchesOptions(name string, p *v1alpha1.Protected
 		opt.CodeOwnerApprovalRequired = p.CodeOwnerApprovalRequired
 	}
 
-	// For GitLab API, access levels are typically set as simple access level values
-	// rather than arrays of complex permissions
-	if len(p.PushAccessLevels) > 0 && p.PushAccessLevels[0].AccessLevel != nil {
-		accessLevel := gitlab.AccessLevelValue(*p.PushAccessLevels[0].AccessLevel)
-		opt.PushAccessLevel = &accessLevel
+	// Use the array-based allowed_to_* options so UserID/GroupID entries aren't silently dropped (#267).
+	if levels := branchPermissionOptions(p.PushAccessLevels); levels != nil {
+		opt.AllowedToPush = &levels
 	}
-
-	if len(p.MergeAccessLevels) > 0 && p.MergeAccessLevels[0].AccessLevel != nil {
-		accessLevel := gitlab.AccessLevelValue(*p.MergeAccessLevels[0].AccessLevel)
-		opt.MergeAccessLevel = &accessLevel
+	if levels := branchPermissionOptions(p.MergeAccessLevels); levels != nil {
+		opt.AllowedToMerge = &levels
 	}
-
-	if len(p.UnprotectAccessLevels) > 0 && p.UnprotectAccessLevels[0].AccessLevel != nil {
-		accessLevel := gitlab.AccessLevelValue(*p.UnprotectAccessLevels[0].AccessLevel)
-		opt.UnprotectAccessLevel = &accessLevel
+	if levels := branchPermissionOptions(p.UnprotectAccessLevels); levels != nil {
+		opt.AllowedToUnprotect = &levels
 	}
 
 	return opt
+}
+
+// branchPermissionOptions preserves AccessLevel, UserID, and GroupID for every entry, instead of collapsing to the first entry's AccessLevel.
+func branchPermissionOptions(descs []*v1alpha1.BranchAccessDescription) []*gitlab.BranchPermissionOptions {
+	if len(descs) == 0 {
+		return nil
+	}
+
+	opts := make([]*gitlab.BranchPermissionOptions, 0, len(descs))
+	for _, d := range descs {
+		if d == nil {
+			continue
+		}
+		bp := &gitlab.BranchPermissionOptions{
+			UserID:  d.UserID,
+			GroupID: d.GroupID,
+		}
+		if d.AccessLevel != nil {
+			al := gitlab.AccessLevelValue(*d.AccessLevel)
+			bp.AccessLevel = &al
+		}
+		opts = append(opts, bp)
+	}
+	if len(opts) == 0 {
+		return nil
+	}
+	return opts
 }
 
 // IsProtectedBranchUpToDate checks whether there is a change in any of the modifiable fields.
@@ -216,31 +237,55 @@ func IsProtectedBranchUpToDate(p *v1alpha1.ProtectedBranchParameters, pb *gitlab
 	return true
 }
 
-// isAccessLevelsUpToDate compares access levels between spec and GitLab
-func isAccessLevelsUpToDate(specLevels []*v1alpha1.BranchAccessDescription, gitlabLevels []*gitlab.BranchAccessDescription) bool { //nolint:gocyclo
-	if len(specLevels) != len(gitlabLevels) {
+// isAccessLevelsUpToDate compares access levels between spec and GitLab using
+// bipartite matching, so the result never depends on entry order.
+func isAccessLevelsUpToDate(specLevels []*v1alpha1.BranchAccessDescription, gitlabLevels []*gitlab.BranchAccessDescription) bool {
+	filteredSpecLevels := make([]*v1alpha1.BranchAccessDescription, 0, len(specLevels))
+	for _, specLevel := range specLevels {
+		if specLevel != nil {
+			filteredSpecLevels = append(filteredSpecLevels, specLevel)
+		}
+	}
+	if len(filteredSpecLevels) != len(gitlabLevels) {
 		return false
 	}
 
-	// Simple comparison - if lengths match and all access levels match
-	for _, specLevel := range specLevels {
-		found := false
-		for _, gitlabLevel := range gitlabLevels {
-			if specLevel.AccessLevel != nil && int64(*specLevel.AccessLevel) == int64(gitlabLevel.AccessLevel) {
-				// Check if user and group IDs also match
-				userMatch := (specLevel.UserID == nil && gitlabLevel.UserID == 0) || (specLevel.UserID != nil && *specLevel.UserID == gitlabLevel.UserID)
-				groupMatch := (specLevel.GroupID == nil && gitlabLevel.GroupID == 0) || (specLevel.GroupID != nil && *specLevel.GroupID == gitlabLevel.GroupID)
+	matchOfObserved := make([]int, len(gitlabLevels))
+	for i := range matchOfObserved {
+		matchOfObserved[i] = -1
+	}
 
-				if userMatch && groupMatch {
-					found = true
-					break
-				}
-			}
-		}
-		if !found {
+	for specIdx := range filteredSpecLevels {
+		visited := make([]bool, len(gitlabLevels))
+		if !tryAssign(specIdx, filteredSpecLevels, gitlabLevels, matchOfObserved, visited) {
 			return false
 		}
 	}
 
 	return true
+}
+
+// tryAssign gives filteredSpecLevels[specIdx] a compatible slot in
+// gitlabLevels, reassigning an existing match via an augmenting path if needed.
+func tryAssign(specIdx int, filteredSpecLevels []*v1alpha1.BranchAccessDescription, gitlabLevels []*gitlab.BranchAccessDescription, matchOfObserved []int, visited []bool) bool {
+	for i, gitlabLevel := range gitlabLevels {
+		if visited[i] || gitlabLevel == nil || !accessLevelDescriptionMatches(filteredSpecLevels[specIdx], gitlabLevel) {
+			continue
+		}
+		visited[i] = true
+		if matchOfObserved[i] == -1 || tryAssign(matchOfObserved[i], filteredSpecLevels, gitlabLevels, matchOfObserved, visited) {
+			matchOfObserved[i] = specIdx
+			return true
+		}
+	}
+	return false
+}
+
+// accessLevelDescriptionMatches reports whether an observed entry satisfies a
+// desired one; AccessLevel is only compared when the spec sets it.
+func accessLevelDescriptionMatches(specLevel *v1alpha1.BranchAccessDescription, gitlabLevel *gitlab.BranchAccessDescription) bool {
+	accessMatch := specLevel.AccessLevel == nil || int64(*specLevel.AccessLevel) == int64(gitlabLevel.AccessLevel)
+	userMatch := (specLevel.UserID == nil && gitlabLevel.UserID == 0) || (specLevel.UserID != nil && *specLevel.UserID == gitlabLevel.UserID)
+	groupMatch := (specLevel.GroupID == nil && gitlabLevel.GroupID == 0) || (specLevel.GroupID != nil && *specLevel.GroupID == gitlabLevel.GroupID)
+	return accessMatch && userMatch && groupMatch
 }
