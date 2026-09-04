@@ -34,6 +34,7 @@ import (
 
 	legacyV1Beta1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/v1beta1"
 	namespacedV1Beta1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/v1beta1"
+	namespacedV1Beta2 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/v1beta2"
 	auth "github.com/crossplane-contrib/provider-gitlab/pkg/common/auth"
 )
 
@@ -164,52 +165,83 @@ func UseLegacyProviderConfig(ctx context.Context, c client.Client, mg resource.L
 func UseProvicerConfig(ctx context.Context, c client.Client, mg resource.ModernManaged) (*Config, error) {
 	pcRef := mg.GetProviderConfigReference()
 
+	// track records ProviderConfig usage for mg. It is only invoked once the
+	// referenced config has been resolved, so a usage record (and the finalizer
+	// it implies) is never created for a reference that does not exist.
+	track := func() error {
+		t := resource.NewProviderConfigUsageTracker(c, &namespacedV1Beta1.ProviderConfigUsage{})
+		return errors.Wrap(t.Track(ctx, mg), "cannot track ProviderConfig usage")
+	}
+
 	switch pcRef.Kind {
 	case "ClusterProviderConfig":
 		cpc := &namespacedV1Beta1.ClusterProviderConfig{}
 		if err := c.Get(ctx, types.NamespacedName{Name: pcRef.Name}, cpc); err != nil {
 			return nil, errors.Wrap(err, "cannot get referenced ClusterProviderConfig")
 		}
-		return buildConfigFromSpec(ctx, c, mg, cpc.Spec, nil)
+		if err := track(); err != nil {
+			return nil, err
+		}
+		return buildClusterProviderConfig(ctx, c, mg, cpc.Spec)
 	default: // "ProviderConfig" or empty (default)
-		pc := &namespacedV1Beta1.ProviderConfig{}
+		pc := &namespacedV1Beta2.ProviderConfig{}
 		if err := c.Get(ctx, types.NamespacedName{Name: pcRef.Name, Namespace: mg.GetNamespace()}, pc); err != nil {
 			return nil, errors.Wrap(err, "cannot get referenced ProviderConfig")
 		}
-		return buildConfigFromSpec(ctx, c, mg, pc.Spec, &pc.Namespace)
+		if err := track(); err != nil {
+			return nil, err
+		}
+		return buildProviderConfig(ctx, c, mg, pc)
 	}
 }
 
-func buildConfigFromSpec(ctx context.Context, c client.Client, mg resource.ModernManaged, spec namespacedV1Beta1.ProviderConfigSpec, secretNamespace *string) (*Config, error) {
-	t := resource.NewProviderConfigUsageTracker(c, &namespacedV1Beta1.ProviderConfigUsage{})
-	if err := t.Track(ctx, mg); err != nil {
-		return nil, errors.Wrap(err, "cannot track ProviderConfig usage")
-	}
+// buildProviderConfig builds a Config from a namespaced ProviderConfig
+// (gitlab.m.crossplane.io/v1beta2). Its credentials secret is referenced with a
+// LocalSecretKeySelector and always read from the ProviderConfig's own
+// namespace.
+func buildProviderConfig(ctx context.Context, c client.Client, mg resource.ModernManaged, pc *namespacedV1Beta2.ProviderConfig) (*Config, error) {
+	spec := pc.Spec
+	// The single selector is used both to read the token and to record the
+	// resolved reference in Config.CredentialsSecretRef, so the read namespace
+	// and the recorded namespace are the same by construction. It is scoped to
+	// the ProviderConfig's own namespace (equal to mg.GetNamespace(), since the
+	// PC was fetched there), which self-managed token detection (isSelfManaged)
+	// compares against.
+	sel := localToSecretKeySelector(spec.Credentials.SecretRef, pc.GetNamespace())
+	return buildConfig(ctx, c, mg, spec.BaseURL, spec.Credentials.Source, spec.Credentials.Method, spec.InsecureSkipVerify, sel)
+}
 
-	switch s := spec.Credentials.Source; s {
+// buildClusterProviderConfig builds a Config from a cluster scoped
+// ClusterProviderConfig spec. Its credentials secret is referenced with a full
+// SecretKeySelector that carries its own namespace.
+func buildClusterProviderConfig(ctx context.Context, c client.Client, mg resource.ModernManaged, spec namespacedV1Beta1.ProviderConfigSpec) (*Config, error) {
+	return buildConfig(ctx, c, mg, spec.BaseURL, spec.Credentials.Source, spec.Credentials.Method, spec.InsecureSkipVerify, spec.Credentials.SecretRef)
+}
+
+// buildConfig resolves the shared tail both namespaced builders have in common:
+// it validates the credentials source, reads the token from the given selector
+// and assembles the Config. sel must be nil-safe; a nil selector for a Secret
+// source is reported as a missing credentials reference.
+func buildConfig(ctx context.Context, c client.Client, mg resource.ModernManaged, baseURL string, source v2.CredentialsSource, method auth.AuthType, insecureSkipVerify *bool, sel *v2.SecretKeySelector) (*Config, error) {
+	switch source {
 	case v2.CredentialsSourceSecret:
-		if spec.Credentials.SecretRef == nil {
+		if sel == nil {
 			return nil, errors.New("no credentials secret referenced")
 		}
 
-		secretRef := spec.Credentials.SecretRef.DeepCopy()
-		if secretNamespace != nil {
-			secretRef.SecretReference.Namespace = *secretNamespace
-		}
-
-		token, err := GetTokenValueFromSecret(ctx, c, mg, secretRef)
+		token, err := GetTokenValueFromSecret(ctx, c, mg, sel)
 		if err != nil {
 			return nil, err
 		}
 
 		return &Config{
-			BaseURL:              spec.BaseURL,
+			BaseURL:              baseURL,
 			Token:                *token,
-			InsecureSkipVerify:   ptr.Deref(spec.InsecureSkipVerify, false),
-			AuthMethod:           spec.Credentials.Method,
-			CredentialsSecretRef: secretRef,
+			InsecureSkipVerify:   ptr.Deref(insecureSkipVerify, false),
+			AuthMethod:           method,
+			CredentialsSecretRef: sel,
 		}, nil
 	default:
-		return nil, errors.Errorf("credentials source %s is not currently supported", s)
+		return nil, errors.Errorf("credentials source %s is not currently supported", source)
 	}
 }
