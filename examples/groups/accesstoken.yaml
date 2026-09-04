@@ -71,7 +71,7 @@ type: connection.crossplane.io/v1alpha1
 stringData:
   token: <a group access token with api + self_rotate scopes>
 ---
-apiVersion: gitlab.m.crossplane.io/v1beta1
+apiVersion: gitlab.m.crossplane.io/v1beta2
 kind: ProviderConfig
 metadata:
   name: gitlab-self-rotating-group
@@ -82,7 +82,6 @@ spec:
     source: Secret
     method: PersonalAccessToken
     secretRef:
-      namespace: default
       # Same secret the AccessToken below writes its token into.
       name: gitlab-self-rotating-group-token
       key: token

@@ -28,6 +28,16 @@ import (
 
 // Setup adds a controller that reconciles ProviderConfigs by accounting for
 // their current usage.
+// +cluster-scope:delete=9
+//
+// The ProviderConfigUsage type is namespaced v1beta1 only: v1beta2 introduced a
+// new storage version for ProviderConfig but did not fork Usage or
+// ClusterProviderConfig, so usage accounting stays on v1beta1. This controller
+// therefore names, watches and (in SetupNamespacedGated) gates on the v1beta1
+// GVKs. That is correct while v1beta1 remains served, but it couples starting
+// the ProviderConfig reconciler to the deprecated version: when v1beta1 is
+// eventually removed, these references must move to the then-current version,
+// otherwise the gate never fires and this controller silently never starts.
 func SetupNamespaced(mgr ctrl.Manager, o controller.Options) error {
 	name := providerconfig.ControllerName(v1beta1.ProviderConfigGroupKind)
 
