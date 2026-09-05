@@ -8,14 +8,14 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/pkg/errors v0.9.1
-	gitlab.com/gitlab-org/api/client-go/v2 v2.62.0
+	gitlab.com/gitlab-org/api/client-go/v2 v2.63.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/oauth2 v0.36.0
 	k8s.io/api v0.37.0
 	k8s.io/apiextensions-apiserver v0.37.0
 	k8s.io/apimachinery v0.37.0
 	k8s.io/client-go v0.37.0
-	sigs.k8s.io/controller-runtime v0.24.1
+	sigs.k8s.io/controller-runtime v0.25.0
 )
 
 require (
