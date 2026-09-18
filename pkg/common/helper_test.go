@@ -538,3 +538,24 @@ func TestResolvePublicJobsSetting(t *testing.T) {
 		})
 	}
 }
+
+func TestIsPathExternalName(t *testing.T) {
+	cases := map[string]struct {
+		name string
+		want bool
+	}{
+		"NumericID":     {name: "1234", want: false},
+		"SinglePath":    {name: "example-group", want: true},
+		"NestedPath":    {name: "path/to/example-group", want: true},
+		"NumericPath":   {name: "path/to/1234", want: true},
+		"LeadingDigits": {name: "1234-example", want: true},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			if got := IsPathExternalName(tc.name); got != tc.want {
+				t.Errorf("IsPathExternalName(%q) = %v, want %v", tc.name, got, tc.want)
+			}
+		})
+	}
+}

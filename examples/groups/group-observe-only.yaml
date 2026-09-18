@@ -1,0 +1,16 @@
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Group
+metadata:
+  name: example-group-observed
+  annotations:
+    # Numeric ID or full path. A path is replaced by the ID on the first reconcile.
+    crossplane.io/external-name: path/to/example-group
+spec:
+  # LateInitialize keeps the resolved ID persisted if the annotation is changed later.
+  managementPolicies:
+    - Observe
+    - LateInitialize
+  forProvider:
+    path: example-group
+  providerConfigRef:
+    name: gitlab-provider
