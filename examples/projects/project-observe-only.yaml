@@ -1,0 +1,17 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Project
+metadata:
+  name: example-project-observed
+  namespace: default
+  annotations:
+    # Numeric ID or full path. A path is replaced by the ID on the first reconcile.
+    crossplane.io/external-name: path/to/example-project
+spec:
+  # LateInitialize keeps the resolved ID persisted if the annotation is changed later.
+  managementPolicies:
+    - Observe
+    - LateInitialize
+  forProvider: {}
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
