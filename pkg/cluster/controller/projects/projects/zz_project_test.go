@@ -51,6 +51,7 @@ var (
 	projectID         = int64(1234)
 	extName           = strconv.FormatInt(projectID, 10)
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: extName}
+	fullPath          = "path/to/example-project"
 	timeNow           = time.Now()
 )
 
@@ -232,18 +233,37 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
-		"NotIDExternalName": {
+		"PathExternalNamePinsID": {
 			args: args{
 				project: &fake.MockClient{
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return &gitlab.Project{}, &gitlab.Response{}, nil
+						if pid != fullPath {
+							return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						}
+						return &gitlab.Project{ID: projectID, Name: "example-project"}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, nil, nil
 					},
 				},
-				cr: project(withExternalName("fr")),
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(fullPath),
+				),
 			},
 			want: want{
-				cr:  project(withExternalName("fr")),
-				err: errors.New(errNotProject),
+				cr: project(
+					withClientDefaultValues(),
+					withConditions(v2.Available()),
+					withExternalName(extName),
+					func(p *v1alpha1.Project) { p.Status.AtProvider.ID = projectID },
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: true,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
 			},
 		},
 		"FailedGetRequest": {

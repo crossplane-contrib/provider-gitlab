@@ -139,17 +139,17 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	projectID, err := strconv.Atoi(externalName)
-	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errNotProject)
-	}
-
-	prj, res, err := e.client.GetProject(projectID, nil)
+	prj, res, err := e.client.GetProject(externalName, nil)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
+	}
+
+	externalNamePinned := common.IsPathExternalName(externalName)
+	if externalNamePinned {
+		meta.SetExternalName(cr, strconv.FormatInt(prj.ID, 10))
 	}
 
 	// Check if the project is in a pending deletion state and either remove the
@@ -198,7 +198,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		ResourceExists:   true,
 		ResourceUpToDate: isProjectUpToDate(current, prj) && e.cache.isPushRulesUpToDate,
 		// Compare against specSnapshot (pre-secret-substitution)
-		ResourceLateInitialized: !cmp.Equal(specSnapshot, &cr.Spec.ForProvider),
+		ResourceLateInitialized: !cmp.Equal(specSnapshot, &cr.Spec.ForProvider) || externalNamePinned,
 		ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte(prj.RunnersToken)},
 	}, nil
 }
