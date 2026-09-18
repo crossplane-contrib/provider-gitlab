@@ -18,6 +18,7 @@ package common
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
@@ -81,4 +82,10 @@ func ResolvePublicJobsSetting(publicBuilds, publicJobs *bool) (*bool, bool) {
 		return publicBuilds, true
 	}
 	return nil, false
+}
+
+// IsPathExternalName reports whether the external-name is a full path rather than a numeric ID.
+func IsPathExternalName(name string) bool {
+	_, err := strconv.ParseInt(name, 10, 64)
+	return err != nil
 }

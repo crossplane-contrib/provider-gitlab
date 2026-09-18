@@ -46,7 +46,6 @@ import (
 
 const (
 	errNotGroup          = "managed resource is not a Gitlab Group custom resource"
-	errIDNotInt          = "specified ID is not an integer"
 	errGetFailed         = "cannot get Gitlab Group"
 	errCreateFailed      = "cannot create Gitlab Group"
 	errUpdateFailed      = "cannot update Gitlab Group"
@@ -133,20 +132,20 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	groupID, err := strconv.Atoi(externalName)
-	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errIDNotInt)
-	}
-
 	//nolint:staticcheck // Keeping this for backward compatibility during deprecation
 	cr.Spec.ForProvider.EmailsEnabled = lateInitializeEmailsEnabled(cr.Spec.ForProvider.EmailsEnabled, cr.Spec.ForProvider.EmailsDisabled)
 
-	grp, res, err := e.client.GetGroup(groupID, nil)
+	grp, res, err := e.client.GetGroup(externalName, nil)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
+	}
+
+	externalNamePinned := common.IsPathExternalName(externalName)
+	if externalNamePinned {
+		meta.SetExternalName(cr, strconv.FormatInt(grp.ID, 10))
 	}
 
 	// Check if the group is in a pending deletion state and either remove the
@@ -184,7 +183,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	return managed.ExternalObservation{
 		ResourceExists:          true,
 		ResourceUpToDate:        isUpToDate,
-		ResourceLateInitialized: isResourceLateInitialized,
+		ResourceLateInitialized: isResourceLateInitialized || externalNamePinned,
 		ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte(grp.RunnersToken)},
 	}, nil
 }
