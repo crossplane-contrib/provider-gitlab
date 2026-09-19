@@ -8,7 +8,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/pkg/errors v0.9.1
-	gitlab.com/gitlab-org/api/client-go/v2 v2.62.0
+	gitlab.com/gitlab-org/api/client-go/v3 v3.12.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/oauth2 v0.36.0
 	k8s.io/api v0.37.0
@@ -19,6 +19,7 @@ require (
 )
 
 require (
+	cel.dev/expr v0.25.3 // indirect
 	github.com/go-openapi/swag/cmdutils v0.27.1 // indirect
 	github.com/go-openapi/swag/conv v0.27.1 // indirect
 	github.com/go-openapi/swag/fileutils v0.27.1 // indirect
