@@ -1,0 +1,15 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Project
+metadata:
+  name: example-project-observed
+  namespace: default
+  annotations:
+    # Numeric ID or full path of the project.
+    crossplane.io/external-name: path/to/example-project
+spec:
+  managementPolicies:
+    - Observe
+  forProvider: {}
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
