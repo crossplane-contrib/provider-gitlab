@@ -44,6 +44,32 @@ spec:
 kubectl apply -f examples/providerconfig/provider.yaml
 ```
 
+### Referencing groups and projects by full path
+
+Set the `crossplane.io/external-name` annotation to the full path when you do
+not know the numeric ID of a `Group` or `Project`, for example for observe-only
+resources:
+
+```yaml
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Group
+metadata:
+  name: example-group-observed
+  annotations:
+    crossplane.io/external-name: path/to/example-group
+spec:
+  managementPolicies:
+    - Observe
+  forProvider:
+    path: example-group
+  providerConfigRef:
+    name: gitlab-provider
+```
+
+The path is used as the identifier as long as the annotation is set to it.
+GitLab resolves the old path of a renamed project, but not of a renamed group,
+so update the annotation after renaming a group that is only observed.
+
 ### Self-rotating service account tokens
 
 The namespaced `groups.gitlab.m.crossplane.io/v1alpha1` `ServiceAccountAccessToken`

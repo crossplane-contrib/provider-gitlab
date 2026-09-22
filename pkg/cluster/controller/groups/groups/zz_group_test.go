@@ -56,6 +56,7 @@ var (
 	expiresAt          = time.Now()
 	expiresAtIso       = (gitlab.ISOTime)(expiresAt)
 	extNameAnnotation  = map[string]string{meta.AnnotationKeyExternalName: extName}
+	fullPath           = "path/to/example-group"
 	visibility         = "private"
 	v1alpha1Visibility = v1alpha1.VisibilityValue(visibility)
 
@@ -261,18 +262,36 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
-		"NotIDExternalName": {
+		"PathExternalName": {
 			args: args{
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{}, &gitlab.Response{}, nil
+						if pid != fullPath {
+							return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						}
+						return &gitlab.Group{ID: 1234, Name: name}, &gitlab.Response{}, nil
 					},
 				},
-				cr: group(withExternalName("fr")),
+				cr: group(
+					withPath(""),
+					withClientDefaultValues(),
+					withExternalName(fullPath),
+				),
 			},
 			want: want{
-				cr:  group(withExternalName("fr")),
-				err: errors.New(errIDNotInt),
+				cr: group(
+					withPath(""),
+					withClientDefaultValues(),
+					withConditions(v2.Available()),
+					withExternalName(fullPath),
+					func(g *v1alpha1.Group) { g.Status.AtProvider.ID = ptr.To(int64(1234)) },
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
 			},
 		},
 		"FailedGetRequest": {
