@@ -388,6 +388,14 @@ type ProjectParameters struct {
 	// +optional
 	PushRules *PushRules `json:"pushRules,omitempty"`
 
+	// Approvals configures the project's merge request approval
+	// configuration. Fields left unset are not managed by this provider.
+	//
+	// GitLab API docs:
+	// https://docs.gitlab.com/api/merge_request_approvals/#update-approval-configuration-for-a-project
+	// +optional
+	Approvals *Approvals `json:"approvals,omitempty"`
+
 	// Enable Delete source branch option by default for all new merge requests.
 	// +optional
 	RemoveSourceBranchAfterMerge *bool `json:"removeSourceBranchAfterMerge,omitempty"`
@@ -509,6 +517,41 @@ type PushRules struct {
 
 	// Reject commit when it’s not DCO certified.
 	RejectNonDCOCommits *bool `json:"rejectNonDcoCommits,omitempty"`
+}
+
+// Approvals configures a project's merge request approval configuration.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/api/merge_request_approvals/#update-approval-configuration-for-a-project
+type Approvals struct {
+	// ResetApprovalsOnPush resets approvals on a new push to the merge request.
+	// +optional
+	ResetApprovalsOnPush *bool `json:"resetApprovalsOnPush,omitempty"`
+
+	// DisableOverridingApproversPerMergeRequest prevents users from overriding
+	// approvers per merge request.
+	// +optional
+	DisableOverridingApproversPerMergeRequest *bool `json:"disableOverridingApproversPerMergeRequest,omitempty"`
+
+	// MergeRequestsAuthorApproval allows merge request authors to self-approve
+	// their own merge requests.
+	// +optional
+	MergeRequestsAuthorApproval *bool `json:"mergeRequestsAuthorApproval,omitempty"`
+
+	// MergeRequestsDisableCommittersApproval prevents committers from
+	// approving their own merge requests.
+	// +optional
+	MergeRequestsDisableCommittersApproval *bool `json:"mergeRequestsDisableCommittersApproval,omitempty"`
+
+	// RequireReauthenticationToApprove requires the reauthentication password
+	// to approve merge requests.
+	// +optional
+	RequireReauthenticationToApprove *bool `json:"requireReauthenticationToApprove,omitempty"`
+
+	// SelectiveCodeOwnerRemovals allows removing individual code owner
+	// approval requirements for a merge request.
+	// +optional
+	SelectiveCodeOwnerRemovals *bool `json:"selectiveCodeOwnerRemovals,omitempty"`
 }
 
 // ProjectNamespace represents a project namespace.

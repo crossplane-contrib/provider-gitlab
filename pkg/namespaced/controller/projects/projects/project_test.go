@@ -84,6 +84,10 @@ func withProjectPushRules(pr *v1alpha1.PushRules) projectModifier {
 	return func(r *v1alpha1.Project) { r.Spec.ForProvider.PushRules = pr }
 }
 
+func withApprovals(a *v1alpha1.Approvals) projectModifier {
+	return func(r *v1alpha1.Project) { r.Spec.ForProvider.Approvals = a }
+}
+
 func withMergeTrainSettings(enabled, skipAllowed, pipelines *bool) projectModifier {
 	return func(r *v1alpha1.Project) {
 		r.Spec.ForProvider.MergeTrainsEnabled = enabled
@@ -455,6 +459,134 @@ func TestObserve(t *testing.T) {
 					ResourceExists:          true,
 					ResourceUpToDate:        true,
 					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		// Approvals is not set in the spec, so GetApprovalConfiguration must
+		// not be called at all (no mock is provided; a call would panic).
+		"ApprovalsNotManaged": {
+			args: args{
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{Name: "example-project"}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withConditions(v2.Available()),
+					withStatus(v1alpha1.ProjectObservation{}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		"ApprovalsUpToDate": {
+			args: args{
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{Name: "example-project"}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+					MockGetApprovalConfiguration: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovals, *gitlab.Response, error) {
+						return &gitlab.ProjectApprovals{
+							ResetApprovalsOnPush:             true,
+							MergeRequestsAuthorApproval:      false,
+							RequireReauthenticationToApprove: true,
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withApprovals(&v1alpha1.Approvals{
+						ResetApprovalsOnPush:             ptr.To(true),
+						MergeRequestsAuthorApproval:      ptr.To(false),
+						RequireReauthenticationToApprove: ptr.To(true),
+					}),
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withConditions(v2.Available()),
+					withStatus(v1alpha1.ProjectObservation{}),
+					withApprovals(&v1alpha1.Approvals{
+						ResetApprovalsOnPush:                      ptr.To(true),
+						MergeRequestsAuthorApproval:               ptr.To(false),
+						RequireReauthenticationToApprove:          ptr.To(true),
+						DisableOverridingApproversPerMergeRequest: ptr.To(false),
+						MergeRequestsDisableCommittersApproval:    ptr.To(false),
+						SelectiveCodeOwnerRemovals:                ptr.To(false),
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: true,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		"ApprovalsNotUpToDate": {
+			args: args{
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{Name: "example-project"}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+					MockGetApprovalConfiguration: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovals, *gitlab.Response, error) {
+						return &gitlab.ProjectApprovals{
+							ResetApprovalsOnPush: false,
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withApprovals(&v1alpha1.Approvals{
+						ResetApprovalsOnPush: ptr.To(true),
+					}),
+				),
+			},
+			want: want{
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(extName),
+					withConditions(v2.Available()),
+					withStatus(v1alpha1.ProjectObservation{}),
+					withApprovals(&v1alpha1.Approvals{
+						ResetApprovalsOnPush:                      ptr.To(true),
+						DisableOverridingApproversPerMergeRequest: ptr.To(false),
+						MergeRequestsAuthorApproval:               ptr.To(false),
+						MergeRequestsDisableCommittersApproval:    ptr.To(false),
+						RequireReauthenticationToApprove:          ptr.To(false),
+						SelectiveCodeOwnerRemovals:                ptr.To(false),
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: true,
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
 				},
 			},
@@ -1193,8 +1325,9 @@ func TestUpdate(t *testing.T) {
 
 	cases := map[string]struct {
 		args
-		cacheExternalPushRules *v1alpha1.PushRules
-		cachePushRulesUpToDate bool
+		cacheExternalPushRules   *v1alpha1.PushRules
+		cachePushRulesUpToDate   bool
+		cacheIsApprovalsUpToDate bool
 		want
 	}{
 		"InValidInput": {
@@ -1359,12 +1492,97 @@ func TestUpdate(t *testing.T) {
 				),
 			},
 		},
+		"ApprovalsNotManagedSkipped": {
+			args: args{
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, nil
+					},
+					// No approvals mocks needed - Approvals is not set in spec, so
+					// ChangeApprovalConfiguration must not be called.
+				},
+				cr: project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
+			},
+			cacheIsApprovalsUpToDate: false,
+			want: want{
+				cr: project(withStatus(v1alpha1.ProjectObservation{ID: 1234})),
+			},
+		},
+		"ApprovalsUpToDateSkipped": {
+			args: args{
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, nil
+					},
+					// No approvals mocks needed - already up to date per cache.
+				},
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withApprovals(&v1alpha1.Approvals{ResetApprovalsOnPush: ptr.To(true)}),
+				),
+			},
+			cacheIsApprovalsUpToDate: true,
+			want: want{
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withApprovals(&v1alpha1.Approvals{ResetApprovalsOnPush: ptr.To(true)}),
+				),
+			},
+		},
+		"SuccessfulUpdateApprovals": {
+			args: args{
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, nil
+					},
+					MockChangeApprovalConfiguration: func(pid interface{}, opt *gitlab.ChangeApprovalConfigurationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovals, *gitlab.Response, error) {
+						return &gitlab.ProjectApprovals{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withApprovals(&v1alpha1.Approvals{ResetApprovalsOnPush: ptr.To(true)}),
+				),
+			},
+			cacheIsApprovalsUpToDate: false,
+			want: want{
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withApprovals(&v1alpha1.Approvals{ResetApprovalsOnPush: ptr.To(true)}),
+				),
+			},
+		},
+		"FailedUpdateApprovals": {
+			args: args{
+				project: &fake.MockClient{
+					MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{}, &gitlab.Response{}, nil
+					},
+					MockChangeApprovalConfiguration: func(pid interface{}, opt *gitlab.ChangeApprovalConfigurationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovals, *gitlab.Response, error) {
+						return &gitlab.ProjectApprovals{}, &gitlab.Response{}, errBoom
+					},
+				},
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withApprovals(&v1alpha1.Approvals{ResetApprovalsOnPush: ptr.To(true)}),
+				),
+			},
+			cacheIsApprovalsUpToDate: false,
+			want: want{
+				cr: project(
+					withStatus(v1alpha1.ProjectObservation{ID: 1234}),
+					withApprovals(&v1alpha1.Approvals{ResetApprovalsOnPush: ptr.To(true)}),
+				),
+				err: errors.Wrap(errBoom, errUpdateApprovalsFailed),
+			},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			e := &external{kube: tc.kube, client: tc.project}
 			e.cache.externalPushRules = tc.cacheExternalPushRules
 			e.cache.isPushRulesUpToDate = tc.cachePushRulesUpToDate
+			e.cache.isApprovalsUpToDate = tc.cacheIsApprovalsUpToDate
 			o, err := e.Update(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {

@@ -59,6 +59,11 @@ const (
 	errLateInitialize          = "cannot late-initialize Gitlab project"
 	errLateInitializePushRules = "cannot late-initialize Gitlab project push rules"
 	errCheckPushRulesUpToDate  = "cannot compare project push rules"
+
+	errUpdateApprovalsFailed   = "cannot update Gitlab project approvals"
+	errGetApprovalsFailed      = "cannot retrieve Gitlab project approvals"
+	errLateInitializeApprovals = "cannot late-initialize Gitlab project approvals"
+	errCheckApprovalsUpToDate  = "cannot compare project approvals"
 )
 
 // SetupProject adds a controller that reconciles Projects.
@@ -127,6 +132,9 @@ type external struct {
 	cache struct {
 		externalPushRules   *v1alpha1.PushRules
 		isPushRulesUpToDate bool
+
+		externalApprovals   *gitlab.ProjectApprovals
+		isApprovalsUpToDate bool
 	}
 }
 
@@ -195,10 +203,15 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errCheckPushRulesUpToDate)
 	}
 
+	e.cache.isApprovalsUpToDate, err = e.isApprovalsUpToDate(ctx, cr)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errCheckApprovalsUpToDate)
+	}
+
 	cr.Status.AtProvider = projects.GenerateObservation(prj)
 	return managed.ExternalObservation{
 		ResourceExists:   true,
-		ResourceUpToDate: isProjectUpToDate(current, prj) && e.cache.isPushRulesUpToDate,
+		ResourceUpToDate: isProjectUpToDate(current, prj) && e.cache.isPushRulesUpToDate && e.cache.isApprovalsUpToDate,
 		// Compare against specSnapshot (pre-secret-substitution)
 		ResourceLateInitialized: !cmp.Equal(specSnapshot, &cr.Spec.ForProvider),
 		ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte(prj.RunnersToken)},
@@ -263,7 +276,25 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			return managed.ExternalUpdate{}, err
 		}
 	}
+
+	if cr.Spec.ForProvider.Approvals != nil && !e.cache.isApprovalsUpToDate {
+		if err := e.updateApprovals(ctx, cr); err != nil {
+			return managed.ExternalUpdate{}, err
+		}
+	}
 	return managed.ExternalUpdate{}, nil
+}
+
+// updateApprovals reconciles the project's merge request approval
+// configuration. Unlike push rules, the approvals endpoint always exists and
+// is updated via a single POST, so there is no add-vs-edit distinction.
+func (e *external) updateApprovals(ctx context.Context, cr *v1alpha1.Project) error {
+	_, _, err := e.client.ChangeApprovalConfiguration(
+		meta.GetExternalName(cr),
+		projects.GenerateChangeApprovalConfigurationOptions(cr.Spec.ForProvider.Approvals),
+		gitlab.WithContext(ctx),
+	)
+	return errors.Wrap(err, errUpdateApprovalsFailed)
 }
 
 // updatePushRules reconciles push rules for a project. It decides whether to
@@ -452,7 +483,96 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 		return errors.Wrap(err, errLateInitializePushRules)
 	}
 
+	if err := e.lateInitializeApprovals(ctx, cr); err != nil {
+		return errors.Wrap(err, errLateInitializeApprovals)
+	}
+
 	return nil
+}
+
+// getApprovals fetches and caches the project's merge request approval
+// configuration. It only fetches from GitLab when the spec opts into managing
+// approvals, since the endpoint is otherwise irrelevant to reconciliation.
+func (e *external) getApprovals(ctx context.Context, cr *v1alpha1.Project) (*gitlab.ProjectApprovals, error) {
+	if cr.Spec.ForProvider.Approvals == nil {
+		return nil, nil
+	}
+	if e.cache.externalApprovals != nil {
+		return e.cache.externalApprovals, nil
+	}
+	res, _, err := e.client.GetApprovalConfiguration(meta.GetExternalName(cr), gitlab.WithContext(ctx))
+	if err != nil {
+		return nil, errors.Wrap(err, errGetApprovalsFailed)
+	}
+	e.cache.externalApprovals = res
+	return res, nil
+}
+
+// lateInitializeApprovals fills empty fields of the approvals spec block
+// with the values seen in GitLab. It only runs if the user has already
+// opted into managing approvals by setting a non-nil block in the spec.
+func (e *external) lateInitializeApprovals(ctx context.Context, cr *v1alpha1.Project) error {
+	live, err := e.getApprovals(ctx, cr)
+	if err != nil || live == nil {
+		return err
+	}
+
+	in := cr.Spec.ForProvider.Approvals
+	if in.ResetApprovalsOnPush == nil {
+		in.ResetApprovalsOnPush = &live.ResetApprovalsOnPush
+	}
+	if in.DisableOverridingApproversPerMergeRequest == nil {
+		in.DisableOverridingApproversPerMergeRequest = &live.DisableOverridingApproversPerMergeRequest
+	}
+	if in.MergeRequestsAuthorApproval == nil {
+		in.MergeRequestsAuthorApproval = &live.MergeRequestsAuthorApproval
+	}
+	if in.MergeRequestsDisableCommittersApproval == nil {
+		in.MergeRequestsDisableCommittersApproval = &live.MergeRequestsDisableCommittersApproval
+	}
+	if in.RequireReauthenticationToApprove == nil {
+		in.RequireReauthenticationToApprove = &live.RequireReauthenticationToApprove
+	}
+	if in.SelectiveCodeOwnerRemovals == nil {
+		in.SelectiveCodeOwnerRemovals = &live.SelectiveCodeOwnerRemovals
+	}
+	return nil
+}
+
+// isApprovalsUpToDate checks whether the approvals spec block (if any)
+// matches the live GitLab configuration. A nil spec block means approvals
+// are not managed by this provider and is always considered up to date.
+func (e *external) isApprovalsUpToDate(ctx context.Context, cr *v1alpha1.Project) (bool, error) {
+	if cr.Spec.ForProvider.Approvals == nil {
+		return true, nil
+	}
+
+	live, err := e.getApprovals(ctx, cr)
+	if err != nil {
+		return false, err
+	}
+
+	p := cr.Spec.ForProvider.Approvals
+	if !clients.IsBoolEqualToBoolPtr(p.ResetApprovalsOnPush, live.ResetApprovalsOnPush) {
+		return false, nil
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.DisableOverridingApproversPerMergeRequest, live.DisableOverridingApproversPerMergeRequest) {
+		return false, nil
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.MergeRequestsAuthorApproval, live.MergeRequestsAuthorApproval) {
+		return false, nil
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.MergeRequestsDisableCommittersApproval, live.MergeRequestsDisableCommittersApproval) {
+		return false, nil
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.RequireReauthenticationToApprove, live.RequireReauthenticationToApprove) {
+		return false, nil
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.SelectiveCodeOwnerRemovals, live.SelectiveCodeOwnerRemovals) {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (e *external) lateInitializePushRules(ctx context.Context, cr *v1alpha1.Project) error {

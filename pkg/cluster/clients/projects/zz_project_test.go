@@ -773,3 +773,50 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateChangeApprovalConfigurationOptions(t *testing.T) {
+	cases := map[string]struct {
+		approvals *v1alpha1.Approvals
+		want      *gitlab.ChangeApprovalConfigurationOptions
+	}{
+		"Nil": {
+			approvals: nil,
+			want:      &gitlab.ChangeApprovalConfigurationOptions{},
+		},
+		"AllFieldsSet": {
+			approvals: &v1alpha1.Approvals{
+				ResetApprovalsOnPush:                      ptr.To(true),
+				DisableOverridingApproversPerMergeRequest: ptr.To(true),
+				MergeRequestsAuthorApproval:               ptr.To(false),
+				MergeRequestsDisableCommittersApproval:    ptr.To(true),
+				RequireReauthenticationToApprove:          ptr.To(true),
+				SelectiveCodeOwnerRemovals:                ptr.To(false),
+			},
+			want: &gitlab.ChangeApprovalConfigurationOptions{
+				ResetApprovalsOnPush:                      ptr.To(true),
+				DisableOverridingApproversPerMergeRequest: ptr.To(true),
+				MergeRequestsAuthorApproval:               ptr.To(false),
+				MergeRequestsDisableCommittersApproval:    ptr.To(true),
+				RequireReauthenticationToApprove:          ptr.To(true),
+				SelectiveCodeOwnerRemovals:                ptr.To(false),
+			},
+		},
+		"PartiallySet": {
+			approvals: &v1alpha1.Approvals{
+				ResetApprovalsOnPush: ptr.To(true),
+			},
+			want: &gitlab.ChangeApprovalConfigurationOptions{
+				ResetApprovalsOnPush: ptr.To(true),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateChangeApprovalConfigurationOptions(tc.approvals)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
