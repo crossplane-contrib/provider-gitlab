@@ -26,13 +26,17 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	clustergroupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
 	legacyv1beta1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/v1beta1"
 	namespacedgroupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
 	namespacedv1beta1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/v1beta1"
+	namespacedv1beta2 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/v1beta2"
+	auth "github.com/crossplane-contrib/provider-gitlab/pkg/common/auth"
 )
 
 type mockManagedResource struct {
@@ -223,39 +227,52 @@ func TestUseLegacyProviderConfigSetsCredentialsSecretRef(t *testing.T) {
 	}
 }
 
-func TestUseProviderConfigForcesCredentialsSecretNamespace(t *testing.T) {
+// TestUseProviderConfigResolvesLocalSecretRef verifies that a namespaced
+// ProviderConfig resolves its LocalSecretKeySelector against the
+// ProviderConfig's own namespace, and populates Config.CredentialsSecretRef with
+// that namespace. This is the contract the token self-rotation detection
+// (isSelfManaged) relies on: it compares CredentialsSecretRef.Namespace with the
+// managed resource's namespace.
+func TestUseProviderConfigResolvesLocalSecretRef(t *testing.T) {
 	const (
-		managedNamespace = "tenant-a"
-		otherNamespace   = "tenant-b"
-		testToken        = "test-token-value"
+		testToken   = "test-token-value"
+		pcNamespace = "team-a"
+		secretName  = "gitlab-creds"
+		secretKey   = "token"
 	)
 
-	mg := &namespacedgroupsv1alpha1.Group{ObjectMeta: metav1.ObjectMeta{Namespace: managedNamespace}}
-	mg.SetProviderConfigReference(&v2.ProviderConfigReference{Kind: "ProviderConfig", Name: "test-provider-config"})
-	selector := &v2.SecretKeySelector{
-		Key:             "token",
-		SecretReference: v2.SecretReference{Name: "test-secret", Namespace: otherNamespace},
+	mg := &namespacedgroupsv1alpha1.AccessToken{
+		ObjectMeta: metav1.ObjectMeta{Name: "at", Namespace: pcNamespace},
 	}
+	mg.SetProviderConfigReference(&v2.ProviderConfigReference{Kind: "ProviderConfig", Name: "pc"})
 
-	var secretKey client.ObjectKey
 	kube := &test.MockClient{
 		MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
 			switch o := obj.(type) {
-			case *namespacedv1beta1.ProviderConfig:
-				*o = namespacedv1beta1.ProviderConfig{
-					ObjectMeta: metav1.ObjectMeta{Name: key.Name, Namespace: key.Namespace},
-					Spec: namespacedv1beta1.ProviderConfigSpec{
-						Credentials: namespacedv1beta1.ProviderCredentials{
+			case *namespacedv1beta2.ProviderConfig:
+				if key.Namespace != pcNamespace {
+					t.Fatalf("ProviderConfig fetched from namespace %q, want %q", key.Namespace, pcNamespace)
+				}
+				*o = namespacedv1beta2.ProviderConfig{
+					ObjectMeta: metav1.ObjectMeta{Name: "pc", Namespace: pcNamespace},
+					Spec: namespacedv1beta2.ProviderConfigSpec{
+						Credentials: namespacedv1beta2.ProviderCredentials{
 							Source: v2.CredentialsSourceSecret,
-							CommonCredentialSelectors: v2.CommonCredentialSelectors{
-								SecretRef: selector,
+							Method: auth.PersonalAccessToken,
+							SecretRef: &v2.LocalSecretKeySelector{
+								Key:                  secretKey,
+								LocalSecretReference: v2.LocalSecretReference{Name: secretName},
 							},
 						},
 					},
 				}
 			case *corev1.Secret:
-				secretKey = key
-				*o = corev1.Secret{Data: map[string][]byte{"token": []byte(testToken)}}
+				if key.Namespace != pcNamespace {
+					t.Fatalf("secret fetched from namespace %q, want %q", key.Namespace, pcNamespace)
+				}
+				*o = corev1.Secret{Data: map[string][]byte{secretKey: []byte(testToken)}}
+			case *namespacedv1beta1.ProviderConfigUsage:
+				return apierrors.NewNotFound(schema.GroupResource{}, key.Name)
 			}
 			return nil
 		},
@@ -266,59 +283,92 @@ func TestUseProviderConfigForcesCredentialsSecretNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UseProvicerConfig() error = %v", err)
 	}
+	if cfg == nil {
+		t.Fatal("UseProvicerConfig() returned nil config")
+	}
 
-	want := client.ObjectKey{Name: "test-secret", Namespace: managedNamespace}
-	if diff := cmp.Diff(want, secretKey); diff != "" {
-		t.Fatalf("secret key mismatch (-want +got):\n%s", diff)
+	want := &v2.SecretKeySelector{
+		Key:             secretKey,
+		SecretReference: v2.SecretReference{Name: secretName, Namespace: pcNamespace},
 	}
-	if diff := cmp.Diff(managedNamespace, cfg.CredentialsSecretRef.SecretReference.Namespace); diff != "" {
-		t.Fatalf("credentials secret namespace mismatch (-want +got):\n%s", diff)
+	if diff := cmp.Diff(want, cfg.CredentialsSecretRef); diff != "" {
+		t.Fatalf("CredentialsSecretRef mismatch (-want +got):\n%s", diff)
 	}
-	if diff := cmp.Diff(otherNamespace, selector.SecretReference.Namespace); diff != "" {
-		t.Fatalf("source selector namespace mutated (-want +got):\n%s", diff)
+	if cfg.Token != testToken {
+		t.Fatalf("Token = %q, want %q", cfg.Token, testToken)
+	}
+	if cfg.AuthMethod != auth.PersonalAccessToken {
+		t.Fatalf("AuthMethod = %q, want %q", cfg.AuthMethod, auth.PersonalAccessToken)
 	}
 }
 
-func TestUseClusterProviderConfigPreservesCredentialsSecretNamespace(t *testing.T) {
-	const secretNamespace = "credentials"
+// TestUseProviderConfigResolvesClusterSecretRef verifies that a
+// ClusterProviderConfig keeps its full SecretKeySelector (arbitrary namespace)
+// after the namespaced/cluster split.
+func TestUseProviderConfigResolvesClusterSecretRef(t *testing.T) {
+	const (
+		testToken       = "cluster-token-value"
+		mgNamespace     = "team-a"
+		secretNamespace = "crossplane-system"
+		secretName      = "gitlab-creds"
+		secretKey       = "token"
+	)
 
-	mg := &namespacedgroupsv1alpha1.Group{ObjectMeta: metav1.ObjectMeta{Namespace: "tenant-a"}}
-	mg.SetProviderConfigReference(&v2.ProviderConfigReference{Kind: "ClusterProviderConfig", Name: "test-provider-config"})
+	selector := &v2.SecretKeySelector{
+		Key:             secretKey,
+		SecretReference: v2.SecretReference{Name: secretName, Namespace: secretNamespace},
+	}
 
-	var secretKey client.ObjectKey
+	mg := &namespacedgroupsv1alpha1.AccessToken{
+		ObjectMeta: metav1.ObjectMeta{Name: "at", Namespace: mgNamespace},
+	}
+	mg.SetProviderConfigReference(&v2.ProviderConfigReference{Kind: "ClusterProviderConfig", Name: "cpc"})
+
 	kube := &test.MockClient{
 		MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
 			switch o := obj.(type) {
 			case *namespacedv1beta1.ClusterProviderConfig:
+				if key.Namespace != "" {
+					t.Fatalf("ClusterProviderConfig fetched with namespace %q, want cluster scope", key.Namespace)
+				}
 				*o = namespacedv1beta1.ClusterProviderConfig{
+					ObjectMeta: metav1.ObjectMeta{Name: "cpc"},
 					Spec: namespacedv1beta1.ProviderConfigSpec{
 						Credentials: namespacedv1beta1.ProviderCredentials{
 							Source: v2.CredentialsSourceSecret,
+							Method: auth.PersonalAccessToken,
 							CommonCredentialSelectors: v2.CommonCredentialSelectors{
-								SecretRef: &v2.SecretKeySelector{
-									Key:             "token",
-									SecretReference: v2.SecretReference{Name: "test-secret", Namespace: secretNamespace},
-								},
+								SecretRef: selector,
 							},
 						},
 					},
 				}
 			case *corev1.Secret:
-				secretKey = key
-				*o = corev1.Secret{Data: map[string][]byte{"token": []byte("test-token-value")}}
+				if key.Namespace != secretNamespace {
+					t.Fatalf("secret fetched from namespace %q, want %q", key.Namespace, secretNamespace)
+				}
+				*o = corev1.Secret{Data: map[string][]byte{secretKey: []byte(testToken)}}
+			case *namespacedv1beta1.ProviderConfigUsage:
+				return apierrors.NewNotFound(schema.GroupResource{}, key.Name)
 			}
 			return nil
 		},
 		MockCreate: test.NewMockCreateFn(nil),
 	}
 
-	if _, err := UseProvicerConfig(context.Background(), kube, mg); err != nil {
+	cfg, err := UseProvicerConfig(context.Background(), kube, mg)
+	if err != nil {
 		t.Fatalf("UseProvicerConfig() error = %v", err)
 	}
+	if cfg == nil {
+		t.Fatal("UseProvicerConfig() returned nil config")
+	}
 
-	want := client.ObjectKey{Name: "test-secret", Namespace: secretNamespace}
-	if diff := cmp.Diff(want, secretKey); diff != "" {
-		t.Fatalf("secret key mismatch (-want +got):\n%s", diff)
+	if diff := cmp.Diff(selector, cfg.CredentialsSecretRef); diff != "" {
+		t.Fatalf("CredentialsSecretRef mismatch (-want +got):\n%s", diff)
+	}
+	if cfg.Token != testToken {
+		t.Fatalf("Token = %q, want %q", cfg.Token, testToken)
 	}
 }
 

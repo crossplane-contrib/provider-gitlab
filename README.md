@@ -56,7 +56,7 @@ It supports two modes, selected automatically:
   endpoints.
 * **Self-managed mode**: the `ProviderConfig` authenticates with the *very token*
   this resource manages — i.e. the `ProviderConfig.credentials.secretRef` points
-  at the same secret (namespace, name and `token` key) that the resource writes
+  at the same secret in the ProviderConfig's own namespace (name and `token` key) that the resource writes
   via `writeConnectionSecretToRef`. The provider then acts as the service account
   itself and uses the self endpoints (`GET/POST /personal_access_tokens/self`).
   This lets a short-lived token reconcile a whole group and keep itself alive by
@@ -145,7 +145,7 @@ automatically:
   check is required.
 * **Self-managed mode**: the `ProviderConfig` authenticates with the *very token*
   this resource manages — i.e. its `credentials.secretRef` points at the same
-  secret (namespace, name and `token` key) that the resource writes via
+  secret in the ProviderConfig's own namespace (name and `token` key) that the resource writes via
   `writeConnectionSecretToRef`. The provider then acts as the token's bot user
   and uses the self endpoints, keeping the token alive by self-rotating before
   expiry. A `SelfManaged` status condition reports the active mode.

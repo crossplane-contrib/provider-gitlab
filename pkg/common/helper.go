@@ -52,6 +52,25 @@ func GetTokenValueFromSecret(ctx context.Context, client client.Client, m resour
 	return &data, nil
 }
 
+// localToSecretKeySelector expands a namespace-scoped LocalSecretKeySelector
+// into a fully qualified SecretKeySelector rooted at ns. It returns nil when l
+// is nil so callers can keep their existing nil checks. This is the single
+// place that pins a local selector to a namespace, so the namespace a secret is
+// read from and the namespace recorded in Config.CredentialsSecretRef are
+// guaranteed to match by construction.
+func localToSecretKeySelector(l *v2.LocalSecretKeySelector, ns string) *v2.SecretKeySelector {
+	if l == nil {
+		return nil
+	}
+	return &v2.SecretKeySelector{
+		Key: l.Key,
+		SecretReference: v2.SecretReference{
+			Name:      l.Name,
+			Namespace: ns,
+		},
+	}
+}
+
 // GetTokenValueFromLocalSecret is a helper function that retrieves the value of a secret key specified by a LocalSecretKeySelector.
 // It constructs a SecretKeySelector from the LocalSecretKeySelector and calls GetTokenValueFromSecret to fetch the value.
 func GetTokenValueFromLocalSecret(ctx context.Context, client client.Client, m resource.Managed, l *v2.LocalSecretKeySelector) (*string, error) {
@@ -59,13 +78,7 @@ func GetTokenValueFromLocalSecret(ctx context.Context, client client.Client, m r
 		return nil, errors.Errorf(ErrSecretSelectorNil)
 	}
 
-	return GetTokenValueFromSecret(ctx, client, m, &v2.SecretKeySelector{
-		Key: l.Key,
-		SecretReference: v2.SecretReference{
-			Name:      l.Name,
-			Namespace: m.GetNamespace(),
-		},
-	})
+	return GetTokenValueFromSecret(ctx, client, m, localToSecretKeySelector(l, m.GetNamespace()))
 }
 
 // ResolvePublicJobsSetting determines the effective publicJobs value

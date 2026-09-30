@@ -61,6 +61,7 @@ type ProviderConfigStatus struct {
 // +kubebuilder:printcolumn:name="SECRET-NAME",type="string",JSONPath=".spec.credentials.secretRef.name",priority=1
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,provider,gitlab}
 // +kubebuilder:subresource:status
+// +kubebuilder:deprecatedversion:warning="gitlab.m.crossplane.io/v1beta1 ProviderConfig is deprecated; use gitlab.m.crossplane.io/v1beta2. The credentials secret is always read from the ProviderConfig's own namespace; secretRef.namespace, fs and env are ignored."
 type ProviderConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
