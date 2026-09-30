@@ -51,6 +51,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/recorder"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
 
@@ -155,7 +156,7 @@ type fakeManager struct {
 	addErr             error
 	logger             logr.Logger
 	deprecatedRecorder record.EventRecorder
-	recorder           events.EventRecorder
+	recorder           recorder.EventRecorder
 }
 
 // type check to make sure fakeManager implements manager.Manager
@@ -191,7 +192,7 @@ func (m *fakeManager) GetEventRecorderFor(string) record.EventRecorder {
 	}
 	return m.deprecatedRecorder
 }
-func (m *fakeManager) GetEventRecorder(name string) events.EventRecorder {
+func (m *fakeManager) GetEventRecorder(name string) recorder.EventRecorder {
 	if m.recorder == nil {
 		m.recorder = events.NewFakeRecorder(32)
 	}
