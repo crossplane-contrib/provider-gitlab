@@ -26,7 +26,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 )
 
 // GenerateUpdateApplicationSettingsOptions generates GitLab Settings update options from the desired state

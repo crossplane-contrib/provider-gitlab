@@ -24,7 +24,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 )
 
 // GenerateUpdateApplicationSettingsOptions generates GitLab Settings update options from the desired state
@@ -1077,7 +1077,7 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.DefaultBranchName, g.DefaultBranchName) {
 		return false
 	}
-		if !isDefaultBranchProtectionDefaultsPtrEqualToDefaultsPtr(p.DefaultBranchProtectionDefaults, g.DefaultBranchProtectionDefaults) {
+	if !isDefaultBranchProtectionDefaultsPtrEqualToDefaultsPtr(p.DefaultBranchProtectionDefaults, g.DefaultBranchProtectionDefaults) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.DefaultCiConfigPath, g.DefaultCiConfigPath) {
@@ -1265,7 +1265,7 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.ElasticsearchShards, g.ElasticsearchShards) {
 		return false
 	}
-		if p.ElasticsearchURL != nil {
+	if p.ElasticsearchURL != nil {
 		// ElasticsearchURL is a comma separated string in gitlab
 		splitUrls := strings.Split(*p.ElasticsearchURL, ",")
 		if !clients.IsComparableSliceEqualToComparableSlicePtr(&splitUrls, g.ElasticsearchURL) {
@@ -1758,7 +1758,7 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.RequireTwoFactorAuthentication, g.RequireTwoFactorAuthentication) {
 		return false
 	}
-		if !clients.IsComparableSliceEqualToComparableSlicePtr(p.RestrictedVisibilityLevels, clients.VisibilityValueSliceToStringSlice(g.RestrictedVisibilityLevels)) {
+	if !clients.IsComparableSliceEqualToComparableSlicePtr(p.RestrictedVisibilityLevels, clients.VisibilityValueSliceToStringSlice(g.RestrictedVisibilityLevels)) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.RunnerTokenExpirationInterval, g.RunnerTokenExpirationInterval) {
