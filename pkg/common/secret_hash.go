@@ -134,11 +134,23 @@ func (h *SecretHasher) Set(o metav1.Object, name, value string) {
 // and patches it to the API server. It must be used in Update, where the
 // managed reconciler does not persist annotations. It is a no-op when disabled
 // or when the stored hash is already up to date.
+//
+// The patch is sent from a copy of o, so that the API server response does not
+// overwrite the in-memory status of o (e.g. observations made during Observe),
+// which the managed reconciler persists after Update. Only the new
+// resourceVersion is carried back to o so that the subsequent status update
+// does not conflict.
 func (h *SecretHasher) Persist(ctx context.Context, kube client.Client, o client.Object, name, value string) error {
 	if !h.Enabled() || h.IsUpToDate(o, name, value) {
 		return nil
 	}
+	p := o.DeepCopyObject().(client.Object)
 	patch := client.MergeFrom(o.DeepCopyObject().(client.Object))
+	h.Set(p, name, value)
 	h.Set(o, name, value)
-	return errors.Wrap(kube.Patch(ctx, o, patch), ErrPersistSecretHash)
+	if err := kube.Patch(ctx, p, patch); err != nil {
+		return errors.Wrap(err, ErrPersistSecretHash)
+	}
+	o.SetResourceVersion(p.GetResourceVersion())
+	return nil
 }
