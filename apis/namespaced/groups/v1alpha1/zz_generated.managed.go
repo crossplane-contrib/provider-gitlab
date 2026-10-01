@@ -260,6 +260,46 @@ func (mg *IntegrationHarbor) SetWriteConnectionSecretToReference(r *v2.LocalSecr
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this IntegrationMattermost.
+func (mg *IntegrationMattermost) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetManagementPolicies of this IntegrationMattermost.
+func (mg *IntegrationMattermost) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationMattermost.
+func (mg *IntegrationMattermost) GetProviderConfigReference() *v2.ProviderConfigReference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationMattermost.
+func (mg *IntegrationMattermost) GetWriteConnectionSecretToReference() *v2.LocalSecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationMattermost.
+func (mg *IntegrationMattermost) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetManagementPolicies of this IntegrationMattermost.
+func (mg *IntegrationMattermost) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationMattermost.
+func (mg *IntegrationMattermost) SetProviderConfigReference(r *v2.ProviderConfigReference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationMattermost.
+func (mg *IntegrationMattermost) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this LdapGroupLink.
 func (mg *LdapGroupLink) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)

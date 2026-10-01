@@ -1679,9 +1679,9 @@ func (in *IntegrationMattermostParameters) DeepCopyInto(out *IntegrationMattermo
 		*out = new(bool)
 		**out = **in
 	}
-	if in.ConfidentialNoteChannel != nil {
-		in, out := &in.ConfidentialNoteChannel, &out.ConfidentialNoteChannel
-		*out = new(string)
+	if in.ConfidentialNoteEvents != nil {
+		in, out := &in.ConfidentialNoteEvents, &out.ConfidentialNoteEvents
+		*out = new(bool)
 		**out = **in
 	}
 	if in.PipelineEvents != nil {
@@ -1719,9 +1719,9 @@ func (in *IntegrationMattermostParameters) DeepCopyInto(out *IntegrationMattermo
 		*out = new(string)
 		**out = **in
 	}
-	if in.ConfidentialNoteEvents != nil {
-		in, out := &in.ConfidentialNoteEvents, &out.ConfidentialNoteEvents
-		*out = new(bool)
+	if in.ConfidentialNoteChannel != nil {
+		in, out := &in.ConfidentialNoteChannel, &out.ConfidentialNoteChannel
+		*out = new(string)
 		**out = **in
 	}
 	if in.TagPushChannel != nil {

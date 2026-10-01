@@ -34,6 +34,16 @@ type ProviderConfigSpec struct {
 	// InsecureSkipVerify ignores self signed TLS certificates when connecting
 	// to Gitlab.
 	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
+
+	// SecretHashKeySecretRef references a secret key holding the HMAC key used to
+	// hash write-only secret values (such as integration webhooks or passwords)
+	// into managed resource annotations, so that changes to those secrets are
+	// detected and re-applied to GitLab. The key must be at least 32 bytes long
+	// (e.g. generated with `openssl rand -base64 32`). When unset, no hash is
+	// stored and changes to write-only secret values are not detected.
+	// Rotating the key causes a single re-apply of affected resources.
+	// +optional
+	SecretHashKeySecretRef *v2.SecretKeySelector `json:"secretHashKeySecretRef,omitempty"`
 }
 
 // ProviderCredentials required to authenticate.

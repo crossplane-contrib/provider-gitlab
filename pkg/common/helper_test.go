@@ -187,6 +187,11 @@ func TestUseLegacyProviderConfigSetsCredentialsSecretRef(t *testing.T) {
 		},
 	}
 
+	hashKeySelector := &v2.SecretKeySelector{
+		Key:             "key",
+		SecretReference: v2.SecretReference{Name: "hash-key", Namespace: "default"},
+	}
+
 	mg := &clustergroupsv1alpha1.Group{}
 	mg.SetProviderConfigReference(&v2.Reference{Name: "test-provider-config"})
 
@@ -203,6 +208,7 @@ func TestUseLegacyProviderConfigSetsCredentialsSecretRef(t *testing.T) {
 								SecretRef: selector,
 							},
 						},
+						SecretHashKeySecretRef: hashKeySelector,
 					},
 				}
 			case *corev1.Secret:
@@ -224,6 +230,9 @@ func TestUseLegacyProviderConfigSetsCredentialsSecretRef(t *testing.T) {
 
 	if diff := cmp.Diff(selector, cfg.CredentialsSecretRef); diff != "" {
 		t.Fatalf("CredentialsSecretRef mismatch (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(hashKeySelector, cfg.SecretHashKeySecretRef); diff != "" {
+		t.Fatalf("SecretHashKeySecretRef mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -264,6 +273,10 @@ func TestUseProviderConfigResolvesLocalSecretRef(t *testing.T) {
 								LocalSecretReference: v2.LocalSecretReference{Name: secretName},
 							},
 						},
+						SecretHashKeySecretRef: &v2.LocalSecretKeySelector{
+							Key:                  "key",
+							LocalSecretReference: v2.LocalSecretReference{Name: "hash-key"},
+						},
 					},
 				}
 			case *corev1.Secret:
@@ -300,6 +313,14 @@ func TestUseProviderConfigResolvesLocalSecretRef(t *testing.T) {
 	if cfg.AuthMethod != auth.PersonalAccessToken {
 		t.Fatalf("AuthMethod = %q, want %q", cfg.AuthMethod, auth.PersonalAccessToken)
 	}
+	// The secret hash key is pinned to the ProviderConfig's own namespace.
+	wantHashKey := &v2.SecretKeySelector{
+		Key:             "key",
+		SecretReference: v2.SecretReference{Name: "hash-key", Namespace: pcNamespace},
+	}
+	if diff := cmp.Diff(wantHashKey, cfg.SecretHashKeySecretRef); diff != "" {
+		t.Fatalf("SecretHashKeySecretRef mismatch (-want +got):\n%s", diff)
+	}
 }
 
 // TestUseProviderConfigResolvesClusterSecretRef verifies that a
@@ -317,6 +338,11 @@ func TestUseProviderConfigResolvesClusterSecretRef(t *testing.T) {
 	selector := &v2.SecretKeySelector{
 		Key:             secretKey,
 		SecretReference: v2.SecretReference{Name: secretName, Namespace: secretNamespace},
+	}
+
+	hashKeySelector := &v2.SecretKeySelector{
+		Key:             "key",
+		SecretReference: v2.SecretReference{Name: "hash-key", Namespace: secretNamespace},
 	}
 
 	mg := &namespacedgroupsv1alpha1.AccessToken{
@@ -341,6 +367,7 @@ func TestUseProviderConfigResolvesClusterSecretRef(t *testing.T) {
 								SecretRef: selector,
 							},
 						},
+						SecretHashKeySecretRef: hashKeySelector,
 					},
 				}
 			case *corev1.Secret:
@@ -369,6 +396,9 @@ func TestUseProviderConfigResolvesClusterSecretRef(t *testing.T) {
 	}
 	if cfg.Token != testToken {
 		t.Fatalf("Token = %q, want %q", cfg.Token, testToken)
+	}
+	if diff := cmp.Diff(hashKeySelector, cfg.SecretHashKeySecretRef); diff != "" {
+		t.Fatalf("SecretHashKeySecretRef mismatch (-want +got):\n%s", diff)
 	}
 }
 

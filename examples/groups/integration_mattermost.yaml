@@ -1,0 +1,20 @@
+---
+apiVersion: groups.gitlab.m.crossplane.io/v1alpha1
+kind: IntegrationMattermost
+metadata:
+  name: mattermost-g7
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    groupId: 20
+    webhookSecretRef:
+      name: mattermost-webhook
+      key: webhook
+    username: "gitlab-bot"
+    channel: "gitlab-notifications"
+    pushEvents: true
+    pipelineEvents: true
+    pipelineChannel: "gitlab-pipelines"

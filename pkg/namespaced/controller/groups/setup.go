@@ -26,6 +26,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/hooks"
 	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/integrationharbor"
+	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/integrationmattermost"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/ldapgrouplinks"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/runners"
@@ -51,6 +52,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		serviceaccountaccesstokens.SetupServiceAccountAccessToken,
 		hooks.SetupHook,
 		integrationharbor.SetupIntegrationHarbor,
+		integrationmattermost.SetupIntegrationMattermost,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -76,6 +78,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		serviceaccountaccesstokens.SetupServiceAccountAccessTokenGated,
 		hooks.SetupHookGated,
 		integrationharbor.SetupIntegrationHarborGated,
+		integrationmattermost.SetupIntegrationMattermostGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
