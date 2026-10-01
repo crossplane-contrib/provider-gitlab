@@ -13,3 +13,9 @@ spec:
       namespace: crossplane-system
       name: gitlab-credentials
       key: token
+  # Optional: HMAC key used to detect changes to write-only secret values
+  # (e.g. integration webhooks) that GitLab never returns. See README.
+  # secretHashKeySecretRef:
+  #   namespace: crossplane-system
+  #   name: gitlab-secret-hash-key
+  #   key: key

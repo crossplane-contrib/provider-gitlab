@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.22.0
-  name: integrationmattermosts.projects.gitlab.m.crossplane.io
+  name: integrationmattermosts.groups.gitlab.m.crossplane.io
 spec:
-  group: projects.gitlab.m.crossplane.io
+  group: groups.gitlab.m.crossplane.io
   names:
     categories:
     - crossplane
@@ -28,14 +28,14 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
-    - jsonPath: .spec.forProvider.projectId
-      name: PROJECT
+    - jsonPath: .spec.forProvider.groupId
+      name: GROUP
       type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
         description: A IntegrationMattermost is a managed resource that represents
-          a GitLab Project Mattermost Integration
+          a GitLab Group Mattermost Integration.
         properties:
           apiVersion:
             description: |-
@@ -56,16 +56,23 @@ spec:
             type: object
           spec:
             description: A IntegrationMattermostSpec defines the desired state of
-              a GitLab Project Mattermost Integration.
+              a GitLab Group Mattermost Integration.
             properties:
               forProvider:
                 description: ForProvider represents the desired state of the mattermost
-                  integration
+                  integration.
                 properties:
+                  alertChannel:
+                    description: The name of the channel to receive notifications
+                      for alert events.
+                    type: string
+                  alertEvents:
+                    description: Enable notifications for alert events.
+                    type: boolean
                   branchesToBeNotified:
-                    description: Branches to send notifications for. Valid options
-                      are all, default, protected, and default_and_protected. The
-                      default value is default.
+                    description: |-
+                      Branches to send notifications for. Valid options are all, default, protected, and default_and_protected. The default value is default.
+                      WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
                     enum:
                     - all
                     - default
@@ -89,44 +96,20 @@ spec:
                   confidentialNoteEvents:
                     description: Enable notifications for confidential note events.
                     type: boolean
-                  issueChannel:
+                  deploymentChannel:
                     description: The name of the channel to receive notifications
-                      for issue events.
+                      for deployment events.
                     type: string
-                  issuesEvents:
-                    description: Enable notifications for issue events.
+                  deploymentEvents:
+                    description: Enable notifications for deployment events.
                     type: boolean
-                  mergeRequestChannel:
-                    description: The name of the channel to receive notifications
-                      for merge request events.
-                    type: string
-                  mergeRequestsEvents:
-                    description: Enable notifications for merge request events.
-                    type: boolean
-                  noteChannel:
-                    description: The name of the channel to receive notifications
-                      for note events.
-                    type: string
-                  noteEvents:
-                    description: Enable notifications for note events.
-                    type: boolean
-                  notifyOnlyBrokenPipelines:
-                    description: Send notifications for broken pipelines.
-                    type: boolean
-                  pipelineChannel:
-                    description: The name of the channel to receive notifications
-                      for pipeline events.
-                    type: string
-                  pipelineEvents:
-                    description: Enable notifications for pipeline events.
-                    type: boolean
-                  projectId:
-                    description: ProjectID is the ID of the project.
+                  groupId:
+                    description: GroupID is the ID of the group.
                     format: int64
                     type: integer
-                  projectIdRef:
-                    description: ProjectIDRef is a reference to a project to retrieve
-                      its projectId
+                  groupIdRef:
+                    description: GroupIDRef is a reference to a group to retrieve
+                      its groupId.
                     properties:
                       name:
                         description: Name of the referenced object.
@@ -162,9 +145,9 @@ spec:
                     required:
                     - name
                     type: object
-                  projectIdSelector:
-                    description: ProjectIDSelector selects reference to a project
-                      to retrieve its projectId.
+                  groupIdSelector:
+                    description: GroupIDSelector selects reference to a group to retrieve
+                      its groupId.
                     properties:
                       matchControllerRef:
                         description: |-
@@ -206,12 +189,58 @@ spec:
                             type: string
                         type: object
                     type: object
+                  issueChannel:
+                    description: The name of the channel to receive notifications
+                      for issue events.
+                    type: string
+                  issuesEvents:
+                    description: Enable notifications for issue events.
+                    type: boolean
+                  labelsToBeNotified:
+                    description: |-
+                      Labels to send notifications for. Leave blank to receive notifications for all events.
+                      WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
+                    type: string
+                  labelsToBeNotifiedBehavior:
+                    description: |-
+                      Labels to be notified for. Valid options are match_any and match_all. The default value is match_any.
+                      WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
+                    enum:
+                    - match_any
+                    - match_all
+                    type: string
+                  mergeRequestChannel:
+                    description: The name of the channel to receive notifications
+                      for merge request events.
+                    type: string
+                  mergeRequestsEvents:
+                    description: Enable notifications for merge request events.
+                    type: boolean
+                  noteChannel:
+                    description: The name of the channel to receive notifications
+                      for note events.
+                    type: string
+                  noteEvents:
+                    description: Enable notifications for note events.
+                    type: boolean
+                  notifyOnlyBrokenPipelines:
+                    description: |-
+                      Send notifications for broken pipelines.
+                      WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
+                    type: boolean
+                  pipelineChannel:
+                    description: The name of the channel to receive notifications
+                      for pipeline events.
+                    type: string
+                  pipelineEvents:
+                    description: Enable notifications for pipeline events.
+                    type: boolean
                   pushChannel:
                     description: The name of the channel to receive notifications
                       for push events.
                     type: string
                   pushEvents:
-                    description: "\tEnable notifications for push events."
+                    description: Enable notifications for push events.
                     type: boolean
                   tagPushChannel:
                     description: The name of the channel to receive notifications
@@ -220,14 +249,38 @@ spec:
                   tagPushEvents:
                     description: Enable notifications for tag push events.
                     type: boolean
+                  useInheritedSettings:
+                    description: UseInheritedSettings indicates whether to inherit
+                      the default Mattermost settings from the parent group.
+                    type: boolean
                   username:
                     description: Mattermost notifications username.
                     type: string
-                  webhook:
-                    description: |-
-                      Mattermost notifications webhook (for example, http://mattermost.example.com/hooks/...).
-                      WARNING: This field is NOT reconciled as the GitLab API does not return it as it is a write-only field.
+                  vulnerabilityChannel:
+                    description: The name of the channel to receive notifications
+                      for vulnerability events.
                     type: string
+                  vulnerabilityEvents:
+                    description: Enable notifications for vulnerability events.
+                    type: boolean
+                  webhookSecretRef:
+                    description: |-
+                      WebHookSecretRef is a reference to a secret that contains the Mattermost notifications
+                      webhook URL (for example, https://mattermost.example.com/hooks/...).
+                      The GitLab API never returns the webhook. When the ProviderConfig sets secretHashKeySecretRef,
+                      changes to the secret value are detected by comparing its keyed hash with the hash of the last
+                      applied value, stored in the "gitlab.crossplane.io/webhook-secret-hash" annotation. Otherwise
+                      changes to the secret value are NOT detected. Changes made outside of Crossplane are never detected.
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        description: Name of the secret.
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
                   wikiPageChannel:
                     description: The name of the channel to receive notifications
                       for wiki page events.
@@ -236,7 +289,7 @@ spec:
                     description: Enable notifications for wiki page events.
                     type: boolean
                 required:
-                - webhook
+                - webhookSecretRef
                 type: object
               managementPolicies:
                 default:
@@ -298,21 +351,19 @@ spec:
             type: object
           status:
             description: A IntegrationMattermostStatus represents the observed state
-              of a GitLab Project Mattermost Integration.
+              of a GitLab Group Mattermost Integration.
             properties:
               atProvider:
                 description: AtProvider represents the observed state of the mattermost
-                  integration
+                  integration.
                 properties:
                   active:
                     type: boolean
+                  alertChannel:
+                    description: Channel to use for alert events.
+                    type: string
                   alertEvents:
                     type: boolean
-                  branchesToBeNotified:
-                    description: Branches to send notifications for. Valid options
-                      are all, default, protected, and default_and_protected. The
-                      default value is default.
-                    type: string
                   channel:
                     description: Default channel to use if no other channel is configured.
                     type: string
@@ -332,6 +383,9 @@ spec:
                     type: boolean
                   createdAt:
                     format: date-time
+                    type: string
+                  deploymentChannel:
+                    description: Channel to use for deployment events.
                     type: string
                   deploymentEvents:
                     type: boolean
@@ -363,9 +417,6 @@ spec:
                     type: string
                   noteEvents:
                     type: boolean
-                  notifyOnlyBrokenPipelines:
-                    description: Send notifications for broken pipelines.
-                    type: boolean
                   pipelineChannel:
                     description: Channel to use for pipeline events.
                     type: string
@@ -396,32 +447,11 @@ spec:
                     type: string
                   vulnerabilityEvents:
                     type: boolean
-                  webhook:
-                    description: |-
-                      Mattermost notifications webhook (for example, http://mattermost.example.com/hooks/...).
-                      This field is not returned by GitLab API for security reasons. So it will always be empty in the observation.
-                    type: string
                   wikiPageChannel:
                     description: Channel to use for wiki page events.
                     type: string
                   wikiPageEvents:
                     type: boolean
-                required:
-                - branchesToBeNotified
-                - channel
-                - confidentialIssueChannel
-                - confidentialNoteChannel
-                - issueChannel
-                - mergeRequestChannel
-                - noteChannel
-                - notifyOnlyBrokenPipelines
-                - pipelineChannel
-                - pushChannel
-                - tagPushChannel
-                - username
-                - vulnerabilityChannel
-                - webhook
-                - wikiPageChannel
                 type: object
               conditions:
                 description: Conditions of the resource.
