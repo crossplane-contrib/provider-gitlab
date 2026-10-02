@@ -1,0 +1,14 @@
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Group
+metadata:
+  name: example-group-observed
+  annotations:
+    # Numeric ID or full path of the group.
+    crossplane.io/external-name: path/to/example-group
+spec:
+  managementPolicies:
+    - Observe
+  forProvider:
+    path: example-group
+  providerConfigRef:
+    name: gitlab-provider
