@@ -108,12 +108,12 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 			Cadence:   prj.ContainerExpirationPolicy.Cadence,
 			KeepN:     prj.ContainerExpirationPolicy.KeepN,
 			OlderThan: prj.ContainerExpirationPolicy.OlderThan,
-			// GitLab reports the deletion pattern as name_regex; name_regex_delete
-			// never appears in a response, so client-go's NameRegexDelete is
-			// always empty on the read side. NameRegex carries a deprecation
-			// marker pointing at that empty field, see
+			// GitLab reports the deletion pattern as name_regex and never
+			// returns name_regex_delete, so NameRegexDelete is always empty
+			// on the read side. client-go v3.16.2 corrected the annotations
+			// accordingly, see
 			// https://gitlab.com/gitlab-org/api/client-go/-/issues/2303
-			NameRegex:     prj.ContainerExpirationPolicy.NameRegex, //nolint:staticcheck
+			NameRegex:     prj.ContainerExpirationPolicy.NameRegex,
 			NameRegexKeep: prj.ContainerExpirationPolicy.NameRegexKeep,
 			Enabled:       prj.ContainerExpirationPolicy.Enabled,
 			NextRunAt:     &metav1.Time{Time: *prj.ContainerExpirationPolicy.NextRunAt},

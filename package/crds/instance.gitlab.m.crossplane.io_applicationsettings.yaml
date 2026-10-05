@@ -68,6 +68,9 @@ spec:
                     type: string
                   afterSignUpText:
                     type: string
+                  aiActionApiRateLimit:
+                    format: int64
+                    type: integer
                   akismetApiKey:
                     type: string
                   akismetApiKeySecretRef:
@@ -141,6 +144,9 @@ spec:
                     items:
                       type: string
                     type: array
+                  auditEventsApiLimit:
+                    format: int64
+                    type: integer
                   authorizedKeysEnabled:
                     type: boolean
                   autoBanUserOnExcessiveProjectsDownload:
@@ -152,7 +158,13 @@ spec:
                   autocompleteUsers:
                     format: int64
                     type: integer
+                  autocompleteUsersLimit:
+                    format: int64
+                    type: integer
                   autocompleteUsersUnauthenticated:
+                    format: int64
+                    type: integer
+                  autocompleteUsersUnauthenticatedLimit:
                     format: int64
                     type: integer
                   automaticPurchasedStorageAllocation:
@@ -173,6 +185,9 @@ spec:
                     type: boolean
                   ciJobLiveTraceEnabled:
                     type: boolean
+                  ciLintLimitPerUser:
+                    format: int64
+                    type: integer
                   ciMaxIncludes:
                     format: int64
                     type: integer
@@ -191,6 +206,15 @@ spec:
                     format: int64
                     type: integer
                   concurrentGitHubImportJobsLimit:
+                    format: int64
+                    type: integer
+                  concurrentPullRequestImportJobsLimit:
+                    format: int64
+                    type: integer
+                  concurrentRelationBatchExportLimit:
+                    format: int64
+                    type: integer
+                  concurrentRelationExportLimit:
                     format: int64
                     type: integer
                   containerExpirationPoliciesEnableHistoricEntries:
@@ -602,6 +626,9 @@ spec:
                   geoStatusTimeout:
                     format: int64
                     type: integer
+                  gitPushPipelineLimit:
+                    format: int64
+                    type: integer
                   gitRateLimitUsersAlertlist:
                     items:
                       format: int64
@@ -642,6 +669,9 @@ spec:
                     type: string
                   gravatarEnabled:
                     type: boolean
+                  groupAuditEventsApiLimit:
+                    format: int64
+                    type: integer
                   groupDownloadExportLimit:
                     format: int64
                     type: integer
@@ -654,6 +684,9 @@ spec:
                   groupOwnersCanManageDefaultBranchProtection:
                     type: boolean
                   groupRunnerTokenExpirationInterval:
+                    format: int64
+                    type: integer
+                  groupSecretsLimit:
                     format: int64
                     type: integer
                   hashedStorageEnabled:
@@ -690,6 +723,9 @@ spec:
                     type: integer
                   htmlEmailsEnabled:
                     type: boolean
+                  importJobsConcurrencyLimit:
+                    format: int64
+                    type: integer
                   importSources:
                     items:
                       type: string
@@ -735,6 +771,12 @@ spec:
                     type: string
                   jiraConnectPublicKeyStorageEnabled:
                     type: boolean
+                  jobPlayLimitPerUserProject:
+                    format: int64
+                    type: integer
+                  jobRetryLimitPerUserProject:
+                    format: int64
+                    type: integer
                   keepLatestArtifact:
                     type: boolean
                   krokiEnabled:
@@ -790,6 +832,12 @@ spec:
                     format: int64
                     type: integer
                   maxExportSize:
+                    format: int64
+                    type: integer
+                  maxGitHubResponseSizeLimit:
+                    format: int64
+                    type: integer
+                  maxHTTPResponseSizeLimit:
                     format: int64
                     type: integer
                   maxImportRemoteFileSize:
@@ -892,7 +940,16 @@ spec:
                     type: boolean
                   personalAccessTokenPrefix:
                     type: string
+                  pipelineCancelLimitPerUserProject:
+                    format: int64
+                    type: integer
                   pipelineLimitPerProjectUserSha:
+                    format: int64
+                    type: integer
+                  pipelineLimitPerUser:
+                    format: int64
+                    type: integer
+                  pipelineRetryLimitPerUserProject:
                     format: int64
                     type: integer
                   plantumlEnabled:
@@ -905,6 +962,9 @@ spec:
                     type: boolean
                   preventMergeRequestsCommittersApproval:
                     type: boolean
+                  projectAuditEventsApiLimit:
+                    format: int64
+                    type: integer
                   projectDownloadExportLimit:
                     format: int64
                     type: integer
@@ -920,6 +980,9 @@ spec:
                     format: int64
                     type: integer
                   projectRunnerTokenExpirationInterval:
+                    format: int64
+                    type: integer
+                  projectSecretsLimit:
                     format: int64
                     type: integer
                   projectsApiRateLimitUnauthenticated:
@@ -942,6 +1005,9 @@ spec:
                   rateLimitingResponseText:
                     type: string
                   rawBlobRequestLimit:
+                    format: int64
+                    type: integer
+                  rawBlobRequestLimitUnauthenticated:
                     format: int64
                     type: integer
                   recaptchaEnabled:
@@ -1014,7 +1080,22 @@ spec:
                   rsaKeyRestriction:
                     format: int64
                     type: integer
+                  runnerJobsEndpointsApiLimit:
+                    format: int64
+                    type: integer
+                  runnerJobsPatchTraceApiLimit:
+                    format: int64
+                    type: integer
+                  runnerJobsRequestApiLimit:
+                    format: int64
+                    type: integer
                   runnerTokenExpirationInterval:
+                    format: int64
+                    type: integer
+                  scanExecutionPoliciesActionLimit:
+                    format: int64
+                    type: integer
+                  scanExecutionPoliciesScheduleLimit:
                     format: int64
                     type: integer
                   searchRateLimit:
@@ -1205,6 +1286,9 @@ spec:
                     type: string
                   suggestPipelineEnabled:
                     type: boolean
+                  tagsCreateLimit:
+                    format: int64
+                    type: integer
                   terminalMaxSessionTime:
                     format: int64
                     type: integer
@@ -1216,6 +1300,14 @@ spec:
                     format: int64
                     type: integer
                   throttleAuthenticatedApiRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedDependencyProxyEnabled:
+                    type: boolean
+                  throttleAuthenticatedDependencyProxyPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedDependencyProxyRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleAuthenticatedDeprecatedApiEnabled:
@@ -1234,12 +1326,28 @@ spec:
                   throttleAuthenticatedFilesApiRequestsPerPeriod:
                     format: int64
                     type: integer
+                  throttleAuthenticatedGitHTTPEnabled:
+                    type: boolean
+                  throttleAuthenticatedGitHTTPPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedGitHTTPRequestsPerPeriod:
+                    format: int64
+                    type: integer
                   throttleAuthenticatedGitLFSEnabled:
                     type: boolean
                   throttleAuthenticatedGitLFSPeriodInSeconds:
                     format: int64
                     type: integer
                   throttleAuthenticatedGitLFSRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedMCPEnabled:
+                    type: boolean
+                  throttleAuthenticatedMCPPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedMCPRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleAuthenticatedPackagesApiEnabled:
@@ -1298,6 +1406,14 @@ spec:
                     format: int64
                     type: integer
                   throttleUnauthenticatedFilesApiRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleUnauthenticatedGitHTTPEnabled:
+                    type: boolean
+                  throttleUnauthenticatedGitHTTPPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleUnauthenticatedGitHTTPRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleUnauthenticatedGitLFSEnabled:
@@ -1371,6 +1487,27 @@ spec:
                     type: boolean
                   userShowAddSshKeyMessage:
                     type: boolean
+                  usersApiLimitFollowers:
+                    format: int64
+                    type: integer
+                  usersApiLimitFollowing:
+                    format: int64
+                    type: integer
+                  usersApiLimitGpgKey:
+                    format: int64
+                    type: integer
+                  usersApiLimitGpgKeys:
+                    format: int64
+                    type: integer
+                  usersApiLimitSshKey:
+                    format: int64
+                    type: integer
+                  usersApiLimitSshKeys:
+                    format: int64
+                    type: integer
+                  usersApiLimitStatus:
+                    format: int64
+                    type: integer
                   usersGetByIdLimit:
                     format: int64
                     type: integer
@@ -1382,6 +1519,15 @@ spec:
                     type: array
                   versionCheckEnabled:
                     type: boolean
+                  virtualRegistriesEndpointsApiLimit:
+                    format: int64
+                    type: integer
+                  webHookEventResendLimit:
+                    format: int64
+                    type: integer
+                  webHookTestLimit:
+                    format: int64
+                    type: integer
                   webIdEClientsidePreviewEnabled:
                     type: boolean
                   whatsNewVariant:
@@ -1465,6 +1611,9 @@ spec:
                     type: string
                   afterSignUpText:
                     type: string
+                  aiActionApiRateLimit:
+                    format: int64
+                    type: integer
                   akismetEnabled:
                     type: boolean
                   allowAccountDeletion:
@@ -1506,6 +1655,9 @@ spec:
                     items:
                       type: string
                     type: array
+                  auditEventsApiLimit:
+                    format: int64
+                    type: integer
                   authorizedKeysEnabled:
                     type: boolean
                   autoBanUserOnExcessiveProjectsDownload:
@@ -1517,7 +1669,13 @@ spec:
                   autocompleteUsers:
                     format: int64
                     type: integer
+                  autocompleteUsersLimit:
+                    format: int64
+                    type: integer
                   autocompleteUsersUnauthenticated:
+                    format: int64
+                    type: integer
+                  autocompleteUsersUnauthenticatedLimit:
                     format: int64
                     type: integer
                   automaticPurchasedStorageAllocation:
@@ -1536,6 +1694,9 @@ spec:
                     type: boolean
                   ciJobLiveTraceEnabled:
                     type: boolean
+                  ciLintLimitPerUser:
+                    format: int64
+                    type: integer
                   ciMaxIncludes:
                     format: int64
                     type: integer
@@ -1554,6 +1715,15 @@ spec:
                     format: int64
                     type: integer
                   concurrentGitHubImportJobsLimit:
+                    format: int64
+                    type: integer
+                  concurrentPullRequestImportJobsLimit:
+                    format: int64
+                    type: integer
+                  concurrentRelationBatchExportLimit:
+                    format: int64
+                    type: integer
+                  concurrentRelationExportLimit:
                     format: int64
                     type: integer
                   containerExpirationPoliciesEnableHistoricEntries:
@@ -1856,6 +2026,9 @@ spec:
                   geoStatusTimeout:
                     format: int64
                     type: integer
+                  gitPushPipelineLimit:
+                    format: int64
+                    type: integer
                   gitRateLimitUsersAlertlist:
                     items:
                       format: int64
@@ -1896,6 +2069,9 @@ spec:
                     type: string
                   gravatarEnabled:
                     type: boolean
+                  groupAuditEventsApiLimit:
+                    format: int64
+                    type: integer
                   groupDownloadExportLimit:
                     format: int64
                     type: integer
@@ -1908,6 +2084,9 @@ spec:
                   groupOwnersCanManageDefaultBranchProtection:
                     type: boolean
                   groupRunnerTokenExpirationInterval:
+                    format: int64
+                    type: integer
+                  groupSecretsLimit:
                     format: int64
                     type: integer
                   hashedStorageEnabled:
@@ -1947,6 +2126,9 @@ spec:
                   id:
                     format: int64
                     type: integer
+                  importJobsConcurrencyLimit:
+                    format: int64
+                    type: integer
                   importSources:
                     items:
                       type: string
@@ -1976,6 +2158,12 @@ spec:
                     type: string
                   jiraConnectPublicKeyStorageEnabled:
                     type: boolean
+                  jobPlayLimitPerUserProject:
+                    format: int64
+                    type: integer
+                  jobRetryLimitPerUserProject:
+                    format: int64
+                    type: integer
                   keepLatestArtifact:
                     type: boolean
                   krokiEnabled:
@@ -2015,6 +2203,12 @@ spec:
                     format: int64
                     type: integer
                   maxExportSize:
+                    format: int64
+                    type: integer
+                  maxGitHubResponseSizeLimit:
+                    format: int64
+                    type: integer
+                  maxHTTPResponseSizeLimit:
                     format: int64
                     type: integer
                   maxImportRemoteFileSize:
@@ -2117,7 +2311,16 @@ spec:
                     type: boolean
                   personalAccessTokenPrefix:
                     type: string
+                  pipelineCancelLimitPerUserProject:
+                    format: int64
+                    type: integer
                   pipelineLimitPerProjectUserSha:
+                    format: int64
+                    type: integer
+                  pipelineLimitPerUser:
+                    format: int64
+                    type: integer
+                  pipelineRetryLimitPerUserProject:
                     format: int64
                     type: integer
                   plantumlEnabled:
@@ -2130,6 +2333,9 @@ spec:
                     type: boolean
                   preventMergeRequestsCommittersApproval:
                     type: boolean
+                  projectAuditEventsApiLimit:
+                    format: int64
+                    type: integer
                   projectDownloadExportLimit:
                     format: int64
                     type: integer
@@ -2145,6 +2351,9 @@ spec:
                     format: int64
                     type: integer
                   projectRunnerTokenExpirationInterval:
+                    format: int64
+                    type: integer
+                  projectSecretsLimit:
                     format: int64
                     type: integer
                   projectsApiRateLimitUnauthenticated:
@@ -2167,6 +2376,9 @@ spec:
                   rateLimitingResponseText:
                     type: string
                   rawBlobRequestLimit:
+                    format: int64
+                    type: integer
+                  rawBlobRequestLimitUnauthenticated:
                     format: int64
                     type: integer
                   recaptchaEnabled:
@@ -2207,7 +2419,22 @@ spec:
                   rsaKeyRestriction:
                     format: int64
                     type: integer
+                  runnerJobsEndpointsApiLimit:
+                    format: int64
+                    type: integer
+                  runnerJobsPatchTraceApiLimit:
+                    format: int64
+                    type: integer
+                  runnerJobsRequestApiLimit:
+                    format: int64
+                    type: integer
                   runnerTokenExpirationInterval:
+                    format: int64
+                    type: integer
+                  scanExecutionPoliciesActionLimit:
+                    format: int64
+                    type: integer
+                  scanExecutionPoliciesScheduleLimit:
                     format: int64
                     type: integer
                   searchRateLimit:
@@ -2302,6 +2529,9 @@ spec:
                     type: string
                   suggestPipelineEnabled:
                     type: boolean
+                  tagsCreateLimit:
+                    format: int64
+                    type: integer
                   terminalMaxSessionTime:
                     format: int64
                     type: integer
@@ -2313,6 +2543,14 @@ spec:
                     format: int64
                     type: integer
                   throttleAuthenticatedApiRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedDependencyProxyEnabled:
+                    type: boolean
+                  throttleAuthenticatedDependencyProxyPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedDependencyProxyRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleAuthenticatedDeprecatedApiEnabled:
@@ -2331,12 +2569,28 @@ spec:
                   throttleAuthenticatedFilesApiRequestsPerPeriod:
                     format: int64
                     type: integer
+                  throttleAuthenticatedGitHTTPEnabled:
+                    type: boolean
+                  throttleAuthenticatedGitHTTPPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedGitHTTPRequestsPerPeriod:
+                    format: int64
+                    type: integer
                   throttleAuthenticatedGitLFSEnabled:
                     type: boolean
                   throttleAuthenticatedGitLFSPeriodInSeconds:
                     format: int64
                     type: integer
                   throttleAuthenticatedGitLFSRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedMCPEnabled:
+                    type: boolean
+                  throttleAuthenticatedMCPPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedMCPRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleAuthenticatedPackagesApiEnabled:
@@ -2395,6 +2649,14 @@ spec:
                     format: int64
                     type: integer
                   throttleUnauthenticatedFilesApiRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleUnauthenticatedGitHTTPEnabled:
+                    type: boolean
+                  throttleUnauthenticatedGitHTTPPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleUnauthenticatedGitHTTPRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleUnauthenticatedGitLFSEnabled:
@@ -2471,6 +2733,27 @@ spec:
                     type: boolean
                   userShowAddSshKeyMessage:
                     type: boolean
+                  usersApiLimitFollowers:
+                    format: int64
+                    type: integer
+                  usersApiLimitFollowing:
+                    format: int64
+                    type: integer
+                  usersApiLimitGpgKey:
+                    format: int64
+                    type: integer
+                  usersApiLimitGpgKeys:
+                    format: int64
+                    type: integer
+                  usersApiLimitSshKey:
+                    format: int64
+                    type: integer
+                  usersApiLimitSshKeys:
+                    format: int64
+                    type: integer
+                  usersApiLimitStatus:
+                    format: int64
+                    type: integer
                   usersGetByIdLimit:
                     format: int64
                     type: integer
@@ -2482,6 +2765,15 @@ spec:
                     type: array
                   versionCheckEnabled:
                     type: boolean
+                  virtualRegistriesEndpointsApiLimit:
+                    format: int64
+                    type: integer
+                  webHookEventResendLimit:
+                    format: int64
+                    type: integer
+                  webHookTestLimit:
+                    format: int64
+                    type: integer
                   webIdEClientsidePreviewEnabled:
                     type: boolean
                   whatsNewVariant:

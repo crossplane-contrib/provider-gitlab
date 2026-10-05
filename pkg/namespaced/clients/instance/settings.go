@@ -130,7 +130,7 @@ func v1Alpha1DefaultBranchProtectionDefaultsOptionsPtrToGitlabBranchProtectionDe
 				AccessLevel: &accessLevel,
 			}
 		}
-		result.AllowedToMerge = &allowedToMerge
+		result.AllowedToMerge = allowedToMerge
 	}
 
 	if input.AllowedToPush != nil {
@@ -141,7 +141,7 @@ func v1Alpha1DefaultBranchProtectionDefaultsOptionsPtrToGitlabBranchProtectionDe
 				AccessLevel: &accessLevel,
 			}
 		}
-		result.AllowedToPush = &allowedToPush
+		result.AllowedToPush = allowedToPush
 	}
 
 	return result

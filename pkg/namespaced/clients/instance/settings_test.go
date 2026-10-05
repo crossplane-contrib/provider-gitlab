@@ -248,8 +248,8 @@ func TestV1Alpha1DefaultBranchProtectionDefaultsOptionsPtrToGitlabBranchProtecti
 			want: &gitlab.DefaultBranchProtectionDefaultsOptions{
 				AllowForcePush:          boolPtr(true),
 				DeveloperCanInitialPush: boolPtr(false),
-				AllowedToMerge:          &[]*gitlab.GroupAccessLevel{{AccessLevel: accessLevelPtr(30)}},
-				AllowedToPush:           &[]*gitlab.GroupAccessLevel{{AccessLevel: accessLevelPtr(40)}},
+				AllowedToMerge:          []*gitlab.GroupAccessLevel{{AccessLevel: accessLevelPtr(30)}},
+				AllowedToPush:           []*gitlab.GroupAccessLevel{{AccessLevel: accessLevelPtr(40)}},
 			},
 		},
 	}

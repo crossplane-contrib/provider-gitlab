@@ -133,15 +133,10 @@ func ContainerExpirationPolicyAttributesV1alpha1ToGitlab(from *v1alpha1.Containe
 	result := &gitlab.ContainerExpirationPolicyAttributes{
 		Cadence:       from.Cadence,
 		OlderThan:     from.OlderThan,
+		NameRegex:     from.NameRegex,
 		NameRegexKeep: from.NameRegexKeep,
 		Enabled:       from.Enabled,
 		KeepN:         from.KeepN,
-		// The deletion pattern has to be written to NameRegexDelete, not to
-		// NameRegex: CreateProject, CreateProjectForUser and EditProject
-		// overwrite NameRegex with NameRegexDelete before encoding the request,
-		// so a pattern placed in NameRegex is dropped and nothing is sent.
-		// NameRegexDelete is what ends up on the wire as name_regex.
-		NameRegexDelete: from.NameRegex,
 	}
 	return result
 }

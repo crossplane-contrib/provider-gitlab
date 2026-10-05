@@ -93,11 +93,9 @@ var (
 		Cadence:       &cadence,
 		KeepN:         &keepN,
 		OlderThan:     &olderThan,
+		NameRegex:     &nameRegex,
 		NameRegexKeep: &nameRegexKeep,
 		Enabled:       &enabled,
-		// client-go copies NameRegexDelete over NameRegex before encoding, so
-		// the deletion pattern has to be set here to reach the API.
-		NameRegexDelete: &nameRegex,
 	}
 	sharedRunnersEnabled                      = true
 	visibility                                = "private"
