@@ -335,6 +335,7 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 		in.AutocloseReferencedIssues = &project.AutocloseReferencedIssues
 	}
 
+	in.AnalyticsAccessLevel = clients.LateInitializeAccessControlValue(in.AnalyticsAccessLevel, project.AnalyticsAccessLevel)
 	in.BuildsAccessLevel = clients.LateInitializeAccessControlValue(in.BuildsAccessLevel, project.BuildsAccessLevel)
 	in.CIConfigPath = clients.LateInitializeStringPtr(in.CIConfigPath, project.CIConfigPath)
 
@@ -354,7 +355,10 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 
 	in.DefaultBranch = clients.LateInitializeStringPtr(in.DefaultBranch, project.DefaultBranch)
 	in.Description = clients.LateInitializeStringPtr(in.Description, project.Description)
+	in.EnvironmentsAccessLevel = clients.LateInitializeAccessControlValue(in.EnvironmentsAccessLevel, project.EnvironmentsAccessLevel)
+	in.FeatureFlagsAccessLevel = clients.LateInitializeAccessControlValue(in.FeatureFlagsAccessLevel, project.FeatureFlagsAccessLevel)
 	in.ForkingAccessLevel = clients.LateInitializeAccessControlValue(in.ForkingAccessLevel, project.ForkingAccessLevel)
+	in.InfrastructureAccessLevel = clients.LateInitializeAccessControlValue(in.InfrastructureAccessLevel, project.InfrastructureAccessLevel)
 	in.IssuesAccessLevel = clients.LateInitializeAccessControlValue(in.IssuesAccessLevel, project.IssuesAccessLevel)
 	in.IssuesTemplate = clients.LateInitializeStringPtr(in.IssuesTemplate, project.IssuesTemplate)
 
@@ -375,12 +379,18 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	}
 	in.MergeRequestsTemplate = clients.LateInitializeStringPtr(in.MergeRequestsTemplate, project.MergeRequestsTemplate)
 
+	in.ModelExperimentsAccessLevel = clients.LateInitializeAccessControlValue(in.ModelExperimentsAccessLevel, project.ModelExperimentsAccessLevel)
+	in.ModelRegistryAccessLevel = clients.LateInitializeAccessControlValue(in.ModelRegistryAccessLevel, project.ModelRegistryAccessLevel)
+	in.MonitorAccessLevel = clients.LateInitializeAccessControlValue(in.MonitorAccessLevel, project.MonitorAccessLevel)
+
 	if in.OnlyAllowMergeIfAllDiscussionsAreResolved == nil {
 		in.OnlyAllowMergeIfAllDiscussionsAreResolved = &project.OnlyAllowMergeIfAllDiscussionsAreResolved
 	}
 	if in.OnlyAllowMergeIfPipelineSucceeds == nil {
 		in.OnlyAllowMergeIfPipelineSucceeds = &project.OnlyAllowMergeIfPipelineSucceeds
 	}
+
+	in.PackageRegistryAccessLevel = clients.LateInitializeAccessControlValue(in.PackageRegistryAccessLevel, project.PackageRegistryAccessLevel)
 
 	if in.PackagesEnabled == nil {
 		in.PackagesEnabled = &project.PackagesEnabled //nolint:staticcheck
@@ -397,11 +407,14 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 		in.PublicBuilds = &project.PublicJobs
 	}
 
+	in.ReleasesAccessLevel = clients.LateInitializeAccessControlValue(in.ReleasesAccessLevel, project.ReleasesAccessLevel)
+
 	if in.RemoveSourceBranchAfterMerge == nil {
 		in.RemoveSourceBranchAfterMerge = &project.RemoveSourceBranchAfterMerge
 	}
 
 	in.RepositoryAccessLevel = clients.LateInitializeAccessControlValue(in.RepositoryAccessLevel, project.RepositoryAccessLevel)
+	in.SecurityAndComplianceAccessLevel = clients.LateInitializeAccessControlValue(in.SecurityAndComplianceAccessLevel, project.SecurityAndComplianceAccessLevel)
 
 	if in.RequestAccessEnabled == nil {
 		in.RequestAccessEnabled = &project.RequestAccessEnabled
@@ -532,6 +545,9 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.AutocloseReferencedIssues, g.AutocloseReferencedIssues) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.AnalyticsAccessLevel), string(g.AnalyticsAccessLevel)) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.BuildsAccessLevel), string(g.BuildsAccessLevel)) {
 		return false
 	}
@@ -556,7 +572,16 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.Description, g.Description) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.EnvironmentsAccessLevel), string(g.EnvironmentsAccessLevel)) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.FeatureFlagsAccessLevel), string(g.FeatureFlagsAccessLevel)) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.ForkingAccessLevel), string(g.ForkingAccessLevel)) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.InfrastructureAccessLevel), string(g.InfrastructureAccessLevel)) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.IssuesAccessLevel), string(g.IssuesAccessLevel)) {
@@ -598,6 +623,15 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.MirrorUserID, g.MirrorUserID) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.ModelExperimentsAccessLevel), string(g.ModelExperimentsAccessLevel)) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.ModelRegistryAccessLevel), string(g.ModelRegistryAccessLevel)) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.MonitorAccessLevel), string(g.MonitorAccessLevel)) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.OnlyAllowMergeIfAllDiscussionsAreResolved, g.OnlyAllowMergeIfAllDiscussionsAreResolved) {
 		return false
 	}
@@ -605,6 +639,9 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.OnlyMirrorProtectedBranches, g.OnlyMirrorProtectedBranches) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.PackageRegistryAccessLevel), string(g.PackageRegistryAccessLevel)) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.PackagesEnabled, g.PackagesEnabled) { //nolint:staticcheck // deprecated but still needed for backward compatibility
@@ -622,6 +659,9 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(effectiveValue, g.PublicJobs) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.ReleasesAccessLevel), string(g.ReleasesAccessLevel)) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.RemoveSourceBranchAfterMerge, g.RemoveSourceBranchAfterMerge) {
 		return false
 	}
@@ -632,6 +672,9 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ResolveOutdatedDiffDiscussions, g.ResolveOutdatedDiffDiscussions) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.SecurityAndComplianceAccessLevel), string(g.SecurityAndComplianceAccessLevel)) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ServiceDeskEnabled, g.ServiceDeskEnabled) {

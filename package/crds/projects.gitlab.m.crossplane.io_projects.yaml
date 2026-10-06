@@ -64,6 +64,9 @@ spec:
                     description: Set whether or not merge requests can be merged with
                       skipped jobs.
                     type: boolean
+                  analyticsAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
                   approvalsBeforeMerge:
                     description: |-
                       How many approvers should approve merge request by default.More actions
@@ -157,8 +160,14 @@ spec:
                   emailsDisabled:
                     description: Disable email notifications.
                     type: boolean
+                  environmentsAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
                   externalAuthorizationClassificationLabel:
                     description: The classification label for the project.
+                    type: string
+                  featureFlagsAccessLevel:
+                    description: One of disabled, private, or enabled.
                     type: string
                   forkingAccessLevel:
                     description: One of disabled, private, or enabled.
@@ -186,6 +195,9 @@ spec:
                     - key
                     - name
                     type: object
+                  infrastructureAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
                   initializeWithReadme:
                     description: false by default.
                     type: boolean
@@ -234,6 +246,15 @@ spec:
                       a pull mirror event. (admins only)
                     format: int64
                     type: integer
+                  modelExperimentsAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
+                  modelRegistryAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
+                  monitorAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
                   name:
                     description: |-
                       Name is the human-readable name of the project.
@@ -338,8 +359,14 @@ spec:
                   onlyMirrorProtectedBranches:
                     description: Only mirror protected branches.
                     type: boolean
+                  packageRegistryAccessLevel:
+                    description: One of disabled, private, enabled, or public.
+                    type: string
                   packagesEnabled:
-                    description: Enable or disable packages repository feature.
+                    description: |-
+                      Enable or disable packages repository feature.
+                      GitLab documents packagesEnabled as superseded by packageRegistryAccessLevel;
+                      prefer that field and avoid setting both.
                     type: boolean
                   pagesAccessLevel:
                     description: One of disabled, private, enabled, or public.
@@ -426,6 +453,9 @@ spec:
                         description: Reject commit when it’s not signed.
                         type: boolean
                     type: object
+                  releasesAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
                   removeFinalizerOnPendingDeletion:
                     description: |-
                       RemoveFinalizerOnPendingDeletion specifies wether the finalizer of this
@@ -446,6 +476,9 @@ spec:
                     description: Automatically resolve merge request diffs discussions
                       on lines changed with a push.
                     type: boolean
+                  securityAndComplianceAccessLevel:
+                    description: One of disabled, private, or enabled.
+                    type: string
                   serviceDeskEnabled:
                     description: Enable or disable Service Desk feature.
                     type: boolean
