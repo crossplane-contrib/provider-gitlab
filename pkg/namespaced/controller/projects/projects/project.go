@@ -333,7 +333,6 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 		in.AutocloseReferencedIssues = &project.AutocloseReferencedIssues
 	}
 
-	in.BuildCoverageRegex = clients.LateInitializeStringPtr(in.BuildCoverageRegex, project.BuildCoverageRegex)
 	in.BuildsAccessLevel = clients.LateInitializeAccessControlValue(in.BuildsAccessLevel, project.BuildsAccessLevel)
 	in.CIConfigPath = clients.LateInitializeStringPtr(in.CIConfigPath, project.CIConfigPath)
 
@@ -396,8 +395,6 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	if in.OnlyMirrorProtectedBranches == nil {
 		in.OnlyMirrorProtectedBranches = &project.OnlyMirrorProtectedBranches
 	}
-
-	in.OperationsAccessLevel = clients.LateInitializeAccessControlValue(in.OperationsAccessLevel, project.OperationsAccessLevel)
 
 	if in.PackagesEnabled == nil {
 		in.PackagesEnabled = &project.PackagesEnabled //nolint:staticcheck
@@ -547,9 +544,6 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.AutocloseReferencedIssues, g.AutocloseReferencedIssues) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr(p.BuildCoverageRegex, g.BuildCoverageRegex) {
-		return false
-	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.BuildsAccessLevel), string(g.BuildsAccessLevel)) {
 		return false
 	}
@@ -623,9 +617,6 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.OnlyMirrorProtectedBranches, g.OnlyMirrorProtectedBranches) {
-		return false
-	}
-	if !clients.IsComparableEqualToComparablePtr((*string)(p.OperationsAccessLevel), string(g.OperationsAccessLevel)) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.PackagesEnabled, g.PackagesEnabled) { //nolint:staticcheck // deprecated but still needed for backward compatibility

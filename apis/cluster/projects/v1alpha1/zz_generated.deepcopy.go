@@ -623,8 +623,8 @@ func (in *ContainerExpirationPolicyAttributes) DeepCopyInto(out *ContainerExpira
 		*out = new(string)
 		**out = **in
 	}
-	if in.NameRegexDelete != nil {
-		in, out := &in.NameRegexDelete, &out.NameRegexDelete
+	if in.NameRegex != nil {
+		in, out := &in.NameRegex, &out.NameRegex
 		*out = new(string)
 		**out = **in
 	}
@@ -636,11 +636,6 @@ func (in *ContainerExpirationPolicyAttributes) DeepCopyInto(out *ContainerExpira
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
 		*out = new(bool)
-		**out = **in
-	}
-	if in.NameRegex != nil {
-		in, out := &in.NameRegex, &out.NameRegex
-		*out = new(string)
 		**out = **in
 	}
 }
@@ -2422,11 +2417,6 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(bool)
 		**out = **in
 	}
-	if in.BuildCoverageRegex != nil {
-		in, out := &in.BuildCoverageRegex, &out.BuildCoverageRegex
-		*out = new(string)
-		**out = **in
-	}
 	if in.BuildGitStrategy != nil {
 		in, out := &in.BuildGitStrategy, &out.BuildGitStrategy
 		*out = new(string)
@@ -2615,11 +2605,6 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	if in.OnlyMirrorProtectedBranches != nil {
 		in, out := &in.OnlyMirrorProtectedBranches, &out.OnlyMirrorProtectedBranches
 		*out = new(bool)
-		**out = **in
-	}
-	if in.OperationsAccessLevel != nil {
-		in, out := &in.OperationsAccessLevel, &out.OperationsAccessLevel
-		*out = new(AccessControlValue)
 		**out = **in
 	}
 	if in.PackagesEnabled != nil {

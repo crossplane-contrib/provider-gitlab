@@ -54,8 +54,6 @@ var (
 	snippetsAccessLevelv1alpha1          = v1alpha1.AccessControlValue(snippetsAccessLevel)
 	pagesAccessLevel                     = "enabled"
 	pagesAccessLevelv1alpha1             = v1alpha1.AccessControlValue(pagesAccessLevel)
-	operationsAccessLevel                = "public"
-	operationsAccessLevelv1alpha1        = v1alpha1.AccessControlValue(operationsAccessLevel)
 	containerRegistryAccessLevel         = "enabled"
 	containerRegistryAccessLevelv1alpha1 = v1alpha1.AccessControlValue(pagesAccessLevel)
 	emailsDisabled                       = true
@@ -63,43 +61,45 @@ var (
 	cadence                              = "Cadence"
 	keepN                                = int64(1)
 	olderThan                            = "OlderThan"
-	nameRegexDelete                      = "NameRegexDelete"
+	nameRegex                            = "NameRegex"
 	nameRegexKeep                        = "NameRegexKeep"
 	enabled                              = false
 	nextRunAt                            = time.Now()
 	gitlabContainerExpirationPolicy      = gitlab.ContainerExpirationPolicy{
-		Cadence:         cadence,
-		KeepN:           keepN,
-		OlderThan:       olderThan,
-		NameRegexDelete: nameRegexDelete,
-		NameRegexKeep:   nameRegexKeep,
-		Enabled:         enabled,
-		NextRunAt:       &nextRunAt,
+		Cadence:       cadence,
+		KeepN:         keepN,
+		OlderThan:     olderThan,
+		NameRegex:     nameRegex,
+		NameRegexKeep: nameRegexKeep,
+		Enabled:       enabled,
+		NextRunAt:     &nextRunAt,
 	}
 	v1alpha1ContainerExpirationPolicy = v1alpha1.ContainerExpirationPolicy{
-		Cadence:         cadence,
-		KeepN:           keepN,
-		OlderThan:       olderThan,
-		NameRegexDelete: nameRegexDelete,
-		NameRegexKeep:   nameRegexKeep,
-		Enabled:         enabled,
-		NextRunAt:       &metav1.Time{Time: nextRunAt},
+		Cadence:       cadence,
+		KeepN:         keepN,
+		OlderThan:     olderThan,
+		NameRegex:     nameRegex,
+		NameRegexKeep: nameRegexKeep,
+		Enabled:       enabled,
+		NextRunAt:     &metav1.Time{Time: nextRunAt},
 	}
 	v1alpha1ContainerExpirationPolicyAttributes = v1alpha1.ContainerExpirationPolicyAttributes{
-		Cadence:         &cadence,
-		KeepN:           func() *int64 { v := keepN; return &v }(),
-		OlderThan:       &olderThan,
-		NameRegexDelete: &nameRegexDelete,
-		NameRegexKeep:   &nameRegexKeep,
-		Enabled:         &enabled,
+		Cadence:       &cadence,
+		KeepN:         func() *int64 { v := keepN; return &v }(),
+		OlderThan:     &olderThan,
+		NameRegex:     &nameRegex,
+		NameRegexKeep: &nameRegexKeep,
+		Enabled:       &enabled,
 	}
 	gitlabContainerExpirationPolicyAttributes = gitlab.ContainerExpirationPolicyAttributes{
-		Cadence:         &cadence,
-		KeepN:           &keepN,
-		OlderThan:       &olderThan,
-		NameRegexDelete: &nameRegexDelete,
-		NameRegexKeep:   &nameRegexKeep,
-		Enabled:         &enabled,
+		Cadence:       &cadence,
+		KeepN:         &keepN,
+		OlderThan:     &olderThan,
+		NameRegexKeep: &nameRegexKeep,
+		Enabled:       &enabled,
+		// client-go copies NameRegexDelete over NameRegex before encoding, so
+		// the deletion pattern has to be set here to reach the API.
+		NameRegexDelete: &nameRegex,
 	}
 	sharedRunnersEnabled                      = true
 	visibility                                = "private"
@@ -119,7 +119,6 @@ var (
 	buildGitStategy                           = "strategy"
 	buildTimeout                              = int64(60)
 	autoCancelPendingPipelines                = "enabled"
-	buildCoverageRegex                        = "some-regex"
 	ciConfigPath                              = "path/to/ci/config"
 	ciForwardDeploymentEnabled                = false
 	ciDefaultGitDepth                         = int64(50)
@@ -454,7 +453,6 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					WikiAccessLevel:                           &wikiAccessLevelv1alpha1,
 					SnippetsAccessLevel:                       &snippetsAccessLevelv1alpha1,
 					PagesAccessLevel:                          &pagesAccessLevelv1alpha1,
-					OperationsAccessLevel:                     &operationsAccessLevelv1alpha1,
 					EmailsDisabled:                            &emailsDisabled,
 					ResolveOutdatedDiffDiscussions:            &resolveOutdatedDiffDiscussions,
 					ContainerExpirationPolicyAttributes:       &v1alpha1ContainerExpirationPolicyAttributes,
@@ -475,7 +473,6 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					BuildGitStrategy:                          &buildGitStategy,
 					BuildTimeout:                              &buildTimeout,
 					AutoCancelPendingPipelines:                &autoCancelPendingPipelines,
-					BuildCoverageRegex:                        &buildCoverageRegex,
 					CIConfigPath:                              &ciConfigPath,
 					CIForwardDeploymentEnabled:                &ciForwardDeploymentEnabled,
 					CIDefaultGitDepth:                         &ciDefaultGitDepth,
@@ -511,7 +508,6 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				WikiAccessLevel:                     clients.AccessControlValueStringToGitlab(wikiAccessLevel),
 				SnippetsAccessLevel:                 clients.AccessControlValueStringToGitlab(snippetsAccessLevel),
 				PagesAccessLevel:                    clients.AccessControlValueStringToGitlab(pagesAccessLevel),
-				OperationsAccessLevel:               clients.AccessControlValueStringToGitlab(operationsAccessLevel),
 				EmailsDisabled:                      &emailsDisabled,
 				ResolveOutdatedDiffDiscussions:      &resolveOutdatedDiffDiscussions,
 				ContainerExpirationPolicyAttributes: &gitlabContainerExpirationPolicyAttributes,
@@ -533,7 +529,6 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				BuildGitStrategy:                         &buildGitStategy,
 				BuildTimeout:                             &buildTimeout,
 				AutoCancelPendingPipelines:               &autoCancelPendingPipelines,
-				BuildCoverageRegex:                       &buildCoverageRegex,
 				CIConfigPath:                             &ciConfigPath,
 				CIForwardDeploymentEnabled:               &ciForwardDeploymentEnabled,
 				AutoDevopsEnabled:                        &autoDevopsEnabled,
@@ -629,7 +624,6 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					WikiAccessLevel:                           &wikiAccessLevelv1alpha1,
 					SnippetsAccessLevel:                       &snippetsAccessLevelv1alpha1,
 					PagesAccessLevel:                          &pagesAccessLevelv1alpha1,
-					OperationsAccessLevel:                     &operationsAccessLevelv1alpha1,
 					EmailsDisabled:                            &emailsDisabled,
 					ResolveOutdatedDiffDiscussions:            &resolveOutdatedDiffDiscussions,
 					ContainerExpirationPolicyAttributes:       &v1alpha1ContainerExpirationPolicyAttributes,
@@ -649,7 +643,6 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					BuildGitStrategy:                          &buildGitStategy,
 					BuildTimeout:                              &buildTimeout,
 					AutoCancelPendingPipelines:                &autoCancelPendingPipelines,
-					BuildCoverageRegex:                        &buildCoverageRegex,
 					CIConfigPath:                              &ciConfigPath,
 					CIForwardDeploymentEnabled:                &ciForwardDeploymentEnabled,
 					CIDefaultGitDepth:                         &ciDefaultGitDepth,
@@ -681,7 +674,6 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				BuildsAccessLevel:                   clients.AccessControlValueStringToGitlab(buildsAccessLevel),
 				WikiAccessLevel:                     clients.AccessControlValueStringToGitlab(wikiAccessLevel),
 				SnippetsAccessLevel:                 clients.AccessControlValueStringToGitlab(snippetsAccessLevel),
-				OperationsAccessLevel:               clients.AccessControlValueStringToGitlab(operationsAccessLevel),
 				EmailsDisabled:                      &emailsDisabled,
 				PagesAccessLevel:                    clients.AccessControlValueStringToGitlab(pagesAccessLevel),
 				ResolveOutdatedDiffDiscussions:      &resolveOutdatedDiffDiscussions,
@@ -703,7 +695,6 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				BuildGitStrategy:                         &buildGitStategy,
 				BuildTimeout:                             &buildTimeout,
 				AutoCancelPendingPipelines:               &autoCancelPendingPipelines,
-				BuildCoverageRegex:                       &buildCoverageRegex,
 				CIConfigPath:                             &ciConfigPath,
 				CIForwardDeploymentEnabled:               &ciForwardDeploymentEnabled,
 				CIDefaultGitDepth:                        &ciDefaultGitDepth,

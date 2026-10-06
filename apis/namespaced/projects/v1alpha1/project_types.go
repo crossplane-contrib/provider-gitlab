@@ -113,13 +113,15 @@ type User struct {
 
 // ContainerExpirationPolicy represents the container expiration policy.
 type ContainerExpirationPolicy struct {
-	Cadence         string       `json:"cadence"`
-	KeepN           int64        `json:"keepN"`
-	OlderThan       string       `json:"olderThan"`
-	NameRegexDelete string       `json:"nameRegexDelete"`
-	NameRegexKeep   string       `json:"nameRegexKeep"`
-	Enabled         bool         `json:"enabled"`
-	NextRunAt       *metav1.Time `json:"nextRunAt"`
+	Cadence   string `json:"cadence"`
+	KeepN     int64  `json:"keepN"`
+	OlderThan string `json:"olderThan"`
+	// Regular expression matching the image names to delete, as reported by
+	// GitLab in name_regex.
+	NameRegex     string       `json:"nameRegex"`
+	NameRegexKeep string       `json:"nameRegexKeep"`
+	Enabled       bool         `json:"enabled"`
+	NextRunAt     *metav1.Time `json:"nextRunAt"`
 }
 
 // ProjectLicense represent the license for a project.
@@ -136,15 +138,20 @@ type ProjectLicense struct {
 //
 // GitLab API docs: https://docs.gitlab.com/ee/api/projects.html#create-project
 type ContainerExpirationPolicyAttributes struct {
-	Cadence         *string `json:"cadence,omitempty"`
-	KeepN           *int64  `json:"keepN,omitempty"`
-	OlderThan       *string `json:"olderThan,omitempty"`
-	NameRegexDelete *string `json:"nameRegexDelete,omitempty"`
-	NameRegexKeep   *string `json:"nameRegexKeep,omitempty"`
-	Enabled         *bool   `json:"enabled,omitempty"`
+	Cadence   *string `json:"cadence,omitempty"`
+	KeepN     *int64  `json:"keepN,omitempty"`
+	OlderThan *string `json:"olderThan,omitempty"`
 
-	// Deprecated members
-	NameRegex *string `url:"name_regex,omitempty" json:"name_regex,omitempty"`
+	// Regular expression matching the image names to delete.
+	//
+	// GitLab implements the deletion pattern as name_regex, and that is the only
+	// spelling its API declares. The documentation additionally advertises
+	// name_regex_delete, but that parameter does not exist and is discarded
+	// without an error.
+	// See https://gitlab.com/gitlab-org/api/client-go/-/issues/2303
+	NameRegex     *string `json:"nameRegex,omitempty"`
+	NameRegexKeep *string `json:"nameRegexKeep,omitempty"`
+	Enabled       *bool   `json:"enabled,omitempty"`
 }
 
 // ProjectParameters define the desired state of a Gitlab Project
@@ -176,10 +183,6 @@ type ProjectParameters struct {
 	// +optional
 	AutocloseReferencedIssues *bool `json:"autocloseReferencedIssues,omitempty"`
 
-	// Test coverage parsing.
-	// +optional
-	BuildCoverageRegex *string `json:"buildCoverageRegex,omitempty"`
-
 	// The Git strategy. Defaults to fetch.
 	// +kubebuilder:validation:Enum:=fetch;clone
 	// +optional
@@ -206,7 +209,7 @@ type ProjectParameters struct {
 	CIForwardDeploymentEnabled *bool `json:"ciForwardDeploymentEnabled,omitempty"`
 
 	// Update the image cleanup policy for this project. Accepts: cadence (string), keepN (integer), olderThan (string),
-	// nameRegex (string), nameRegexDelete (string), nameRegexKeep (string), enabled (boolean).
+	// nameRegex (string), nameRegexKeep (string), enabled (boolean).
 	// +optional
 	ContainerExpirationPolicyAttributes *ContainerExpirationPolicyAttributes `json:"containerExpirationPolicyAttributes,omitempty"`
 
@@ -345,10 +348,6 @@ type ProjectParameters struct {
 	// Only mirror protected branches.
 	// +optional
 	OnlyMirrorProtectedBranches *bool `json:"onlyMirrorProtectedBranches,omitempty"`
-
-	// One of disabled, private, or enabled.
-	// +optional
-	OperationsAccessLevel *AccessControlValue `json:"operationsAccessLevel,omitempty"`
 
 	// Enable or disable packages repository feature.
 	// +optional

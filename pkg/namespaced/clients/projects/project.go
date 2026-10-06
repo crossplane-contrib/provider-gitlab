@@ -105,13 +105,18 @@ func GenerateObservation(prj *gitlab.Project) v1alpha1.ProjectObservation { //no
 
 	if prj.ContainerExpirationPolicy != nil {
 		o.ContainerExpirationPolicy = &v1alpha1.ContainerExpirationPolicy{
-			Cadence:         prj.ContainerExpirationPolicy.Cadence,
-			KeepN:           prj.ContainerExpirationPolicy.KeepN,
-			OlderThan:       prj.ContainerExpirationPolicy.OlderThan,
-			NameRegexDelete: prj.ContainerExpirationPolicy.NameRegexDelete,
-			NameRegexKeep:   prj.ContainerExpirationPolicy.NameRegexKeep,
-			Enabled:         prj.ContainerExpirationPolicy.Enabled,
-			NextRunAt:       &metav1.Time{Time: *prj.ContainerExpirationPolicy.NextRunAt},
+			Cadence:   prj.ContainerExpirationPolicy.Cadence,
+			KeepN:     prj.ContainerExpirationPolicy.KeepN,
+			OlderThan: prj.ContainerExpirationPolicy.OlderThan,
+			// GitLab reports the deletion pattern as name_regex; name_regex_delete
+			// never appears in a response, so client-go's NameRegexDelete is
+			// always empty on the read side. NameRegex carries a deprecation
+			// marker pointing at that empty field, see
+			// https://gitlab.com/gitlab-org/api/client-go/-/issues/2303
+			NameRegex:     prj.ContainerExpirationPolicy.NameRegex, //nolint:staticcheck
+			NameRegexKeep: prj.ContainerExpirationPolicy.NameRegexKeep,
+			Enabled:       prj.ContainerExpirationPolicy.Enabled,
+			NextRunAt:     &metav1.Time{Time: *prj.ContainerExpirationPolicy.NextRunAt},
 		}
 	}
 
@@ -317,7 +322,6 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		WikiAccessLevel:                     clients.AccessControlValueV1alpha1ToGitlab(p.WikiAccessLevel),
 		SnippetsAccessLevel:                 clients.AccessControlValueV1alpha1ToGitlab(p.SnippetsAccessLevel),
 		PagesAccessLevel:                    clients.AccessControlValueV1alpha1ToGitlab(p.PagesAccessLevel),
-		OperationsAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.OperationsAccessLevel),
 		EmailsDisabled:                      p.EmailsDisabled,
 		ResolveOutdatedDiffDiscussions:      p.ResolveOutdatedDiffDiscussions,
 		ContainerExpirationPolicyAttributes: clients.ContainerExpirationPolicyAttributesV1alpha1ToGitlab(p.ContainerExpirationPolicyAttributes),
@@ -341,7 +345,6 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		PrintingMergeRequestLinkEnabled:           p.PrintingMergeRequestLinkEnabled,
 		BuildGitStrategy:                          p.BuildGitStrategy,
 		AutoCancelPendingPipelines:                p.AutoCancelPendingPipelines,
-		BuildCoverageRegex:                        p.BuildCoverageRegex,
 		CIConfigPath:                              p.CIConfigPath,
 		CIForwardDeploymentEnabled:                p.CIForwardDeploymentEnabled,
 		AutoDevopsEnabled:                         p.AutoDevopsEnabled,
@@ -392,7 +395,6 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		WikiAccessLevel:                           clients.AccessControlValueV1alpha1ToGitlab(p.WikiAccessLevel),
 		SnippetsAccessLevel:                       clients.AccessControlValueV1alpha1ToGitlab(p.SnippetsAccessLevel),
 		PagesAccessLevel:                          clients.AccessControlValueV1alpha1ToGitlab(p.PagesAccessLevel),
-		OperationsAccessLevel:                     clients.AccessControlValueV1alpha1ToGitlab(p.OperationsAccessLevel),
 		EmailsDisabled:                            p.EmailsDisabled,
 		ResolveOutdatedDiffDiscussions:            p.ResolveOutdatedDiffDiscussions,
 		ContainerExpirationPolicyAttributes:       clients.ContainerExpirationPolicyAttributesV1alpha1ToGitlab(p.ContainerExpirationPolicyAttributes),
@@ -413,7 +415,6 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		Topics:                                    &p.Topics,
 		BuildGitStrategy:                          p.BuildGitStrategy,
 		AutoCancelPendingPipelines:                p.AutoCancelPendingPipelines,
-		BuildCoverageRegex:                        p.BuildCoverageRegex,
 		CIConfigPath:                              p.CIConfigPath,
 		CIForwardDeploymentEnabled:                p.CIForwardDeploymentEnabled,
 		AutoDevopsEnabled:                         p.AutoDevopsEnabled,
