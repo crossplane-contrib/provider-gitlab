@@ -488,7 +488,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					SharedRunnersEnabled:                      &sharedRunnersEnabled,
 					Visibility:                                &visibilityv1alpha1,
 					ImportURL:                                 &importURL,
-					PublicBuilds:                              &publicBuilds,
+					PublicBuilds:                              &publicBuilds, //nolint:staticcheck
 					AllowMergeOnSkippedPipeline:               &allowMergeOnSkippedPipeline,
 					OnlyAllowMergeIfPipelineSucceeds:          &onlyAllowMergeIfPipelineSucceeds,
 					OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
@@ -546,14 +546,14 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				SecurityAndComplianceAccessLevel:          clients.AccessControlValueStringToGitlab(securityAndComplianceAccessLevel),
 				ModelExperimentsAccessLevel:               clients.AccessControlValueStringToGitlab(modelExperimentsAccessLevel),
 				ModelRegistryAccessLevel:                  clients.AccessControlValueStringToGitlab(modelRegistryAccessLevel),
-				EmailsDisabled:                            &emailsDisabled,
+				EmailsDisabled:                            &emailsDisabled, //nolint:staticcheck
 				ResolveOutdatedDiffDiscussions:            &resolveOutdatedDiffDiscussions,
 				ContainerExpirationPolicyAttributes:       &gitlabContainerExpirationPolicyAttributes,
 				ContainerRegistryAccessLevel:              clients.AccessControlValueStringToGitlab(containerRegistryAccessLevel),
 				SharedRunnersEnabled:                      &sharedRunnersEnabled,
 				Visibility:                                clients.VisibilityValueStringToGitlab(visibility),
 				ImportURL:                                 &importURL,
-				PublicBuilds:                              &publicBuilds,
+				PublicBuilds:                              &publicBuilds, //nolint:staticcheck
 				AllowMergeOnSkippedPipeline:               &allowMergeOnSkippedPipeline,
 				OnlyAllowMergeIfPipelineSucceeds:          &onlyAllowMergeIfPipelineSucceeds,
 				OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
@@ -561,7 +561,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
 				LFSEnabled:                                &lfsEnabled,
 				RequestAccessEnabled:                      &requestAccessEnabled,
-				TagList:                                   ptr.To[[]string](nil),
+				TagList:                                   ptr.To[[]string](nil), //nolint:staticcheck
 				Topics:                                    &topics,
 				PrintingMergeRequestLinkEnabled:           &printingMergeRequestLinkEnabled,
 				BuildGitStrategy:                          &buildGitStategy,
@@ -579,7 +579,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				TemplateProjectID:                         &templateProjectID,
 				UseCustomTemplate:                         &useCustomTemplate,
 				GroupWithProjectTemplatesID:               &groupWithProjectTemplatesID,
-				PackagesEnabled:                           &packagesEnabled,
+				PackagesEnabled:                           &packagesEnabled, //nolint:staticcheck
 				ServiceDeskEnabled:                        &serviceDeskEnabled,
 				AutocloseReferencedIssues:                 &autocloseReferencedIssues,
 				SuggestionCommitMessage:                   &suggestionCommitMessage,
@@ -605,7 +605,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				IssuesAccessLevel:              clients.AccessControlValueStringToGitlab(issuesAccessLevel),
 				ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
 				MergeMethod:                    clients.MergeMethodStringToGitlab(mergeMethod),
-				TagList:                        ptr.To[[]string](nil),
+				TagList:                        ptr.To[[]string](nil), //nolint:staticcheck
 				Topics:                         &topics,
 				BuildTimeout:                   &buildTimeout,
 			},
@@ -622,7 +622,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 			},
 			want: &gitlab.CreateProjectOptions{
 				Name:    &overrideName,
-				TagList: ptr.To[[]string](nil),
+				TagList: ptr.To[[]string](nil), //nolint:staticcheck
 				Topics:  &topics,
 			},
 		},
@@ -679,7 +679,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					SharedRunnersEnabled:                      &sharedRunnersEnabled,
 					Visibility:                                &visibilityv1alpha1,
 					ImportURL:                                 &importURL,
-					PublicBuilds:                              &publicBuilds,
+					PublicBuilds:                              &publicBuilds, //nolint:staticcheck
 					AllowMergeOnSkippedPipeline:               &allowMergeOnSkippedPipeline,
 					OnlyAllowMergeIfPipelineSucceeds:          &onlyAllowMergeIfPipelineSucceeds,
 					OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
@@ -722,7 +722,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				BuildsAccessLevel:                         clients.AccessControlValueStringToGitlab(buildsAccessLevel),
 				WikiAccessLevel:                           clients.AccessControlValueStringToGitlab(wikiAccessLevel),
 				SnippetsAccessLevel:                       clients.AccessControlValueStringToGitlab(snippetsAccessLevel),
-				EmailsDisabled:                            &emailsDisabled,
+				EmailsDisabled:                            &emailsDisabled, //nolint:staticcheck
 				PagesAccessLevel:                          clients.AccessControlValueStringToGitlab(pagesAccessLevel),
 				AnalyticsAccessLevel:                      clients.AccessControlValueStringToGitlab(analyticsAccessLevel),
 				ReleasesAccessLevel:                       clients.AccessControlValueStringToGitlab(releasesAccessLevel),
@@ -748,7 +748,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
 				LFSEnabled:                                &lfsEnabled,
 				RequestAccessEnabled:                      &requestAccessEnabled,
-				TagList:                                   ptr.To[[]string](nil),
+				TagList:                                   ptr.To[[]string](nil), //nolint:staticcheck
 				Topics:                                    &topics,
 				BuildGitStrategy:                          &buildGitStategy,
 				BuildTimeout:                              &buildTimeout,
@@ -764,7 +764,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				MirrorTriggerBuilds:                       &mirrorTriggerBuilds,
 				OnlyMirrorProtectedBranches:               &onlyMirrorProtectedBranches,
 				MirrorOverwritesDivergedBranches:          &mirrorOverwritesDivergedBranches,
-				PackagesEnabled:                           &packagesEnabled,
+				PackagesEnabled:                           &packagesEnabled, //nolint:staticcheck
 				ServiceDeskEnabled:                        &serviceDeskEnabled,
 				AutocloseReferencedIssues:                 &autocloseReferencedIssues,
 				SuggestionCommitMessage:                   &suggestionCommitMessage,
@@ -790,7 +790,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				IssuesAccessLevel:              clients.AccessControlValueStringToGitlab(issuesAccessLevel),
 				ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
 				MergeMethod:                    clients.MergeMethodStringToGitlab(mergeMethod),
-				TagList:                        ptr.To[[]string](nil),
+				TagList:                        ptr.To[[]string](nil), //nolint:staticcheck
 				Topics:                         &topics,
 				BuildTimeout:                   &buildTimeout,
 			},
@@ -807,7 +807,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 			},
 			want: &gitlab.EditProjectOptions{
 				Name:    &name,
-				TagList: ptr.To[[]string](nil),
+				TagList: ptr.To[[]string](nil), //nolint:staticcheck
 				Topics:  &topics,
 			},
 		},
