@@ -160,6 +160,10 @@ type ProjectParameters struct {
 	// +optional
 	AllowMergeOnSkippedPipeline *bool `json:"allowMergeOnSkippedPipeline,omitempty"`
 
+	// One of disabled, private, or enabled.
+	// +optional
+	AnalyticsAccessLevel *AccessControlValue `json:"analyticsAccessLevel,omitempty"`
+
 	// How many approvers should approve merge request by default.More actions
 	// To configure approval rules, see Merge request approvals API.
 	//
@@ -242,9 +246,17 @@ type ProjectParameters struct {
 	// +optional
 	EmailsDisabled *bool `json:"emailsDisabled,omitempty"`
 
+	// One of disabled, private, or enabled.
+	// +optional
+	EnvironmentsAccessLevel *AccessControlValue `json:"environmentsAccessLevel,omitempty"`
+
 	// The classification label for the project.
 	// +optional
 	ExternalAuthorizationClassificationLabel *string `json:"externalAuthorizationClassificationLabel,omitempty"`
+
+	// One of disabled, private, or enabled.
+	// +optional
+	FeatureFlagsAccessLevel *AccessControlValue `json:"featureFlagsAccessLevel,omitempty"`
 
 	// One of disabled, private, or enabled.
 	// +optional
@@ -264,6 +276,10 @@ type ProjectParameters struct {
 	// This is preferable to using ImportURL since it allows users to reference a URL that contains sensitive information such as a personal access token.
 	// +optional
 	ImportURLSecretRef *v2.LocalSecretKeySelector `json:"importUrlSecretRef,omitempty"`
+
+	// One of disabled, private, or enabled.
+	// +optional
+	InfrastructureAccessLevel *AccessControlValue `json:"infrastructureAccessLevel,omitempty"`
 
 	// false by default.
 	// +optional
@@ -324,6 +340,18 @@ type ProjectParameters struct {
 	// +optional
 	MirrorUserID *int64 `json:"mirrorUserId,omitempty"`
 
+	// One of disabled, private, or enabled.
+	// +optional
+	ModelExperimentsAccessLevel *AccessControlValue `json:"modelExperimentsAccessLevel,omitempty"`
+
+	// One of disabled, private, or enabled.
+	// +optional
+	ModelRegistryAccessLevel *AccessControlValue `json:"modelRegistryAccessLevel,omitempty"`
+
+	// One of disabled, private, or enabled.
+	// +optional
+	MonitorAccessLevel *AccessControlValue `json:"monitorAccessLevel,omitempty"`
+
 	// Namespace for the new project (defaults to the current user’s namespace).
 	// +optional
 	NamespaceID *int64 `json:"namespaceId,omitempty"`
@@ -349,7 +377,13 @@ type ProjectParameters struct {
 	// +optional
 	OnlyMirrorProtectedBranches *bool `json:"onlyMirrorProtectedBranches,omitempty"`
 
+	// One of disabled, private, enabled, or public.
+	// +optional
+	PackageRegistryAccessLevel *AccessControlValue `json:"packageRegistryAccessLevel,omitempty"`
+
 	// Enable or disable packages repository feature.
+	// GitLab documents packagesEnabled as superseded by packageRegistryAccessLevel;
+	// prefer that field and avoid setting both.
 	// +optional
 	PackagesEnabled *bool `json:"packagesEnabled,omitempty"`
 
@@ -385,6 +419,10 @@ type ProjectParameters struct {
 	// +optional
 	PushRules *PushRules `json:"pushRules,omitempty"`
 
+	// One of disabled, private, or enabled.
+	// +optional
+	ReleasesAccessLevel *AccessControlValue `json:"releasesAccessLevel,omitempty"`
+
 	// Enable Delete source branch option by default for all new merge requests.
 	// +optional
 	RemoveSourceBranchAfterMerge *bool `json:"removeSourceBranchAfterMerge,omitempty"`
@@ -400,6 +438,10 @@ type ProjectParameters struct {
 	// Automatically resolve merge request diffs discussions on lines changed with a push.
 	// +optional
 	ResolveOutdatedDiffDiscussions *bool `json:"resolveOutdatedDiffDiscussions,omitempty"`
+
+	// One of disabled, private, or enabled.
+	// +optional
+	SecurityAndComplianceAccessLevel *AccessControlValue `json:"securityAndComplianceAccessLevel,omitempty"`
 
 	// Enable or disable Service Desk feature.
 	// +optional
