@@ -1540,3 +1540,31 @@ func TestSanitizeImportURL(t *testing.T) {
 		})
 	}
 }
+
+// TestLateInitializeSkipsMirrorFields guards against stamping mirror_user on
+// non-mirrored projects: unset mirror fields must stay nil after late-init.
+func TestLateInitializeSkipsMirrorFields(t *testing.T) {
+	e := &external{client: &fake.MockClient{
+		MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, nil
+		},
+	}}
+	cr := &v1alpha1.Project{}
+	glProject := &gitlab.Project{
+		Mirror:                           true,
+		MirrorUserID:                     5,
+		MirrorTriggerBuilds:              true,
+		OnlyMirrorProtectedBranches:      true,
+		MirrorOverwritesDivergedBranches: true,
+	}
+
+	if err := e.lateInitialize(context.Background(), cr, glProject); err != nil {
+		t.Fatalf("lateInitialize returned error: %v", err)
+	}
+
+	p := cr.Spec.ForProvider
+	if p.Mirror != nil || p.MirrorUserID != nil || p.MirrorTriggerBuilds != nil ||
+		p.OnlyMirrorProtectedBranches != nil || p.MirrorOverwritesDivergedBranches != nil {
+		t.Errorf("mirror fields must stay nil, got %+v", p)
+	}
+}

@@ -376,27 +376,11 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	}
 	in.MergeRequestsTemplate = clients.LateInitializeStringPtr(in.MergeRequestsTemplate, project.MergeRequestsTemplate)
 
-	if in.Mirror == nil {
-		in.Mirror = &project.Mirror
-	}
-	if in.MirrorOverwritesDivergedBranches == nil {
-		in.MirrorOverwritesDivergedBranches = &project.MirrorOverwritesDivergedBranches
-	}
-	if in.MirrorTriggerBuilds == nil {
-		in.MirrorTriggerBuilds = &project.MirrorTriggerBuilds
-	}
-	if in.MirrorUserID == nil && project.MirrorUserID != 0 { // since project.MirrorUserID is non-nullable, value `0` treated as `not set`
-		val := project.MirrorUserID
-		in.MirrorUserID = &val
-	}
 	if in.OnlyAllowMergeIfAllDiscussionsAreResolved == nil {
 		in.OnlyAllowMergeIfAllDiscussionsAreResolved = &project.OnlyAllowMergeIfAllDiscussionsAreResolved
 	}
 	if in.OnlyAllowMergeIfPipelineSucceeds == nil {
 		in.OnlyAllowMergeIfPipelineSucceeds = &project.OnlyAllowMergeIfPipelineSucceeds
-	}
-	if in.OnlyMirrorProtectedBranches == nil {
-		in.OnlyMirrorProtectedBranches = &project.OnlyMirrorProtectedBranches
 	}
 
 	in.OperationsAccessLevel = clients.LateInitializeAccessControlValue(in.OperationsAccessLevel, project.OperationsAccessLevel)
@@ -447,6 +431,8 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 
 	in.Visibility = clients.LateInitializeVisibilityValue(in.Visibility, project.Visibility)
 	in.WikiAccessLevel = clients.LateInitializeAccessControlValue(in.WikiAccessLevel, project.WikiAccessLevel)
+
+	// Mirror fields are deliberately not late-initialized (see TestLateInitializeSkipsMirrorFields).
 
 	if err := e.lateInitializePushRules(ctx, cr); err != nil {
 		return errors.Wrap(err, errLateInitializePushRules)
