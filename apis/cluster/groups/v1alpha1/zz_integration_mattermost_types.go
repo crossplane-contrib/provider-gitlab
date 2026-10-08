@@ -43,10 +43,8 @@ type IntegrationMattermostParameters struct {
 
 	// WebHookSecretRef is a reference to a secret that contains the Mattermost notifications
 	// webhook URL (for example, https://mattermost.example.com/hooks/...).
-	// The GitLab API never returns the webhook. When the ProviderConfig sets secretHashKeySecretRef,
-	// changes to the secret value are detected by comparing its keyed hash with the hash of the last
-	// applied value, stored in the "gitlab.crossplane.io/webhook-secret-hash" annotation. Otherwise
-	// changes to the secret value are NOT detected. Changes made outside of Crossplane are never detected.
+	// The GitLab API never returns the webhook, so changes to the secret value are NOT detected:
+	// they are only applied when another setting of the integration changes.
 	// +required
 	WebHookSecretRef v2.SecretKeySelector `json:"webhookSecretRef"`
 

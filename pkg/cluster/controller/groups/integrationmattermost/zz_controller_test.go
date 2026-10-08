@@ -40,34 +40,21 @@ import (
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	groupclients "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups/fake"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 var (
 	unexpectedItem resource.Managed
 	errBoom        = errors.New("boom")
 
-	testGroupID        int64 = 42
-	testIntegID        int64 = 999
-	testChannel              = "gitlab-notifications"
-	testWebHook              = "https://mattermost.example.com/hooks/abc123"
-	testRotatedWebHook       = "https://mattermost.example.com/hooks/def456"
-
-	testHasher = mustSecretHasher([]byte("0123456789abcdef0123456789abcdef"))
+	testGroupID int64 = 42
+	testIntegID int64 = 999
+	testChannel       = "gitlab-notifications"
+	testWebHook       = "https://mattermost.example.com/hooks/abc123"
 )
-
-func mustSecretHasher(key []byte) *common.SecretHasher {
-	h, err := common.NewSecretHasherWithKey(key)
-	if err != nil {
-		panic(err)
-	}
-	return h
-}
 
 type args struct {
 	mattermostClient groupclients.MattermostClient
 	kube             client.Client
-	hasher           *common.SecretHasher
 	cr               resource.Managed
 }
 
@@ -112,12 +99,6 @@ func withDeletionTimestamp(t time.Time) mattermostModifier {
 	}
 }
 
-func withWebHookHash(webhook string) mattermostModifier {
-	return func(r *v1alpha1.IntegrationMattermost) {
-		testHasher.Set(r, webHookSecretHashName, webhook)
-	}
-}
-
 func integrationMattermost(m ...mattermostModifier) *v1alpha1.IntegrationMattermost {
 	cr := &v1alpha1.IntegrationMattermost{}
 	for _, f := range m {
@@ -127,10 +108,6 @@ func integrationMattermost(m ...mattermostModifier) *v1alpha1.IntegrationMatterm
 }
 
 func mockKubeWithSecret(webhook string) client.Client {
-	return mockKubeWithSecretAndPatch(webhook, nil)
-}
-
-func mockKubeWithSecretAndPatch(webhook string, patchErr error) client.Client {
 	return &test.MockClient{
 		MockGet: func(_ context.Context, _ client.ObjectKey, obj client.Object) error {
 			secret, ok := obj.(*corev1.Secret)
@@ -140,7 +117,6 @@ func mockKubeWithSecretAndPatch(webhook string, patchErr error) client.Client {
 			secret.Data = map[string][]byte{"webhook": []byte(webhook)}
 			return nil
 		},
-		MockPatch: test.NewMockPatchFn(patchErr),
 	}
 }
 
@@ -411,7 +387,6 @@ func TestObserve(t *testing.T) {
 		},
 		"SuccessActive": {
 			args: args{
-				hasher: testHasher,
 				mattermostClient: &fake.MockClient{
 					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
 						return activeMattermost(), &gitlab.Response{}, nil
@@ -422,7 +397,6 @@ func TestObserve(t *testing.T) {
 					withGroupID(testGroupID),
 					withWebHookSecretRef("my-secret", "webhook"),
 					withChannel(testChannel),
-					withWebHookHash(testWebHook),
 				),
 			},
 			want: want{
@@ -430,7 +404,6 @@ func TestObserve(t *testing.T) {
 					withGroupID(testGroupID),
 					withWebHookSecretRef("my-secret", "webhook"),
 					withChannel(testChannel),
-					withWebHookHash(testWebHook),
 					withConditions(v2.Available()),
 					withStatus(activeMattermostObservation()),
 				),
@@ -440,7 +413,7 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
-		"SettingsDriftSkipsWebHookCheck": {
+		"SettingsDrift": {
 			args: args{
 				mattermostClient: &fake.MockClient{
 					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
@@ -464,121 +437,6 @@ func TestObserve(t *testing.T) {
 				result: managed.ExternalObservation{
 					ResourceExists:   true,
 					ResourceUpToDate: false,
-				},
-			},
-		},
-		"WebHookRotated": {
-			args: args{
-				hasher: testHasher,
-				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						return activeMattermost(), &gitlab.Response{}, nil
-					},
-				},
-				kube: mockKubeWithSecret(testRotatedWebHook),
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withChannel(testChannel),
-					withWebHookHash(testWebHook),
-				),
-			},
-			want: want{
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withChannel(testChannel),
-					withWebHookHash(testWebHook),
-					withConditions(v2.Available()),
-					withStatus(activeMattermostObservation()),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:   true,
-					ResourceUpToDate: false,
-				},
-			},
-		},
-		"WebHookHashMissing": {
-			args: args{
-				hasher: testHasher,
-				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						return activeMattermost(), &gitlab.Response{}, nil
-					},
-				},
-				kube: mockKubeWithSecret(testWebHook),
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withChannel(testChannel),
-				),
-			},
-			want: want{
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withChannel(testChannel),
-					withConditions(v2.Available()),
-					withStatus(activeMattermostObservation()),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:   true,
-					ResourceUpToDate: false,
-				},
-			},
-		},
-		"WebHookResolutionFailed": {
-			args: args{
-				hasher: testHasher,
-				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						return activeMattermost(), &gitlab.Response{}, nil
-					},
-				},
-				kube: &test.MockClient{MockGet: test.NewMockGetFn(errBoom)},
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withChannel(testChannel),
-					withWebHookHash(testWebHook),
-				),
-			},
-			want: want{
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withChannel(testChannel),
-					withWebHookHash(testWebHook),
-					withConditions(v2.Available()),
-					withStatus(activeMattermostObservation()),
-				),
-				err: errors.Wrap(errors.Wrap(errBoom, "Cannot find referenced secret"), errWebHookMissing),
-			},
-		},
-		"HasherDisabledSkipsWebHookCheck": {
-			args: args{
-				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						return activeMattermost(), &gitlab.Response{}, nil
-					},
-				},
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withChannel(testChannel),
-				),
-			},
-			want: want{
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withChannel(testChannel),
-					withConditions(v2.Available()),
-					withStatus(activeMattermostObservation()),
-				),
-				result: managed.ExternalObservation{
-					ResourceExists:   true,
-					ResourceUpToDate: true,
 				},
 			},
 		},
@@ -615,7 +473,7 @@ func TestObserve(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{client: tc.mattermostClient, kube: tc.kube, hasher: tc.hasher}
+			e := &external{client: tc.mattermostClient, kube: tc.kube}
 			o, err := e.Observe(context.Background(), tc.args.cr)
 
 			if (tc.want.err == nil) != (err == nil) {
@@ -695,32 +553,6 @@ func TestCreate(t *testing.T) {
 		},
 		"SuccessfulCreate": {
 			args: args{
-				hasher: testHasher,
-				mattermostClient: &fake.MockClient{
-					MockSetGroupMattermostIntegration: func(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						return &gitlab.GroupMattermostIntegration{Integration: gitlab.Integration{Active: true}}, &gitlab.Response{}, nil
-					},
-				},
-				kube: mockKubeWithSecret(testWebHook),
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withChannel(testChannel),
-					withWebHookSecretRef("my-secret", "webhook"),
-				),
-			},
-			want: want{
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withChannel(testChannel),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withConditions(v2.Creating()),
-					withWebHookHash(testWebHook),
-				),
-				result: managed.ExternalCreation{},
-			},
-		},
-		"SuccessfulCreateWithoutHasher": {
-			args: args{
 				mattermostClient: &fake.MockClient{
 					MockSetGroupMattermostIntegration: func(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
 						return &gitlab.GroupMattermostIntegration{Integration: gitlab.Integration{Active: true}}, &gitlab.Response{}, nil
@@ -772,7 +604,7 @@ func TestCreate(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{client: tc.mattermostClient, kube: tc.kube, hasher: tc.hasher}
+			e := &external{client: tc.mattermostClient, kube: tc.kube}
 			o, err := e.Create(context.Background(), tc.args.cr)
 
 			if (tc.want.err == nil) != (err == nil) {
@@ -843,93 +675,12 @@ func TestUpdate(t *testing.T) {
 		},
 		"SuccessfulUpdate": {
 			args: args{
-				hasher: testHasher,
 				mattermostClient: &fake.MockClient{
 					MockSetGroupMattermostIntegration: func(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
 						return &gitlab.GroupMattermostIntegration{Integration: gitlab.Integration{Active: true}}, &gitlab.Response{}, nil
 					},
 				},
 				kube: mockKubeWithSecret(testWebHook),
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withChannel(testChannel),
-					withWebHookSecretRef("my-secret", "webhook"),
-				),
-			},
-			want: want{
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withChannel(testChannel),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withWebHookHash(testWebHook),
-				),
-				result: managed.ExternalUpdate{},
-			},
-		},
-		"RotatedWebHookHashPersisted": {
-			args: args{
-				hasher: testHasher,
-				mattermostClient: &fake.MockClient{
-					MockSetGroupMattermostIntegration: func(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						if opt.WebHook == nil || *opt.WebHook != testRotatedWebHook {
-							return nil, &gitlab.Response{}, errors.New("rotated webhook was not sent")
-						}
-						return &gitlab.GroupMattermostIntegration{Integration: gitlab.Integration{Active: true}}, &gitlab.Response{}, nil
-					},
-				},
-				kube: mockKubeWithSecret(testRotatedWebHook),
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withChannel(testChannel),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withWebHookHash(testWebHook),
-				),
-			},
-			want: want{
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withChannel(testChannel),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withWebHookHash(testRotatedWebHook),
-				),
-				result: managed.ExternalUpdate{},
-			},
-		},
-		"PersistHashFailed": {
-			args: args{
-				hasher: testHasher,
-				mattermostClient: &fake.MockClient{
-					MockSetGroupMattermostIntegration: func(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						return &gitlab.GroupMattermostIntegration{Integration: gitlab.Integration{Active: true}}, &gitlab.Response{}, nil
-					},
-				},
-				kube: mockKubeWithSecretAndPatch(testWebHook, errBoom),
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withChannel(testChannel),
-					withWebHookSecretRef("my-secret", "webhook"),
-				),
-			},
-			want: want{
-				cr: integrationMattermost(
-					withGroupID(testGroupID),
-					withChannel(testChannel),
-					withWebHookSecretRef("my-secret", "webhook"),
-					withWebHookHash(testWebHook),
-				),
-				result: managed.ExternalUpdate{},
-				err:    errors.Wrap(errBoom, common.ErrPersistSecretHash),
-			},
-		},
-		"SuccessfulUpdateWithoutHasher": {
-			args: args{
-				mattermostClient: &fake.MockClient{
-					MockSetGroupMattermostIntegration: func(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						return &gitlab.GroupMattermostIntegration{Integration: gitlab.Integration{Active: true}}, &gitlab.Response{}, nil
-					},
-				},
-				// A patch would fail: none must be attempted without a hasher.
-				kube: mockKubeWithSecretAndPatch(testWebHook, errBoom),
 				cr: integrationMattermost(
 					withGroupID(testGroupID),
 					withChannel(testChannel),
@@ -973,7 +724,7 @@ func TestUpdate(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{client: tc.mattermostClient, kube: tc.kube, hasher: tc.hasher}
+			e := &external{client: tc.mattermostClient, kube: tc.kube}
 			o, err := e.Update(context.Background(), tc.args.cr)
 
 			if (tc.want.err == nil) != (err == nil) {

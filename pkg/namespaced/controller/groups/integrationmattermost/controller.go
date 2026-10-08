@@ -23,7 +23,6 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
@@ -46,9 +45,6 @@ const (
 	errCreateFailed             = "cannot create Gitlab group integration mattermost"
 	errUpdateFailed             = "cannot update Gitlab group integration mattermost"
 	errDeleteFailed             = "cannot delete Gitlab group integration mattermost"
-
-	// webHookSecretHashName identifies the webhook in its secret hash annotation.
-	webHookSecretHashName = "webhook"
 )
 
 // SetupIntegrationMattermost adds a controller that reconciles GitLab Group Mattermost integrations.
@@ -116,18 +112,13 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if err != nil {
 		return nil, err
 	}
-	hasher, err := common.NewSecretHasher(ctx, c.kube, cr, cfg)
-	if err != nil {
-		return nil, err
-	}
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), hasher: hasher}, nil
+	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
 }
 
 // external represents the external client for GitLab Group Mattermost integrations.
 type external struct {
 	kube   client.Client
 	client groups.MattermostClient
-	hasher *common.SecretHasher
 }
 
 // resolveWebHook reads the Mattermost webhook from the referenced secret.
@@ -143,33 +134,17 @@ func (e *external) resolveWebHook(ctx context.Context, cr *v1alpha1.IntegrationM
 }
 
 // applyMattermost applies the desired Mattermost settings to the GitLab group.
-// It returns the applied webhook so that its hash can be recorded.
-func (e *external) applyMattermost(ctx context.Context, cr *v1alpha1.IntegrationMattermost) (string, error) {
+func (e *external) applyMattermost(ctx context.Context, cr *v1alpha1.IntegrationMattermost) error {
 	webhook, err := e.resolveWebHook(ctx, cr)
 	if err != nil {
-		return "", err
+		return err
 	}
 	_, _, err = e.client.SetGroupMattermostIntegration(
 		*cr.Spec.ForProvider.GroupID,
 		groups.GenerateGroupMattermostIntegrationOptions(&cr.Spec.ForProvider, webhook),
 		gitlab.WithContext(ctx),
 	)
-	return webhook, err
-}
-
-// isWebHookUpToDate reports whether the webhook currently held in the secret is
-// the one last applied to GitLab, as GitLab never returns the webhook. The check
-// needs a secret hash key, and is skipped while deleting so that a removed
-// secret cannot block deletion.
-func (e *external) isWebHookUpToDate(ctx context.Context, cr *v1alpha1.IntegrationMattermost) (bool, error) {
-	if !e.hasher.Enabled() || meta.WasDeleted(cr) {
-		return true, nil
-	}
-	webhook, err := e.resolveWebHook(ctx, cr)
-	if err != nil {
-		return false, err
-	}
-	return e.hasher.IsUpToDate(cr, webHookSecretHashName, webhook), nil
+	return err
 }
 
 // Observe checks whether the external resource exists and whether it is up-to-date.
@@ -200,16 +175,9 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.Status.AtProvider = groups.GenerateIntegrationMattermostObservation(mattermost)
 	cr.Status.SetConditions(v2.Available())
 
-	upToDate := groups.IsIntegrationMattermostUpToDate(&cr.Spec.ForProvider, mattermost)
-	if upToDate {
-		if upToDate, err = e.isWebHookUpToDate(ctx, cr); err != nil {
-			return managed.ExternalObservation{}, err
-		}
-	}
-
 	return managed.ExternalObservation{
 		ResourceExists:   true,
-		ResourceUpToDate: upToDate,
+		ResourceUpToDate: groups.IsIntegrationMattermostUpToDate(&cr.Spec.ForProvider, mattermost),
 	}, nil
 }
 
@@ -226,12 +194,9 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	cr.Status.SetConditions(v2.Creating())
 
-	webhook, err := e.applyMattermost(ctx, cr)
-	if err != nil {
+	if err := e.applyMattermost(ctx, cr); err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
-	// The managed reconciler persists annotations set during Create.
-	e.hasher.Set(cr, webHookSecretHashName, webhook)
 	return managed.ExternalCreation{}, nil
 }
 
@@ -246,13 +211,8 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errGroupIDMissing)
 	}
 
-	webhook, err := e.applyMattermost(ctx, cr)
-	if err != nil {
+	if err := e.applyMattermost(ctx, cr); err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
-	}
-	// The managed reconciler does not persist annotations set during Update.
-	if err := e.hasher.Persist(ctx, e.kube, cr, webHookSecretHashName, webhook); err != nil {
-		return managed.ExternalUpdate{}, err
 	}
 	return managed.ExternalUpdate{}, nil
 }
