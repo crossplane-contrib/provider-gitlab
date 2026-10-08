@@ -127,6 +127,10 @@ type external struct {
 	cache struct {
 		externalPushRules   *v1alpha1.PushRules
 		isPushRulesUpToDate bool
+		// observedProject is the project as seen by Observe. crossplane-runtime
+		// connects a fresh external per reconcile and calls Observe before
+		// Update, so Update can rely on it describing the current state.
+		observedProject *gitlab.Project
 	}
 }
 
@@ -153,6 +157,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
+	e.cache.observedProject = prj
 
 	// Check if the project is in a pending deletion state and either remove the
 	// finalizer if specified or keep tracking it.
@@ -249,9 +254,14 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		}
 	}
 
+	opts := projects.GenerateEditProjectOptions(cr.Name, current)
+	if e.cache.observedProject != nil {
+		omitUnchangedPullMirrorAttributes(opts, e.cache.observedProject)
+	}
+
 	_, _, err := e.client.EditProject(
 		meta.GetExternalName(cr),
-		projects.GenerateEditProjectOptions(cr.Name, current),
+		opts,
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
@@ -376,6 +386,12 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	}
 	in.MergeRequestsTemplate = clients.LateInitializeStringPtr(in.MergeRequestsTemplate, project.MergeRequestsTemplate)
 
+	// Pull-mirror settings (Mirror, MirrorUserID, MirrorTriggerBuilds,
+	// OnlyMirrorProtectedBranches, MirrorOverwritesDivergedBranches) are
+	// deliberately not late-initialized: they stay unmanaged unless set
+	// explicitly, because GitLab EE treats any of them in an edit request as a
+	// change to mirroring. See omitUnchangedPullMirrorAttributes.
+
 	if in.OnlyAllowMergeIfAllDiscussionsAreResolved == nil {
 		in.OnlyAllowMergeIfAllDiscussionsAreResolved = &project.OnlyAllowMergeIfAllDiscussionsAreResolved
 	}
@@ -431,8 +447,6 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 
 	in.Visibility = clients.LateInitializeVisibilityValue(in.Visibility, project.Visibility)
 	in.WikiAccessLevel = clients.LateInitializeAccessControlValue(in.WikiAccessLevel, project.WikiAccessLevel)
-
-	// Mirror fields are deliberately not late-initialized (see TestLateInitializeSkipsMirrorFields).
 
 	if err := e.lateInitializePushRules(ctx, cr); err != nil {
 		return errors.Wrap(err, errLateInitializePushRules)
@@ -678,6 +692,62 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	return true
+}
+
+// omitUnchangedPullMirrorAttributes removes pull-mirror attributes from an
+// edit request when they would not change the observed project g.
+//
+// GitLab EE treats the presence of any pull-mirror attribute in an edit
+// request as a change to mirroring, whatever its value. Unless the request
+// assigns a different mirror_user_id (admins only), it resets the mirror user
+// to the caller. Sending mirror: true for a mirror forces a pull, and sending
+// import_url makes GitLab probe the remote and fail the request with 422 if it
+// is unreachable. Update sends the whole spec whenever any field drifts, so
+// unchanged pull-mirror attributes must not ride along.
+//
+// An attribute is dropped only when it equals the observed value under the
+// comparison isProjectUpToDate uses. For projects that are not pull mirrors
+// GitLab omits the mirror sub-settings from responses, so they decode as zero
+// values. That is also what earlier provider versions late-initialized for the
+// boolean sub-settings, so those are dropped. While a project is becoming a
+// pull mirror its sub-settings cannot be observed, and any that are set are
+// sent together with mirror.
+//
+// import_url is dropped only when its URL without credentials is unchanged
+// and the project is not, and is not becoming, a pull mirror. GitLab never
+// returns import_url credentials, so rotated credentials of a mirror cannot be
+// observed and are still sent; for other projects they have no effect after
+// the initial import.
+func omitUnchangedPullMirrorAttributes(o *gitlab.EditProjectOptions, g *gitlab.Project) {
+	willBeMirror := ptr.Deref(o.Mirror, g.Mirror)
+	enablingMirror := willBeMirror && !g.Mirror
+
+	if !enablingMirror {
+		omitUnchangedMirrorSubSettings(o, g)
+	}
+	if clients.IsComparableEqualToComparablePtr(o.Mirror, g.Mirror) {
+		o.Mirror = nil
+	}
+	if o.ImportURL != nil && !willBeMirror && sanitizeImportURL(*o.ImportURL) == g.ImportURL {
+		o.ImportURL = nil
+	}
+}
+
+// omitUnchangedMirrorSubSettings drops the pull-mirror sub-settings of o that
+// equal those of the observed project g.
+func omitUnchangedMirrorSubSettings(o *gitlab.EditProjectOptions, g *gitlab.Project) {
+	if clients.IsComparableEqualToComparablePtr(o.MirrorUserID, g.MirrorUserID) {
+		o.MirrorUserID = nil
+	}
+	if clients.IsComparableEqualToComparablePtr(o.MirrorTriggerBuilds, g.MirrorTriggerBuilds) {
+		o.MirrorTriggerBuilds = nil
+	}
+	if clients.IsComparableEqualToComparablePtr(o.OnlyMirrorProtectedBranches, g.OnlyMirrorProtectedBranches) {
+		o.OnlyMirrorProtectedBranches = nil
+	}
+	if clients.IsComparableEqualToComparablePtr(o.MirrorOverwritesDivergedBranches, g.MirrorOverwritesDivergedBranches) {
+		o.MirrorOverwritesDivergedBranches = nil
+	}
 }
 
 // sanitizeImportURL strips the userinfo (username / password / token) from a
