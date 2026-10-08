@@ -20,6 +20,7 @@ package projects
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -1541,16 +1542,29 @@ func TestSanitizeImportURL(t *testing.T) {
 	}
 }
 
-// TestLateInitializeSkipsMirrorFields guards against stamping mirror_user on
-// non-mirrored projects: unset mirror fields must stay nil after late-init.
+// pushRulesUnavailable mimics GitLab Community Edition, which answers the push
+// rules endpoint with 404.
+func pushRulesUnavailable(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+	return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+}
+
+// pullMirrorFields holds the pull-mirror settings of ProjectParameters so they
+// can be compared as a unit.
+type pullMirrorFields struct {
+	Mirror                           *bool
+	MirrorUserID                     *int64
+	MirrorTriggerBuilds              *bool
+	OnlyMirrorProtectedBranches      *bool
+	MirrorOverwritesDivergedBranches *bool
+}
+
+// TestLateInitializeSkipsMirrorFields verifies that pull-mirror settings
+// observed in GitLab are not copied into the spec, while other fields still are.
 func TestLateInitializeSkipsMirrorFields(t *testing.T) {
-	e := &external{client: &fake.MockClient{
-		MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
-			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, nil
-		},
-	}}
+	e := &external{client: &fake.MockClient{MockGetProjectPushRules: pushRulesUnavailable}}
 	cr := &v1alpha1.Project{}
 	glProject := &gitlab.Project{
+		Path:                             path,
 		Mirror:                           true,
 		MirrorUserID:                     5,
 		MirrorTriggerBuilds:              true,
@@ -1559,12 +1573,213 @@ func TestLateInitializeSkipsMirrorFields(t *testing.T) {
 	}
 
 	if err := e.lateInitialize(context.Background(), cr, glProject); err != nil {
-		t.Fatalf("lateInitialize returned error: %v", err)
+		t.Fatalf("lateInitialize(...): %v", err)
 	}
 
 	p := cr.Spec.ForProvider
-	if p.Mirror != nil || p.MirrorUserID != nil || p.MirrorTriggerBuilds != nil ||
-		p.OnlyMirrorProtectedBranches != nil || p.MirrorOverwritesDivergedBranches != nil {
-		t.Errorf("mirror fields must stay nil, got %+v", p)
+	if diff := cmp.Diff(ptr.To(path), p.Path); diff != "" {
+		t.Errorf("non-mirror fields must still be late-initialized: Path: -want, +got:\n%s", diff)
+	}
+	got := pullMirrorFields{
+		Mirror:                           p.Mirror,
+		MirrorUserID:                     p.MirrorUserID,
+		MirrorTriggerBuilds:              p.MirrorTriggerBuilds,
+		OnlyMirrorProtectedBranches:      p.OnlyMirrorProtectedBranches,
+		MirrorOverwritesDivergedBranches: p.MirrorOverwritesDivergedBranches,
+	}
+	if diff := cmp.Diff(pullMirrorFields{}, got); diff != "" {
+		t.Errorf("pull-mirror fields must not be late-initialized: -want, +got:\n%s", diff)
+	}
+}
+
+func TestOmitUnchangedPullMirrorAttributes(t *testing.T) {
+	const (
+		credentialedURL = "https://TOKEN:@github.com/example/repo.git"
+		sanitizedURL    = "https://github.com/example/repo.git"
+	)
+	// The sub-settings alternate between true and false so that comparing a
+	// field against the wrong observed field fails.
+	mirrored := func() *gitlab.Project {
+		return &gitlab.Project{
+			Mirror:                           true,
+			MirrorUserID:                     5,
+			MirrorTriggerBuilds:              true,
+			OnlyMirrorProtectedBranches:      false,
+			MirrorOverwritesDivergedBranches: true,
+			ImportURL:                        sanitizedURL,
+		}
+	}
+
+	cases := map[string]struct {
+		reason   string
+		opts     *gitlab.EditProjectOptions
+		observed *gitlab.Project
+		want     *gitlab.EditProjectOptions
+	}{
+		"UnsetAttributesStayUnset": {
+			reason:   "Attributes absent from the spec must not be added, and other fields must be left alone.",
+			opts:     &gitlab.EditProjectOptions{Description: ptr.To("d")},
+			observed: mirrored(),
+			want:     &gitlab.EditProjectOptions{Description: ptr.To("d")},
+		},
+		"LateInitializedValuesOnNonMirrorAreOmitted": {
+			reason: "Values persisted by late-initialization before #415 equal the zero values GitLab reports for a project that is not a pull mirror.",
+			opts: &gitlab.EditProjectOptions{
+				Mirror:                           ptr.To(false),
+				MirrorTriggerBuilds:              ptr.To(false),
+				OnlyMirrorProtectedBranches:      ptr.To(false),
+				MirrorOverwritesDivergedBranches: ptr.To(false),
+			},
+			observed: &gitlab.Project{},
+			want:     &gitlab.EditProjectOptions{},
+		},
+		"UnchangedSettingsOnMirrorAreOmitted": {
+			reason: "Resending unchanged settings of a pull mirror would reset its mirror user to the caller and force a pull.",
+			opts: &gitlab.EditProjectOptions{
+				Mirror:                           ptr.To(true),
+				MirrorUserID:                     ptr.To(int64(5)),
+				MirrorTriggerBuilds:              ptr.To(true),
+				OnlyMirrorProtectedBranches:      ptr.To(false),
+				MirrorOverwritesDivergedBranches: ptr.To(true),
+			},
+			observed: mirrored(),
+			want:     &gitlab.EditProjectOptions{},
+		},
+		"ChangedSettingsAreKept": {
+			reason: "Settings that differ from the observed project are real changes and must be sent.",
+			opts: &gitlab.EditProjectOptions{
+				Mirror:                           ptr.To(false),
+				MirrorUserID:                     ptr.To(int64(7)),
+				MirrorTriggerBuilds:              ptr.To(false),
+				OnlyMirrorProtectedBranches:      ptr.To(true),
+				MirrorOverwritesDivergedBranches: ptr.To(false),
+			},
+			observed: mirrored(),
+			want: &gitlab.EditProjectOptions{
+				Mirror:                           ptr.To(false),
+				MirrorUserID:                     ptr.To(int64(7)),
+				MirrorTriggerBuilds:              ptr.To(false),
+				OnlyMirrorProtectedBranches:      ptr.To(true),
+				MirrorOverwritesDivergedBranches: ptr.To(false),
+			},
+		},
+		"SubSettingsWhenEnablingMirrorAreKept": {
+			reason: "GitLab hides the sub-settings of a project that is not a pull mirror, so they cannot be proven unchanged and must be sent together with mirror.",
+			opts: &gitlab.EditProjectOptions{
+				Mirror:                           ptr.To(true),
+				MirrorUserID:                     ptr.To(int64(5)),
+				MirrorTriggerBuilds:              ptr.To(false),
+				OnlyMirrorProtectedBranches:      ptr.To(false),
+				MirrorOverwritesDivergedBranches: ptr.To(false),
+			},
+			observed: &gitlab.Project{},
+			want: &gitlab.EditProjectOptions{
+				Mirror:                           ptr.To(true),
+				MirrorUserID:                     ptr.To(int64(5)),
+				MirrorTriggerBuilds:              ptr.To(false),
+				OnlyMirrorProtectedBranches:      ptr.To(false),
+				MirrorOverwritesDivergedBranches: ptr.To(false),
+			},
+		},
+		"ChangedImportURLIsKept": {
+			reason:   "A different host or path is a real change.",
+			opts:     &gitlab.EditProjectOptions{ImportURL: ptr.To("https://TOKEN:@github.com/example/other.git")},
+			observed: &gitlab.Project{ImportURL: sanitizedURL},
+			want:     &gitlab.EditProjectOptions{ImportURL: ptr.To("https://TOKEN:@github.com/example/other.git")},
+		},
+		"UnchangedImportURLOnNonMirrorIsOmitted": {
+			reason:   "Credentials have no effect after the initial import; resending the URL would reset the mirror user to the caller and make GitLab probe the remote.",
+			opts:     &gitlab.EditProjectOptions{ImportURL: ptr.To(credentialedURL)},
+			observed: &gitlab.Project{ImportURL: sanitizedURL},
+			want:     &gitlab.EditProjectOptions{},
+		},
+		"UnchangedImportURLOnMirrorIsKept": {
+			reason:   "GitLab never returns credentials, so rotated credentials of a pull mirror cannot be observed and must still be sent.",
+			opts:     &gitlab.EditProjectOptions{ImportURL: ptr.To(credentialedURL)},
+			observed: mirrored(),
+			want:     &gitlab.EditProjectOptions{ImportURL: ptr.To(credentialedURL)},
+		},
+		"UnchangedImportURLWhenEnablingMirrorIsKept": {
+			reason:   "A project becoming a pull mirror needs current credentials.",
+			opts:     &gitlab.EditProjectOptions{Mirror: ptr.To(true), ImportURL: ptr.To(credentialedURL)},
+			observed: &gitlab.Project{ImportURL: sanitizedURL},
+			want:     &gitlab.EditProjectOptions{Mirror: ptr.To(true), ImportURL: ptr.To(credentialedURL)},
+		},
+		"UnchangedImportURLWhenDisablingMirrorIsOmitted": {
+			reason:   "Disabling a pull mirror must not depend on its remote being reachable.",
+			opts:     &gitlab.EditProjectOptions{Mirror: ptr.To(false), ImportURL: ptr.To(credentialedURL)},
+			observed: mirrored(),
+			want:     &gitlab.EditProjectOptions{Mirror: ptr.To(false)},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			omitUnchangedPullMirrorAttributes(tc.opts, tc.observed)
+			if diff := cmp.Diff(tc.want, tc.opts); diff != "" {
+				t.Errorf("%s\nomitUnchangedPullMirrorAttributes(...): -want, +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+// TestUpdateAfterObserveOmitsUnchangedPullMirrorAttributes drives Observe and
+// then Update on one external client, as crossplane-runtime does, and checks the
+// encoded edit request. The spec carries the pull-mirror values that provider
+// versions before #415 late-initialized, plus an unrelated change that makes
+// the project drift. GitLab EE resets the mirror user to the caller when any
+// pull-mirror attribute is present without a different mirror_user_id, so
+// none of them may be sent.
+func TestUpdateAfterObserveOmitsUnchangedPullMirrorAttributes(t *testing.T) {
+	const importURL = "https://github.com/example/repo.git"
+	var sent *gitlab.EditProjectOptions
+	e := &external{client: &fake.MockClient{
+		MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+			return &gitlab.Project{Description: "observed", ImportURL: importURL}, &gitlab.Response{}, nil
+		},
+		MockGetProjectPushRules: pushRulesUnavailable,
+		MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+			sent = opt
+			return &gitlab.Project{}, &gitlab.Response{}, nil
+		},
+	}}
+	cr := project(withExternalName(extName), withSpec(v1alpha1.ProjectParameters{
+		Description:                      ptr.To("desired"),
+		ImportURL:                        ptr.To(importURL),
+		Mirror:                           ptr.To(false),
+		MirrorTriggerBuilds:              ptr.To(false),
+		OnlyMirrorProtectedBranches:      ptr.To(false),
+		MirrorOverwritesDivergedBranches: ptr.To(false),
+	}))
+
+	obs, err := e.Observe(context.Background(), cr)
+	if err != nil {
+		t.Fatalf("Observe(...): %v", err)
+	}
+	if obs.ResourceUpToDate {
+		t.Fatal("Observe(...): ResourceUpToDate = true, want false: the description drift must trigger an update")
+	}
+	if _, err := e.Update(context.Background(), cr); err != nil {
+		t.Fatalf("Update(...): %v", err)
+	}
+
+	body, err := json.Marshal(sent)
+	if err != nil {
+		t.Fatalf("json.Marshal(...): %v", err)
+	}
+	var keys map[string]json.RawMessage
+	if err := json.Unmarshal(body, &keys); err != nil {
+		t.Fatalf("json.Unmarshal(...): %v", err)
+	}
+	var leaked []string
+	for _, k := range []string{"mirror", "mirror_user_id", "mirror_trigger_builds", "only_mirror_protected_branches", "mirror_overwrites_diverged_branches", "import_url"} {
+		if _, ok := keys[k]; ok {
+			leaked = append(leaked, k)
+		}
+	}
+	if len(leaked) > 0 {
+		t.Errorf("edit request contains unchanged pull-mirror attributes %v:\n%s", leaked, body)
+	}
+	if diff := cmp.Diff(`"desired"`, string(keys["description"])); diff != "" {
+		t.Errorf("edit request must still carry the drifted field: description: -want, +got:\n%s", diff)
 	}
 }
