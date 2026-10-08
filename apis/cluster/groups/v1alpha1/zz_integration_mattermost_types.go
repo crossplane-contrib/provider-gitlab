@@ -43,8 +43,9 @@ type IntegrationMattermostParameters struct {
 
 	// WebHookSecretRef is a reference to a secret that contains the Mattermost notifications
 	// webhook URL (for example, https://mattermost.example.com/hooks/...).
-	// The GitLab API never returns the webhook, so changes to the secret value are NOT detected:
-	// they are only applied when another setting of the integration changes.
+	// The webhook must not be empty. The GitLab API never returns the webhook, so changes to the
+	// secret value are NOT detected: they are only applied when another setting of the integration
+	// changes.
 	// +required
 	WebHookSecretRef v2.SecretKeySelector `json:"webhookSecretRef"`
 
@@ -118,11 +119,9 @@ type IntegrationMattermostParameters struct {
 	// +optional
 	DeploymentEvents *bool `json:"deploymentEvents,omitempty"`
 
-	// Enable notifications for alert events.
-	// +optional
-	AlertEvents *bool `json:"alertEvents,omitempty"`
-
 	// Enable notifications for vulnerability events.
+	// Only available on GitLab Premium and Ultimate (EE). On GitLab CE this setting is ignored
+	// and never converges.
 	// +optional
 	VulnerabilityEvents *bool `json:"vulnerabilityEvents,omitempty"`
 
@@ -135,6 +134,8 @@ type IntegrationMattermostParameters struct {
 	IssueChannel *string `json:"issueChannel,omitempty"`
 
 	// The name of the channel to receive notifications for confidential issue events.
+	// When unset, GitLab uses issueChannel.
+	// +kubebuilder:validation:MinLength=1
 	// +optional
 	ConfidentialIssueChannel *string `json:"confidentialIssueChannel,omitempty"`
 
@@ -147,6 +148,8 @@ type IntegrationMattermostParameters struct {
 	NoteChannel *string `json:"noteChannel,omitempty"`
 
 	// The name of the channel to receive notifications for confidential note events.
+	// When unset, GitLab uses noteChannel.
+	// +kubebuilder:validation:MinLength=1
 	// +optional
 	ConfidentialNoteChannel *string `json:"confidentialNoteChannel,omitempty"`
 
@@ -166,15 +169,16 @@ type IntegrationMattermostParameters struct {
 	// +optional
 	DeploymentChannel *string `json:"deploymentChannel,omitempty"`
 
-	// The name of the channel to receive notifications for alert events.
-	// +optional
-	AlertChannel *string `json:"alertChannel,omitempty"`
-
 	// The name of the channel to receive notifications for vulnerability events.
+	// Only available on GitLab Premium and Ultimate (EE). On GitLab CE this setting is ignored
+	// and never converges.
 	// +optional
 	VulnerabilityChannel *string `json:"vulnerabilityChannel,omitempty"`
 
-	// UseInheritedSettings indicates whether to inherit the default Mattermost settings from the parent group.
+	// UseInheritedSettings indicates whether to inherit the Mattermost settings instead of using
+	// the ones of this resource. Settings are inherited from the closest ancestor group with custom
+	// settings, or else from the instance. While inheriting, all other settings are ignored by GitLab
+	// and are not compared. Defaults to false, which detaches the group from inherited settings.
 	// +optional
 	UseInheritedSettings *bool `json:"useInheritedSettings,omitempty"`
 }
@@ -206,8 +210,6 @@ type IntegrationMattermostObservation struct {
 	WikiPageChannel string `json:"wikiPageChannel,omitempty"`
 	// Channel to use for deployment events.
 	DeploymentChannel string `json:"deploymentChannel,omitempty"`
-	// Channel to use for alert events.
-	AlertChannel string `json:"alertChannel,omitempty"`
 	// Channel to use for vulnerability events.
 	VulnerabilityChannel string `json:"vulnerabilityChannel,omitempty"`
 }
@@ -229,6 +231,9 @@ type IntegrationMattermostStatus struct {
 // +kubebuilder:object:root=true
 
 // A IntegrationMattermost is a managed resource that represents a GitLab Group Mattermost Integration.
+// It requires GitLab 17.9 or later, which introduced the group integrations API.
+// The incident, work item, group mention and notify_only_when_pipeline_status_changes options are
+// not supported yet.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"

@@ -34,8 +34,11 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A IntegrationMattermost is a managed resource that represents
-          a GitLab Group Mattermost Integration.
+        description: |-
+          A IntegrationMattermost is a managed resource that represents a GitLab Group Mattermost Integration.
+          It requires GitLab 17.9 or later, which introduced the group integrations API.
+          The incident, work item, group mention and notify_only_when_pipeline_status_changes options are
+          not supported yet.
         properties:
           apiVersion:
             description: |-
@@ -76,13 +79,6 @@ spec:
                 description: ForProvider represents the desired state of the mattermost
                   integration.
                 properties:
-                  alertChannel:
-                    description: The name of the channel to receive notifications
-                      for alert events.
-                    type: string
-                  alertEvents:
-                    description: Enable notifications for alert events.
-                    type: boolean
                   branchesToBeNotified:
                     description: |-
                       Branches to send notifications for. Valid options are all, default, protected, and default_and_protected. The default value is default.
@@ -97,15 +93,19 @@ spec:
                     description: Default channel to use if no other channel is configured.
                     type: string
                   confidentialIssueChannel:
-                    description: The name of the channel to receive notifications
-                      for confidential issue events.
+                    description: |-
+                      The name of the channel to receive notifications for confidential issue events.
+                      When unset, GitLab uses issueChannel.
+                    minLength: 1
                     type: string
                   confidentialIssuesEvents:
                     description: Enable notifications for confidential issue events.
                     type: boolean
                   confidentialNoteChannel:
-                    description: The name of the channel to receive notifications
-                      for confidential note events.
+                    description: |-
+                      The name of the channel to receive notifications for confidential note events.
+                      When unset, GitLab uses noteChannel.
+                    minLength: 1
                     type: string
                   confidentialNoteEvents:
                     description: Enable notifications for confidential note events.
@@ -258,25 +258,34 @@ spec:
                     description: Enable notifications for tag push events.
                     type: boolean
                   useInheritedSettings:
-                    description: UseInheritedSettings indicates whether to inherit
-                      the default Mattermost settings from the parent group.
+                    description: |-
+                      UseInheritedSettings indicates whether to inherit the Mattermost settings instead of using
+                      the ones of this resource. Settings are inherited from the closest ancestor group with custom
+                      settings, or else from the instance. While inheriting, all other settings are ignored by GitLab
+                      and are not compared. Defaults to false, which detaches the group from inherited settings.
                     type: boolean
                   username:
                     description: Mattermost notifications username.
                     type: string
                   vulnerabilityChannel:
-                    description: The name of the channel to receive notifications
-                      for vulnerability events.
+                    description: |-
+                      The name of the channel to receive notifications for vulnerability events.
+                      Only available on GitLab Premium and Ultimate (EE). On GitLab CE this setting is ignored
+                      and never converges.
                     type: string
                   vulnerabilityEvents:
-                    description: Enable notifications for vulnerability events.
+                    description: |-
+                      Enable notifications for vulnerability events.
+                      Only available on GitLab Premium and Ultimate (EE). On GitLab CE this setting is ignored
+                      and never converges.
                     type: boolean
                   webhookSecretRef:
                     description: |-
                       WebHookSecretRef is a reference to a secret that contains the Mattermost notifications
                       webhook URL (for example, https://mattermost.example.com/hooks/...).
-                      The GitLab API never returns the webhook, so changes to the secret value are NOT detected:
-                      they are only applied when another setting of the integration changes.
+                      The webhook must not be empty. The GitLab API never returns the webhook, so changes to the
+                      secret value are NOT detected: they are only applied when another setting of the integration
+                      changes.
                     properties:
                       key:
                         description: The key to select.
@@ -398,9 +407,6 @@ spec:
                 properties:
                   active:
                     type: boolean
-                  alertChannel:
-                    description: Channel to use for alert events.
-                    type: string
                   alertEvents:
                     type: boolean
                   channel:

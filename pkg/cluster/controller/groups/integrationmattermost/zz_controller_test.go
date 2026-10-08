@@ -99,6 +99,12 @@ func withDeletionTimestamp(t time.Time) mattermostModifier {
 	}
 }
 
+func withUseInheritedSettings(b bool) mattermostModifier {
+	return func(r *v1alpha1.IntegrationMattermost) {
+		r.Spec.ForProvider.UseInheritedSettings = &b
+	}
+}
+
 func integrationMattermost(m ...mattermostModifier) *v1alpha1.IntegrationMattermost {
 	cr := &v1alpha1.IntegrationMattermost{}
 	for _, f := range m {
@@ -161,6 +167,32 @@ func activeMattermostObservation() v1alpha1.IntegrationMattermostObservation {
 		},
 		Channel: testChannel,
 	}
+}
+
+func inheritedMattermost(active bool) *gitlab.GroupMattermostIntegration {
+	m := activeMattermost()
+	m.Active = active
+	m.Inherited = true
+	return m
+}
+
+func inheritedMattermostObservation(active bool) v1alpha1.IntegrationMattermostObservation {
+	o := activeMattermostObservation()
+	o.Active = ptr.To(active)
+	o.Inherited = ptr.To(true)
+	return o
+}
+
+// checkSentOptions fails unless the webhook is sent and inherited settings
+// are explicitly disabled.
+func checkSentOptions(_ any, opt *gitlab.GroupMattermostIntegrationOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+	if opt.WebHook == nil || *opt.WebHook != testWebHook {
+		return nil, &gitlab.Response{}, errors.New("webhook was not sent")
+	}
+	if opt.UseInheritedSettings == nil || *opt.UseInheritedSettings {
+		return nil, &gitlab.Response{}, errors.New("use_inherited_settings=false was not sent")
+	}
+	return &gitlab.GroupMattermostIntegration{Integration: gitlab.Integration{Active: true}}, &gitlab.Response{}, nil
 }
 
 func TestConnect(t *testing.T) {
@@ -440,6 +472,100 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
+		"InheritedAsRequested": {
+			args: args{
+				mattermostClient: &fake.MockClient{
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+						return inheritedMattermost(false), &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withChannel("ignored-while-inheriting"),
+					withUseInheritedSettings(true),
+				),
+			},
+			want: want{
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withChannel("ignored-while-inheriting"),
+					withUseInheritedSettings(true),
+					withConditions(v2.Available()),
+					withStatus(inheritedMattermostObservation(false)),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:   true,
+					ResourceUpToDate: true,
+				},
+			},
+		},
+		"InheritedNotRequested": {
+			args: args{
+				mattermostClient: &fake.MockClient{
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+						return inheritedMattermost(true), &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withChannel(testChannel),
+				),
+			},
+			want: want{
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withChannel(testChannel),
+					withConditions(v2.Available()),
+					withStatus(inheritedMattermostObservation(true)),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:   true,
+					ResourceUpToDate: false,
+				},
+			},
+		},
+		"InactiveInheritedNotRequested": {
+			args: args{
+				mattermostClient: &fake.MockClient{
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+						return inheritedMattermost(false), &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withChannel(testChannel),
+				),
+			},
+			want: want{
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withChannel(testChannel),
+				),
+				result: managed.ExternalObservation{ResourceExists: false},
+			},
+		},
+		"DeletingInheritedIsGone": {
+			args: args{
+				mattermostClient: &fake.MockClient{
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+						return inheritedMattermost(true), &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withUseInheritedSettings(true),
+					withDeletionTimestamp(time.Now()),
+				),
+			},
+			want: want{
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withUseInheritedSettings(true),
+					withDeletionTimestamp(time.Now()),
+				),
+				result: managed.ExternalObservation{ResourceExists: false},
+			},
+		},
 		"SuccessInactive": {
 			args: args{
 				mattermostClient: &fake.MockClient{
@@ -551,12 +677,30 @@ func TestCreate(t *testing.T) {
 				err: errors.Wrap(errors.Wrap(errors.Wrap(errBoom, "Cannot find referenced secret"), errWebHookMissing), errCreateFailed),
 			},
 		},
+		"EmptyWebHook": {
+			args: args{
+				mattermostClient: &fake.MockClient{},
+				kube:             mockKubeWithSecret(""),
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withChannel(testChannel),
+					withWebHookSecretRef("my-secret", "webhook"),
+				),
+			},
+			want: want{
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withChannel(testChannel),
+					withWebHookSecretRef("my-secret", "webhook"),
+					withConditions(v2.Creating()),
+				),
+				err: errors.Wrap(errors.New(errWebHookEmpty), errCreateFailed),
+			},
+		},
 		"SuccessfulCreate": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockSetGroupMattermostIntegration: func(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						return &gitlab.GroupMattermostIntegration{Integration: gitlab.Integration{Active: true}}, &gitlab.Response{}, nil
-					},
+					MockSetGroupMattermostIntegration: checkSentOptions,
 				},
 				kube: mockKubeWithSecret(testWebHook),
 				cr: integrationMattermost(
@@ -673,12 +817,29 @@ func TestUpdate(t *testing.T) {
 				err: errors.Wrap(errors.Wrap(errors.Wrap(errBoom, "Cannot find referenced secret"), errWebHookMissing), errUpdateFailed),
 			},
 		},
+		"EmptyWebHook": {
+			args: args{
+				mattermostClient: &fake.MockClient{},
+				kube:             mockKubeWithSecret(""),
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withChannel(testChannel),
+					withWebHookSecretRef("my-secret", "webhook"),
+				),
+			},
+			want: want{
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withChannel(testChannel),
+					withWebHookSecretRef("my-secret", "webhook"),
+				),
+				err: errors.Wrap(errors.New(errWebHookEmpty), errUpdateFailed),
+			},
+		},
 		"SuccessfulUpdate": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockSetGroupMattermostIntegration: func(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						return &gitlab.GroupMattermostIntegration{Integration: gitlab.Integration{Active: true}}, &gitlab.Response{}, nil
-					},
+					MockSetGroupMattermostIntegration: checkSentOptions,
 				},
 				kube: mockKubeWithSecret(testWebHook),
 				cr: integrationMattermost(

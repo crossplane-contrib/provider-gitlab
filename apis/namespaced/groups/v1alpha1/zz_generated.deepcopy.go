@@ -1390,11 +1390,6 @@ func (in *IntegrationMattermostParameters) DeepCopyInto(out *IntegrationMattermo
 		*out = new(bool)
 		**out = **in
 	}
-	if in.AlertEvents != nil {
-		in, out := &in.AlertEvents, &out.AlertEvents
-		*out = new(bool)
-		**out = **in
-	}
 	if in.VulnerabilityEvents != nil {
 		in, out := &in.VulnerabilityEvents, &out.VulnerabilityEvents
 		*out = new(bool)
@@ -1447,11 +1442,6 @@ func (in *IntegrationMattermostParameters) DeepCopyInto(out *IntegrationMattermo
 	}
 	if in.DeploymentChannel != nil {
 		in, out := &in.DeploymentChannel, &out.DeploymentChannel
-		*out = new(string)
-		**out = **in
-	}
-	if in.AlertChannel != nil {
-		in, out := &in.AlertChannel, &out.AlertChannel
 		*out = new(string)
 		**out = **in
 	}

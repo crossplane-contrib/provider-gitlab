@@ -23,11 +23,13 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -41,6 +43,7 @@ const (
 	errNotIntegrationMattermost = "managed resource is not a Gitlab group integration mattermost custom resource"
 	errGroupIDMissing           = "GroupID is missing"
 	errWebHookMissing           = "cannot resolve Mattermost webhook from secret reference"
+	errWebHookEmpty             = "Mattermost webhook from secret reference is empty"
 	errGetFailed                = "cannot get Gitlab group integration mattermost"
 	errCreateFailed             = "cannot create Gitlab group integration mattermost"
 	errUpdateFailed             = "cannot update Gitlab group integration mattermost"
@@ -127,10 +130,31 @@ func (e *external) resolveWebHook(ctx context.Context, cr *v1alpha1.IntegrationM
 	if err != nil {
 		return "", errors.Wrap(err, errWebHookMissing)
 	}
-	if webhook == nil {
-		return "", nil
+	// GitLab rejects an empty webhook with a bare 400 Bad Request.
+	if webhook == nil || *webhook == "" {
+		return "", errors.New(errWebHookEmpty)
 	}
 	return *webhook, nil
+}
+
+// exists reports whether the observed integration is managed by cr.
+//
+// GitLab propagates the settings of the closest ancestor with custom settings
+// (or else of the instance) to every group without custom settings. Such an
+// inherited integration exists when cr asks to inherit, even if inactive, so
+// that it is not created over and over. It cannot be removed, so it is
+// considered gone while cr is being deleted.
+func exists(cr *v1alpha1.IntegrationMattermost, mattermost *gitlab.GroupMattermostIntegration) bool {
+	switch {
+	case mattermost == nil:
+		return false
+	case mattermost.Inherited && meta.WasDeleted(cr):
+		return false
+	case mattermost.Inherited && ptr.Deref(cr.Spec.ForProvider.UseInheritedSettings, false):
+		return true
+	default:
+		return mattermost.Active
+	}
 }
 
 // applyMattermost applies the desired Mattermost settings to the GitLab group.
@@ -168,7 +192,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
-	if mattermost == nil || !mattermost.Active {
+	if !exists(cr, mattermost) {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 

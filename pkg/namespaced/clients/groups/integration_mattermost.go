@@ -18,6 +18,7 @@ package groups
 
 import (
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
@@ -39,21 +40,24 @@ func NewMattermostClient(cfg common.Config) MattermostClient {
 
 // GenerateGroupMattermostIntegrationOptions produces GroupMattermostIntegrationOptions from IntegrationMattermostParameters.
 // The webhook value must be resolved from the referenced secret prior to calling this function
-// and passed in through `webhook`. An empty webhook is omitted from the options so that
-// existing remote state is not unintentionally cleared.
+// and passed in through `webhook`.
+//
+// UseInheritedSettings is always sent, defaulting to false: when it is omitted, GitLab keeps
+// inheriting settings and ignores all the other submitted attributes.
 func GenerateGroupMattermostIntegrationOptions(in *v1alpha1.IntegrationMattermostParameters, webhook string) *gitlab.GroupMattermostIntegrationOptions {
 	if in == nil {
 		return &gitlab.GroupMattermostIntegrationOptions{}
 	}
 
-	opts := gitlab.GroupMattermostIntegrationOptions{
+	return &gitlab.GroupMattermostIntegrationOptions{
+		WebHook:                    &webhook,
 		Username:                   in.Username,
 		Channel:                    in.Channel,
 		NotifyOnlyBrokenPipelines:  in.NotifyOnlyBrokenPipelines,
 		BranchesToBeNotified:       in.BranchesToBeNotified,
 		LabelsToBeNotified:         in.LabelsToBeNotified,
 		LabelsToBeNotifiedBehavior: in.LabelsToBeNotifiedBehavior,
-		UseInheritedSettings:       in.UseInheritedSettings,
+		UseInheritedSettings:       ptr.To(ptr.Deref(in.UseInheritedSettings, false)),
 
 		PushEvents:               in.PushEvents,
 		IssuesEvents:             in.IssuesEvents,
@@ -65,7 +69,6 @@ func GenerateGroupMattermostIntegrationOptions(in *v1alpha1.IntegrationMattermos
 		PipelineEvents:           in.PipelineEvents,
 		WikiPageEvents:           in.WikiPageEvents,
 		DeploymentEvents:         in.DeploymentEvents,
-		AlertEvents:              in.AlertEvents,
 		VulnerabilityEvents:      in.VulnerabilityEvents,
 
 		PushChannel:              in.PushChannel,
@@ -78,15 +81,8 @@ func GenerateGroupMattermostIntegrationOptions(in *v1alpha1.IntegrationMattermos
 		PipelineChannel:          in.PipelineChannel,
 		WikiPageChannel:          in.WikiPageChannel,
 		DeploymentChannel:        in.DeploymentChannel,
-		AlertChannel:             in.AlertChannel,
 		VulnerabilityChannel:     in.VulnerabilityChannel,
 	}
-
-	if webhook != "" {
-		opts.WebHook = &webhook
-	}
-
-	return &opts
 }
 
 // GenerateIntegrationMattermostObservation converts gitlab.GroupMattermostIntegration to IntegrationMattermostObservation.
@@ -113,7 +109,6 @@ func GenerateIntegrationMattermostObservation(observation *gitlab.GroupMattermos
 		out.PipelineChannel = p.PipelineChannel
 		out.WikiPageChannel = p.WikiPageChannel
 		out.DeploymentChannel = p.DeploymentChannel
-		out.AlertChannel = p.AlertChannel
 		out.VulnerabilityChannel = p.VulnerabilityChannel
 	}
 
@@ -122,15 +117,26 @@ func GenerateIntegrationMattermostObservation(observation *gitlab.GroupMattermos
 
 // IsIntegrationMattermostUpToDate returns true if the remote Mattermost integration matches the desired spec.
 //
+// The inheritance state is compared first. While inheriting, GitLab ignores all other settings,
+// so they are not compared.
+//
 // Note: WebHook is excluded because GitLab does not return it (write-only). NotifyOnlyBrokenPipelines,
 // BranchesToBeNotified, LabelsToBeNotified and LabelsToBeNotifiedBehavior are excluded because the
 // GitLab client does not decode them from the API response properties.
 func IsIntegrationMattermostUpToDate(spec *v1alpha1.IntegrationMattermostParameters, observation *gitlab.GroupMattermostIntegration) bool { //nolint:gocyclo
-	if spec == nil || observation == nil || observation.Properties == nil {
+	if spec == nil || observation == nil {
 		return false
 	}
 
-	if !observation.Active {
+	inherit := ptr.Deref(spec.UseInheritedSettings, false)
+	if observation.Inherited != inherit {
+		return false
+	}
+	if inherit {
+		return true
+	}
+
+	if !observation.Active || observation.Properties == nil {
 		return false
 	}
 
@@ -147,7 +153,6 @@ func IsIntegrationMattermostUpToDate(spec *v1alpha1.IntegrationMattermostParamet
 		clients.IsComparableEqualToComparablePtr(spec.PipelineEvents, observation.PipelineEvents) &&
 		clients.IsComparableEqualToComparablePtr(spec.WikiPageEvents, observation.WikiPageEvents) &&
 		clients.IsComparableEqualToComparablePtr(spec.DeploymentEvents, observation.DeploymentEvents) &&
-		clients.IsComparableEqualToComparablePtr(spec.AlertEvents, observation.AlertEvents) &&
 		clients.IsComparableEqualToComparablePtr(spec.VulnerabilityEvents, observation.VulnerabilityEvents) &&
 		clients.IsComparableEqualToComparablePtr(spec.PushChannel, p.PushChannel) &&
 		clients.IsComparableEqualToComparablePtr(spec.IssueChannel, p.IssueChannel) &&
@@ -159,6 +164,5 @@ func IsIntegrationMattermostUpToDate(spec *v1alpha1.IntegrationMattermostParamet
 		clients.IsComparableEqualToComparablePtr(spec.PipelineChannel, p.PipelineChannel) &&
 		clients.IsComparableEqualToComparablePtr(spec.WikiPageChannel, p.WikiPageChannel) &&
 		clients.IsComparableEqualToComparablePtr(spec.DeploymentChannel, p.DeploymentChannel) &&
-		clients.IsComparableEqualToComparablePtr(spec.AlertChannel, p.AlertChannel) &&
 		clients.IsComparableEqualToComparablePtr(spec.VulnerabilityChannel, p.VulnerabilityChannel)
 }
