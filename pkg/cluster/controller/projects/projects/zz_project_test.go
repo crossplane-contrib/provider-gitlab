@@ -104,9 +104,9 @@ func withClientDefaultValues() projectModifier {
 			NamespaceID:                               &i64,
 			EmailsDisabled:                            &f,
 			ResolveOutdatedDiffDiscussions:            &f,
-			ContainerRegistryEnabled:                  &f,
+			ContainerRegistryEnabled:                  &f, //nolint:staticcheck
 			SharedRunnersEnabled:                      &f,
-			PublicBuilds:                              &f,
+			PublicBuilds:                              &f, //nolint:staticcheck
 			OnlyAllowMergeIfPipelineSucceeds:          &f,
 			OnlyAllowMergeIfAllDiscussionsAreResolved: &f,
 			RemoveSourceBranchAfterMerge:              &f,
@@ -116,7 +116,7 @@ func withClientDefaultValues() projectModifier {
 			BuildTimeout:                              &i64,
 			CIDefaultGitDepth:                         &i64,
 			AutoDevopsEnabled:                         &f,
-			ApprovalsBeforeMerge:                      &i64,
+			ApprovalsBeforeMerge:                      &i64, //nolint:staticcheck
 			MergeTrainsEnabled:                        &f,
 			MergeTrainsSkipTrainAllowed:               &f,
 			MergePipelinesEnabled:                     &f,
@@ -936,7 +936,7 @@ func TestObserve(t *testing.T) {
 		MergeTrainsEnabled:                        &f,
 		MergeTrainsSkipTrainAllowed:               &f,
 		MergePipelinesEnabled:                     &f,
-		ApprovalsBeforeMerge:                      ptr.To(int64(0)),
+		ApprovalsBeforeMerge:                      ptr.To(int64(0)), //nolint:staticcheck
 		ForkingAccessLevel:                        &al,
 		BuildsAccessLevel:                         &al,
 		WikiAccessLevel:                           &al,
@@ -953,18 +953,18 @@ func TestObserve(t *testing.T) {
 		ModelExperimentsAccessLevel:               &al,
 		ModelRegistryAccessLevel:                  &al,
 		ResolveOutdatedDiffDiscussions:            &f,
-		ContainerRegistryEnabled:                  &f,
+		ContainerRegistryEnabled:                  &f, //nolint:staticcheck
 		ContainerRegistryAccessLevel:              &al,
 		SharedRunnersEnabled:                      &f,
 		Visibility:                                &visibility,
-		PublicBuilds:                              &f,
+		PublicBuilds:                              &f, //nolint:staticcheck
 		OnlyAllowMergeIfPipelineSucceeds:          &f,
 		OnlyAllowMergeIfAllDiscussionsAreResolved: &f,
 		MergeMethod:                               &mergeMethod,
 		RemoveSourceBranchAfterMerge:              &f,
 		LFSEnabled:                                &f,
 		RequestAccessEnabled:                      &f,
-		TagList:                                   tags,
+		TagList:                                   tags, //nolint:staticcheck
 		Topics:                                    topics,
 		CIConfigPath:                              &s,
 		CIDefaultGitDepth:                         &i64,
@@ -1054,27 +1054,27 @@ func TestObserve(t *testing.T) {
 			ModelExperimentsAccessLevel:               gitlab.PublicAccessControl,
 			ModelRegistryAccessLevel:                  gitlab.PublicAccessControl,
 			ResolveOutdatedDiffDiscussions:            f,
-			ContainerRegistryEnabled:                  f,
+			ContainerRegistryEnabled:                  f, //nolint:staticcheck
 			SharedRunnersEnabled:                      f,
 			Visibility:                                gitlab.PublicVisibility,
-			PublicBuilds:                              f,
+			PublicBuilds:                              f, //nolint:staticcheck
 			OnlyAllowMergeIfPipelineSucceeds:          f,
 			OnlyAllowMergeIfAllDiscussionsAreResolved: f,
 			MergeMethod:                               gitlab.FastForwardMerge,
 			RemoveSourceBranchAfterMerge:              f,
 			LFSEnabled:                                f,
 			RequestAccessEnabled:                      f,
-			TagList:                                   tags,
+			TagList:                                   tags, //nolint:staticcheck
 			Topics:                                    topics,
 			CIConfigPath:                              s,
 			CIDefaultGitDepth:                         i64,
-			ApprovalsBeforeMerge:                      i64,
+			ApprovalsBeforeMerge:                      i64, //nolint:staticcheck
 			Mirror:                                    f,
 			MirrorUserID:                              i64,
 			MirrorTriggerBuilds:                       f,
 			OnlyMirrorProtectedBranches:               f,
 			MirrorOverwritesDivergedBranches:          f,
-			PackagesEnabled:                           f,
+			PackagesEnabled:                           f, //nolint:staticcheck
 			ServiceDeskEnabled:                        f,
 			AutocloseReferencedIssues:                 f,
 			AllowMergeOnSkippedPipeline:               f,
@@ -1479,21 +1479,21 @@ func TestDelete(t *testing.T) {
 				},
 				cr: project(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
-					withPath(gitlab.Ptr("project")),
+					withPermanentlyRemove(new(true)),
+					withPath(new("project")),
 					withStatus(v1alpha1.ProjectObservation{PathWithNamespace: "path/to/project"}),
 				),
 			},
 			want: want{
 				cr: project(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
-					withPath(gitlab.Ptr("project")),
+					withPermanentlyRemove(new(true)),
+					withPath(new("project")),
 					withStatus(v1alpha1.ProjectObservation{PathWithNamespace: "path/to/project"}),
 				),
 				calls: []deleteProjectCalls{
 					{Pid: "0", Opt: &gitlab.DeleteProjectOptions{}},
-					{Pid: "0", Opt: &gitlab.DeleteProjectOptions{PermanentlyRemove: gitlab.Ptr(true), FullPath: gitlab.Ptr("path/to/project")}},
+					{Pid: "0", Opt: &gitlab.DeleteProjectOptions{PermanentlyRemove: new(true), FullPath: new("path/to/project")}},
 				},
 				err: nil,
 			},

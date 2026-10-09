@@ -156,8 +156,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	opt := &gitlab.ShareWithGroupOptions{
-		GroupID:     gitlab.Ptr(groupID),
-		GroupAccess: gitlab.Ptr(gitlab.AccessLevelValue(cr.Spec.ForProvider.AccessLevel)),
+		GroupID:     new(groupID),
+		GroupAccess: new(gitlab.AccessLevelValue(cr.Spec.ForProvider.AccessLevel)),
 	}
 	if cr.Spec.ForProvider.ExpiresAt != nil {
 		opt.ExpiresAt = cr.Spec.ForProvider.ExpiresAt
