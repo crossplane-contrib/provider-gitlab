@@ -21,6 +21,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"github.com/crossplane/crossplane/apis/v2/core/v2"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -90,6 +91,11 @@ func (in *ProviderConfigSpec) DeepCopyInto(out *ProviderConfigSpec) {
 	if in.InsecureSkipVerify != nil {
 		in, out := &in.InsecureSkipVerify, &out.InsecureSkipVerify
 		*out = new(bool)
+		**out = **in
+	}
+	if in.SecretHashKeySecretRef != nil {
+		in, out := &in.SecretHashKeySecretRef, &out.SecretHashKeySecretRef
+		*out = new(v2.SecretKeySelector)
 		**out = **in
 	}
 }

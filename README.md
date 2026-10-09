@@ -44,6 +44,38 @@ spec:
 kubectl apply -f examples/providerconfig/provider.yaml
 ```
 
+### Detecting changes to write-only secrets
+
+Some GitLab settings are write-only: the API accepts them but never returns
+them (for example the webhook of a Mattermost integration). To detect when the
+Kubernetes secret holding such a value changes, the provider can store a keyed
+HMAC-SHA256 of the last applied value in a
+`gitlab.crossplane.io/<name>-secret-hash` annotation on the managed resource,
+and re-apply the value when the secret no longer matches it.
+
+This is opt-in: set `spec.secretHashKeySecretRef` on the `ProviderConfig` (or
+`ClusterProviderConfig`) to a secret key holding at least 32 bytes of random
+data. On a namespaced `ProviderConfig` the secret is read from the
+ProviderConfig's own namespace.
+
+```bash
+kubectl create secret generic gitlab-secret-hash-key -n crossplane-system \
+  --from-literal=key="$(openssl rand -base64 32)"
+```
+
+```yaml
+spec:
+  secretHashKeySecretRef:
+    namespace: crossplane-system
+    name: gitlab-secret-hash-key
+    key: key
+```
+
+Without it no hash is stored, and changes to write-only secret values are only
+applied when another setting of the resource changes. Rotating the key causes a
+single re-apply of the affected resources. Changes made directly in GitLab are
+never detected.
+
 ### Self-rotating service account tokens
 
 The namespaced `groups.gitlab.m.crossplane.io/v1alpha1` `ServiceAccountAccessToken`

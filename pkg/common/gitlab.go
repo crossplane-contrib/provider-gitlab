@@ -56,6 +56,12 @@ type Config struct {
 	// used to detect self-referential setups, where a managed resource writes its
 	// token to the very secret its ProviderConfig authenticates with.
 	CredentialsSecretRef *v2.SecretKeySelector
+
+	// SecretHashKeySecretRef is the resolved secret key selector of the HMAC key
+	// used to hash write-only secret values (see SecretHasher). It is nil when
+	// the ProviderConfig does not configure one. The key itself is only read by
+	// controllers that need it, so a misconfigured key cannot break others.
+	SecretHashKeySecretRef *v2.SecretKeySelector
 }
 
 // NewClient creates new Gitlab Client with provided Gitlab Configurations/Credentials.
@@ -151,11 +157,12 @@ func UseLegacyProviderConfig(ctx context.Context, c client.Client, mg resource.L
 		}
 
 		return &Config{
-			BaseURL:              pc.Spec.BaseURL,
-			Token:                *token,
-			InsecureSkipVerify:   ptr.Deref(pc.Spec.InsecureSkipVerify, false),
-			AuthMethod:           pc.Spec.Credentials.Method,
-			CredentialsSecretRef: pc.Spec.Credentials.SecretRef,
+			BaseURL:                pc.Spec.BaseURL,
+			Token:                  *token,
+			InsecureSkipVerify:     ptr.Deref(pc.Spec.InsecureSkipVerify, false),
+			AuthMethod:             pc.Spec.Credentials.Method,
+			CredentialsSecretRef:   pc.Spec.Credentials.SecretRef,
+			SecretHashKeySecretRef: pc.Spec.SecretHashKeySecretRef,
 		}, nil
 	default:
 		return nil, errors.Errorf("credentials source %s is not currently supported", s)
@@ -208,14 +215,24 @@ func buildProviderConfig(ctx context.Context, c client.Client, mg resource.Moder
 	// PC was fetched there), which self-managed token detection (isSelfManaged)
 	// compares against.
 	sel := localToSecretKeySelector(spec.Credentials.SecretRef, pc.GetNamespace())
-	return buildConfig(ctx, c, mg, spec.BaseURL, spec.Credentials.Source, spec.Credentials.Method, spec.InsecureSkipVerify, sel)
+	cfg, err := buildConfig(ctx, c, mg, spec.BaseURL, spec.Credentials.Source, spec.Credentials.Method, spec.InsecureSkipVerify, sel)
+	if err != nil {
+		return nil, err
+	}
+	cfg.SecretHashKeySecretRef = localToSecretKeySelector(spec.SecretHashKeySecretRef, pc.GetNamespace())
+	return cfg, nil
 }
 
 // buildClusterProviderConfig builds a Config from a cluster scoped
 // ClusterProviderConfig spec. Its credentials secret is referenced with a full
 // SecretKeySelector that carries its own namespace.
 func buildClusterProviderConfig(ctx context.Context, c client.Client, mg resource.ModernManaged, spec namespacedV1Beta1.ProviderConfigSpec) (*Config, error) {
-	return buildConfig(ctx, c, mg, spec.BaseURL, spec.Credentials.Source, spec.Credentials.Method, spec.InsecureSkipVerify, spec.Credentials.SecretRef)
+	cfg, err := buildConfig(ctx, c, mg, spec.BaseURL, spec.Credentials.Source, spec.Credentials.Method, spec.InsecureSkipVerify, spec.Credentials.SecretRef)
+	if err != nil {
+		return nil, err
+	}
+	cfg.SecretHashKeySecretRef = spec.SecretHashKeySecretRef
+	return cfg, nil
 }
 
 // buildConfig resolves the shared tail both namespaced builders have in common:
