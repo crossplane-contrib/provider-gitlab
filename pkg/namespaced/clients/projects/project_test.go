@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
@@ -93,11 +93,9 @@ var (
 		Cadence:       &cadence,
 		KeepN:         &keepN,
 		OlderThan:     &olderThan,
+		NameRegex:     &nameRegex,
 		NameRegexKeep: &nameRegexKeep,
 		Enabled:       &enabled,
-		// client-go copies NameRegexDelete over NameRegex before encoding, so
-		// the deletion pattern has to be set here to reach the API.
-		NameRegexDelete: &nameRegex,
 	}
 	sharedRunnersEnabled                      = true
 	visibility                                = "private"

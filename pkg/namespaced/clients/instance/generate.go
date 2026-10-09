@@ -28,7 +28,7 @@ import (
 	"strings"
 	"text/template"
 
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 )
@@ -59,7 +59,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 )
 `
 
@@ -270,17 +270,17 @@ func generateObservationAssignment(fieldName string, gitlabType, v1Type reflect.
 func generateUpToDateCheck(fieldName string, gitlabType, v1Type reflect.Type) string {
 	// Special case for DefaultBranchProtectionDefaults
 	if fieldName == "DefaultBranchProtectionDefaults" {
-		return fmt.Sprintf("\tif !isDefaultBranchProtectionDefaultsPtrEqualToDefaultsPtr(p.%s, g.%s) {\n\t\treturn false\n\t}", fieldName, fieldName)
+		return fmt.Sprintf("if !isDefaultBranchProtectionDefaultsPtrEqualToDefaultsPtr(p.%s, g.%s) {\n\t\treturn false\n\t}", fieldName, fieldName)
 	}
 
 	// Special case for RestrictedVisibilityLevels
 	if fieldName == "RestrictedVisibilityLevels" {
-		return fmt.Sprintf("\tif !clients.IsComparableSliceEqualToComparableSlicePtr(p.%s, clients.VisibilityValueSliceToStringSlice(g.%s)) {\n\t\treturn false\n\t}", fieldName, fieldName)
+		return fmt.Sprintf("if !clients.IsComparableSliceEqualToComparableSlicePtr(p.%s, clients.VisibilityValueSliceToStringSlice(g.%s)) {\n\t\treturn false\n\t}", fieldName, fieldName)
 	}
 
 	// Special case for ElasticsearchURL
 	if fieldName == "ElasticsearchURL" {
-		return fmt.Sprintf(`	if p.ElasticsearchURL != nil {
+		return fmt.Sprintf(`if p.ElasticsearchURL != nil {
 		// ElasticsearchURL is a comma separated string in gitlab
 		splitUrls := strings.Split(*p.ElasticsearchURL, ",")
 		if !clients.IsComparableSliceEqualToComparableSlicePtr(&splitUrls, g.ElasticsearchURL) {

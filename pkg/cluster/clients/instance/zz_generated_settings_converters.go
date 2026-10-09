@@ -26,7 +26,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 )
 
 // GenerateUpdateApplicationSettingsOptions generates GitLab Settings update options from the desired state
@@ -36,6 +36,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 		return nil
 	}
 	o := &gitlab.UpdateSettingsOptions{}
+	o.AIActionAPIRateLimit = p.AIActionAPIRateLimit
 	o.AbuseNotificationEmail = p.AbuseNotificationEmail
 	o.AdminMode = p.AdminMode
 	o.AfterSignOutPath = p.AfterSignOutPath
@@ -57,16 +58,18 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.AssetProxyEnabled = p.AssetProxyEnabled
 	o.AssetProxySecretKey = p.AssetProxySecretKey
 	o.AssetProxyURL = p.AssetProxyURL
+	o.AuditEventsAPILimit = p.AuditEventsAPILimit
 	o.AuthorizedKeysEnabled = p.AuthorizedKeysEnabled
 	o.AutoBanUserOnExcessiveProjectsDownload = p.AutoBanUserOnExcessiveProjectsDownload
-	o.AutocompleteUsers = p.AutocompleteUsers
-	o.AutocompleteUsersUnauthenticated = p.AutocompleteUsersUnauthenticated
+	o.AutocompleteUsersLimit = p.AutocompleteUsersLimit
 	o.AutoDevOpsDomain = p.AutoDevOpsDomain
 	o.AutoDevOpsEnabled = p.AutoDevOpsEnabled
+	o.AutocompleteUsersUnauthenticatedLimit = p.AutocompleteUsersUnauthenticatedLimit
 	o.AutomaticPurchasedStorageAllocation = p.AutomaticPurchasedStorageAllocation
 	o.BulkImportConcurrentPipelineBatchLimit = p.BulkImportConcurrentPipelineBatchLimit
 	o.BulkImportEnabled = p.BulkImportEnabled
 	o.BulkImportMaxDownloadFileSize = p.BulkImportMaxDownloadFileSize
+	o.CILintLimitPerUser = p.CILintLimitPerUser
 	o.CanCreateGroup = p.CanCreateGroup
 	o.CanCreateOrganization = p.CanCreateOrganization
 	o.CheckNamespacePlan = p.CheckNamespacePlan
@@ -78,6 +81,9 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.ConcurrentBitbucketImportJobsLimit = p.ConcurrentBitbucketImportJobsLimit
 	o.ConcurrentBitbucketServerImportJobsLimit = p.ConcurrentBitbucketServerImportJobsLimit
 	o.ConcurrentGitHubImportJobsLimit = p.ConcurrentGitHubImportJobsLimit
+	o.ConcurrentPullRequestImportJobsLimit = p.ConcurrentPullRequestImportJobsLimit
+	o.ConcurrentRelationBatchExportLimit = p.ConcurrentRelationBatchExportLimit
+	o.ConcurrentRelationExportLimit = p.ConcurrentRelationExportLimit
 	o.ContainerExpirationPoliciesEnableHistoricEntries = p.ContainerExpirationPoliciesEnableHistoricEntries
 	o.ContainerRegistryCleanupTagsServiceMaxListSize = p.ContainerRegistryCleanupTagsServiceMaxListSize
 	o.ContainerRegistryDeleteTagsServiceTimeout = p.ContainerRegistryDeleteTagsServiceTimeout
@@ -201,6 +207,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.FlocEnabled = p.FlocEnabled
 	o.GeoNodeAllowedIPs = p.GeoNodeAllowedIPs
 	o.GeoStatusTimeout = p.GeoStatusTimeout
+	o.GitPushPipelineLimit = p.GitPushPipelineLimit
 	o.GitRateLimitUsersAlertlist = p.GitRateLimitUsersAlertlist
 	o.GitTwoFactorSessionExpiry = p.GitTwoFactorSessionExpiry
 	o.GitalyTimeoutDefault = p.GitalyTimeoutDefault
@@ -216,11 +223,13 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.GrafanaEnabled = p.GrafanaEnabled
 	o.GrafanaURL = p.GrafanaURL
 	o.GravatarEnabled = p.GravatarEnabled
+	o.GroupAuditEventsAPILimit = p.GroupAuditEventsAPILimit
 	o.GroupDownloadExportLimit = p.GroupDownloadExportLimit
 	o.GroupExportLimit = p.GroupExportLimit
 	o.GroupImportLimit = p.GroupImportLimit
 	o.GroupOwnersCanManageDefaultBranchProtection = p.GroupOwnersCanManageDefaultBranchProtection
 	o.GroupRunnerTokenExpirationInterval = p.GroupRunnerTokenExpirationInterval
+	o.GroupSecretsLimit = p.GroupSecretsLimit
 	o.HTMLEmailsEnabled = p.HTMLEmailsEnabled
 	o.HashedStorageEnabled = p.HashedStorageEnabled
 	o.HelpPageDocumentationBaseURL = p.HelpPageDocumentationBaseURL
@@ -232,6 +241,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.HomePageURL = p.HomePageURL
 	o.HousekeepingEnabled = p.HousekeepingEnabled
 	o.HousekeepingOptimizeRepositoryPeriod = p.HousekeepingOptimizeRepositoryPeriod
+	o.ImportJobsConcurrencyLimit = p.ImportJobsConcurrencyLimit
 	o.ImportSources = p.ImportSources
 	o.InactiveProjectsDeleteAfterMonths = p.InactiveProjectsDeleteAfterMonths
 	o.InactiveProjectsMinSizeMB = p.InactiveProjectsMinSizeMB
@@ -244,6 +254,8 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.JiraConnectApplicationKey = p.JiraConnectApplicationKey
 	o.JiraConnectPublicKeyStorageEnabled = p.JiraConnectPublicKeyStorageEnabled
 	o.JiraConnectProxyURL = p.JiraConnectProxyURL
+	o.JobPlayLimitPerUserProject = p.JobPlayLimitPerUserProject
+	o.JobRetryLimitPerUserProject = p.JobRetryLimitPerUserProject
 	o.KeepLatestArtifact = p.KeepLatestArtifact
 	o.KrokiEnabled = p.KrokiEnabled
 	o.KrokiFormats = p.KrokiFormats
@@ -261,6 +273,8 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.MaxAttachmentSize = p.MaxAttachmentSize
 	o.MaxDecompressedArchiveSize = p.MaxDecompressedArchiveSize
 	o.MaxExportSize = p.MaxExportSize
+	o.MaxGitHubResponseSizeLimit = p.MaxGitHubResponseSizeLimit
+	o.MaxHTTPResponseSizeLimit = p.MaxHTTPResponseSizeLimit
 	o.MaxImportRemoteFileSize = p.MaxImportRemoteFileSize
 	o.MaxImportSize = p.MaxImportSize
 	o.MaxLoginAttempts = p.MaxLoginAttempts
@@ -297,18 +311,23 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.PasswordLowercaseRequired = p.PasswordLowercaseRequired
 	o.PerformanceBarAllowedGroupPath = p.PerformanceBarAllowedGroupPath
 	o.PersonalAccessTokenPrefix = p.PersonalAccessTokenPrefix
+	o.PipelineCancelLimitPerUserProject = p.PipelineCancelLimitPerUserProject
+	o.PipelineLimitPerUser = p.PipelineLimitPerUser
+	o.PipelineRetryLimitPerUserProject = p.PipelineRetryLimitPerUserProject
 	o.PlantumlEnabled = p.PlantumlEnabled
 	o.PlantumlURL = p.PlantumlURL
 	o.PipelineLimitPerProjectUserSha = p.PipelineLimitPerProjectUserSha
 	o.PollingIntervalMultiplier = p.PollingIntervalMultiplier
 	o.PreventMergeRequestsAuthorApproval = p.PreventMergeRequestsAuthorApproval
 	o.PreventMergeRequestsCommittersApproval = p.PreventMergeRequestsCommittersApproval
+	o.ProjectAuditEventsAPILimit = p.ProjectAuditEventsAPILimit
 	o.ProjectDownloadExportLimit = p.ProjectDownloadExportLimit
 	o.ProjectExportEnabled = p.ProjectExportEnabled
 	o.ProjectExportLimit = p.ProjectExportLimit
 	o.ProjectImportLimit = p.ProjectImportLimit
 	o.ProjectJobsAPIRateLimit = p.ProjectJobsAPIRateLimit
 	o.ProjectRunnerTokenExpirationInterval = p.ProjectRunnerTokenExpirationInterval
+	o.ProjectSecretsLimit = p.ProjectSecretsLimit
 	o.ProjectsAPIRateLimitUnauthenticated = p.ProjectsAPIRateLimitUnauthenticated
 	o.PrometheusMetricsEnabled = p.PrometheusMetricsEnabled
 	o.ProtectedCIVariables = p.ProtectedCIVariables
@@ -319,6 +338,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.RSAKeyRestriction = p.RSAKeyRestriction
 	o.RateLimitingResponseText = p.RateLimitingResponseText
 	o.RawBlobRequestLimit = p.RawBlobRequestLimit
+	o.RawBlobRequestLimitUnauthenticated = p.RawBlobRequestLimitUnauthenticated
 	o.RecaptchaEnabled = p.RecaptchaEnabled
 	o.RecaptchaPrivateKey = p.RecaptchaPrivateKey
 	o.RecaptchaSiteKey = p.RecaptchaSiteKey
@@ -334,7 +354,12 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.RequirePersonalAccessTokenExpiry = p.RequirePersonalAccessTokenExpiry
 	o.RequireTwoFactorAuthentication = p.RequireTwoFactorAuthentication
 	o.RestrictedVisibilityLevels = clients.StringPtrSliceToVisibilityValuePtrSlice(p.RestrictedVisibilityLevels)
+	o.RunnerJobsEndpointsAPILimit = p.RunnerJobsEndpointsAPILimit
+	o.RunnerJobsPatchTraceAPILimit = p.RunnerJobsPatchTraceAPILimit
+	o.RunnerJobsRequestAPILimit = p.RunnerJobsRequestAPILimit
 	o.RunnerTokenExpirationInterval = p.RunnerTokenExpirationInterval
+	o.ScanExecutionPoliciesActionLimit = p.ScanExecutionPoliciesActionLimit
+	o.ScanExecutionPoliciesScheduleLimit = p.ScanExecutionPoliciesScheduleLimit
 	o.SearchRateLimit = p.SearchRateLimit
 	o.SearchRateLimitUnauthenticated = p.SearchRateLimitUnauthenticated
 	o.SecretDetectionRevocationTokenTypesURL = p.SecretDetectionRevocationTokenTypesURL
@@ -383,20 +408,30 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.StaticObjectsExternalStorageAuthToken = p.StaticObjectsExternalStorageAuthToken
 	o.StaticObjectsExternalStorageURL = p.StaticObjectsExternalStorageURL
 	o.SuggestPipelineEnabled = p.SuggestPipelineEnabled
+	o.TagsCreateLimit = p.TagsCreateLimit
 	o.TerminalMaxSessionTime = p.TerminalMaxSessionTime
 	o.Terms = p.Terms
 	o.ThrottleAuthenticatedAPIEnabled = p.ThrottleAuthenticatedAPIEnabled
 	o.ThrottleAuthenticatedAPIPeriodInSeconds = p.ThrottleAuthenticatedAPIPeriodInSeconds
 	o.ThrottleAuthenticatedAPIRequestsPerPeriod = p.ThrottleAuthenticatedAPIRequestsPerPeriod
+	o.ThrottleAuthenticatedDependencyProxyEnabled = p.ThrottleAuthenticatedDependencyProxyEnabled
+	o.ThrottleAuthenticatedDependencyProxyPeriodInSeconds = p.ThrottleAuthenticatedDependencyProxyPeriodInSeconds
+	o.ThrottleAuthenticatedDependencyProxyRequestsPerPeriod = p.ThrottleAuthenticatedDependencyProxyRequestsPerPeriod
 	o.ThrottleAuthenticatedDeprecatedAPIEnabled = p.ThrottleAuthenticatedDeprecatedAPIEnabled
 	o.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds = p.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds
 	o.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod = p.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod
 	o.ThrottleAuthenticatedFilesAPIEnabled = p.ThrottleAuthenticatedFilesAPIEnabled
 	o.ThrottleAuthenticatedFilesAPIPeriodInSeconds = p.ThrottleAuthenticatedFilesAPIPeriodInSeconds
 	o.ThrottleAuthenticatedFilesAPIRequestsPerPeriod = p.ThrottleAuthenticatedFilesAPIRequestsPerPeriod
+	o.ThrottleAuthenticatedGitHTTPEnabled = p.ThrottleAuthenticatedGitHTTPEnabled
+	o.ThrottleAuthenticatedGitHTTPPeriodInSeconds = p.ThrottleAuthenticatedGitHTTPPeriodInSeconds
+	o.ThrottleAuthenticatedGitHTTPRequestsPerPeriod = p.ThrottleAuthenticatedGitHTTPRequestsPerPeriod
 	o.ThrottleAuthenticatedGitLFSEnabled = p.ThrottleAuthenticatedGitLFSEnabled
 	o.ThrottleAuthenticatedGitLFSPeriodInSeconds = p.ThrottleAuthenticatedGitLFSPeriodInSeconds
 	o.ThrottleAuthenticatedGitLFSRequestsPerPeriod = p.ThrottleAuthenticatedGitLFSRequestsPerPeriod
+	o.ThrottleAuthenticatedMCPEnabled = p.ThrottleAuthenticatedMCPEnabled
+	o.ThrottleAuthenticatedMCPPeriodInSeconds = p.ThrottleAuthenticatedMCPPeriodInSeconds
+	o.ThrottleAuthenticatedMCPRequestsPerPeriod = p.ThrottleAuthenticatedMCPRequestsPerPeriod
 	o.ThrottleAuthenticatedPackagesAPIEnabled = p.ThrottleAuthenticatedPackagesAPIEnabled
 	o.ThrottleAuthenticatedPackagesAPIPeriodInSeconds = p.ThrottleAuthenticatedPackagesAPIPeriodInSeconds
 	o.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod = p.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod
@@ -418,6 +453,9 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.ThrottleUnauthenticatedFilesAPIEnabled = p.ThrottleUnauthenticatedFilesAPIEnabled
 	o.ThrottleUnauthenticatedFilesAPIPeriodInSeconds = p.ThrottleUnauthenticatedFilesAPIPeriodInSeconds
 	o.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod = p.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod
+	o.ThrottleUnauthenticatedGitHTTPEnabled = p.ThrottleUnauthenticatedGitHTTPEnabled
+	o.ThrottleUnauthenticatedGitHTTPPeriodInSeconds = p.ThrottleUnauthenticatedGitHTTPPeriodInSeconds
+	o.ThrottleUnauthenticatedGitHTTPRequestsPerPeriod = p.ThrottleUnauthenticatedGitHTTPRequestsPerPeriod
 	o.ThrottleUnauthenticatedGitLFSEnabled = p.ThrottleUnauthenticatedGitLFSEnabled
 	o.ThrottleUnauthenticatedGitLFSPeriodInSeconds = p.ThrottleUnauthenticatedGitLFSPeriodInSeconds
 	o.ThrottleUnauthenticatedGitLFSRequestsPerPeriod = p.ThrottleUnauthenticatedGitLFSRequestsPerPeriod
@@ -445,10 +483,20 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.UserEmailLookupLimit = p.UserEmailLookupLimit
 	o.UserOauthApplications = p.UserOauthApplications
 	o.UserShowAddSSHKeyMessage = p.UserShowAddSSHKeyMessage
+	o.UsersAPILimitFollowers = p.UsersAPILimitFollowers
+	o.UsersAPILimitFollowing = p.UsersAPILimitFollowing
+	o.UsersAPILimitGPGKey = p.UsersAPILimitGPGKey
+	o.UsersAPILimitGPGKeys = p.UsersAPILimitGPGKeys
+	o.UsersAPILimitSSHKey = p.UsersAPILimitSSHKey
+	o.UsersAPILimitSSHKeys = p.UsersAPILimitSSHKeys
+	o.UsersAPILimitStatus = p.UsersAPILimitStatus
 	o.UsersGetByIDLimit = p.UsersGetByIDLimit
 	o.UsersGetByIDLimitAllowlistRaw = p.UsersGetByIDLimitAllowlistRaw
 	o.ValidRunnerRegistrars = p.ValidRunnerRegistrars
 	o.VersionCheckEnabled = p.VersionCheckEnabled
+	o.VirtualRegistriesEndpointsAPILimit = p.VirtualRegistriesEndpointsAPILimit
+	o.WebHookEventResendLimit = p.WebHookEventResendLimit
+	o.WebHookTestLimit = p.WebHookTestLimit
 	o.WebIDEClientsidePreviewEnabled = p.WebIDEClientsidePreviewEnabled
 	o.WhatsNewVariant = p.WhatsNewVariant
 	o.WikiPageMaxContentBytes = p.WikiPageMaxContentBytes
@@ -466,6 +514,8 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.ThrottleUnauthenticatedEnabled = p.ThrottleUnauthenticatedEnabled
 	o.ThrottleUnauthenticatedPeriodInSeconds = p.ThrottleUnauthenticatedPeriodInSeconds
 	o.ThrottleUnauthenticatedRequestsPerPeriod = p.ThrottleUnauthenticatedRequestsPerPeriod
+	o.AutocompleteUsers = p.AutocompleteUsers
+	o.AutocompleteUsersUnauthenticated = p.AutocompleteUsersUnauthenticated
 	return o
 }
 
@@ -476,6 +526,17 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 		return v1alpha1.ApplicationSettingsObservation{}
 	}
 	o := v1alpha1.ApplicationSettingsObservation{}
+	o.AIActionAPIRateLimit = g.AIActionAPIRateLimit
+	o.AuditEventsAPILimit = g.AuditEventsAPILimit
+	o.AutocompleteUsersLimit = g.AutocompleteUsersLimit
+	o.AutocompleteUsersUnauthenticatedLimit = g.AutocompleteUsersUnauthenticatedLimit
+	o.CILintLimitPerUser = g.CILintLimitPerUser
+	o.ConcurrentPullRequestImportJobsLimit = g.ConcurrentPullRequestImportJobsLimit
+	o.ConcurrentRelationBatchExportLimit = g.ConcurrentRelationBatchExportLimit
+	o.ConcurrentRelationExportLimit = g.ConcurrentRelationExportLimit
+	o.GitPushPipelineLimit = g.GitPushPipelineLimit
+	o.GroupAuditEventsAPILimit = g.GroupAuditEventsAPILimit
+	o.GroupSecretsLimit = g.GroupSecretsLimit
 	o.ID = g.ID
 	o.AbuseNotificationEmail = g.AbuseNotificationEmail
 	o.AdminMode = g.AdminMode
@@ -498,8 +559,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.AssetProxyURL = g.AssetProxyURL
 	o.AuthorizedKeysEnabled = g.AuthorizedKeysEnabled
 	o.AutoBanUserOnExcessiveProjectsDownload = g.AutoBanUserOnExcessiveProjectsDownload
-	o.AutocompleteUsers = g.AutocompleteUsers
-	o.AutocompleteUsersUnauthenticated = g.AutocompleteUsersUnauthenticated
 	o.AutoDevOpsDomain = g.AutoDevOpsDomain
 	o.AutoDevOpsEnabled = g.AutoDevOpsEnabled
 	o.AutomaticPurchasedStorageAllocation = g.AutomaticPurchasedStorageAllocation
@@ -659,6 +718,7 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.HomePageURL = g.HomePageURL
 	o.HousekeepingEnabled = g.HousekeepingEnabled
 	o.HousekeepingOptimizeRepositoryPeriod = g.HousekeepingOptimizeRepositoryPeriod
+	o.ImportJobsConcurrencyLimit = g.ImportJobsConcurrencyLimit
 	o.ImportSources = g.ImportSources
 	o.InactiveProjectsDeleteAfterMonths = g.InactiveProjectsDeleteAfterMonths
 	o.InactiveProjectsMinSizeMB = g.InactiveProjectsMinSizeMB
@@ -670,6 +730,8 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.IssuesCreateLimit = g.IssuesCreateLimit
 	o.JiraConnectPublicKeyStorageEnabled = g.JiraConnectPublicKeyStorageEnabled
 	o.JiraConnectProxyURL = g.JiraConnectProxyURL
+	o.JobPlayLimitPerUserProject = g.JobPlayLimitPerUserProject
+	o.JobRetryLimitPerUserProject = g.JobRetryLimitPerUserProject
 	o.KeepLatestArtifact = g.KeepLatestArtifact
 	o.KrokiEnabled = g.KrokiEnabled
 	o.KrokiFormats = g.KrokiFormats
@@ -686,6 +748,8 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.MaxAttachmentSize = g.MaxAttachmentSize
 	o.MaxDecompressedArchiveSize = g.MaxDecompressedArchiveSize
 	o.MaxExportSize = g.MaxExportSize
+	o.MaxGitHubResponseSizeLimit = g.MaxGitHubResponseSizeLimit
+	o.MaxHTTPResponseSizeLimit = g.MaxHTTPResponseSizeLimit
 	o.MaxImportRemoteFileSize = g.MaxImportRemoteFileSize
 	o.MaxImportSize = g.MaxImportSize
 	o.MaxLoginAttempts = g.MaxLoginAttempts
@@ -722,18 +786,23 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.PasswordLowercaseRequired = g.PasswordLowercaseRequired
 	o.PerformanceBarAllowedGroupPath = g.PerformanceBarAllowedGroupPath
 	o.PersonalAccessTokenPrefix = g.PersonalAccessTokenPrefix
+	o.PipelineCancelLimitPerUserProject = g.PipelineCancelLimitPerUserProject
 	o.PipelineLimitPerProjectUserSha = g.PipelineLimitPerProjectUserSha
+	o.PipelineLimitPerUser = g.PipelineLimitPerUser
+	o.PipelineRetryLimitPerUserProject = g.PipelineRetryLimitPerUserProject
 	o.PlantumlEnabled = g.PlantumlEnabled
 	o.PlantumlURL = g.PlantumlURL
 	o.PollingIntervalMultiplier = g.PollingIntervalMultiplier
 	o.PreventMergeRequestsAuthorApproval = g.PreventMergeRequestsAuthorApproval
 	o.PreventMergeRequestsCommittersApproval = g.PreventMergeRequestsCommittersApproval
+	o.ProjectAuditEventsAPILimit = g.ProjectAuditEventsAPILimit
 	o.ProjectDownloadExportLimit = g.ProjectDownloadExportLimit
 	o.ProjectExportEnabled = g.ProjectExportEnabled
 	o.ProjectExportLimit = g.ProjectExportLimit
 	o.ProjectImportLimit = g.ProjectImportLimit
 	o.ProjectJobsAPIRateLimit = g.ProjectJobsAPIRateLimit
 	o.ProjectRunnerTokenExpirationInterval = g.ProjectRunnerTokenExpirationInterval
+	o.ProjectSecretsLimit = g.ProjectSecretsLimit
 	o.ProjectsAPIRateLimitUnauthenticated = g.ProjectsAPIRateLimitUnauthenticated
 	o.PrometheusMetricsEnabled = g.PrometheusMetricsEnabled
 	o.ProtectedCIVariables = g.ProtectedCIVariables
@@ -744,6 +813,7 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.RSAKeyRestriction = g.RSAKeyRestriction
 	o.RateLimitingResponseText = g.RateLimitingResponseText
 	o.RawBlobRequestLimit = g.RawBlobRequestLimit
+	o.RawBlobRequestLimitUnauthenticated = g.RawBlobRequestLimitUnauthenticated
 	o.RecaptchaEnabled = g.RecaptchaEnabled
 	o.ReceiveMaxInputSize = g.ReceiveMaxInputSize
 	o.ReceptiveClusterAgentsEnabled = g.ReceptiveClusterAgentsEnabled
@@ -757,7 +827,12 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.RequirePersonalAccessTokenExpiry = g.RequirePersonalAccessTokenExpiry
 	o.RequireTwoFactorAuthentication = g.RequireTwoFactorAuthentication
 	o.RestrictedVisibilityLevels = clients.VisibilityValueSliceToStringSlice(g.RestrictedVisibilityLevels)
+	o.RunnerJobsEndpointsAPILimit = g.RunnerJobsEndpointsAPILimit
+	o.RunnerJobsPatchTraceAPILimit = g.RunnerJobsPatchTraceAPILimit
+	o.RunnerJobsRequestAPILimit = g.RunnerJobsRequestAPILimit
 	o.RunnerTokenExpirationInterval = g.RunnerTokenExpirationInterval
+	o.ScanExecutionPoliciesActionLimit = g.ScanExecutionPoliciesActionLimit
+	o.ScanExecutionPoliciesScheduleLimit = g.ScanExecutionPoliciesScheduleLimit
 	o.SearchRateLimit = g.SearchRateLimit
 	o.SearchRateLimitUnauthenticated = g.SearchRateLimitUnauthenticated
 	o.SecretDetectionRevocationTokenTypesURL = g.SecretDetectionRevocationTokenTypesURL
@@ -800,20 +875,30 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.SpamCheckEndpointURL = g.SpamCheckEndpointURL
 	o.StaticObjectsExternalStorageURL = g.StaticObjectsExternalStorageURL
 	o.SuggestPipelineEnabled = g.SuggestPipelineEnabled
+	o.TagsCreateLimit = g.TagsCreateLimit
 	o.TerminalMaxSessionTime = g.TerminalMaxSessionTime
 	o.Terms = g.Terms
 	o.ThrottleAuthenticatedAPIEnabled = g.ThrottleAuthenticatedAPIEnabled
 	o.ThrottleAuthenticatedAPIPeriodInSeconds = g.ThrottleAuthenticatedAPIPeriodInSeconds
 	o.ThrottleAuthenticatedAPIRequestsPerPeriod = g.ThrottleAuthenticatedAPIRequestsPerPeriod
+	o.ThrottleAuthenticatedDependencyProxyEnabled = g.ThrottleAuthenticatedDependencyProxyEnabled
+	o.ThrottleAuthenticatedDependencyProxyPeriodInSeconds = g.ThrottleAuthenticatedDependencyProxyPeriodInSeconds
+	o.ThrottleAuthenticatedDependencyProxyRequestsPerPeriod = g.ThrottleAuthenticatedDependencyProxyRequestsPerPeriod
 	o.ThrottleAuthenticatedDeprecatedAPIEnabled = g.ThrottleAuthenticatedDeprecatedAPIEnabled
 	o.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds = g.ThrottleAuthenticatedDeprecatedAPIPeriodInSeconds
 	o.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod = g.ThrottleAuthenticatedDeprecatedAPIRequestsPerPeriod
 	o.ThrottleAuthenticatedFilesAPIEnabled = g.ThrottleAuthenticatedFilesAPIEnabled
 	o.ThrottleAuthenticatedFilesAPIPeriodInSeconds = g.ThrottleAuthenticatedFilesAPIPeriodInSeconds
 	o.ThrottleAuthenticatedFilesAPIRequestsPerPeriod = g.ThrottleAuthenticatedFilesAPIRequestsPerPeriod
+	o.ThrottleAuthenticatedGitHTTPEnabled = g.ThrottleAuthenticatedGitHTTPEnabled
+	o.ThrottleAuthenticatedGitHTTPPeriodInSeconds = g.ThrottleAuthenticatedGitHTTPPeriodInSeconds
+	o.ThrottleAuthenticatedGitHTTPRequestsPerPeriod = g.ThrottleAuthenticatedGitHTTPRequestsPerPeriod
 	o.ThrottleAuthenticatedGitLFSEnabled = g.ThrottleAuthenticatedGitLFSEnabled
 	o.ThrottleAuthenticatedGitLFSPeriodInSeconds = g.ThrottleAuthenticatedGitLFSPeriodInSeconds
 	o.ThrottleAuthenticatedGitLFSRequestsPerPeriod = g.ThrottleAuthenticatedGitLFSRequestsPerPeriod
+	o.ThrottleAuthenticatedMCPEnabled = g.ThrottleAuthenticatedMCPEnabled
+	o.ThrottleAuthenticatedMCPPeriodInSeconds = g.ThrottleAuthenticatedMCPPeriodInSeconds
+	o.ThrottleAuthenticatedMCPRequestsPerPeriod = g.ThrottleAuthenticatedMCPRequestsPerPeriod
 	o.ThrottleAuthenticatedPackagesAPIEnabled = g.ThrottleAuthenticatedPackagesAPIEnabled
 	o.ThrottleAuthenticatedPackagesAPIPeriodInSeconds = g.ThrottleAuthenticatedPackagesAPIPeriodInSeconds
 	o.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod = g.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod
@@ -835,6 +920,9 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.ThrottleUnauthenticatedFilesAPIEnabled = g.ThrottleUnauthenticatedFilesAPIEnabled
 	o.ThrottleUnauthenticatedFilesAPIPeriodInSeconds = g.ThrottleUnauthenticatedFilesAPIPeriodInSeconds
 	o.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod = g.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod
+	o.ThrottleUnauthenticatedGitHTTPEnabled = g.ThrottleUnauthenticatedGitHTTPEnabled
+	o.ThrottleUnauthenticatedGitHTTPPeriodInSeconds = g.ThrottleUnauthenticatedGitHTTPPeriodInSeconds
+	o.ThrottleUnauthenticatedGitHTTPRequestsPerPeriod = g.ThrottleUnauthenticatedGitHTTPRequestsPerPeriod
 	o.ThrottleUnauthenticatedGitLFSEnabled = g.ThrottleUnauthenticatedGitLFSEnabled
 	o.ThrottleUnauthenticatedGitLFSPeriodInSeconds = g.ThrottleUnauthenticatedGitLFSPeriodInSeconds
 	o.ThrottleUnauthenticatedGitLFSRequestsPerPeriod = g.ThrottleUnauthenticatedGitLFSRequestsPerPeriod
@@ -862,10 +950,20 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.UserDefaultsToPrivateProfile = g.UserDefaultsToPrivateProfile
 	o.UserOauthApplications = g.UserOauthApplications
 	o.UserShowAddSSHKeyMessage = g.UserShowAddSSHKeyMessage
+	o.UsersAPILimitFollowers = g.UsersAPILimitFollowers
+	o.UsersAPILimitFollowing = g.UsersAPILimitFollowing
+	o.UsersAPILimitGPGKey = g.UsersAPILimitGPGKey
+	o.UsersAPILimitGPGKeys = g.UsersAPILimitGPGKeys
+	o.UsersAPILimitSSHKey = g.UsersAPILimitSSHKey
+	o.UsersAPILimitSSHKeys = g.UsersAPILimitSSHKeys
+	o.UsersAPILimitStatus = g.UsersAPILimitStatus
 	o.UsersGetByIDLimit = g.UsersGetByIDLimit
 	o.UsersGetByIDLimitAllowlistRaw = g.UsersGetByIDLimitAllowlistRaw
 	o.ValidRunnerRegistrars = g.ValidRunnerRegistrars
 	o.VersionCheckEnabled = g.VersionCheckEnabled
+	o.VirtualRegistriesEndpointsAPILimit = g.VirtualRegistriesEndpointsAPILimit
+	o.WebHookEventResendLimit = g.WebHookEventResendLimit
+	o.WebHookTestLimit = g.WebHookTestLimit
 	o.WebIDEClientsidePreviewEnabled = g.WebIDEClientsidePreviewEnabled
 	o.WhatsNewVariant = g.WhatsNewVariant
 	o.WikiPageMaxContentBytes = g.WikiPageMaxContentBytes
@@ -884,6 +982,8 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.ThrottleUnauthenticatedPeriodInSeconds = g.ThrottleUnauthenticatedPeriodInSeconds
 	o.ThrottleUnauthenticatedRequestsPerPeriod = g.ThrottleUnauthenticatedRequestsPerPeriod
 	o.UserEmailLookupLimit = g.UserEmailLookupLimit
+	o.AutocompleteUsers = g.AutocompleteUsers
+	o.AutocompleteUsersUnauthenticated = g.AutocompleteUsersUnauthenticated
 	return o
 }
 
@@ -894,6 +994,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return true
 	}
 	if g == nil {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.AIActionAPIRateLimit, g.AIActionAPIRateLimit) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.AbuseNotificationEmail, g.AbuseNotificationEmail) {
@@ -959,22 +1062,25 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.AssetProxyURL, g.AssetProxyURL) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.AuditEventsAPILimit, g.AuditEventsAPILimit) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.AuthorizedKeysEnabled, g.AuthorizedKeysEnabled) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.AutoBanUserOnExcessiveProjectsDownload, g.AutoBanUserOnExcessiveProjectsDownload) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr(p.AutocompleteUsers, g.AutocompleteUsers) {
-		return false
-	}
-	if !clients.IsComparableEqualToComparablePtr(p.AutocompleteUsersUnauthenticated, g.AutocompleteUsersUnauthenticated) {
+	if !clients.IsComparableEqualToComparablePtr(p.AutocompleteUsersLimit, g.AutocompleteUsersLimit) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.AutoDevOpsDomain, g.AutoDevOpsDomain) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.AutoDevOpsEnabled, g.AutoDevOpsEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.AutocompleteUsersUnauthenticatedLimit, g.AutocompleteUsersUnauthenticatedLimit) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.AutomaticPurchasedStorageAllocation, g.AutomaticPurchasedStorageAllocation) {
@@ -987,6 +1093,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.BulkImportMaxDownloadFileSize, g.BulkImportMaxDownloadFileSize) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.CILintLimitPerUser, g.CILintLimitPerUser) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.CanCreateGroup, g.CanCreateGroup) {
@@ -1017,6 +1126,15 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ConcurrentGitHubImportJobsLimit, g.ConcurrentGitHubImportJobsLimit) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ConcurrentPullRequestImportJobsLimit, g.ConcurrentPullRequestImportJobsLimit) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ConcurrentRelationBatchExportLimit, g.ConcurrentRelationBatchExportLimit) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ConcurrentRelationExportLimit, g.ConcurrentRelationExportLimit) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ContainerExpirationPoliciesEnableHistoricEntries, g.ContainerExpirationPoliciesEnableHistoricEntries) {
@@ -1364,6 +1482,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.GeoStatusTimeout, g.GeoStatusTimeout) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.GitPushPipelineLimit, g.GitPushPipelineLimit) {
+		return false
+	}
 	if !clients.IsComparableSliceEqualToComparableSlicePtr(p.GitRateLimitUsersAlertlist, g.GitRateLimitUsersAlertlist) {
 		return false
 	}
@@ -1409,6 +1530,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.GravatarEnabled, g.GravatarEnabled) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.GroupAuditEventsAPILimit, g.GroupAuditEventsAPILimit) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.GroupDownloadExportLimit, g.GroupDownloadExportLimit) {
 		return false
 	}
@@ -1422,6 +1546,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.GroupRunnerTokenExpirationInterval, g.GroupRunnerTokenExpirationInterval) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.GroupSecretsLimit, g.GroupSecretsLimit) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.HTMLEmailsEnabled, g.HTMLEmailsEnabled) {
@@ -1455,6 +1582,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.HousekeepingOptimizeRepositoryPeriod, g.HousekeepingOptimizeRepositoryPeriod) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ImportJobsConcurrencyLimit, g.ImportJobsConcurrencyLimit) {
 		return false
 	}
 	if !clients.IsComparableSliceEqualToComparableSlicePtr(p.ImportSources, g.ImportSources) {
@@ -1491,6 +1621,12 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.JiraConnectProxyURL, g.JiraConnectProxyURL) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.JobPlayLimitPerUserProject, g.JobPlayLimitPerUserProject) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.JobRetryLimitPerUserProject, g.JobRetryLimitPerUserProject) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.KeepLatestArtifact, g.KeepLatestArtifact) {
@@ -1542,6 +1678,12 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.MaxExportSize, g.MaxExportSize) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.MaxGitHubResponseSizeLimit, g.MaxGitHubResponseSizeLimit) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.MaxHTTPResponseSizeLimit, g.MaxHTTPResponseSizeLimit) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.MaxImportRemoteFileSize, g.MaxImportRemoteFileSize) {
@@ -1652,6 +1794,15 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.PersonalAccessTokenPrefix, g.PersonalAccessTokenPrefix) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.PipelineCancelLimitPerUserProject, g.PipelineCancelLimitPerUserProject) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.PipelineLimitPerUser, g.PipelineLimitPerUser) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.PipelineRetryLimitPerUserProject, g.PipelineRetryLimitPerUserProject) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.PlantumlEnabled, g.PlantumlEnabled) {
 		return false
 	}
@@ -1670,6 +1821,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.PreventMergeRequestsCommittersApproval, g.PreventMergeRequestsCommittersApproval) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.ProjectAuditEventsAPILimit, g.ProjectAuditEventsAPILimit) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.ProjectDownloadExportLimit, g.ProjectDownloadExportLimit) {
 		return false
 	}
@@ -1686,6 +1840,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ProjectRunnerTokenExpirationInterval, g.ProjectRunnerTokenExpirationInterval) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ProjectSecretsLimit, g.ProjectSecretsLimit) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ProjectsAPIRateLimitUnauthenticated, g.ProjectsAPIRateLimitUnauthenticated) {
@@ -1716,6 +1873,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.RawBlobRequestLimit, g.RawBlobRequestLimit) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.RawBlobRequestLimitUnauthenticated, g.RawBlobRequestLimitUnauthenticated) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.RecaptchaEnabled, g.RecaptchaEnabled) {
@@ -1763,7 +1923,22 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableSliceEqualToComparableSlicePtr(p.RestrictedVisibilityLevels, clients.VisibilityValueSliceToStringSlice(g.RestrictedVisibilityLevels)) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.RunnerJobsEndpointsAPILimit, g.RunnerJobsEndpointsAPILimit) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.RunnerJobsPatchTraceAPILimit, g.RunnerJobsPatchTraceAPILimit) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.RunnerJobsRequestAPILimit, g.RunnerJobsRequestAPILimit) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.RunnerTokenExpirationInterval, g.RunnerTokenExpirationInterval) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ScanExecutionPoliciesActionLimit, g.ScanExecutionPoliciesActionLimit) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ScanExecutionPoliciesScheduleLimit, g.ScanExecutionPoliciesScheduleLimit) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.SearchRateLimit, g.SearchRateLimit) {
@@ -1910,6 +2085,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.SuggestPipelineEnabled, g.SuggestPipelineEnabled) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.TagsCreateLimit, g.TagsCreateLimit) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.TerminalMaxSessionTime, g.TerminalMaxSessionTime) {
 		return false
 	}
@@ -1923,6 +2101,15 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedAPIRequestsPerPeriod, g.ThrottleAuthenticatedAPIRequestsPerPeriod) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedDependencyProxyEnabled, g.ThrottleAuthenticatedDependencyProxyEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedDependencyProxyPeriodInSeconds, g.ThrottleAuthenticatedDependencyProxyPeriodInSeconds) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedDependencyProxyRequestsPerPeriod, g.ThrottleAuthenticatedDependencyProxyRequestsPerPeriod) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedDeprecatedAPIEnabled, g.ThrottleAuthenticatedDeprecatedAPIEnabled) {
@@ -1943,6 +2130,15 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedFilesAPIRequestsPerPeriod, g.ThrottleAuthenticatedFilesAPIRequestsPerPeriod) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedGitHTTPEnabled, g.ThrottleAuthenticatedGitHTTPEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedGitHTTPPeriodInSeconds, g.ThrottleAuthenticatedGitHTTPPeriodInSeconds) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedGitHTTPRequestsPerPeriod, g.ThrottleAuthenticatedGitHTTPRequestsPerPeriod) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedGitLFSEnabled, g.ThrottleAuthenticatedGitLFSEnabled) {
 		return false
 	}
@@ -1950,6 +2146,15 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedGitLFSRequestsPerPeriod, g.ThrottleAuthenticatedGitLFSRequestsPerPeriod) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedMCPEnabled, g.ThrottleAuthenticatedMCPEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedMCPPeriodInSeconds, g.ThrottleAuthenticatedMCPPeriodInSeconds) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedMCPRequestsPerPeriod, g.ThrottleAuthenticatedMCPRequestsPerPeriod) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedPackagesAPIEnabled, g.ThrottleAuthenticatedPackagesAPIEnabled) {
@@ -2013,6 +2218,15 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod, g.ThrottleUnauthenticatedFilesAPIRequestsPerPeriod) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleUnauthenticatedGitHTTPEnabled, g.ThrottleUnauthenticatedGitHTTPEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleUnauthenticatedGitHTTPPeriodInSeconds, g.ThrottleUnauthenticatedGitHTTPPeriodInSeconds) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.ThrottleUnauthenticatedGitHTTPRequestsPerPeriod, g.ThrottleUnauthenticatedGitHTTPRequestsPerPeriod) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ThrottleUnauthenticatedGitLFSEnabled, g.ThrottleUnauthenticatedGitLFSEnabled) {
@@ -2096,6 +2310,27 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.UserShowAddSSHKeyMessage, g.UserShowAddSSHKeyMessage) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.UsersAPILimitFollowers, g.UsersAPILimitFollowers) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.UsersAPILimitFollowing, g.UsersAPILimitFollowing) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.UsersAPILimitGPGKey, g.UsersAPILimitGPGKey) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.UsersAPILimitGPGKeys, g.UsersAPILimitGPGKeys) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.UsersAPILimitSSHKey, g.UsersAPILimitSSHKey) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.UsersAPILimitSSHKeys, g.UsersAPILimitSSHKeys) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.UsersAPILimitStatus, g.UsersAPILimitStatus) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.UsersGetByIDLimit, g.UsersGetByIDLimit) {
 		return false
 	}
@@ -2106,6 +2341,15 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.VersionCheckEnabled, g.VersionCheckEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.VirtualRegistriesEndpointsAPILimit, g.VirtualRegistriesEndpointsAPILimit) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.WebHookEventResendLimit, g.WebHookEventResendLimit) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.WebHookTestLimit, g.WebHookTestLimit) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.WebIDEClientsidePreviewEnabled, g.WebIDEClientsidePreviewEnabled) {
@@ -2157,6 +2401,12 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ThrottleUnauthenticatedRequestsPerPeriod, g.ThrottleUnauthenticatedRequestsPerPeriod) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.AutocompleteUsers, g.AutocompleteUsers) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.AutocompleteUsersUnauthenticated, g.AutocompleteUsersUnauthenticated) {
 		return false
 	}
 	return true

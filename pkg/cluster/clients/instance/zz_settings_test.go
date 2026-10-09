@@ -22,7 +22,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 )
@@ -250,8 +250,8 @@ func TestV1Alpha1DefaultBranchProtectionDefaultsOptionsPtrToGitlabBranchProtecti
 			want: &gitlab.DefaultBranchProtectionDefaultsOptions{
 				AllowForcePush:          boolPtr(true),
 				DeveloperCanInitialPush: boolPtr(false),
-				AllowedToMerge:          &[]*gitlab.GroupAccessLevel{{AccessLevel: accessLevelPtr(30)}},
-				AllowedToPush:           &[]*gitlab.GroupAccessLevel{{AccessLevel: accessLevelPtr(40)}},
+				AllowedToMerge:          []*gitlab.GroupAccessLevel{{AccessLevel: accessLevelPtr(30)}},
+				AllowedToPush:           []*gitlab.GroupAccessLevel{{AccessLevel: accessLevelPtr(40)}},
 			},
 		},
 	}
