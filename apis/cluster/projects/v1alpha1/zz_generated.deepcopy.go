@@ -2392,6 +2392,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.AnalyticsAccessLevel != nil {
+		in, out := &in.AnalyticsAccessLevel, &out.AnalyticsAccessLevel
+		*out = new(AccessControlValue)
+		**out = **in
+	}
 	if in.ApprovalsBeforeMerge != nil {
 		in, out := &in.ApprovalsBeforeMerge, &out.ApprovalsBeforeMerge
 		*out = new(int64)
@@ -2482,9 +2487,19 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.EnvironmentsAccessLevel != nil {
+		in, out := &in.EnvironmentsAccessLevel, &out.EnvironmentsAccessLevel
+		*out = new(AccessControlValue)
+		**out = **in
+	}
 	if in.ExternalAuthorizationClassificationLabel != nil {
 		in, out := &in.ExternalAuthorizationClassificationLabel, &out.ExternalAuthorizationClassificationLabel
 		*out = new(string)
+		**out = **in
+	}
+	if in.FeatureFlagsAccessLevel != nil {
+		in, out := &in.FeatureFlagsAccessLevel, &out.FeatureFlagsAccessLevel
+		*out = new(AccessControlValue)
 		**out = **in
 	}
 	if in.ForkingAccessLevel != nil {
@@ -2505,6 +2520,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	if in.ImportURLSecretRef != nil {
 		in, out := &in.ImportURLSecretRef, &out.ImportURLSecretRef
 		*out = new(v2.SecretKeySelector)
+		**out = **in
+	}
+	if in.InfrastructureAccessLevel != nil {
+		in, out := &in.InfrastructureAccessLevel, &out.InfrastructureAccessLevel
+		*out = new(AccessControlValue)
 		**out = **in
 	}
 	if in.InitializeWithReadme != nil {
@@ -2577,6 +2597,21 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(int64)
 		**out = **in
 	}
+	if in.ModelExperimentsAccessLevel != nil {
+		in, out := &in.ModelExperimentsAccessLevel, &out.ModelExperimentsAccessLevel
+		*out = new(AccessControlValue)
+		**out = **in
+	}
+	if in.ModelRegistryAccessLevel != nil {
+		in, out := &in.ModelRegistryAccessLevel, &out.ModelRegistryAccessLevel
+		*out = new(AccessControlValue)
+		**out = **in
+	}
+	if in.MonitorAccessLevel != nil {
+		in, out := &in.MonitorAccessLevel, &out.MonitorAccessLevel
+		*out = new(AccessControlValue)
+		**out = **in
+	}
 	if in.NamespaceID != nil {
 		in, out := &in.NamespaceID, &out.NamespaceID
 		*out = new(int64)
@@ -2605,6 +2640,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	if in.OnlyMirrorProtectedBranches != nil {
 		in, out := &in.OnlyMirrorProtectedBranches, &out.OnlyMirrorProtectedBranches
 		*out = new(bool)
+		**out = **in
+	}
+	if in.PackageRegistryAccessLevel != nil {
+		in, out := &in.PackageRegistryAccessLevel, &out.PackageRegistryAccessLevel
+		*out = new(AccessControlValue)
 		**out = **in
 	}
 	if in.PackagesEnabled != nil {
@@ -2642,6 +2682,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(PushRules)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ReleasesAccessLevel != nil {
+		in, out := &in.ReleasesAccessLevel, &out.ReleasesAccessLevel
+		*out = new(AccessControlValue)
+		**out = **in
+	}
 	if in.RemoveSourceBranchAfterMerge != nil {
 		in, out := &in.RemoveSourceBranchAfterMerge, &out.RemoveSourceBranchAfterMerge
 		*out = new(bool)
@@ -2660,6 +2705,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	if in.ResolveOutdatedDiffDiscussions != nil {
 		in, out := &in.ResolveOutdatedDiffDiscussions, &out.ResolveOutdatedDiffDiscussions
 		*out = new(bool)
+		**out = **in
+	}
+	if in.SecurityAndComplianceAccessLevel != nil {
+		in, out := &in.SecurityAndComplianceAccessLevel, &out.SecurityAndComplianceAccessLevel
+		*out = new(AccessControlValue)
 		**out = **in
 	}
 	if in.ServiceDeskEnabled != nil {
