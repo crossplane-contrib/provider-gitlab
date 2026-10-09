@@ -86,9 +86,6 @@ spec:
                     description: Set whether auto-closing referenced issues on default
                       branch.
                     type: boolean
-                  buildCoverageRegex:
-                    description: Test coverage parsing.
-                    type: string
                   buildGitStrategy:
                     description: The Git strategy. Defaults to fetch.
                     enum:
@@ -117,7 +114,7 @@ spec:
                   containerExpirationPolicyAttributes:
                     description: |-
                       Update the image cleanup policy for this project. Accepts: cadence (string), keepN (integer), olderThan (string),
-                      nameRegex (string), nameRegexDelete (string), nameRegexKeep (string), enabled (boolean).
+                      nameRegex (string), nameRegexKeep (string), enabled (boolean).
                     properties:
                       cadence:
                         type: string
@@ -126,10 +123,15 @@ spec:
                       keepN:
                         format: int64
                         type: integer
-                      name_regex:
-                        description: Deprecated members
-                        type: string
-                      nameRegexDelete:
+                      nameRegex:
+                        description: |-
+                          Regular expression matching the image names to delete.
+
+                          GitLab implements the deletion pattern as name_regex, and that is the only
+                          spelling its API declares. The documentation additionally advertises
+                          name_regex_delete, but that parameter does not exist and is discarded
+                          without an error.
+                          See https://gitlab.com/gitlab-org/api/client-go/-/issues/2303
                         type: string
                       nameRegexKeep:
                         type: string
@@ -336,9 +338,6 @@ spec:
                   onlyMirrorProtectedBranches:
                     description: Only mirror protected branches.
                     type: boolean
-                  operationsAccessLevel:
-                    description: One of disabled, private, or enabled.
-                    type: string
                   packagesEnabled:
                     description: Enable or disable packages repository feature.
                     type: boolean
@@ -586,7 +585,10 @@ spec:
                       keepN:
                         format: int64
                         type: integer
-                      nameRegexDelete:
+                      nameRegex:
+                        description: |-
+                          Regular expression matching the image names to delete, as reported by
+                          GitLab in name_regex.
                         type: string
                       nameRegexKeep:
                         type: string
@@ -599,7 +601,7 @@ spec:
                     - cadence
                     - enabled
                     - keepN
-                    - nameRegexDelete
+                    - nameRegex
                     - nameRegexKeep
                     - nextRunAt
                     - olderThan
