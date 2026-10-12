@@ -4,7 +4,7 @@ metadata:
   name: example-project-observed
   namespace: default
   annotations:
-    # Numeric ID or full path of the project.
+    # Numeric ID, or full path with observe-only management policies.
     crossplane.io/external-name: path/to/example-project
 spec:
   managementPolicies:

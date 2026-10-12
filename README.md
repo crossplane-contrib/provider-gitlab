@@ -44,11 +44,10 @@ spec:
 kubectl apply -f examples/providerconfig/provider.yaml
 ```
 
-### Referencing groups and projects by full path
+### Observing groups and projects by full path
 
-Set the `crossplane.io/external-name` annotation to the full path when you do
-not know the numeric ID of a `Group` or `Project`, for example for observe-only
-resources:
+Set the `crossplane.io/external-name` annotation of an observe-only `Group` or
+`Project` to its full path when you do not know the numeric ID:
 
 ```yaml
 apiVersion: groups.gitlab.crossplane.io/v1alpha1
@@ -61,14 +60,28 @@ spec:
   managementPolicies:
     - Observe
   forProvider:
-    path: example-group
+    path: "" # required by the CRD, not used for the lookup
   providerConfigRef:
     name: gitlab-provider
 ```
 
-The path is used as the identifier as long as the annotation is set to it.
-GitLab resolves the old path of a renamed project, but not of a renamed group,
-so update the annotation after renaming a group that is only observed.
+A full path is only accepted with the management policies `[Observe]` or
+`[Observe, LateInitialize]`, which require the provider flag
+`--enable-management-policies`. Any other policy reports an error, since a
+write through a moved path could change the wrong resource.
+
+Other resources can reference an observed `Group` or `Project` as usual. The
+reference resolves to the numeric ID once the resource has been observed, and
+by default the referencing resource keeps that ID.
+
+Keep in mind:
+
+* GitLab still finds a renamed project by its old path, but not a renamed
+  group. Update the annotation after renaming an observed group.
+* If another group or project takes over the path, the resource observes that
+  one instead.
+* A top-level group whose path is only digits, such as `1234`, is looked up as
+  a numeric ID.
 
 ### Self-rotating service account tokens
 
