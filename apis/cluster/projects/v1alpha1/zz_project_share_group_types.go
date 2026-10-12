@@ -38,6 +38,7 @@ type ProjectShareGroupParameters struct {
 
 	// GroupID is the ID of the group to share with.
 	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1.Group
+	// +crossplane:generate:reference:extractor=github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1.GroupID()
 	// +crossplane:generate:reference:refFieldName=GroupRef
 	// +crossplane:generate:reference:selectorFieldName=GroupSelector
 	// +optional
@@ -55,6 +56,7 @@ type ProjectShareGroupParameters struct {
 
 	// ProjectID is the ID of the project being shared.
 	// +crossplane:generate:reference:type=Project
+	// +crossplane:generate:reference:extractor=github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1.ProjectID()
 	// +crossplane:generate:reference:refFieldName=ProjectRef
 	// +crossplane:generate:reference:selectorFieldName=ProjectSelector
 	// +optional

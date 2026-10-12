@@ -61,7 +61,7 @@ func (mg *Hook) ResolveReferences(ctx context.Context, c client.Reader) error {
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -89,7 +89,7 @@ func (mg *ApprovalRule) ResolveReferences(ctx context.Context, c client.Reader) 
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -117,7 +117,7 @@ func (mg *Project) ResolveReferences(ctx context.Context, c client.Reader) error
 		Reference:    mg.Spec.ForProvider.NamespaceIDRef,
 		Selector:     mg.Spec.ForProvider.NamespaceIDSelector,
 		To:           reference.To{Managed: &v1alpha1.Group{}, List: &v1alpha1.GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      v1alpha1.GroupID(),
 	})
 
 	if err != nil {
@@ -145,7 +145,7 @@ func (mg *DeployToken) ResolveReferences(ctx context.Context, c client.Reader) e
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -173,7 +173,7 @@ func (mg *Member) ResolveReferences(ctx context.Context, c client.Reader) error 
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -201,7 +201,7 @@ func (mg *Variable) ResolveReferences(ctx context.Context, c client.Reader) erro
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -229,7 +229,7 @@ func (mg *Runner) ResolveReferences(ctx context.Context, c client.Reader) error 
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -257,7 +257,7 @@ func (mg *Badge) ResolveReferences(ctx context.Context, c client.Reader) error {
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -285,7 +285,7 @@ func (mg *IntegrationMattermost) ResolveReferences(ctx context.Context, c client
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -312,7 +312,7 @@ func (mg *ServiceAccount) ResolveReferences(ctx context.Context, c client.Reader
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -340,7 +340,7 @@ func (mg *ServiceAccountAccessToken) ResolveReferences(ctx context.Context, c cl
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
