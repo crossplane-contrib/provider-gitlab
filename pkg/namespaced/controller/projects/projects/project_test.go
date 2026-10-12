@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects/fake"
 )
@@ -71,6 +72,10 @@ func withPath(p *string) projectModifier {
 
 func withExternalName(projectID string) projectModifier {
 	return func(r *v1alpha1.Project) { meta.SetExternalName(r, projectID) }
+}
+
+func withManagementPolicies(p ...v2.ManagementAction) projectModifier {
+	return func(r *v1alpha1.Project) { r.SetManagementPolicies(p) }
 }
 
 func withStatus(s v1alpha1.ProjectObservation) projectModifier {
@@ -231,7 +236,7 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
-		"PathExternalName": {
+		"PathExternalNameObserveOnly": {
 			args: args{
 				project: &fake.MockClient{
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
@@ -247,6 +252,7 @@ func TestObserve(t *testing.T) {
 				cr: project(
 					withClientDefaultValues(),
 					withExternalName(fullPath),
+					withManagementPolicies(v2.ManagementActionObserve),
 				),
 			},
 			want: want{
@@ -254,6 +260,7 @@ func TestObserve(t *testing.T) {
 					withClientDefaultValues(),
 					withConditions(v2.Available()),
 					withExternalName(fullPath),
+					withManagementPolicies(v2.ManagementActionObserve),
 					func(p *v1alpha1.Project) { p.Status.AtProvider.ID = projectID },
 				),
 				result: managed.ExternalObservation{
@@ -262,6 +269,30 @@ func TestObserve(t *testing.T) {
 					ResourceLateInitialized: false,
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
 				},
+			},
+		},
+		"PathExternalNameNotFound": {
+			args: args{
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: project(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionObserve)),
+			},
+			want: want{
+				cr:     project(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionObserve)),
+				result: managed.ExternalObservation{},
+			},
+		},
+		"PathExternalNameWithWritePolicies": {
+			args: args{
+				project: &fake.MockClient{},
+				cr:      project(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionAll)),
+			},
+			want: want{
+				cr:  project(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionAll)),
+				err: errors.New(common.ErrPathExternalNameNotObserveOnly),
 			},
 		},
 		"FailedGetRequest": {
@@ -424,6 +455,9 @@ func TestObserve(t *testing.T) {
 			args: args{
 				project: &fake.MockClient{
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						if pid != extName {
+							return nil, &gitlab.Response{}, errBoom
+						}
 						return &gitlab.Project{Name: "example-project"}, &gitlab.Response{}, nil
 					},
 					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {

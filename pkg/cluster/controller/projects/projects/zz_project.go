@@ -141,6 +141,10 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
+	if err := common.ValidateExternalName(externalName, cr.GetManagementPolicies()); err != nil {
+		return managed.ExternalObservation{}, err
+	}
+
 	prj, res, err := e.client.GetProject(externalName, nil)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {

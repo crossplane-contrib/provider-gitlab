@@ -121,7 +121,7 @@ type external struct {
 	client groups.Client
 }
 
-func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) { //nolint:gocyclo
 	cr, ok := mg.(*v1alpha1.Group)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotGroup)
@@ -130,6 +130,10 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	externalName := meta.GetExternalName(cr)
 	if externalName == "" {
 		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
+
+	if err := common.ValidateExternalName(externalName, cr.GetManagementPolicies()); err != nil {
+		return managed.ExternalObservation{}, err
 	}
 
 	//nolint:staticcheck // Keeping this for backward compatibility during deprecation
