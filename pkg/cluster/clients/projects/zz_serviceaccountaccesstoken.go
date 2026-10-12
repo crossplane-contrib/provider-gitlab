@@ -21,7 +21,7 @@ package projects
 import (
 	"time"
 
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
@@ -88,7 +88,7 @@ func GetServiceAccountAccessToken(c ServiceAccountAccessTokenClient, pid any, se
 		// ResourceExists: false. Filtering server-side avoids paginating through
 		// revoked/expired tokens on every Observe poll, reducing latency and API
 		// rate-limit pressure for service accounts with many tokens.
-		State: gitlab.Ptr("active"),
+		State: new("active"),
 	}
 
 	var lastRes *gitlab.Response

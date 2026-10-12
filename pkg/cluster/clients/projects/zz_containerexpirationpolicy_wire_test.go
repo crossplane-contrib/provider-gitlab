@@ -25,22 +25,22 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 )
 
-// GitLab only declares name_regex as the deletion pattern, but client-go
-// overwrites ContainerExpirationPolicyAttributes.NameRegex with
-// NameRegexDelete in CreateProject, CreateProjectForUser and EditProject
-// before encoding the request. A pattern written to NameRegex is therefore
-// dropped and never reaches GitLab.
+// GitLab only declares name_regex as the deletion pattern. Earlier client-go
+// versions overwrote ContainerExpirationPolicyAttributes.NameRegex with
+// NameRegexDelete before encoding the request, so a pattern written to
+// NameRegex was dropped; since v3.16.2 NameRegexDelete is only a fallback for
+// an unset NameRegex. Either way the pattern has to leave as name_regex.
 //
 // GenerateCreateProjectOptions and GenerateEditProjectOptions are checked
-// elsewhere against the options struct, which is the state before that
-// rewrite. These tests go through the real client and assert the encoded
-// request body instead, so the mapping stays correct even if client-go changes
-// which field it forwards.
+// elsewhere against the options struct, which is the state before client-go
+// touches those fields. These tests go through the real client and assert the
+// encoded request body instead, so the mapping stays correct even if client-go
+// changes which field it forwards.
 
 // captureRequestBody runs call against a server that records the request body
 // and returns container_expiration_policy_attributes from it.
