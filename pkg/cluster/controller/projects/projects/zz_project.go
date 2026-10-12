@@ -390,9 +390,14 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 		in.OnlyAllowMergeIfPipelineSucceeds = &project.OnlyAllowMergeIfPipelineSucceeds
 	}
 
-	in.PackageRegistryAccessLevel = clients.LateInitializeAccessControlValue(in.PackageRegistryAccessLevel, project.PackageRegistryAccessLevel)
+	// PackageRegistryAccessLevel is deliberately not late-initialized: when set
+	// it takes precedence over packagesEnabled (see
+	// projects.ResolvePackagesEnabled), so copying it would silently switch
+	// existing resources from packagesEnabled to the access level. For the
+	// same reason packagesEnabled is not late-initialized while the level is
+	// set: the copy would be ignored, and re-applied if the level is removed.
 
-	if in.PackagesEnabled == nil {
+	if in.PackagesEnabled == nil && in.PackageRegistryAccessLevel == nil {
 		in.PackagesEnabled = &project.PackagesEnabled //nolint:staticcheck
 	}
 
@@ -414,7 +419,6 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	}
 
 	in.RepositoryAccessLevel = clients.LateInitializeAccessControlValue(in.RepositoryAccessLevel, project.RepositoryAccessLevel)
-	in.SecurityAndComplianceAccessLevel = clients.LateInitializeAccessControlValue(in.SecurityAndComplianceAccessLevel, project.SecurityAndComplianceAccessLevel)
 
 	if in.RequestAccessEnabled == nil {
 		in.RequestAccessEnabled = &project.RequestAccessEnabled
@@ -422,6 +426,9 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	if in.ResolveOutdatedDiffDiscussions == nil {
 		in.ResolveOutdatedDiffDiscussions = &project.ResolveOutdatedDiffDiscussions
 	}
+
+	in.SecurityAndComplianceAccessLevel = clients.LateInitializeAccessControlValue(in.SecurityAndComplianceAccessLevel, project.SecurityAndComplianceAccessLevel)
+
 	if in.ServiceDeskEnabled == nil {
 		in.ServiceDeskEnabled = &project.ServiceDeskEnabled
 	}
@@ -644,7 +651,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.PackageRegistryAccessLevel), string(g.PackageRegistryAccessLevel)) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr(p.PackagesEnabled, g.PackagesEnabled) { //nolint:staticcheck // deprecated but still needed for backward compatibility
+	if !clients.IsComparableEqualToComparablePtr(projects.ResolvePackagesEnabled(p), g.PackagesEnabled) { //nolint:staticcheck // deprecated but still needed for backward compatibility
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.PagesAccessLevel), string(g.PagesAccessLevel)) {

@@ -636,6 +636,69 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 	}
 }
 
+func TestResolvePackagesEnabled(t *testing.T) {
+	cases := map[string]struct {
+		reason string
+		p      *v1alpha1.ProjectParameters
+		want   *bool
+	}{
+		"NeitherSet": {
+			reason: "Without either field nothing is sent.",
+			p:      &v1alpha1.ProjectParameters{},
+			want:   nil,
+		},
+		"OnlyPackagesEnabled": {
+			reason: "Without an access level, packagesEnabled is used as before.",
+			p:      &v1alpha1.ProjectParameters{PackagesEnabled: ptr.To(false)},
+			want:   ptr.To(false),
+		},
+		"LevelDisabledOverridesPackagesEnabled": {
+			reason: "GitLab gates package access on packages_enabled, so disabling the level must also send false.",
+			p: &v1alpha1.ProjectParameters{
+				PackageRegistryAccessLevel: ptr.To(v1alpha1.DisabledAccessControl),
+				PackagesEnabled:            ptr.To(true),
+			},
+			want: ptr.To(false),
+		},
+		"LevelPrivateOverridesPackagesEnabled": {
+			reason: "Any level other than disabled enables packages.",
+			p: &v1alpha1.ProjectParameters{
+				PackageRegistryAccessLevel: ptr.To(v1alpha1.PrivateAccessControl),
+				PackagesEnabled:            ptr.To(false),
+			},
+			want: ptr.To(true),
+		},
+		"LevelPublicWithoutPackagesEnabled": {
+			reason: "The derived value is sent even when packagesEnabled is unset.",
+			p:      &v1alpha1.ProjectParameters{PackageRegistryAccessLevel: ptr.To(v1alpha1.PublicAccessControl)},
+			want:   ptr.To(true),
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			if diff := cmp.Diff(tc.want, ResolvePackagesEnabled(tc.p)); diff != "" {
+				t.Errorf("%s\nResolvePackagesEnabled(...): -want, +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+// TestGenerateProjectOptionsDerivePackagesEnabled verifies that create and
+// edit requests send packages_enabled derived from packageRegistryAccessLevel,
+// not the spec's packagesEnabled.
+func TestGenerateProjectOptionsDerivePackagesEnabled(t *testing.T) {
+	p := &v1alpha1.ProjectParameters{
+		PackageRegistryAccessLevel: ptr.To(v1alpha1.DisabledAccessControl),
+		PackagesEnabled:            ptr.To(true),
+	}
+	if diff := cmp.Diff(ptr.To(false), GenerateCreateProjectOptions(name, p).PackagesEnabled); diff != "" { //nolint:staticcheck
+		t.Errorf("GenerateCreateProjectOptions(...).PackagesEnabled: -want, +got:\n%s", diff)
+	}
+	if diff := cmp.Diff(ptr.To(false), GenerateEditProjectOptions(name, p).PackagesEnabled); diff != "" { //nolint:staticcheck
+		t.Errorf("GenerateEditProjectOptions(...).PackagesEnabled: -want, +got:\n%s", diff)
+	}
+}
+
 func TestGenerateEditProjectOptions(t *testing.T) {
 	type args struct {
 		name       string

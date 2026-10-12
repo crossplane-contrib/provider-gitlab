@@ -867,17 +867,17 @@ func TestObserve(t *testing.T) {
 		"Path":                                      "path",
 		"DefaultBranch":                             "Default branch",
 		"Description":                               "description",
-		"IssuesAccessLevel":                         gitlab.PublicAccessControl,
-		"RepositoryAccessLevel":                     gitlab.PublicAccessControl,
-		"MergeRequestsAccessLevel":                  gitlab.PublicAccessControl,
+		"IssuesAccessLevel":                         gitlab.EnabledAccessControl,
+		"RepositoryAccessLevel":                     gitlab.EnabledAccessControl,
+		"MergeRequestsAccessLevel":                  gitlab.EnabledAccessControl,
 		"MergeTrainsEnabled":                        true,
 		"MergeTrainsSkipTrainAllowed":               true,
 		"MergePipelinesEnabled":                     true,
-		"ForkingAccessLevel":                        gitlab.PublicAccessControl,
-		"BuildsAccessLevel":                         gitlab.PublicAccessControl,
-		"WikiAccessLevel":                           gitlab.PublicAccessControl,
-		"SnippetsAccessLevel":                       gitlab.PublicAccessControl,
-		"PagesAccessLevel":                          gitlab.PublicAccessControl,
+		"ForkingAccessLevel":                        gitlab.EnabledAccessControl,
+		"BuildsAccessLevel":                         gitlab.EnabledAccessControl,
+		"WikiAccessLevel":                           gitlab.EnabledAccessControl,
+		"SnippetsAccessLevel":                       gitlab.EnabledAccessControl,
+		"PagesAccessLevel":                          gitlab.EnabledAccessControl,
 		"AnalyticsAccessLevel":                      gitlab.DisabledAccessControl,
 		"ReleasesAccessLevel":                       gitlab.DisabledAccessControl,
 		"EnvironmentsAccessLevel":                   gitlab.DisabledAccessControl,
@@ -893,7 +893,7 @@ func TestObserve(t *testing.T) {
 		"ContainerRegistryAccessLevel":              gitlab.EnabledAccessControl,
 		"SharedRunnersEnabled":                      true,
 		"Visibility":                                gitlab.PrivateVisibility,
-		"PublicBuilds":                              true,
+		"PublicJobs":                                true,
 		"OnlyAllowMergeIfPipelineSucceeds":          true,
 		"OnlyAllowMergeIfAllDiscussionsAreResolved": true,
 		"MergeMethod":                               gitlab.RebaseMerge,
@@ -909,7 +909,7 @@ func TestObserve(t *testing.T) {
 		"MirrorTriggerBuilds":                       true,
 		"OnlyMirrorProtectedBranches":               true,
 		"MirrorOverwritesDivergedBranches":          true,
-		"PackagesEnabled":                           true,
+		"PackagesEnabled":                           false,
 		"ServiceDeskEnabled":                        true,
 		"AutocloseReferencedIssues":                 true,
 		"AllowMergeOnSkippedPipeline":               true,
@@ -995,37 +995,15 @@ func TestObserve(t *testing.T) {
 		},
 	}
 
+	// The unchanged baseline must be up to date. Otherwise every case below
+	// passes regardless of whether the comparison it targets exists.
+	const baseline = "Baseline"
+	isProjectUpToDateCases[baseline] = nil
+
 	for name, value := range isProjectUpToDateCases {
 		argsProjectModifier := []projectModifier{
 			withSpec(projectParameters),
 			withExternalName("0"),
-		}
-		wantProjectModifier := []projectModifier{
-			withSpec(projectParameters),
-			withExternalName("0"),
-			withProjectPushRules(&v1alpha1.PushRules{
-				AuthorEmailRegex:           ptr.To(""),
-				BranchNameRegex:            ptr.To(""),
-				CommitCommitterCheck:       ptr.To(false),
-				CommitCommitterNameCheck:   ptr.To(false),
-				CommitMessageNegativeRegex: ptr.To(""),
-				CommitMessageRegex:         ptr.To(""),
-				DenyDeleteTag:              ptr.To(true),
-				FileNameRegex:              ptr.To(""),
-				MaxFileSize:                ptr.To(int64(0)),
-				MemberCheck:                ptr.To(false),
-				PreventSecrets:             ptr.To(false),
-				RejectUnsignedCommits:      ptr.To(false),
-				RejectNonDCOCommits:        ptr.To(false),
-			}),
-			withConditions(v2.Available()),
-			withStatus(v1alpha1.ProjectObservation{
-				IssuesAccessLevel:        al,
-				BuildsAccessLevel:        al,
-				MergeRequestsAccessLevel: al,
-				SnippetsAccessLevel:      al,
-				WikiAccessLevel:          al,
-			}),
 		}
 		gitlabProject := &gitlab.Project{
 			Name:                                      s,
@@ -1055,6 +1033,7 @@ func TestObserve(t *testing.T) {
 			ModelRegistryAccessLevel:                  gitlab.PublicAccessControl,
 			ResolveOutdatedDiffDiscussions:            f,
 			ContainerRegistryEnabled:                  f, //nolint:staticcheck
+			ContainerRegistryAccessLevel:              gitlab.PublicAccessControl,
 			SharedRunnersEnabled:                      f,
 			Visibility:                                gitlab.PublicVisibility,
 			PublicBuilds:                              f, //nolint:staticcheck
@@ -1074,28 +1053,48 @@ func TestObserve(t *testing.T) {
 			MirrorTriggerBuilds:                       f,
 			OnlyMirrorProtectedBranches:               f,
 			MirrorOverwritesDivergedBranches:          f,
-			PackagesEnabled:                           f, //nolint:staticcheck
-			ServiceDeskEnabled:                        f,
-			AutocloseReferencedIssues:                 f,
-			AllowMergeOnSkippedPipeline:               f,
-			CIForwardDeploymentEnabled:                f,
+			// packageRegistryAccessLevel public takes precedence over the
+			// spec's packagesEnabled false and implies packages are enabled.
+			PackagesEnabled:             true, //nolint:staticcheck
+			ServiceDeskEnabled:          f,
+			AutocloseReferencedIssues:   f,
+			AllowMergeOnSkippedPipeline: f,
+			CIForwardDeploymentEnabled:  f,
 		}
-		structValue := reflect.ValueOf(gitlabProject).Elem()
-		structFieldValue := structValue.FieldByName(name)
-		val := reflect.ValueOf(value)
-
-		structFieldValue.Set(val)
-		if name == "MergeTrainsEnabled" || name == "MergeTrainsSkipTrainAllowed" || name == "MergePipelinesEnabled" {
-			wantProjectModifier = append(wantProjectModifier, withStatus(v1alpha1.ProjectObservation{
-				IssuesAccessLevel:           al,
-				BuildsAccessLevel:           al,
-				MergeRequestsAccessLevel:    al,
-				SnippetsAccessLevel:         al,
-				WikiAccessLevel:             al,
+		if name != baseline {
+			reflect.ValueOf(gitlabProject).Elem().FieldByName(name).Set(reflect.ValueOf(value))
+		}
+		wantProjectModifier := []projectModifier{
+			withSpec(projectParameters),
+			withExternalName("0"),
+			withProjectPushRules(&v1alpha1.PushRules{
+				AuthorEmailRegex:           ptr.To(""),
+				BranchNameRegex:            ptr.To(""),
+				CommitCommitterCheck:       ptr.To(false),
+				CommitCommitterNameCheck:   ptr.To(false),
+				CommitMessageNegativeRegex: ptr.To(""),
+				CommitMessageRegex:         ptr.To(""),
+				DenyDeleteTag:              ptr.To(true),
+				FileNameRegex:              ptr.To(""),
+				MaxFileSize:                ptr.To(int64(0)),
+				MemberCheck:                ptr.To(false),
+				PreventSecrets:             ptr.To(false),
+				RejectUnsignedCommits:      ptr.To(false),
+				RejectNonDCOCommits:        ptr.To(false),
+			}),
+			withConditions(v2.Available()),
+			// Some of the changed fields are also reported in the observation.
+			withStatus(v1alpha1.ProjectObservation{
+				Public:                      gitlabProject.PublicJobs,
+				IssuesAccessLevel:           v1alpha1.AccessControlValue(gitlabProject.IssuesAccessLevel),
+				BuildsAccessLevel:           v1alpha1.AccessControlValue(gitlabProject.BuildsAccessLevel),
+				MergeRequestsAccessLevel:    v1alpha1.AccessControlValue(gitlabProject.MergeRequestsAccessLevel),
+				SnippetsAccessLevel:         v1alpha1.AccessControlValue(gitlabProject.SnippetsAccessLevel),
+				WikiAccessLevel:             v1alpha1.AccessControlValue(gitlabProject.WikiAccessLevel),
 				MergeTrainsEnabled:          gitlabProject.MergeTrainsEnabled,
 				MergeTrainsSkipTrainAllowed: gitlabProject.MergeTrainsSkipTrainAllowed,
 				MergePipelinesEnabled:       gitlabProject.MergePipelinesEnabled,
-			}))
+			}),
 		}
 		cases["IsProjectUpToDate"+name] = struct {
 			args
@@ -1119,7 +1118,7 @@ func TestObserve(t *testing.T) {
 				cr: project(wantProjectModifier...),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
-					ResourceUpToDate:        false,
+					ResourceUpToDate:        name == baseline,
 					ResourceLateInitialized: false,
 					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
 				},
@@ -1596,5 +1595,257 @@ func TestLateInitializeSkipsMirrorFields(t *testing.T) {
 	if p.Mirror != nil || p.MirrorUserID != nil || p.MirrorTriggerBuilds != nil ||
 		p.OnlyMirrorProtectedBranches != nil || p.MirrorOverwritesDivergedBranches != nil {
 		t.Errorf("mirror fields must stay nil, got %+v", p)
+	}
+}
+
+// TestLateInitializeProjectFeatureAccessLevels verifies that each feature
+// access level is late-initialized from its own observed field, and that
+// packageRegistryAccessLevel is not, because it takes precedence over
+// packagesEnabled. The observed values are distinct per field so that reading
+// one field from another fails.
+func TestLateInitializeProjectFeatureAccessLevels(t *testing.T) {
+	e := &external{client: &fake.MockClient{
+		MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+		},
+	}}
+	cr := &v1alpha1.Project{}
+	glProject := &gitlab.Project{
+		AnalyticsAccessLevel:             "analytics",
+		EnvironmentsAccessLevel:          "environments",
+		FeatureFlagsAccessLevel:          "feature-flags",
+		InfrastructureAccessLevel:        "infrastructure",
+		ModelExperimentsAccessLevel:      "model-experiments",
+		ModelRegistryAccessLevel:         "model-registry",
+		MonitorAccessLevel:               "monitor",
+		PackageRegistryAccessLevel:       "package-registry",
+		ReleasesAccessLevel:              "releases",
+		SecurityAndComplianceAccessLevel: "security-and-compliance",
+	}
+
+	if err := e.lateInitialize(context.Background(), cr, glProject); err != nil {
+		t.Fatalf("lateInitialize(...): %v", err)
+	}
+
+	level := func(s string) *v1alpha1.AccessControlValue { return ptr.To(v1alpha1.AccessControlValue(s)) }
+	p := cr.Spec.ForProvider
+	want := map[string]*v1alpha1.AccessControlValue{
+		"AnalyticsAccessLevel":             level("analytics"),
+		"EnvironmentsAccessLevel":          level("environments"),
+		"FeatureFlagsAccessLevel":          level("feature-flags"),
+		"InfrastructureAccessLevel":        level("infrastructure"),
+		"ModelExperimentsAccessLevel":      level("model-experiments"),
+		"ModelRegistryAccessLevel":         level("model-registry"),
+		"MonitorAccessLevel":               level("monitor"),
+		"PackageRegistryAccessLevel":       nil,
+		"ReleasesAccessLevel":              level("releases"),
+		"SecurityAndComplianceAccessLevel": level("security-and-compliance"),
+	}
+	got := map[string]*v1alpha1.AccessControlValue{
+		"AnalyticsAccessLevel":             p.AnalyticsAccessLevel,
+		"EnvironmentsAccessLevel":          p.EnvironmentsAccessLevel,
+		"FeatureFlagsAccessLevel":          p.FeatureFlagsAccessLevel,
+		"InfrastructureAccessLevel":        p.InfrastructureAccessLevel,
+		"ModelExperimentsAccessLevel":      p.ModelExperimentsAccessLevel,
+		"ModelRegistryAccessLevel":         p.ModelRegistryAccessLevel,
+		"MonitorAccessLevel":               p.MonitorAccessLevel,
+		"PackageRegistryAccessLevel":       p.PackageRegistryAccessLevel,
+		"ReleasesAccessLevel":              p.ReleasesAccessLevel,
+		"SecurityAndComplianceAccessLevel": p.SecurityAndComplianceAccessLevel,
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("lateInitialize(...): -want, +got:\n%s", diff)
+	}
+}
+
+// packageRegistryGitLab is a fake GitLab project that stores the package
+// registry settings the way GitLab's REST API does on an update: the access
+// level is written directly, and only if it did not change does a changed
+// packages_enabled reset it from the project visibility (private here). See
+// ProjectFeaturesCompatibility and Project#set_package_registry_access_level.
+type packageRegistryGitLab struct {
+	level           gitlab.AccessControlValue
+	packagesEnabled bool
+	edits           int
+}
+
+func (g *packageRegistryGitLab) project() *gitlab.Project {
+	return &gitlab.Project{
+		Visibility:                 gitlab.PrivateVisibility,
+		PackageRegistryAccessLevel: g.level,
+		PackagesEnabled:            g.packagesEnabled, //nolint:staticcheck
+	}
+}
+
+func (g *packageRegistryGitLab) edit(o *gitlab.EditProjectOptions) {
+	g.edits++
+	levelChanged := o.PackageRegistryAccessLevel != nil && *o.PackageRegistryAccessLevel != g.level
+	if o.PackageRegistryAccessLevel != nil {
+		g.level = *o.PackageRegistryAccessLevel
+	}
+	if o.PackagesEnabled != nil && *o.PackagesEnabled != g.packagesEnabled { //nolint:staticcheck
+		g.packagesEnabled = *o.PackagesEnabled //nolint:staticcheck
+		if !levelChanged {
+			g.level = gitlab.DisabledAccessControl
+			if g.packagesEnabled {
+				g.level = gitlab.PrivateAccessControl
+			}
+		}
+	}
+}
+
+// TestPackageRegistryConverges runs Observe and Update against a fake GitLab
+// until the project is up to date, and checks that the package registry
+// settings end where the spec asks for, within the expected number of edits.
+func TestPackageRegistryConverges(t *testing.T) {
+	cases := map[string]struct {
+		reason       string
+		spec         v1alpha1.ProjectParameters
+		start        packageRegistryGitLab
+		wantLevel    gitlab.AccessControlValue
+		wantPackages bool
+		wantEdits    int
+	}{
+		"DisableLevel": {
+			reason:       "Disabling the level must also disable packages, which gate package access.",
+			spec:         v1alpha1.ProjectParameters{PackageRegistryAccessLevel: ptr.To(v1alpha1.DisabledAccessControl)},
+			start:        packageRegistryGitLab{level: gitlab.EnabledAccessControl, packagesEnabled: true},
+			wantLevel:    gitlab.DisabledAccessControl,
+			wantPackages: false,
+			wantEdits:    1,
+		},
+		"EnableLevel": {
+			reason:       "Enabling the level must also enable packages.",
+			spec:         v1alpha1.ProjectParameters{PackageRegistryAccessLevel: ptr.To(v1alpha1.EnabledAccessControl)},
+			start:        packageRegistryGitLab{level: gitlab.DisabledAccessControl, packagesEnabled: false},
+			wantLevel:    gitlab.EnabledAccessControl,
+			wantPackages: true,
+			wantEdits:    1,
+		},
+		"RepairContradictoryState": {
+			reason:       "If only packages_enabled changes, GitLab resets the level from the visibility; the next update restores it.",
+			spec:         v1alpha1.ProjectParameters{PackageRegistryAccessLevel: ptr.To(v1alpha1.EnabledAccessControl)},
+			start:        packageRegistryGitLab{level: gitlab.EnabledAccessControl, packagesEnabled: false},
+			wantLevel:    gitlab.EnabledAccessControl,
+			wantPackages: true,
+			wantEdits:    2,
+		},
+		"PackagesEnabledWithoutLevel": {
+			reason:       "Without a level, packagesEnabled still works as before.",
+			spec:         v1alpha1.ProjectParameters{PackagesEnabled: ptr.To(false)},
+			start:        packageRegistryGitLab{level: gitlab.PrivateAccessControl, packagesEnabled: true},
+			wantLevel:    gitlab.DisabledAccessControl,
+			wantPackages: false,
+			wantEdits:    1,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			gl := tc.start
+			e := &external{client: &fake.MockClient{
+				MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+					return gl.project(), &gitlab.Response{}, nil
+				},
+				MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+					gl.edit(opt)
+					return gl.project(), &gitlab.Response{}, nil
+				},
+				MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+				},
+			}}
+			cr := project(withExternalName(extName), withSpec(tc.spec))
+
+			upToDate := false
+			for range 4 {
+				obs, err := e.Observe(context.Background(), cr)
+				if err != nil {
+					t.Fatalf("Observe(...): %v", err)
+				}
+				if upToDate = obs.ResourceUpToDate; upToDate {
+					break
+				}
+				if _, err := e.Update(context.Background(), cr); err != nil {
+					t.Fatalf("Update(...): %v", err)
+				}
+			}
+
+			if !upToDate {
+				t.Fatalf("%s\nproject never became up to date: level %q, packages_enabled %t after %d edits", tc.reason, gl.level, gl.packagesEnabled, gl.edits)
+			}
+			got := struct {
+				Level    gitlab.AccessControlValue
+				Packages bool
+				Edits    int
+			}{gl.level, gl.packagesEnabled, gl.edits}
+			want := struct {
+				Level    gitlab.AccessControlValue
+				Packages bool
+				Edits    int
+			}{tc.wantLevel, tc.wantPackages, tc.wantEdits}
+			if diff := cmp.Diff(want, got); diff != "" {
+				t.Errorf("%s\nfinal GitLab state: -want, +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+// TestPackageRegistryLevelRemoval verifies that removing
+// packageRegistryAccessLevel stops managing the package registry instead of
+// re-applying a packagesEnabled value that late-initialization copied while
+// the level was set.
+func TestPackageRegistryLevelRemoval(t *testing.T) {
+	gl := packageRegistryGitLab{level: gitlab.EnabledAccessControl, packagesEnabled: true}
+	e := &external{client: &fake.MockClient{
+		MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+			return gl.project(), &gitlab.Response{}, nil
+		},
+		MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+			gl.edit(opt)
+			return gl.project(), &gitlab.Response{}, nil
+		},
+		MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+		},
+	}}
+	cr := project(withExternalName(extName), withSpec(v1alpha1.ProjectParameters{
+		PackageRegistryAccessLevel: ptr.To(v1alpha1.EnabledAccessControl),
+	}))
+	reconcile := func(step string) {
+		t.Helper()
+		for range 4 {
+			obs, err := e.Observe(context.Background(), cr)
+			if err != nil {
+				t.Fatalf("%s: Observe(...): %v", step, err)
+			}
+			if obs.ResourceUpToDate {
+				return
+			}
+			if _, err := e.Update(context.Background(), cr); err != nil {
+				t.Fatalf("%s: Update(...): %v", step, err)
+			}
+		}
+		t.Fatalf("%s: project never became up to date", step)
+	}
+
+	reconcile("level enabled")
+	cr.Spec.ForProvider.PackageRegistryAccessLevel = ptr.To(v1alpha1.DisabledAccessControl)
+	reconcile("level disabled")
+	editsBefore := gl.edits
+	cr.Spec.ForProvider.PackageRegistryAccessLevel = nil
+	reconcile("level removed")
+
+	got := struct {
+		Level         gitlab.AccessControlValue
+		Packages      bool
+		EditsOnRemove int
+	}{gl.level, gl.packagesEnabled, gl.edits - editsBefore}
+	want := struct {
+		Level         gitlab.AccessControlValue
+		Packages      bool
+		EditsOnRemove int
+	}{gitlab.DisabledAccessControl, false, 0}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("after removing the level: -want, +got:\n%s", diff)
 	}
 }

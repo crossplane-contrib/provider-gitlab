@@ -300,6 +300,19 @@ func resolvePublicJobsValue(p *v1alpha1.ProjectParameters) *bool {
 	return value
 }
 
+// ResolvePackagesEnabled returns the packages_enabled value to send and to
+// compare. packageRegistryAccessLevel takes precedence over the deprecated
+// packagesEnabled: GitLab's REST API writes the access level without updating
+// packages_enabled, and package access is still gated on packages_enabled, so
+// the value is derived from the level. Without a level, packagesEnabled is
+// used as before.
+func ResolvePackagesEnabled(p *v1alpha1.ProjectParameters) *bool {
+	if p.PackageRegistryAccessLevel == nil {
+		return p.PackagesEnabled
+	}
+	return new(*p.PackageRegistryAccessLevel != v1alpha1.DisabledAccessControl)
+}
+
 // GenerateCreateProjectOptions generates project creation options
 func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *gitlab.CreateProjectOptions {
 	// Name field overrides resource name
@@ -365,7 +378,7 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		InitializeWithReadme:                      p.InitializeWithReadme,
 		TemplateName:                              p.TemplateName,
 		UseCustomTemplate:                         p.UseCustomTemplate,
-		PackagesEnabled:                           p.PackagesEnabled, //nolint:staticcheck
+		PackagesEnabled:                           ResolvePackagesEnabled(p), //nolint:staticcheck
 		ServiceDeskEnabled:                        p.ServiceDeskEnabled,
 		AutocloseReferencedIssues:                 p.AutocloseReferencedIssues,
 		SuggestionCommitMessage:                   p.SuggestionCommitMessage,
@@ -444,7 +457,7 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		MirrorTriggerBuilds:                       p.MirrorTriggerBuilds,
 		OnlyMirrorProtectedBranches:               p.OnlyMirrorProtectedBranches,
 		MirrorOverwritesDivergedBranches:          p.MirrorOverwritesDivergedBranches,
-		PackagesEnabled:                           p.PackagesEnabled, //nolint:staticcheck
+		PackagesEnabled:                           ResolvePackagesEnabled(p), //nolint:staticcheck
 		ServiceDeskEnabled:                        p.ServiceDeskEnabled,
 		AutocloseReferencedIssues:                 p.AutocloseReferencedIssues,
 		SuggestionCommitMessage:                   p.SuggestionCommitMessage,
