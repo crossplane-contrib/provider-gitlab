@@ -9,7 +9,7 @@ PLATFORMS ?= linux_amd64 linux_arm64
 # kind-related versions
 KIND_VERSION = v0.24.0
 
-# golangci-lint must be built with a Go version >= the one targeted by go.mod
+# golangci-lint must be built with a Go version >= the toolchain directive in go.mod
 GOLANGCILINT_VERSION = 2.14.0
 
 # -include will silently skip missing files, which allows us
