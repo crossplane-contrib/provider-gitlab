@@ -719,9 +719,6 @@ spec:
                     type: string
                   gravatarEnabled:
                     type: boolean
-                  groupAuditEventsApiLimit:
-                    format: int64
-                    type: integer
                   groupDownloadExportLimit:
                     format: int64
                     type: integer
@@ -825,12 +822,6 @@ spec:
                     type: string
                   jiraConnectPublicKeyStorageEnabled:
                     type: boolean
-                  jobPlayLimitPerUserProject:
-                    format: int64
-                    type: integer
-                  jobRetryLimitPerUserProject:
-                    format: int64
-                    type: integer
                   keepLatestArtifact:
                     type: boolean
                   krokiEnabled:
@@ -998,16 +989,10 @@ spec:
                     type: boolean
                   personalAccessTokenPrefix:
                     type: string
-                  pipelineCancelLimitPerUserProject:
-                    format: int64
-                    type: integer
                   pipelineLimitPerProjectUserSha:
                     format: int64
                     type: integer
                   pipelineLimitPerUser:
-                    format: int64
-                    type: integer
-                  pipelineRetryLimitPerUserProject:
                     format: int64
                     type: integer
                   plantumlEnabled:
@@ -1020,9 +1005,6 @@ spec:
                     type: boolean
                   preventMergeRequestsCommittersApproval:
                     type: boolean
-                  projectAuditEventsApiLimit:
-                    format: int64
-                    type: integer
                   projectDownloadExportLimit:
                     format: int64
                     type: integer
@@ -1430,14 +1412,6 @@ spec:
                     format: int64
                     type: integer
                   throttleAuthenticatedGitLFSRequestsPerPeriod:
-                    format: int64
-                    type: integer
-                  throttleAuthenticatedMCPEnabled:
-                    type: boolean
-                  throttleAuthenticatedMCPPeriodInSeconds:
-                    format: int64
-                    type: integer
-                  throttleAuthenticatedMCPRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleAuthenticatedPackagesApiEnabled:
@@ -2187,9 +2161,6 @@ spec:
                     type: string
                   gravatarEnabled:
                     type: boolean
-                  groupAuditEventsApiLimit:
-                    format: int64
-                    type: integer
                   groupDownloadExportLimit:
                     format: int64
                     type: integer
@@ -2276,12 +2247,6 @@ spec:
                     type: string
                   jiraConnectPublicKeyStorageEnabled:
                     type: boolean
-                  jobPlayLimitPerUserProject:
-                    format: int64
-                    type: integer
-                  jobRetryLimitPerUserProject:
-                    format: int64
-                    type: integer
                   keepLatestArtifact:
                     type: boolean
                   krokiEnabled:
@@ -2429,16 +2394,10 @@ spec:
                     type: boolean
                   personalAccessTokenPrefix:
                     type: string
-                  pipelineCancelLimitPerUserProject:
-                    format: int64
-                    type: integer
                   pipelineLimitPerProjectUserSha:
                     format: int64
                     type: integer
                   pipelineLimitPerUser:
-                    format: int64
-                    type: integer
-                  pipelineRetryLimitPerUserProject:
                     format: int64
                     type: integer
                   plantumlEnabled:
@@ -2451,9 +2410,6 @@ spec:
                     type: boolean
                   preventMergeRequestsCommittersApproval:
                     type: boolean
-                  projectAuditEventsApiLimit:
-                    format: int64
-                    type: integer
                   projectDownloadExportLimit:
                     format: int64
                     type: integer
@@ -2701,14 +2657,6 @@ spec:
                     format: int64
                     type: integer
                   throttleAuthenticatedGitLFSRequestsPerPeriod:
-                    format: int64
-                    type: integer
-                  throttleAuthenticatedMCPEnabled:
-                    type: boolean
-                  throttleAuthenticatedMCPPeriodInSeconds:
-                    format: int64
-                    type: integer
-                  throttleAuthenticatedMCPRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleAuthenticatedPackagesApiEnabled:

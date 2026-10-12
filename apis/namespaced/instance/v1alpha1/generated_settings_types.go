@@ -405,8 +405,6 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	GravatarEnabled *bool `json:"gravatarEnabled,omitempty"`
 	// +optional
-	GroupAuditEventsAPILimit *int64 `json:"groupAuditEventsApiLimit,omitempty"`
-	// +optional
 	GroupDownloadExportLimit *int64 `json:"groupDownloadExportLimit,omitempty"`
 	// +optional
 	GroupExportLimit *int64 `json:"groupExportLimit,omitempty"`
@@ -468,10 +466,6 @@ type ApplicationSettingsParameters struct {
 	JiraConnectPublicKeyStorageEnabled *bool `json:"jiraConnectPublicKeyStorageEnabled,omitempty"`
 	// +optional
 	JiraConnectProxyURL *string `json:"jiraConnectProxyUrl,omitempty"`
-	// +optional
-	JobPlayLimitPerUserProject *int64 `json:"jobPlayLimitPerUserProject,omitempty"`
-	// +optional
-	JobRetryLimitPerUserProject *int64 `json:"jobRetryLimitPerUserProject,omitempty"`
 	// +optional
 	KeepLatestArtifact *bool `json:"keepLatestArtifact,omitempty"`
 	// +optional
@@ -585,11 +579,7 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	PersonalAccessTokenPrefix *string `json:"personalAccessTokenPrefix,omitempty"`
 	// +optional
-	PipelineCancelLimitPerUserProject *int64 `json:"pipelineCancelLimitPerUserProject,omitempty"`
-	// +optional
 	PipelineLimitPerUser *int64 `json:"pipelineLimitPerUser,omitempty"`
-	// +optional
-	PipelineRetryLimitPerUserProject *int64 `json:"pipelineRetryLimitPerUserProject,omitempty"`
 	// +optional
 	PlantumlEnabled *bool `json:"plantumlEnabled,omitempty"`
 	// +optional
@@ -602,8 +592,6 @@ type ApplicationSettingsParameters struct {
 	PreventMergeRequestsAuthorApproval *bool `json:"preventMergeRequestsAuthorApproval,omitempty"`
 	// +optional
 	PreventMergeRequestsCommittersApproval *bool `json:"preventMergeRequestsCommittersApproval,omitempty"`
-	// +optional
-	ProjectAuditEventsAPILimit *int64 `json:"projectAuditEventsApiLimit,omitempty"`
 	// +optional
 	ProjectDownloadExportLimit *int64 `json:"projectDownloadExportLimit,omitempty"`
 	// +optional
@@ -837,12 +825,6 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ThrottleAuthenticatedGitLFSRequestsPerPeriod *int64 `json:"throttleAuthenticatedGitLFSRequestsPerPeriod,omitempty"`
 	// +optional
-	ThrottleAuthenticatedMCPEnabled *bool `json:"throttleAuthenticatedMCPEnabled,omitempty"`
-	// +optional
-	ThrottleAuthenticatedMCPPeriodInSeconds *int64 `json:"throttleAuthenticatedMCPPeriodInSeconds,omitempty"`
-	// +optional
-	ThrottleAuthenticatedMCPRequestsPerPeriod *int64 `json:"throttleAuthenticatedMCPRequestsPerPeriod,omitempty"`
-	// +optional
 	ThrottleAuthenticatedPackagesAPIEnabled *bool `json:"throttleAuthenticatedPackagesApiEnabled,omitempty"`
 	// +optional
 	ThrottleAuthenticatedPackagesAPIPeriodInSeconds *int64 `json:"throttleAuthenticatedPackagesApiPeriodInSeconds,omitempty"`
@@ -1033,8 +1015,6 @@ type ApplicationSettingsObservation struct {
 	ConcurrentRelationExportLimit int64 `json:"concurrentRelationExportLimit"`
 	// +optional
 	GitPushPipelineLimit int64 `json:"gitPushPipelineLimit"`
-	// +optional
-	GroupAuditEventsAPILimit int64 `json:"groupAuditEventsApiLimit"`
 	// +optional
 	GroupSecretsLimit int64 `json:"groupSecretsLimit"`
 	// +optional
@@ -1418,10 +1398,6 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	JiraConnectProxyURL string `json:"jiraConnectProxyUrl"`
 	// +optional
-	JobPlayLimitPerUserProject int64 `json:"jobPlayLimitPerUserProject"`
-	// +optional
-	JobRetryLimitPerUserProject int64 `json:"jobRetryLimitPerUserProject"`
-	// +optional
 	KeepLatestArtifact bool `json:"keepLatestArtifact"`
 	// +optional
 	KrokiEnabled bool `json:"krokiEnabled"`
@@ -1530,13 +1506,9 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	PersonalAccessTokenPrefix string `json:"personalAccessTokenPrefix"`
 	// +optional
-	PipelineCancelLimitPerUserProject int64 `json:"pipelineCancelLimitPerUserProject"`
-	// +optional
 	PipelineLimitPerProjectUserSha int64 `json:"pipelineLimitPerProjectUserSha"`
 	// +optional
 	PipelineLimitPerUser int64 `json:"pipelineLimitPerUser"`
-	// +optional
-	PipelineRetryLimitPerUserProject int64 `json:"pipelineRetryLimitPerUserProject"`
 	// +optional
 	PlantumlEnabled bool `json:"plantumlEnabled"`
 	// +optional
@@ -1547,8 +1519,6 @@ type ApplicationSettingsObservation struct {
 	PreventMergeRequestsAuthorApproval bool `json:"preventMergeRequestsAuthorApproval"`
 	// +optional
 	PreventMergeRequestsCommittersApproval bool `json:"preventMergeRequestsCommittersApproval"`
-	// +optional
-	ProjectAuditEventsAPILimit int64 `json:"projectAuditEventsApiLimit"`
 	// +optional
 	ProjectDownloadExportLimit int64 `json:"projectDownloadExportLimit"`
 	// +optional
@@ -1749,12 +1719,6 @@ type ApplicationSettingsObservation struct {
 	ThrottleAuthenticatedGitLFSPeriodInSeconds int64 `json:"throttleAuthenticatedGitLFSPeriodInSeconds"`
 	// +optional
 	ThrottleAuthenticatedGitLFSRequestsPerPeriod int64 `json:"throttleAuthenticatedGitLFSRequestsPerPeriod"`
-	// +optional
-	ThrottleAuthenticatedMCPEnabled bool `json:"throttleAuthenticatedMCPEnabled"`
-	// +optional
-	ThrottleAuthenticatedMCPPeriodInSeconds int64 `json:"throttleAuthenticatedMCPPeriodInSeconds"`
-	// +optional
-	ThrottleAuthenticatedMCPRequestsPerPeriod int64 `json:"throttleAuthenticatedMCPRequestsPerPeriod"`
 	// +optional
 	ThrottleAuthenticatedPackagesAPIEnabled bool `json:"throttleAuthenticatedPackagesApiEnabled"`
 	// +optional

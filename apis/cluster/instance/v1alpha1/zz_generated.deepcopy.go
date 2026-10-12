@@ -1546,11 +1546,6 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(bool)
 		**out = **in
 	}
-	if in.GroupAuditEventsAPILimit != nil {
-		in, out := &in.GroupAuditEventsAPILimit, &out.GroupAuditEventsAPILimit
-		*out = new(int64)
-		**out = **in
-	}
 	if in.GroupDownloadExportLimit != nil {
 		in, out := &in.GroupDownloadExportLimit, &out.GroupDownloadExportLimit
 		*out = new(int64)
@@ -1708,16 +1703,6 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	if in.JiraConnectProxyURL != nil {
 		in, out := &in.JiraConnectProxyURL, &out.JiraConnectProxyURL
 		*out = new(string)
-		**out = **in
-	}
-	if in.JobPlayLimitPerUserProject != nil {
-		in, out := &in.JobPlayLimitPerUserProject, &out.JobPlayLimitPerUserProject
-		*out = new(int64)
-		**out = **in
-	}
-	if in.JobRetryLimitPerUserProject != nil {
-		in, out := &in.JobRetryLimitPerUserProject, &out.JobRetryLimitPerUserProject
-		*out = new(int64)
 		**out = **in
 	}
 	if in.KeepLatestArtifact != nil {
@@ -2014,18 +1999,8 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(string)
 		**out = **in
 	}
-	if in.PipelineCancelLimitPerUserProject != nil {
-		in, out := &in.PipelineCancelLimitPerUserProject, &out.PipelineCancelLimitPerUserProject
-		*out = new(int64)
-		**out = **in
-	}
 	if in.PipelineLimitPerUser != nil {
 		in, out := &in.PipelineLimitPerUser, &out.PipelineLimitPerUser
-		*out = new(int64)
-		**out = **in
-	}
-	if in.PipelineRetryLimitPerUserProject != nil {
-		in, out := &in.PipelineRetryLimitPerUserProject, &out.PipelineRetryLimitPerUserProject
 		*out = new(int64)
 		**out = **in
 	}
@@ -2057,11 +2032,6 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	if in.PreventMergeRequestsCommittersApproval != nil {
 		in, out := &in.PreventMergeRequestsCommittersApproval, &out.PreventMergeRequestsCommittersApproval
 		*out = new(bool)
-		**out = **in
-	}
-	if in.ProjectAuditEventsAPILimit != nil {
-		in, out := &in.ProjectAuditEventsAPILimit, &out.ProjectAuditEventsAPILimit
-		*out = new(int64)
 		**out = **in
 	}
 	if in.ProjectDownloadExportLimit != nil {
@@ -2655,21 +2625,6 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 	}
 	if in.ThrottleAuthenticatedGitLFSRequestsPerPeriod != nil {
 		in, out := &in.ThrottleAuthenticatedGitLFSRequestsPerPeriod, &out.ThrottleAuthenticatedGitLFSRequestsPerPeriod
-		*out = new(int64)
-		**out = **in
-	}
-	if in.ThrottleAuthenticatedMCPEnabled != nil {
-		in, out := &in.ThrottleAuthenticatedMCPEnabled, &out.ThrottleAuthenticatedMCPEnabled
-		*out = new(bool)
-		**out = **in
-	}
-	if in.ThrottleAuthenticatedMCPPeriodInSeconds != nil {
-		in, out := &in.ThrottleAuthenticatedMCPPeriodInSeconds, &out.ThrottleAuthenticatedMCPPeriodInSeconds
-		*out = new(int64)
-		**out = **in
-	}
-	if in.ThrottleAuthenticatedMCPRequestsPerPeriod != nil {
-		in, out := &in.ThrottleAuthenticatedMCPRequestsPerPeriod, &out.ThrottleAuthenticatedMCPRequestsPerPeriod
 		*out = new(int64)
 		**out = **in
 	}

@@ -70,6 +70,22 @@ var (
 		"keyid",
 		"secret",
 	}
+
+	// unreleasedFields are settings that client-go models but no released
+	// GitLab (19.4) declares yet. GitLab drops an undeclared parameter and
+	// never returns it, so a value set for one of them could never converge.
+	// Remove an entry once the provider's supported GitLab releases have it.
+	unreleasedFields = map[string]bool{
+		"GroupAuditEventsAPILimit":                  true,
+		"ProjectAuditEventsAPILimit":                true,
+		"JobPlayLimitPerUserProject":                true,
+		"JobRetryLimitPerUserProject":               true,
+		"PipelineCancelLimitPerUserProject":         true,
+		"PipelineRetryLimitPerUserProject":          true,
+		"ThrottleAuthenticatedMCPEnabled":           true,
+		"ThrottleAuthenticatedMCPPeriodInSeconds":   true,
+		"ThrottleAuthenticatedMCPRequestsPerPeriod": true,
+	}
 )
 
 func main() {
@@ -101,6 +117,10 @@ func generateStruct(out *strings.Builder, name string, t reflect.Type, omitEmpty
 
 		// Skip unexported fields
 		if len(fieldName) > 0 && unicode.IsLower([]rune(fieldName)[0]) {
+			continue
+		}
+
+		if unreleasedFields[fieldName] {
 			continue
 		}
 

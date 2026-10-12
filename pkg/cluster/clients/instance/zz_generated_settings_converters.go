@@ -223,7 +223,6 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.GrafanaEnabled = p.GrafanaEnabled
 	o.GrafanaURL = p.GrafanaURL
 	o.GravatarEnabled = p.GravatarEnabled
-	o.GroupAuditEventsAPILimit = p.GroupAuditEventsAPILimit
 	o.GroupDownloadExportLimit = p.GroupDownloadExportLimit
 	o.GroupExportLimit = p.GroupExportLimit
 	o.GroupImportLimit = p.GroupImportLimit
@@ -254,8 +253,6 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.JiraConnectApplicationKey = p.JiraConnectApplicationKey
 	o.JiraConnectPublicKeyStorageEnabled = p.JiraConnectPublicKeyStorageEnabled
 	o.JiraConnectProxyURL = p.JiraConnectProxyURL
-	o.JobPlayLimitPerUserProject = p.JobPlayLimitPerUserProject
-	o.JobRetryLimitPerUserProject = p.JobRetryLimitPerUserProject
 	o.KeepLatestArtifact = p.KeepLatestArtifact
 	o.KrokiEnabled = p.KrokiEnabled
 	o.KrokiFormats = p.KrokiFormats
@@ -311,16 +308,13 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.PasswordLowercaseRequired = p.PasswordLowercaseRequired
 	o.PerformanceBarAllowedGroupPath = p.PerformanceBarAllowedGroupPath
 	o.PersonalAccessTokenPrefix = p.PersonalAccessTokenPrefix
-	o.PipelineCancelLimitPerUserProject = p.PipelineCancelLimitPerUserProject
 	o.PipelineLimitPerUser = p.PipelineLimitPerUser
-	o.PipelineRetryLimitPerUserProject = p.PipelineRetryLimitPerUserProject
 	o.PlantumlEnabled = p.PlantumlEnabled
 	o.PlantumlURL = p.PlantumlURL
 	o.PipelineLimitPerProjectUserSha = p.PipelineLimitPerProjectUserSha
 	o.PollingIntervalMultiplier = p.PollingIntervalMultiplier
 	o.PreventMergeRequestsAuthorApproval = p.PreventMergeRequestsAuthorApproval
 	o.PreventMergeRequestsCommittersApproval = p.PreventMergeRequestsCommittersApproval
-	o.ProjectAuditEventsAPILimit = p.ProjectAuditEventsAPILimit
 	o.ProjectDownloadExportLimit = p.ProjectDownloadExportLimit
 	o.ProjectExportEnabled = p.ProjectExportEnabled
 	o.ProjectExportLimit = p.ProjectExportLimit
@@ -429,9 +423,6 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.ThrottleAuthenticatedGitLFSEnabled = p.ThrottleAuthenticatedGitLFSEnabled
 	o.ThrottleAuthenticatedGitLFSPeriodInSeconds = p.ThrottleAuthenticatedGitLFSPeriodInSeconds
 	o.ThrottleAuthenticatedGitLFSRequestsPerPeriod = p.ThrottleAuthenticatedGitLFSRequestsPerPeriod
-	o.ThrottleAuthenticatedMCPEnabled = p.ThrottleAuthenticatedMCPEnabled
-	o.ThrottleAuthenticatedMCPPeriodInSeconds = p.ThrottleAuthenticatedMCPPeriodInSeconds
-	o.ThrottleAuthenticatedMCPRequestsPerPeriod = p.ThrottleAuthenticatedMCPRequestsPerPeriod
 	o.ThrottleAuthenticatedPackagesAPIEnabled = p.ThrottleAuthenticatedPackagesAPIEnabled
 	o.ThrottleAuthenticatedPackagesAPIPeriodInSeconds = p.ThrottleAuthenticatedPackagesAPIPeriodInSeconds
 	o.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod = p.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod
@@ -535,7 +526,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.ConcurrentRelationBatchExportLimit = g.ConcurrentRelationBatchExportLimit
 	o.ConcurrentRelationExportLimit = g.ConcurrentRelationExportLimit
 	o.GitPushPipelineLimit = g.GitPushPipelineLimit
-	o.GroupAuditEventsAPILimit = g.GroupAuditEventsAPILimit
 	o.GroupSecretsLimit = g.GroupSecretsLimit
 	o.ID = g.ID
 	o.AbuseNotificationEmail = g.AbuseNotificationEmail
@@ -730,8 +720,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.IssuesCreateLimit = g.IssuesCreateLimit
 	o.JiraConnectPublicKeyStorageEnabled = g.JiraConnectPublicKeyStorageEnabled
 	o.JiraConnectProxyURL = g.JiraConnectProxyURL
-	o.JobPlayLimitPerUserProject = g.JobPlayLimitPerUserProject
-	o.JobRetryLimitPerUserProject = g.JobRetryLimitPerUserProject
 	o.KeepLatestArtifact = g.KeepLatestArtifact
 	o.KrokiEnabled = g.KrokiEnabled
 	o.KrokiFormats = g.KrokiFormats
@@ -786,16 +774,13 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.PasswordLowercaseRequired = g.PasswordLowercaseRequired
 	o.PerformanceBarAllowedGroupPath = g.PerformanceBarAllowedGroupPath
 	o.PersonalAccessTokenPrefix = g.PersonalAccessTokenPrefix
-	o.PipelineCancelLimitPerUserProject = g.PipelineCancelLimitPerUserProject
 	o.PipelineLimitPerProjectUserSha = g.PipelineLimitPerProjectUserSha
 	o.PipelineLimitPerUser = g.PipelineLimitPerUser
-	o.PipelineRetryLimitPerUserProject = g.PipelineRetryLimitPerUserProject
 	o.PlantumlEnabled = g.PlantumlEnabled
 	o.PlantumlURL = g.PlantumlURL
 	o.PollingIntervalMultiplier = g.PollingIntervalMultiplier
 	o.PreventMergeRequestsAuthorApproval = g.PreventMergeRequestsAuthorApproval
 	o.PreventMergeRequestsCommittersApproval = g.PreventMergeRequestsCommittersApproval
-	o.ProjectAuditEventsAPILimit = g.ProjectAuditEventsAPILimit
 	o.ProjectDownloadExportLimit = g.ProjectDownloadExportLimit
 	o.ProjectExportEnabled = g.ProjectExportEnabled
 	o.ProjectExportLimit = g.ProjectExportLimit
@@ -896,9 +881,6 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.ThrottleAuthenticatedGitLFSEnabled = g.ThrottleAuthenticatedGitLFSEnabled
 	o.ThrottleAuthenticatedGitLFSPeriodInSeconds = g.ThrottleAuthenticatedGitLFSPeriodInSeconds
 	o.ThrottleAuthenticatedGitLFSRequestsPerPeriod = g.ThrottleAuthenticatedGitLFSRequestsPerPeriod
-	o.ThrottleAuthenticatedMCPEnabled = g.ThrottleAuthenticatedMCPEnabled
-	o.ThrottleAuthenticatedMCPPeriodInSeconds = g.ThrottleAuthenticatedMCPPeriodInSeconds
-	o.ThrottleAuthenticatedMCPRequestsPerPeriod = g.ThrottleAuthenticatedMCPRequestsPerPeriod
 	o.ThrottleAuthenticatedPackagesAPIEnabled = g.ThrottleAuthenticatedPackagesAPIEnabled
 	o.ThrottleAuthenticatedPackagesAPIPeriodInSeconds = g.ThrottleAuthenticatedPackagesAPIPeriodInSeconds
 	o.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod = g.ThrottleAuthenticatedPackagesAPIRequestsPerPeriod
@@ -1530,9 +1512,6 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.GravatarEnabled, g.GravatarEnabled) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr(p.GroupAuditEventsAPILimit, g.GroupAuditEventsAPILimit) {
-		return false
-	}
 	if !clients.IsComparableEqualToComparablePtr(p.GroupDownloadExportLimit, g.GroupDownloadExportLimit) {
 		return false
 	}
@@ -1621,12 +1600,6 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.JiraConnectProxyURL, g.JiraConnectProxyURL) {
-		return false
-	}
-	if !clients.IsComparableEqualToComparablePtr(p.JobPlayLimitPerUserProject, g.JobPlayLimitPerUserProject) {
-		return false
-	}
-	if !clients.IsComparableEqualToComparablePtr(p.JobRetryLimitPerUserProject, g.JobRetryLimitPerUserProject) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.KeepLatestArtifact, g.KeepLatestArtifact) {
@@ -1794,13 +1767,7 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 	if !clients.IsComparableEqualToComparablePtr(p.PersonalAccessTokenPrefix, g.PersonalAccessTokenPrefix) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr(p.PipelineCancelLimitPerUserProject, g.PipelineCancelLimitPerUserProject) {
-		return false
-	}
 	if !clients.IsComparableEqualToComparablePtr(p.PipelineLimitPerUser, g.PipelineLimitPerUser) {
-		return false
-	}
-	if !clients.IsComparableEqualToComparablePtr(p.PipelineRetryLimitPerUserProject, g.PipelineRetryLimitPerUserProject) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.PlantumlEnabled, g.PlantumlEnabled) {
@@ -1819,9 +1786,6 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.PreventMergeRequestsCommittersApproval, g.PreventMergeRequestsCommittersApproval) {
-		return false
-	}
-	if !clients.IsComparableEqualToComparablePtr(p.ProjectAuditEventsAPILimit, g.ProjectAuditEventsAPILimit) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ProjectDownloadExportLimit, g.ProjectDownloadExportLimit) {
@@ -2146,15 +2110,6 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedGitLFSRequestsPerPeriod, g.ThrottleAuthenticatedGitLFSRequestsPerPeriod) {
-		return false
-	}
-	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedMCPEnabled, g.ThrottleAuthenticatedMCPEnabled) {
-		return false
-	}
-	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedMCPPeriodInSeconds, g.ThrottleAuthenticatedMCPPeriodInSeconds) {
-		return false
-	}
-	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedMCPRequestsPerPeriod, g.ThrottleAuthenticatedMCPRequestsPerPeriod) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ThrottleAuthenticatedPackagesAPIEnabled, g.ThrottleAuthenticatedPackagesAPIEnabled) {
