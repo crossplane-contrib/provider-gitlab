@@ -19,7 +19,7 @@ limitations under the License.
 package instance
 
 import (
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
@@ -129,7 +129,7 @@ func v1Alpha1DefaultBranchProtectionDefaultsOptionsPtrToGitlabBranchProtectionDe
 				AccessLevel: &accessLevel,
 			}
 		}
-		result.AllowedToMerge = &allowedToMerge
+		result.AllowedToMerge = allowedToMerge
 	}
 
 	if input.AllowedToPush != nil {
@@ -140,7 +140,7 @@ func v1Alpha1DefaultBranchProtectionDefaultsOptionsPtrToGitlabBranchProtectionDe
 				AccessLevel: &accessLevel,
 			}
 		}
-		result.AllowedToPush = &allowedToPush
+		result.AllowedToPush = allowedToPush
 	}
 
 	return result

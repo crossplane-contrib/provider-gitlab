@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 )
 
 func intPtr(v int) *int { return &v }

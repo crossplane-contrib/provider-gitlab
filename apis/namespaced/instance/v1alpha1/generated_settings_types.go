@@ -29,6 +29,8 @@ import (
 // This struct was generated from gitlab.UpdateSettingsOptions struct, with just a rework of the json tags.
 type ApplicationSettingsParameters struct {
 	// +optional
+	AIActionAPIRateLimit *int64 `json:"aiActionApiRateLimit,omitempty"`
+	// +optional
 	AbuseNotificationEmail *string `json:"abuseNotificationEmail,omitempty"`
 	// +optional
 	AdminMode *bool `json:"adminMode,omitempty"`
@@ -75,17 +77,19 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	AssetProxyURL *string `json:"assetProxyUrl,omitempty"`
 	// +optional
+	AuditEventsAPILimit *int64 `json:"auditEventsApiLimit,omitempty"`
+	// +optional
 	AuthorizedKeysEnabled *bool `json:"authorizedKeysEnabled,omitempty"`
 	// +optional
 	AutoBanUserOnExcessiveProjectsDownload *bool `json:"autoBanUserOnExcessiveProjectsDownload,omitempty"`
 	// +optional
-	AutocompleteUsers *int64 `json:"autocompleteUsers,omitempty"`
-	// +optional
-	AutocompleteUsersUnauthenticated *int64 `json:"autocompleteUsersUnauthenticated,omitempty"`
+	AutocompleteUsersLimit *int64 `json:"autocompleteUsersLimit,omitempty"`
 	// +optional
 	AutoDevOpsDomain *string `json:"autoDevOpsDomain,omitempty"`
 	// +optional
 	AutoDevOpsEnabled *bool `json:"autoDevOpsEnabled,omitempty"`
+	// +optional
+	AutocompleteUsersUnauthenticatedLimit *int64 `json:"autocompleteUsersUnauthenticatedLimit,omitempty"`
 	// +optional
 	AutomaticPurchasedStorageAllocation *bool `json:"automaticPurchasedStorageAllocation,omitempty"`
 	// +optional
@@ -94,6 +98,8 @@ type ApplicationSettingsParameters struct {
 	BulkImportEnabled *bool `json:"bulkImportEnabled,omitempty"`
 	// +optional
 	BulkImportMaxDownloadFileSize *int64 `json:"bulkImportMaxDownloadFileSize,omitempty"`
+	// +optional
+	CILintLimitPerUser *int64 `json:"ciLintLimitPerUser,omitempty"`
 	// +optional
 	CanCreateGroup *bool `json:"canCreateGroup,omitempty"`
 	// +optional
@@ -116,6 +122,12 @@ type ApplicationSettingsParameters struct {
 	ConcurrentBitbucketServerImportJobsLimit *int64 `json:"concurrentBitbucketServerImportJobsLimit,omitempty"`
 	// +optional
 	ConcurrentGitHubImportJobsLimit *int64 `json:"concurrentGitHubImportJobsLimit,omitempty"`
+	// +optional
+	ConcurrentPullRequestImportJobsLimit *int64 `json:"concurrentPullRequestImportJobsLimit,omitempty"`
+	// +optional
+	ConcurrentRelationBatchExportLimit *int64 `json:"concurrentRelationBatchExportLimit,omitempty"`
+	// +optional
+	ConcurrentRelationExportLimit *int64 `json:"concurrentRelationExportLimit,omitempty"`
 	// +optional
 	ContainerExpirationPoliciesEnableHistoricEntries *bool `json:"containerExpirationPoliciesEnableHistoricEntries,omitempty"`
 	// +optional
@@ -361,6 +373,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	GeoStatusTimeout *int64 `json:"geoStatusTimeout,omitempty"`
 	// +optional
+	GitPushPipelineLimit *int64 `json:"gitPushPipelineLimit,omitempty"`
+	// +optional
 	GitRateLimitUsersAlertlist *[]int64 `json:"gitRateLimitUsersAlertlist,omitempty"`
 	// +optional
 	GitTwoFactorSessionExpiry *int64 `json:"gitTwoFactorSessionExpiry,omitempty"`
@@ -401,6 +415,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	GroupRunnerTokenExpirationInterval *int64 `json:"groupRunnerTokenExpirationInterval,omitempty"`
 	// +optional
+	GroupSecretsLimit *int64 `json:"groupSecretsLimit,omitempty"`
+	// +optional
 	HTMLEmailsEnabled *bool `json:"htmlEmailsEnabled,omitempty"`
 	// +optional
 	HashedStorageEnabled *bool `json:"hashedStorageEnabled,omitempty"`
@@ -422,6 +438,8 @@ type ApplicationSettingsParameters struct {
 	HousekeepingEnabled *bool `json:"housekeepingEnabled,omitempty"`
 	// +optional
 	HousekeepingOptimizeRepositoryPeriod *int64 `json:"housekeepingOptimizeRepositoryPeriod,omitempty"`
+	// +optional
+	ImportJobsConcurrencyLimit *int64 `json:"importJobsConcurrencyLimit,omitempty"`
 	// +optional
 	ImportSources *[]string `json:"importSources,omitempty"`
 	// +optional
@@ -484,6 +502,10 @@ type ApplicationSettingsParameters struct {
 	MaxDecompressedArchiveSize *int64 `json:"maxDecompressedArchiveSize,omitempty"`
 	// +optional
 	MaxExportSize *int64 `json:"maxExportSize,omitempty"`
+	// +optional
+	MaxGitHubResponseSizeLimit *int64 `json:"maxGitHubResponseSizeLimit,omitempty"`
+	// +optional
+	MaxHTTPResponseSizeLimit *int64 `json:"maxHTTPResponseSizeLimit,omitempty"`
 	// +optional
 	MaxImportRemoteFileSize *int64 `json:"maxImportRemoteFileSize,omitempty"`
 	// +optional
@@ -557,6 +579,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	PersonalAccessTokenPrefix *string `json:"personalAccessTokenPrefix,omitempty"`
 	// +optional
+	PipelineLimitPerUser *int64 `json:"pipelineLimitPerUser,omitempty"`
+	// +optional
 	PlantumlEnabled *bool `json:"plantumlEnabled,omitempty"`
 	// +optional
 	PlantumlURL *string `json:"plantumlUrl,omitempty"`
@@ -581,6 +605,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	ProjectRunnerTokenExpirationInterval *int64 `json:"projectRunnerTokenExpirationInterval,omitempty"`
 	// +optional
+	ProjectSecretsLimit *int64 `json:"projectSecretsLimit,omitempty"`
+	// +optional
 	ProjectsAPIRateLimitUnauthenticated *int64 `json:"projectsApiRateLimitUnauthenticated,omitempty"`
 	// +optional
 	PrometheusMetricsEnabled *bool `json:"prometheusMetricsEnabled,omitempty"`
@@ -600,6 +626,8 @@ type ApplicationSettingsParameters struct {
 	RateLimitingResponseText *string `json:"rateLimitingResponseText,omitempty"`
 	// +optional
 	RawBlobRequestLimit *int64 `json:"rawBlobRequestLimit,omitempty"`
+	// +optional
+	RawBlobRequestLimitUnauthenticated *int64 `json:"rawBlobRequestLimitUnauthenticated,omitempty"`
 	// +optional
 	RecaptchaEnabled *bool `json:"recaptchaEnabled,omitempty"`
 	// +optional
@@ -635,7 +663,17 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	RestrictedVisibilityLevels *[]string `json:"restrictedVisibilityLevels,omitempty"`
 	// +optional
+	RunnerJobsEndpointsAPILimit *int64 `json:"runnerJobsEndpointsApiLimit,omitempty"`
+	// +optional
+	RunnerJobsPatchTraceAPILimit *int64 `json:"runnerJobsPatchTraceApiLimit,omitempty"`
+	// +optional
+	RunnerJobsRequestAPILimit *int64 `json:"runnerJobsRequestApiLimit,omitempty"`
+	// +optional
 	RunnerTokenExpirationInterval *int64 `json:"runnerTokenExpirationInterval,omitempty"`
+	// +optional
+	ScanExecutionPoliciesActionLimit *int64 `json:"scanExecutionPoliciesActionLimit,omitempty"`
+	// +optional
+	ScanExecutionPoliciesScheduleLimit *int64 `json:"scanExecutionPoliciesScheduleLimit,omitempty"`
 	// +optional
 	SearchRateLimit *int64 `json:"searchRateLimit,omitempty"`
 	// +optional
@@ -745,6 +783,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	SuggestPipelineEnabled *bool `json:"suggestPipelineEnabled,omitempty"`
 	// +optional
+	TagsCreateLimit *int64 `json:"tagsCreateLimit,omitempty"`
+	// +optional
 	TerminalMaxSessionTime *int64 `json:"terminalMaxSessionTime,omitempty"`
 	// +optional
 	Terms *string `json:"terms,omitempty"`
@@ -754,6 +794,12 @@ type ApplicationSettingsParameters struct {
 	ThrottleAuthenticatedAPIPeriodInSeconds *int64 `json:"throttleAuthenticatedApiPeriodInSeconds,omitempty"`
 	// +optional
 	ThrottleAuthenticatedAPIRequestsPerPeriod *int64 `json:"throttleAuthenticatedApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedDependencyProxyEnabled *bool `json:"throttleAuthenticatedDependencyProxyEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedDependencyProxyPeriodInSeconds *int64 `json:"throttleAuthenticatedDependencyProxyPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedDependencyProxyRequestsPerPeriod *int64 `json:"throttleAuthenticatedDependencyProxyRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedDeprecatedAPIEnabled *bool `json:"throttleAuthenticatedDeprecatedApiEnabled,omitempty"`
 	// +optional
@@ -766,6 +812,12 @@ type ApplicationSettingsParameters struct {
 	ThrottleAuthenticatedFilesAPIPeriodInSeconds *int64 `json:"throttleAuthenticatedFilesApiPeriodInSeconds,omitempty"`
 	// +optional
 	ThrottleAuthenticatedFilesAPIRequestsPerPeriod *int64 `json:"throttleAuthenticatedFilesApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleAuthenticatedGitHTTPEnabled *bool `json:"throttleAuthenticatedGitHTTPEnabled,omitempty"`
+	// +optional
+	ThrottleAuthenticatedGitHTTPPeriodInSeconds *int64 `json:"throttleAuthenticatedGitHTTPPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleAuthenticatedGitHTTPRequestsPerPeriod *int64 `json:"throttleAuthenticatedGitHTTPRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleAuthenticatedGitLFSEnabled *bool `json:"throttleAuthenticatedGitLFSEnabled,omitempty"`
 	// +optional
@@ -814,6 +866,12 @@ type ApplicationSettingsParameters struct {
 	ThrottleUnauthenticatedFilesAPIPeriodInSeconds *int64 `json:"throttleUnauthenticatedFilesApiPeriodInSeconds,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedFilesAPIRequestsPerPeriod *int64 `json:"throttleUnauthenticatedFilesApiRequestsPerPeriod,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedGitHTTPEnabled *bool `json:"throttleUnauthenticatedGitHTTPEnabled,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedGitHTTPPeriodInSeconds *int64 `json:"throttleUnauthenticatedGitHTTPPeriodInSeconds,omitempty"`
+	// +optional
+	ThrottleUnauthenticatedGitHTTPRequestsPerPeriod *int64 `json:"throttleUnauthenticatedGitHTTPRequestsPerPeriod,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedGitLFSEnabled *bool `json:"throttleUnauthenticatedGitLFSEnabled,omitempty"`
 	// +optional
@@ -869,6 +927,20 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	UserShowAddSSHKeyMessage *bool `json:"userShowAddSshKeyMessage,omitempty"`
 	// +optional
+	UsersAPILimitFollowers *int64 `json:"usersApiLimitFollowers,omitempty"`
+	// +optional
+	UsersAPILimitFollowing *int64 `json:"usersApiLimitFollowing,omitempty"`
+	// +optional
+	UsersAPILimitGPGKey *int64 `json:"usersApiLimitGpgKey,omitempty"`
+	// +optional
+	UsersAPILimitGPGKeys *int64 `json:"usersApiLimitGpgKeys,omitempty"`
+	// +optional
+	UsersAPILimitSSHKey *int64 `json:"usersApiLimitSshKey,omitempty"`
+	// +optional
+	UsersAPILimitSSHKeys *int64 `json:"usersApiLimitSshKeys,omitempty"`
+	// +optional
+	UsersAPILimitStatus *int64 `json:"usersApiLimitStatus,omitempty"`
+	// +optional
 	UsersGetByIDLimit *int64 `json:"usersGetByIdLimit,omitempty"`
 	// +optional
 	UsersGetByIDLimitAllowlistRaw *string `json:"usersGetByIdLimitAllowlistRaw,omitempty"`
@@ -876,6 +948,12 @@ type ApplicationSettingsParameters struct {
 	ValidRunnerRegistrars *[]string `json:"validRunnerRegistrars,omitempty"`
 	// +optional
 	VersionCheckEnabled *bool `json:"versionCheckEnabled,omitempty"`
+	// +optional
+	VirtualRegistriesEndpointsAPILimit *int64 `json:"virtualRegistriesEndpointsApiLimit,omitempty"`
+	// +optional
+	WebHookEventResendLimit *int64 `json:"webHookEventResendLimit,omitempty"`
+	// +optional
+	WebHookTestLimit *int64 `json:"webHookTestLimit,omitempty"`
 	// +optional
 	WebIDEClientsidePreviewEnabled *bool `json:"webIdEClientsidePreviewEnabled,omitempty"`
 	// +optional
@@ -910,11 +988,35 @@ type ApplicationSettingsParameters struct {
 	ThrottleUnauthenticatedPeriodInSeconds *int64 `json:"throttleUnauthenticatedPeriodInSeconds,omitempty"`
 	// +optional
 	ThrottleUnauthenticatedRequestsPerPeriod *int64 `json:"throttleUnauthenticatedRequestsPerPeriod,omitempty"`
+	// +optional
+	AutocompleteUsers *int64 `json:"autocompleteUsers,omitempty"`
+	// +optional
+	AutocompleteUsersUnauthenticated *int64 `json:"autocompleteUsersUnauthenticated,omitempty"`
 }
 
 // ApplicationSettingsObservation defines the observed state for ApplicationSettings
 // This struct was generated from gitlab.Settings struct, with just a rework of the json tags.
 type ApplicationSettingsObservation struct {
+	// +optional
+	AIActionAPIRateLimit int64 `json:"aiActionApiRateLimit"`
+	// +optional
+	AuditEventsAPILimit int64 `json:"auditEventsApiLimit"`
+	// +optional
+	AutocompleteUsersLimit int64 `json:"autocompleteUsersLimit"`
+	// +optional
+	AutocompleteUsersUnauthenticatedLimit int64 `json:"autocompleteUsersUnauthenticatedLimit"`
+	// +optional
+	CILintLimitPerUser int64 `json:"ciLintLimitPerUser"`
+	// +optional
+	ConcurrentPullRequestImportJobsLimit int64 `json:"concurrentPullRequestImportJobsLimit"`
+	// +optional
+	ConcurrentRelationBatchExportLimit int64 `json:"concurrentRelationBatchExportLimit"`
+	// +optional
+	ConcurrentRelationExportLimit int64 `json:"concurrentRelationExportLimit"`
+	// +optional
+	GitPushPipelineLimit int64 `json:"gitPushPipelineLimit"`
+	// +optional
+	GroupSecretsLimit int64 `json:"groupSecretsLimit"`
 	// +optional
 	ID int64 `json:"id"`
 	// +optional
@@ -959,10 +1061,6 @@ type ApplicationSettingsObservation struct {
 	AuthorizedKeysEnabled bool `json:"authorizedKeysEnabled"`
 	// +optional
 	AutoBanUserOnExcessiveProjectsDownload bool `json:"autoBanUserOnExcessiveProjectsDownload"`
-	// +optional
-	AutocompleteUsers int64 `json:"autocompleteUsers"`
-	// +optional
-	AutocompleteUsersUnauthenticated int64 `json:"autocompleteUsersUnauthenticated"`
 	// +optional
 	AutoDevOpsDomain string `json:"autoDevOpsDomain"`
 	// +optional
@@ -1276,6 +1374,8 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	HousekeepingOptimizeRepositoryPeriod int64 `json:"housekeepingOptimizeRepositoryPeriod"`
 	// +optional
+	ImportJobsConcurrencyLimit int64 `json:"importJobsConcurrencyLimit"`
+	// +optional
 	ImportSources []string `json:"importSources"`
 	// +optional
 	InactiveProjectsDeleteAfterMonths int64 `json:"inactiveProjectsDeleteAfterMonths"`
@@ -1329,6 +1429,10 @@ type ApplicationSettingsObservation struct {
 	MaxDecompressedArchiveSize int64 `json:"maxDecompressedArchiveSize"`
 	// +optional
 	MaxExportSize int64 `json:"maxExportSize"`
+	// +optional
+	MaxGitHubResponseSizeLimit int64 `json:"maxGitHubResponseSizeLimit"`
+	// +optional
+	MaxHTTPResponseSizeLimit int64 `json:"maxHTTPResponseSizeLimit"`
 	// +optional
 	MaxImportRemoteFileSize int64 `json:"maxImportRemoteFileSize"`
 	// +optional
@@ -1404,6 +1508,8 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	PipelineLimitPerProjectUserSha int64 `json:"pipelineLimitPerProjectUserSha"`
 	// +optional
+	PipelineLimitPerUser int64 `json:"pipelineLimitPerUser"`
+	// +optional
 	PlantumlEnabled bool `json:"plantumlEnabled"`
 	// +optional
 	PlantumlURL string `json:"plantumlUrl"`
@@ -1426,6 +1532,8 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	ProjectRunnerTokenExpirationInterval int64 `json:"projectRunnerTokenExpirationInterval"`
 	// +optional
+	ProjectSecretsLimit int64 `json:"projectSecretsLimit"`
+	// +optional
 	ProjectsAPIRateLimitUnauthenticated int64 `json:"projectsApiRateLimitUnauthenticated"`
 	// +optional
 	PrometheusMetricsEnabled bool `json:"prometheusMetricsEnabled"`
@@ -1445,6 +1553,8 @@ type ApplicationSettingsObservation struct {
 	RateLimitingResponseText string `json:"rateLimitingResponseText"`
 	// +optional
 	RawBlobRequestLimit int64 `json:"rawBlobRequestLimit"`
+	// +optional
+	RawBlobRequestLimitUnauthenticated int64 `json:"rawBlobRequestLimitUnauthenticated"`
 	// +optional
 	RecaptchaEnabled bool `json:"recaptchaEnabled"`
 	// +optional
@@ -1472,7 +1582,17 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	RestrictedVisibilityLevels []string `json:"restrictedVisibilityLevels"`
 	// +optional
+	RunnerJobsEndpointsAPILimit int64 `json:"runnerJobsEndpointsApiLimit"`
+	// +optional
+	RunnerJobsPatchTraceAPILimit int64 `json:"runnerJobsPatchTraceApiLimit"`
+	// +optional
+	RunnerJobsRequestAPILimit int64 `json:"runnerJobsRequestApiLimit"`
+	// +optional
 	RunnerTokenExpirationInterval int64 `json:"runnerTokenExpirationInterval"`
+	// +optional
+	ScanExecutionPoliciesActionLimit int64 `json:"scanExecutionPoliciesActionLimit"`
+	// +optional
+	ScanExecutionPoliciesScheduleLimit int64 `json:"scanExecutionPoliciesScheduleLimit"`
 	// +optional
 	SearchRateLimit int64 `json:"searchRateLimit"`
 	// +optional
@@ -1558,6 +1678,8 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	SuggestPipelineEnabled bool `json:"suggestPipelineEnabled"`
 	// +optional
+	TagsCreateLimit int64 `json:"tagsCreateLimit"`
+	// +optional
 	TerminalMaxSessionTime int64 `json:"terminalMaxSessionTime"`
 	// +optional
 	Terms string `json:"terms"`
@@ -1567,6 +1689,12 @@ type ApplicationSettingsObservation struct {
 	ThrottleAuthenticatedAPIPeriodInSeconds int64 `json:"throttleAuthenticatedApiPeriodInSeconds"`
 	// +optional
 	ThrottleAuthenticatedAPIRequestsPerPeriod int64 `json:"throttleAuthenticatedApiRequestsPerPeriod"`
+	// +optional
+	ThrottleAuthenticatedDependencyProxyEnabled bool `json:"throttleAuthenticatedDependencyProxyEnabled"`
+	// +optional
+	ThrottleAuthenticatedDependencyProxyPeriodInSeconds int64 `json:"throttleAuthenticatedDependencyProxyPeriodInSeconds"`
+	// +optional
+	ThrottleAuthenticatedDependencyProxyRequestsPerPeriod int64 `json:"throttleAuthenticatedDependencyProxyRequestsPerPeriod"`
 	// +optional
 	ThrottleAuthenticatedDeprecatedAPIEnabled bool `json:"throttleAuthenticatedDeprecatedApiEnabled"`
 	// +optional
@@ -1579,6 +1707,12 @@ type ApplicationSettingsObservation struct {
 	ThrottleAuthenticatedFilesAPIPeriodInSeconds int64 `json:"throttleAuthenticatedFilesApiPeriodInSeconds"`
 	// +optional
 	ThrottleAuthenticatedFilesAPIRequestsPerPeriod int64 `json:"throttleAuthenticatedFilesApiRequestsPerPeriod"`
+	// +optional
+	ThrottleAuthenticatedGitHTTPEnabled bool `json:"throttleAuthenticatedGitHTTPEnabled"`
+	// +optional
+	ThrottleAuthenticatedGitHTTPPeriodInSeconds int64 `json:"throttleAuthenticatedGitHTTPPeriodInSeconds"`
+	// +optional
+	ThrottleAuthenticatedGitHTTPRequestsPerPeriod int64 `json:"throttleAuthenticatedGitHTTPRequestsPerPeriod"`
 	// +optional
 	ThrottleAuthenticatedGitLFSEnabled bool `json:"throttleAuthenticatedGitLFSEnabled"`
 	// +optional
@@ -1627,6 +1761,12 @@ type ApplicationSettingsObservation struct {
 	ThrottleUnauthenticatedFilesAPIPeriodInSeconds int64 `json:"throttleUnauthenticatedFilesApiPeriodInSeconds"`
 	// +optional
 	ThrottleUnauthenticatedFilesAPIRequestsPerPeriod int64 `json:"throttleUnauthenticatedFilesApiRequestsPerPeriod"`
+	// +optional
+	ThrottleUnauthenticatedGitHTTPEnabled bool `json:"throttleUnauthenticatedGitHTTPEnabled"`
+	// +optional
+	ThrottleUnauthenticatedGitHTTPPeriodInSeconds int64 `json:"throttleUnauthenticatedGitHTTPPeriodInSeconds"`
+	// +optional
+	ThrottleUnauthenticatedGitHTTPRequestsPerPeriod int64 `json:"throttleUnauthenticatedGitHTTPRequestsPerPeriod"`
 	// +optional
 	ThrottleUnauthenticatedGitLFSEnabled bool `json:"throttleUnauthenticatedGitLFSEnabled"`
 	// +optional
@@ -1682,6 +1822,20 @@ type ApplicationSettingsObservation struct {
 	// +optional
 	UserShowAddSSHKeyMessage bool `json:"userShowAddSshKeyMessage"`
 	// +optional
+	UsersAPILimitFollowers int64 `json:"usersApiLimitFollowers"`
+	// +optional
+	UsersAPILimitFollowing int64 `json:"usersApiLimitFollowing"`
+	// +optional
+	UsersAPILimitGPGKey int64 `json:"usersApiLimitGpgKey"`
+	// +optional
+	UsersAPILimitGPGKeys int64 `json:"usersApiLimitGpgKeys"`
+	// +optional
+	UsersAPILimitSSHKey int64 `json:"usersApiLimitSshKey"`
+	// +optional
+	UsersAPILimitSSHKeys int64 `json:"usersApiLimitSshKeys"`
+	// +optional
+	UsersAPILimitStatus int64 `json:"usersApiLimitStatus"`
+	// +optional
 	UsersGetByIDLimit int64 `json:"usersGetByIdLimit"`
 	// +optional
 	UsersGetByIDLimitAllowlistRaw string `json:"usersGetByIdLimitAllowlistRaw"`
@@ -1689,6 +1843,12 @@ type ApplicationSettingsObservation struct {
 	ValidRunnerRegistrars []string `json:"validRunnerRegistrars"`
 	// +optional
 	VersionCheckEnabled bool `json:"versionCheckEnabled"`
+	// +optional
+	VirtualRegistriesEndpointsAPILimit int64 `json:"virtualRegistriesEndpointsApiLimit"`
+	// +optional
+	WebHookEventResendLimit int64 `json:"webHookEventResendLimit"`
+	// +optional
+	WebHookTestLimit int64 `json:"webHookTestLimit"`
 	// +optional
 	WebIDEClientsidePreviewEnabled bool `json:"webIdEClientsidePreviewEnabled"`
 	// +optional
@@ -1725,5 +1885,9 @@ type ApplicationSettingsObservation struct {
 	ThrottleUnauthenticatedRequestsPerPeriod int64 `json:"throttleUnauthenticatedRequestsPerPeriod"`
 	// +optional
 	UserEmailLookupLimit int64 `json:"userEmailLookupLimit"`
+	// +optional
+	AutocompleteUsers int64 `json:"autocompleteUsers"`
+	// +optional
+	AutocompleteUsersUnauthenticated int64 `json:"autocompleteUsersUnauthenticated"`
 }
 
