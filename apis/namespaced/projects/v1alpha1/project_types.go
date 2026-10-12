@@ -162,6 +162,7 @@ type ProjectParameters struct {
 
 	// One of disabled, private, or enabled.
 	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
 	AnalyticsAccessLevel *AccessControlValue `json:"analyticsAccessLevel,omitempty"`
 
 	// How many approvers should approve merge request by default.More actions
@@ -248,6 +249,7 @@ type ProjectParameters struct {
 
 	// One of disabled, private, or enabled.
 	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
 	EnvironmentsAccessLevel *AccessControlValue `json:"environmentsAccessLevel,omitempty"`
 
 	// The classification label for the project.
@@ -256,6 +258,7 @@ type ProjectParameters struct {
 
 	// One of disabled, private, or enabled.
 	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
 	FeatureFlagsAccessLevel *AccessControlValue `json:"featureFlagsAccessLevel,omitempty"`
 
 	// One of disabled, private, or enabled.
@@ -279,6 +282,7 @@ type ProjectParameters struct {
 
 	// One of disabled, private, or enabled.
 	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
 	InfrastructureAccessLevel *AccessControlValue `json:"infrastructureAccessLevel,omitempty"`
 
 	// false by default.
@@ -341,15 +345,20 @@ type ProjectParameters struct {
 	MirrorUserID *int64 `json:"mirrorUserId,omitempty"`
 
 	// One of disabled, private, or enabled.
+	// Requires GitLab 16.5 or later.
 	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
 	ModelExperimentsAccessLevel *AccessControlValue `json:"modelExperimentsAccessLevel,omitempty"`
 
 	// One of disabled, private, or enabled.
+	// Requires GitLab 16.7 or later.
 	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
 	ModelRegistryAccessLevel *AccessControlValue `json:"modelRegistryAccessLevel,omitempty"`
 
 	// One of disabled, private, or enabled.
 	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
 	MonitorAccessLevel *AccessControlValue `json:"monitorAccessLevel,omitempty"`
 
 	// Namespace for the new project (defaults to the current user’s namespace).
@@ -378,12 +387,16 @@ type ProjectParameters struct {
 	OnlyMirrorProtectedBranches *bool `json:"onlyMirrorProtectedBranches,omitempty"`
 
 	// One of disabled, private, enabled, or public.
+	// Takes precedence over packagesEnabled: when set, packages are enabled
+	// unless this is disabled. Not late-initialized from GitLab.
+	// Requires GitLab 18.4 or later.
 	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled;public
 	PackageRegistryAccessLevel *AccessControlValue `json:"packageRegistryAccessLevel,omitempty"`
 
 	// Enable or disable packages repository feature.
-	// GitLab documents packagesEnabled as superseded by packageRegistryAccessLevel;
-	// prefer that field and avoid setting both.
+	// Ignored when packageRegistryAccessLevel is set, which GitLab documents
+	// as its replacement.
 	// +optional
 	PackagesEnabled *bool `json:"packagesEnabled,omitempty"`
 
@@ -421,6 +434,7 @@ type ProjectParameters struct {
 
 	// One of disabled, private, or enabled.
 	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
 	ReleasesAccessLevel *AccessControlValue `json:"releasesAccessLevel,omitempty"`
 
 	// Enable Delete source branch option by default for all new merge requests.
@@ -441,6 +455,7 @@ type ProjectParameters struct {
 
 	// One of disabled, private, or enabled.
 	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
 	SecurityAndComplianceAccessLevel *AccessControlValue `json:"securityAndComplianceAccessLevel,omitempty"`
 
 	// Enable or disable Service Desk feature.
