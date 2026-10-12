@@ -331,9 +331,9 @@ func TestObserve(t *testing.T) {
 					Key:          variableKey,
 					Value:        strPtr("local"),
 					Description:  strPtr(""),
-					Masked:       gitlab.Ptr(false),
-					Protected:    gitlab.Ptr(false),
-					Raw:          gitlab.Ptr(false),
+					Masked:       new(false),
+					Protected:    new(false),
+					Raw:          new(false),
 					VariableType: varTypePtr(commonv1alpha1.VariableType("")),
 				}}), withObservation(v1alpha1.VariableObservation{
 					CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
@@ -367,7 +367,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: variable(
 					withConditions(v2.Available()),
-					withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: strPtr(""), VariableType: &variableType, Masked: gitlab.Ptr(true), Raw: gitlab.Ptr(true), Protected: gitlab.Ptr(false)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}),
+					withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: strPtr(""), VariableType: &variableType, Masked: new(true), Raw: new(true), Protected: new(false)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}),
 					withObservation(v1alpha1.VariableObservation{
 						CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
 							Key:          variableKey,
@@ -455,7 +455,7 @@ func TestCreate(t *testing.T) {
 				}},
 				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, VariableType: &variableType}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")})),
 			},
-			want: want{cr: variable(withConditions(v2.Creating()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, VariableType: &variableType, Masked: gitlab.Ptr(true), Raw: gitlab.Ptr(true)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}))},
+			want: want{cr: variable(withConditions(v2.Creating()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, VariableType: &variableType, Masked: new(true), Raw: new(true)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}))},
 		},
 	}
 
@@ -519,7 +519,7 @@ func TestUpdate(t *testing.T) {
 				}},
 				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, VariableType: &variableType}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")})),
 			},
-			want: want{cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, VariableType: &variableType, Masked: gitlab.Ptr(true), Raw: gitlab.Ptr(true)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}))},
+			want: want{cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, VariableType: &variableType, Masked: new(true), Raw: new(true)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}))},
 		},
 	}
 

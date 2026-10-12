@@ -23,7 +23,6 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -39,12 +38,12 @@ func UpdateVariableFromSecret(kube client.Client, mg resource.Managed, ctx conte
 
 	// Mask variable if it hasn't already been explicitly configured.
 	if params.Masked == nil {
-		params.Masked = gitlab.Ptr(true)
+		params.Masked = new(true)
 	}
 
 	// Make variable raw if it hasn't already been explicitly configured.
 	if params.Raw == nil {
-		params.Raw = gitlab.Ptr(true)
+		params.Raw = new(true)
 	}
 
 	params.Value = value

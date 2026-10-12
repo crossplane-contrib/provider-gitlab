@@ -332,7 +332,7 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		SecurityAndComplianceAccessLevel:    clients.AccessControlValueV1alpha1ToGitlab(p.SecurityAndComplianceAccessLevel),
 		ModelExperimentsAccessLevel:         clients.AccessControlValueV1alpha1ToGitlab(p.ModelExperimentsAccessLevel),
 		ModelRegistryAccessLevel:            clients.AccessControlValueV1alpha1ToGitlab(p.ModelRegistryAccessLevel),
-		EmailsDisabled:                      p.EmailsDisabled,
+		EmailsDisabled:                      p.EmailsDisabled, //nolint:staticcheck
 		ResolveOutdatedDiffDiscussions:      p.ResolveOutdatedDiffDiscussions,
 		ContainerExpirationPolicyAttributes: clients.ContainerExpirationPolicyAttributesV1alpha1ToGitlab(p.ContainerExpirationPolicyAttributes),
 		ContainerRegistryEnabled:            p.ContainerRegistryEnabled, //nolint:staticcheck
@@ -342,7 +342,7 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		ImportURL:                           p.ImportURL,
 		// Note: CreateProjectOptions still uses PublicBuilds (deprecated) in GitLab API client v1.5.0
 		// We map our PublicJobs field to PublicBuilds here until the library adds PublicJobs support
-		PublicBuilds:                              resolvePublicJobsValue(p),
+		PublicBuilds:                              resolvePublicJobsValue(p), //nolint:staticcheck
 		AllowMergeOnSkippedPipeline:               p.AllowMergeOnSkippedPipeline,
 		OnlyAllowMergeIfPipelineSucceeds:          p.OnlyAllowMergeIfPipelineSucceeds,
 		OnlyAllowMergeIfAllDiscussionsAreResolved: p.OnlyAllowMergeIfAllDiscussionsAreResolved,
@@ -365,7 +365,7 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		InitializeWithReadme:                      p.InitializeWithReadme,
 		TemplateName:                              p.TemplateName,
 		UseCustomTemplate:                         p.UseCustomTemplate,
-		PackagesEnabled:                           p.PackagesEnabled,
+		PackagesEnabled:                           p.PackagesEnabled, //nolint:staticcheck
 		ServiceDeskEnabled:                        p.ServiceDeskEnabled,
 		AutocloseReferencedIssues:                 p.AutocloseReferencedIssues,
 		SuggestionCommitMessage:                   p.SuggestionCommitMessage,
@@ -415,7 +415,7 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		SecurityAndComplianceAccessLevel:          clients.AccessControlValueV1alpha1ToGitlab(p.SecurityAndComplianceAccessLevel),
 		ModelExperimentsAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.ModelExperimentsAccessLevel),
 		ModelRegistryAccessLevel:                  clients.AccessControlValueV1alpha1ToGitlab(p.ModelRegistryAccessLevel),
-		EmailsDisabled:                            p.EmailsDisabled,
+		EmailsDisabled:                            p.EmailsDisabled, //nolint:staticcheck
 		ResolveOutdatedDiffDiscussions:            p.ResolveOutdatedDiffDiscussions,
 		ContainerExpirationPolicyAttributes:       clients.ContainerExpirationPolicyAttributesV1alpha1ToGitlab(p.ContainerExpirationPolicyAttributes),
 		ContainerRegistryEnabled:                  p.ContainerRegistryEnabled, //nolint:staticcheck
@@ -444,7 +444,7 @@ func GenerateEditProjectOptions(name string, p *v1alpha1.ProjectParameters) *git
 		MirrorTriggerBuilds:                       p.MirrorTriggerBuilds,
 		OnlyMirrorProtectedBranches:               p.OnlyMirrorProtectedBranches,
 		MirrorOverwritesDivergedBranches:          p.MirrorOverwritesDivergedBranches,
-		PackagesEnabled:                           p.PackagesEnabled,
+		PackagesEnabled:                           p.PackagesEnabled, //nolint:staticcheck
 		ServiceDeskEnabled:                        p.ServiceDeskEnabled,
 		AutocloseReferencedIssues:                 p.AutocloseReferencedIssues,
 		SuggestionCommitMessage:                   p.SuggestionCommitMessage,
