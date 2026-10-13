@@ -19,7 +19,6 @@ package groups
 import (
 	"context"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -267,9 +266,11 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotGroup)
 	}
 
+	// GitLab schedules the group for deletion. Every deletion reconcile repeats
+	// this request until GitLab removes the group, so a group that is already
+	// scheduled is not an error, and permanent removal below still has to run.
 	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{}, gitlab.WithContext(ctx))
-	// if the group is for some reason already marked for deletion, we ignore the error and continue to delete the group permanently
-	if err != nil && !strings.Contains(err.Error(), "Group has been already marked for deletion") {
+	if err != nil && !clients.IsAlreadyMarkedForDeletion(err) {
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 	}
 
@@ -298,6 +299,11 @@ func (e *external) DeletePermanentlyWhenApplicable(ctx context.Context, cr *v1al
 		}
 		if g == nil {
 			return managed.ExternalDelete{}, errors.New("GitLab API returned empty group object")
+		}
+		// GitLab only removes groups permanently that are scheduled for
+		// deletion themselves; one whose ancestor is scheduled goes with it.
+		if g.MarkedForDeletionOn == nil {
+			return managed.ExternalDelete{}, nil
 		}
 		_, err = e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{
 			PermanentlyRemove: cr.Spec.ForProvider.PermanentlyRemove,

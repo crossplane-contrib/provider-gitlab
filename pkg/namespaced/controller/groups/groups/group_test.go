@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"reflect"
 	"testing"
 	"time"
@@ -920,6 +921,18 @@ func TestDelete(t *testing.T) {
 	var recordedCalls []deleteGroupCalls
 	var recordedGetCalls []getGroupCalls
 
+	// The response GitLab gives when deleting a group that is already
+	// scheduled for deletion.
+	errGroupAlreadyMarked := &gitlab.ErrorResponse{
+		StatusCode: http.StatusBadRequest,
+		Response: &http.Response{
+			StatusCode: http.StatusBadRequest,
+			Request:    &http.Request{Method: http.MethodDelete, URL: &url.URL{Path: "/api/v4/groups/0"}},
+		},
+		Message: "{message: Group has already been marked for deletion}",
+	}
+	markedForDeletionOn := new(gitlab.ISOTime(time.Date(2026, 10, 13, 0, 0, 0, 0, time.UTC)))
+
 	type want struct {
 		cr       resource.Managed
 		calls    []deleteGroupCalls
@@ -980,7 +993,7 @@ func TestDelete(t *testing.T) {
 					},
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
 						recordedGetCalls = append(recordedGetCalls, getGroupCalls{Pid: pid})
-						return &gitlab.Group{ID: 0, FullPath: "group-deletion_scheduled-0"}, &gitlab.Response{}, nil
+						return &gitlab.Group{ID: 0, FullPath: "group-deletion_scheduled-0", MarkedForDeletionOn: markedForDeletionOn}, &gitlab.Response{}, nil
 					},
 				},
 				cr: group(
@@ -1106,6 +1119,86 @@ func TestDelete(t *testing.T) {
 				},
 				getCalls: []getGroupCalls{{Pid: "0"}},
 				err:      errors.New("GitLab API returned empty group object"),
+			},
+		},
+		"AlreadyMarkedForDeletion": {
+			args: args{
+				group: &fake.MockClient{
+					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteGroupCalls{Pid: pid, Opt: opt})
+						return nil, errGroupAlreadyMarked
+					},
+				},
+				cr: group(withExternalName("0")),
+			},
+			want: want{
+				cr:    group(withExternalName("0")),
+				calls: []deleteGroupCalls{{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}}},
+				err:   nil,
+			},
+		},
+		"PermanentlyRemoveWhenAlreadyMarked": {
+			args: args{
+				group: &fake.MockClient{
+					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteGroupCalls{Pid: pid, Opt: opt})
+						if opt.PermanentlyRemove == nil {
+							return nil, errGroupAlreadyMarked
+						}
+						return &gitlab.Response{}, nil
+					},
+					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						recordedGetCalls = append(recordedGetCalls, getGroupCalls{Pid: pid})
+						return &gitlab.Group{ID: 0, FullPath: "group-deletion_scheduled-0", MarkedForDeletionOn: markedForDeletionOn}, &gitlab.Response{}, nil
+					},
+				},
+				cr: group(
+					withExternalName("0"),
+					withPermanentlyRemove(new(true)),
+					withPath("group"),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
+			},
+			want: want{
+				cr: group(
+					withExternalName("0"),
+					withPermanentlyRemove(new(true)),
+					withPath("group"),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
+				calls: []deleteGroupCalls{
+					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}},
+					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{PermanentlyRemove: new(true), FullPath: new("group-deletion_scheduled-0")}},
+				},
+				getCalls: []getGroupCalls{{Pid: "0"}},
+				err:      nil,
+			},
+		},
+		"PermanentlyRemoveWhenAncestorScheduled": {
+			args: args{
+				group: &fake.MockClient{
+					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteGroupCalls{Pid: pid, Opt: opt})
+						return &gitlab.Response{}, nil
+					},
+					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						recordedGetCalls = append(recordedGetCalls, getGroupCalls{Pid: pid})
+						return &gitlab.Group{ID: 0, FullPath: "path/to/group"}, &gitlab.Response{}, nil
+					},
+				},
+				cr: group(
+					withExternalName("0"),
+					withPermanentlyRemove(new(true)),
+					withPath("group"),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
+			},
+			want: want{
+				cr: group(
+					withExternalName("0"),
+					withPermanentlyRemove(new(true)),
+					withPath("group"),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
+				calls:    []deleteGroupCalls{{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}}},
+				getCalls: []getGroupCalls{{Pid: "0"}},
+				err:      nil,
 			},
 		},
 		"SuccessfulPermanentlyTopLevelGroupDeletion": {
