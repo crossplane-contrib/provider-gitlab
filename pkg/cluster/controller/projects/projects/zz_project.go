@@ -298,7 +298,10 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	// GitLab schedules the project for deletion. Every deletion reconcile repeats
 	// this request until GitLab removes the project, so a project that is already
 	// scheduled is not an error, and permanent removal below still has to run.
-	_, err := e.client.DeleteProject(meta.GetExternalName(cr), &gitlab.DeleteProjectOptions{}, gitlab.WithContext(ctx))
+	res, err := e.client.DeleteProject(meta.GetExternalName(cr), &gitlab.DeleteProjectOptions{}, gitlab.WithContext(ctx))
+	if err != nil && clients.IsResponseNotFound(res) {
+		return managed.ExternalDelete{}, nil
+	}
 	if err != nil && !clients.IsAlreadyMarkedForDeletion(err) {
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 	}
@@ -324,10 +327,13 @@ func (e *external) deletePermanently(ctx context.Context, cr *v1alpha1.Project) 
 	if prj.MarkedForDeletionOn == nil {
 		return managed.ExternalDelete{}, nil
 	}
-	_, err = e.client.DeleteProject(meta.GetExternalName(cr), &gitlab.DeleteProjectOptions{
+	res, err = e.client.DeleteProject(meta.GetExternalName(cr), &gitlab.DeleteProjectOptions{
 		PermanentlyRemove: new(true),
 		FullPath:          &prj.PathWithNamespace,
 	}, gitlab.WithContext(ctx))
+	if err != nil && clients.IsResponseNotFound(res) {
+		return managed.ExternalDelete{}, nil
+	}
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 }
 

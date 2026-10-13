@@ -269,7 +269,10 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	// GitLab schedules the group for deletion. Every deletion reconcile repeats
 	// this request until GitLab removes the group, so a group that is already
 	// scheduled is not an error, and permanent removal below still has to run.
-	_, err := e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{}, gitlab.WithContext(ctx))
+	res, err := e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{}, gitlab.WithContext(ctx))
+	if err != nil && clients.IsResponseNotFound(res) {
+		return managed.ExternalDelete{}, nil
+	}
 	if err != nil && !clients.IsAlreadyMarkedForDeletion(err) {
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 	}
@@ -282,10 +285,16 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 }
 
-func (e *external) DeletePermanentlyWhenApplicable(ctx context.Context, cr *v1alpha1.Group) (managed.ExternalDelete, error) {
-	// permanent deletion is only available on subgroups; when executed against top-level groups the backend will return an error
+// wantsPermanentRemoval reports whether the group should be removed right away.
+// Permanent removal is only available for subgroups; GitLab rejects it for
+// top-level groups.
+func wantsPermanentRemoval(cr *v1alpha1.Group) bool {
 	isSubGroup := cr.Status.AtProvider.FullPath != nil && *cr.Status.AtProvider.FullPath != cr.Spec.ForProvider.Path
-	if cr.Spec.ForProvider.PermanentlyRemove != nil && *cr.Spec.ForProvider.PermanentlyRemove && isSubGroup {
+	return ptr.Deref(cr.Spec.ForProvider.PermanentlyRemove, false) && isSubGroup
+}
+
+func (e *external) DeletePermanentlyWhenApplicable(ctx context.Context, cr *v1alpha1.Group) (managed.ExternalDelete, error) {
+	if wantsPermanentRemoval(cr) {
 		// FIX: Fetch the current state of the group from GitLab.
 		// This ensures we get the "actual" path if GitLab has already
 		// renamed it for deletion (e.g., path-deletion_scheduled-14).
@@ -305,10 +314,13 @@ func (e *external) DeletePermanentlyWhenApplicable(ctx context.Context, cr *v1al
 		if g.MarkedForDeletionOn == nil {
 			return managed.ExternalDelete{}, nil
 		}
-		_, err = e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{
+		res, err = e.client.DeleteGroup(meta.GetExternalName(cr), &gitlab.DeleteGroupOptions{
 			PermanentlyRemove: cr.Spec.ForProvider.PermanentlyRemove,
 			FullPath:          &g.FullPath,
 		}, gitlab.WithContext(ctx))
+		if err != nil && clients.IsResponseNotFound(res) {
+			return managed.ExternalDelete{}, nil
+		}
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 	}
 	return managed.ExternalDelete{}, nil

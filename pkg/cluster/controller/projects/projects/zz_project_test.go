@@ -1536,6 +1536,23 @@ func TestDelete(t *testing.T) {
 				err:   nil,
 			},
 		},
+		"AlreadyGone": {
+			reason: "GitLab removes a project asynchronously after permanent removal; a 404 while deleting means it is gone.",
+			args: args{
+				project: &fake.MockClient{
+					MockDeleteProject: func(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteProjectCalls{Pid: pid, Opt: opt})
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+					},
+				},
+				cr: project(withExternalName("0"), withPermanentlyRemove(new(true))),
+			},
+			want: want{
+				cr:    project(withExternalName("0"), withPermanentlyRemove(new(true))),
+				calls: []deleteProjectCalls{{Pid: "0", Opt: &gitlab.DeleteProjectOptions{}}},
+				err:   nil,
+			},
+		},
 		"PermanentlyRemoveWhenAlreadyMarked": {
 			reason: "A project that is already scheduled for deletion must still be removed permanently when asked to.",
 			args: args{
