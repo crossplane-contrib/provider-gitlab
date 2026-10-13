@@ -26,6 +26,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/badges"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/groupshares"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/hooks"
 	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/integrationharbor"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/ldapgrouplinks"
@@ -53,6 +54,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		serviceaccountaccesstokens.SetupServiceAccountAccessToken,
 		hooks.SetupHook,
 		integrationharbor.SetupIntegrationHarbor,
+		groupshares.SetupGroupShare,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -78,6 +80,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		serviceaccountaccesstokens.SetupServiceAccountAccessTokenGated,
 		hooks.SetupHookGated,
 		integrationharbor.SetupIntegrationHarborGated,
+		groupshares.SetupGroupShareGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
