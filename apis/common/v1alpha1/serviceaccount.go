@@ -17,7 +17,7 @@ limitations under the License.
 package v1alpha1
 
 // CommonServiceAccountParameters contains common configuration parameters for user service accounts
-// that are shared between instance and group service account types.
+// that are shared between instance, group and project service account types.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/service_accounts/
@@ -29,8 +29,9 @@ type CommonServiceAccountParameters struct {
 	// +optional
 	Username *string `json:"username,omitempty"`
 	// email represents the email of the service account.
+	// name, username and email are reconciled in place (rename-in-place); a
+	// change to any of them is pushed to GitLab on update.
 	// +optional
-	// +immutable
 	Email *string `json:"email,omitempty"`
 }
 
@@ -48,4 +49,6 @@ type CommonServiceAccountObservation struct {
 	Username string `json:"username"`
 	// Email represents the email of the service account.
 	Email string `json:"email"`
+	// Admin represents whether the service account has admin privileges.
+	Admin bool `json:"admin"`
 }

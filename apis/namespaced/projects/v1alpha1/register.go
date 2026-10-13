@@ -156,12 +156,36 @@ var (
 	IntegrationMattermostGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationMattermostKind)
 )
 
+// IntegrationHarbor type metadata
+var (
+	IntegrationHarborKind             = reflect.TypeOf(IntegrationHarbor{}).Name()
+	IntegrationHarborGroupKind        = schema.GroupKind{Group: Group, Kind: IntegrationHarborKind}.String()
+	IntegrationHarborKindAPIVersion   = IntegrationHarborKind + "." + SchemeGroupVersion.String()
+	IntegrationHarborGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationHarborKind)
+)
+
 // ProjectShareGroup type metadata
 var (
 	ProjectShareGroupKind             = reflect.TypeOf(ProjectShareGroup{}).Name()
 	ProjectShareGroupGroupKind        = schema.GroupKind{Group: Group, Kind: ProjectShareGroupKind}.String()
 	ProjectShareGroupKindAPIVersion   = ProjectShareGroupKind + "." + SchemeGroupVersion.String()
 	ProjectShareGroupGroupVersionKind = SchemeGroupVersion.WithKind(ProjectShareGroupKind)
+)
+
+// ServiceAccount type metadata
+var (
+	ServiceAccountKind             = reflect.TypeOf(ServiceAccount{}).Name()
+	ServiceAccountGroupKind        = schema.GroupKind{Group: Group, Kind: ServiceAccountKind}.String()
+	ServiceAccountKindAPIVersion   = ServiceAccountKind + "." + SchemeGroupVersion.String()
+	ServiceAccountGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountKind)
+)
+
+// ServiceAccountAccessToken type metadata
+var (
+	ServiceAccountAccessTokenKind             = reflect.TypeOf(ServiceAccountAccessToken{}).Name()
+	ServiceAccountAccessTokenGroupKind        = schema.GroupKind{Group: Group, Kind: ServiceAccountAccessTokenKind}.String()
+	ServiceAccountAccessTokenKindAPIVersion   = ServiceAccountAccessTokenKind + "." + SchemeGroupVersion.String()
+	ServiceAccountAccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountAccessTokenKind)
 )
 
 func init() {
@@ -182,5 +206,9 @@ func init() {
 
 	// Mattermost
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
+	// Harbor
+	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
 	SchemeBuilder.Register(&ProjectShareGroup{}, &ProjectShareGroupList{})
+	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
+	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})
 }

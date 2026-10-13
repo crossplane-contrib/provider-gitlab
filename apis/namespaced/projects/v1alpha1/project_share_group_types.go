@@ -16,9 +16,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -47,11 +45,11 @@ type ProjectShareGroupParameters struct {
 	// GroupRef allows referencing a Group resource by name.
 	// +optional
 	// +immutable
-	GroupRef *xpv1.NamespacedReference `json:"groupRef,omitempty"`
+	GroupRef *v2.NamespacedReference `json:"groupRef,omitempty"`
 
 	// GroupSelector allows selecting a Group by labels.
 	// +optional
-	GroupSelector *xpv1.NamespacedSelector `json:"groupSelector,omitempty"`
+	GroupSelector *v2.NamespacedSelector `json:"groupSelector,omitempty"`
 
 	// ProjectID is the ID of the project being shared.
 	// +crossplane:generate:reference:type=Project
@@ -64,11 +62,11 @@ type ProjectShareGroupParameters struct {
 	// ProjectRef allows referencing a Project resource by name.
 	// +optional
 	// +immutable
-	ProjectRef *xpv1.NamespacedReference `json:"projectRef,omitempty"`
+	ProjectRef *v2.NamespacedReference `json:"projectRef,omitempty"`
 
 	// ProjectSelector allows selecting a Project by labels.
 	// +optional
-	ProjectSelector *xpv1.NamespacedSelector `json:"projectSelector,omitempty"`
+	ProjectSelector *v2.NamespacedSelector `json:"projectSelector,omitempty"`
 }
 
 // ProjectShareGroupObservation are the fields we read back from GitLab (if any).
@@ -79,14 +77,14 @@ type ProjectShareGroupObservation struct {
 
 // ProjectShareGroupSpec defines the desired state.
 type ProjectShareGroupSpec struct {
-	xpv2.ManagedResourceSpec `json:",inline"`
-	ForProvider              ProjectShareGroupParameters `json:"forProvider"`
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            ProjectShareGroupParameters `json:"forProvider"`
 }
 
 // ProjectShareGroupStatus defines the observed state.
 type ProjectShareGroupStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          ProjectShareGroupObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               ProjectShareGroupObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -17,7 +17,7 @@ limitations under the License.
 package groups
 
 import (
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
@@ -58,6 +58,7 @@ func GenerateServiceAccountObservationFromUser(u *gitlab.User) v1alpha1.ServiceA
 			Name:     u.Name,
 			Username: u.Username,
 			Email:    u.Email,
+			Admin:    u.IsAdmin,
 		},
 	}
 }

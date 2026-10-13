@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests",
+    ":semanticCommits"
+  ],
+  "automergeStrategy": "squash",
+  "rebaseWhen": "auto",
+  "minimumReleaseAge": "1 day",
+  "enabledManagers": ["gomod", "github-actions", "dockerfile", "crossplane"],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch", "minor", "digest", "pinDigest"],
+      "groupName": "all minor and patch",
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "groupName": "all major",
+      "automerge": false
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["indirect"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ],
+  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
+  "pinDigests": true
+}

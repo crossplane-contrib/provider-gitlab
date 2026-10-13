@@ -248,13 +248,21 @@ func getReplacements() []replacement {
 		// Add .cluster suffix to controller names to avoid conflicts with namespaced controllers
 		{"managed.ControllerName(", "managed.ControllerName(\"cluster.\" + "},
 		{"m.crossplane.io", "crossplane.io"},
-		{"xpv2.ManagedResourceSpec", "xpv1.ResourceSpec"},
-		{"xpv1.NamespacedReference", "xpv1.Reference"},
-		{"xpv1.NamespacedSelector", "xpv1.Selector"},
-		{"xpv1.LocalSecretKeySelector", "xpv1.SecretKeySelector"},
-		{"xpv1.LocalSecretReference", "xpv1.SecretReference"},
+		{"v2.ManagedResourceSpec", "v2.ClusterManagedResourceSpec"},
+		{"v2.NamespacedReference", "v2.Reference"},
+		{"v2.NamespacedSelector", "v2.Selector"},
+		{"v2.LocalSecretKeySelector", "v2.SecretKeySelector"},
+		{"v2.LocalSecretReference", "v2.SecretReference"},
 		{"LocalSecretReference:", "SecretReference:"},
 		{".LocalSecretReference", ".SecretReference"},
+		// Self-managed-mode detection compares the credential secret's namespace
+		// against the resource's connection-secret namespace. A namespaced
+		// resource writes to a LocalSecretReference and its secret lives in the
+		// CR's own namespace, so it compares against cr.GetNamespace(). A
+		// cluster-scoped resource has no namespace and writes to a full
+		// SecretReference that carries its own namespace, so it must compare
+		// against the write reference's namespace instead.
+		{"ref.Namespace == cr.GetNamespace()", "ref.Namespace == w.Namespace"},
 		{"reference.NewAPINamespacedResolver", "reference.NewAPIResolver"},
 		{"reference.NamespacedResolutionRequest", "reference.ResolutionRequest"},
 		{"reference.NamespacedResolutionResponse", "reference.ResolutionResponse"},
@@ -263,6 +271,9 @@ func getReplacements() []replacement {
 		{"GetTokenValueFromLocalSecret", "GetTokenValueFromSecret"},
 		{"TestCreateLocalSecretKeySelector", "TestCreateSecretKeySelector"},
 		{"TestCreateLocalSecretReference", "TestCreateSecretReference"},
+		// ClusterManagedResourceSpec uses Reference instead of ProviderConfigReference
+		// for the ProviderConfigReference field (needed for zz_generated.managed.go transformation)
+		{"v2.ProviderConfigReference", "v2.Reference"},
 	}
 }
 

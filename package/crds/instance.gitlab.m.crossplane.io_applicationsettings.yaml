@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   name: applicationsettings.instance.gitlab.m.crossplane.io
 spec:
   group: instance.gitlab.m.crossplane.io
@@ -68,6 +68,9 @@ spec:
                     type: string
                   afterSignUpText:
                     type: string
+                  aiActionApiRateLimit:
+                    format: int64
+                    type: integer
                   akismetApiKey:
                     type: string
                   akismetApiKeySecretRef:
@@ -106,6 +109,8 @@ spec:
                     items:
                       type: string
                     type: array
+                  anonymousSearchesAllowed:
+                    type: boolean
                   archiveBuildsInHumanReadable:
                     type: string
                   asciiDocMaxIncludes:
@@ -139,6 +144,9 @@ spec:
                     items:
                       type: string
                     type: array
+                  auditEventsApiLimit:
+                    format: int64
+                    type: integer
                   authorizedKeysEnabled:
                     type: boolean
                   autoBanUserOnExcessiveProjectsDownload:
@@ -150,7 +158,13 @@ spec:
                   autocompleteUsers:
                     format: int64
                     type: integer
+                  autocompleteUsersLimit:
+                    format: int64
+                    type: integer
                   autocompleteUsersUnauthenticated:
+                    format: int64
+                    type: integer
+                  autocompleteUsersUnauthenticatedLimit:
                     format: int64
                     type: integer
                   automaticPurchasedStorageAllocation:
@@ -171,6 +185,9 @@ spec:
                     type: boolean
                   ciJobLiveTraceEnabled:
                     type: boolean
+                  ciLintLimitPerUser:
+                    format: int64
+                    type: integer
                   ciMaxIncludes:
                     format: int64
                     type: integer
@@ -189,6 +206,15 @@ spec:
                     format: int64
                     type: integer
                   concurrentGitHubImportJobsLimit:
+                    format: int64
+                    type: integer
+                  concurrentPullRequestImportJobsLimit:
+                    format: int64
+                    type: integer
+                  concurrentRelationBatchExportLimit:
+                    format: int64
+                    type: integer
+                  concurrentRelationExportLimit:
                     format: int64
                     type: integer
                   containerExpirationPoliciesEnableHistoricEntries:
@@ -318,6 +344,8 @@ spec:
                   disableFeedToken:
                     type: boolean
                   disableOverridingApproversPerMergeRequest:
+                    type: boolean
+                  disablePasswordAuthenticationForUsersWithSSOIdentities:
                     type: boolean
                   disablePersonalAccessTokens:
                     type: boolean
@@ -598,6 +626,9 @@ spec:
                   geoStatusTimeout:
                     format: int64
                     type: integer
+                  gitPushPipelineLimit:
+                    format: int64
+                    type: integer
                   gitRateLimitUsersAlertlist:
                     items:
                       format: int64
@@ -652,6 +683,9 @@ spec:
                   groupRunnerTokenExpirationInterval:
                     format: int64
                     type: integer
+                  groupSecretsLimit:
+                    format: int64
+                    type: integer
                   hashedStorageEnabled:
                     type: boolean
                   helpPageDocumentationBaseUrl:
@@ -686,6 +720,9 @@ spec:
                     type: integer
                   htmlEmailsEnabled:
                     type: boolean
+                  importJobsConcurrencyLimit:
+                    format: int64
+                    type: integer
                   importSources:
                     items:
                       type: string
@@ -699,6 +736,9 @@ spec:
                     format: int64
                     type: integer
                   inactiveProjectsSendWarningEmailAfterMonths:
+                    format: int64
+                    type: integer
+                  inactiveResourceAccessTokensDeleteAfterDays:
                     format: int64
                     type: integer
                   includeOptionalMetricsInServicePing:
@@ -745,6 +785,8 @@ spec:
                     type: boolean
                   lockMembershipsToLdap:
                     type: boolean
+                  lockMembershipsToSAML:
+                    type: boolean
                   loginRecaptchaProtectionEnabled:
                     type: boolean
                   mailgunEventsEnabled:
@@ -781,6 +823,12 @@ spec:
                     format: int64
                     type: integer
                   maxExportSize:
+                    format: int64
+                    type: integer
+                  maxGitHubResponseSizeLimit:
+                    format: int64
+                    type: integer
+                  maxHTTPResponseSizeLimit:
                     format: int64
                     type: integer
                   maxImportRemoteFileSize:
@@ -860,6 +908,8 @@ spec:
                     type: integer
                   pagesDomainVerificationEnabled:
                     type: boolean
+                  pagesUniqueDomainDefaultEnabled:
+                    type: boolean
                   passwordAuthenticationEnabledForGit:
                     type: boolean
                   passwordAuthenticationEnabledForWeb:
@@ -882,6 +932,9 @@ spec:
                   personalAccessTokenPrefix:
                     type: string
                   pipelineLimitPerProjectUserSha:
+                    format: int64
+                    type: integer
+                  pipelineLimitPerUser:
                     format: int64
                     type: integer
                   plantumlEnabled:
@@ -911,6 +964,9 @@ spec:
                   projectRunnerTokenExpirationInterval:
                     format: int64
                     type: integer
+                  projectSecretsLimit:
+                    format: int64
+                    type: integer
                   projectsApiRateLimitUnauthenticated:
                     format: int64
                     type: integer
@@ -931,6 +987,9 @@ spec:
                   rateLimitingResponseText:
                     type: string
                   rawBlobRequestLimit:
+                    format: int64
+                    type: integer
+                  rawBlobRequestLimitUnauthenticated:
                     format: int64
                     type: integer
                   recaptchaEnabled:
@@ -1003,7 +1062,22 @@ spec:
                   rsaKeyRestriction:
                     format: int64
                     type: integer
+                  runnerJobsEndpointsApiLimit:
+                    format: int64
+                    type: integer
+                  runnerJobsPatchTraceApiLimit:
+                    format: int64
+                    type: integer
+                  runnerJobsRequestApiLimit:
+                    format: int64
+                    type: integer
                   runnerTokenExpirationInterval:
+                    format: int64
+                    type: integer
+                  scanExecutionPoliciesActionLimit:
+                    format: int64
+                    type: integer
+                  scanExecutionPoliciesScheduleLimit:
                     format: int64
                     type: integer
                   searchRateLimit:
@@ -1034,6 +1108,8 @@ spec:
                     type: object
                   secretDetectionTokenRevocationUrl:
                     type: string
+                  secretPushProtectionAvailable:
+                    type: boolean
                   securityApprovalPoliciesLimit:
                     format: int64
                     type: integer
@@ -1048,7 +1124,7 @@ spec:
                   sentryDSN:
                     type: string
                   sentryEnabled:
-                    type: string
+                    type: boolean
                   sentryEnvironment:
                     type: string
                   serviceAccessTokensExpirationEnforced:
@@ -1056,6 +1132,8 @@ spec:
                   sessionExpireDelay:
                     format: int64
                     type: integer
+                  sessionExpireFromInit:
+                    type: boolean
                   sharedRunnersEnabled:
                     type: boolean
                   sharedRunnersMinutes:
@@ -1190,6 +1268,9 @@ spec:
                     type: string
                   suggestPipelineEnabled:
                     type: boolean
+                  tagsCreateLimit:
+                    format: int64
+                    type: integer
                   terminalMaxSessionTime:
                     format: int64
                     type: integer
@@ -1201,6 +1282,14 @@ spec:
                     format: int64
                     type: integer
                   throttleAuthenticatedApiRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedDependencyProxyEnabled:
+                    type: boolean
+                  throttleAuthenticatedDependencyProxyPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedDependencyProxyRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleAuthenticatedDeprecatedApiEnabled:
@@ -1217,6 +1306,14 @@ spec:
                     format: int64
                     type: integer
                   throttleAuthenticatedFilesApiRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedGitHTTPEnabled:
+                    type: boolean
+                  throttleAuthenticatedGitHTTPPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedGitHTTPRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleAuthenticatedGitLFSEnabled:
@@ -1283,6 +1380,14 @@ spec:
                     format: int64
                     type: integer
                   throttleUnauthenticatedFilesApiRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleUnauthenticatedGitHTTPEnabled:
+                    type: boolean
+                  throttleUnauthenticatedGitHTTPPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleUnauthenticatedGitHTTPRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleUnauthenticatedGitLFSEnabled:
@@ -1356,6 +1461,27 @@ spec:
                     type: boolean
                   userShowAddSshKeyMessage:
                     type: boolean
+                  usersApiLimitFollowers:
+                    format: int64
+                    type: integer
+                  usersApiLimitFollowing:
+                    format: int64
+                    type: integer
+                  usersApiLimitGpgKey:
+                    format: int64
+                    type: integer
+                  usersApiLimitGpgKeys:
+                    format: int64
+                    type: integer
+                  usersApiLimitSshKey:
+                    format: int64
+                    type: integer
+                  usersApiLimitSshKeys:
+                    format: int64
+                    type: integer
+                  usersApiLimitStatus:
+                    format: int64
+                    type: integer
                   usersGetByIdLimit:
                     format: int64
                     type: integer
@@ -1367,6 +1493,15 @@ spec:
                     type: array
                   versionCheckEnabled:
                     type: boolean
+                  virtualRegistriesEndpointsApiLimit:
+                    format: int64
+                    type: integer
+                  webHookEventResendLimit:
+                    format: int64
+                    type: integer
+                  webHookTestLimit:
+                    format: int64
+                    type: integer
                   webIdEClientsidePreviewEnabled:
                     type: boolean
                   whatsNewVariant:
@@ -1450,6 +1585,9 @@ spec:
                     type: string
                   afterSignUpText:
                     type: string
+                  aiActionApiRateLimit:
+                    format: int64
+                    type: integer
                   akismetEnabled:
                     type: boolean
                   allowAccountDeletion:
@@ -1472,6 +1610,8 @@ spec:
                     items:
                       type: string
                     type: array
+                  anonymousSearchesAllowed:
+                    type: boolean
                   archiveBuildsInHumanReadable:
                     type: string
                   asciiDocMaxIncludes:
@@ -1489,6 +1629,9 @@ spec:
                     items:
                       type: string
                     type: array
+                  auditEventsApiLimit:
+                    format: int64
+                    type: integer
                   authorizedKeysEnabled:
                     type: boolean
                   autoBanUserOnExcessiveProjectsDownload:
@@ -1500,7 +1643,13 @@ spec:
                   autocompleteUsers:
                     format: int64
                     type: integer
+                  autocompleteUsersLimit:
+                    format: int64
+                    type: integer
                   autocompleteUsersUnauthenticated:
+                    format: int64
+                    type: integer
+                  autocompleteUsersUnauthenticatedLimit:
                     format: int64
                     type: integer
                   automaticPurchasedStorageAllocation:
@@ -1519,6 +1668,9 @@ spec:
                     type: boolean
                   ciJobLiveTraceEnabled:
                     type: boolean
+                  ciLintLimitPerUser:
+                    format: int64
+                    type: integer
                   ciMaxIncludes:
                     format: int64
                     type: integer
@@ -1537,6 +1689,15 @@ spec:
                     format: int64
                     type: integer
                   concurrentGitHubImportJobsLimit:
+                    format: int64
+                    type: integer
+                  concurrentPullRequestImportJobsLimit:
+                    format: int64
+                    type: integer
+                  concurrentRelationBatchExportLimit:
+                    format: int64
+                    type: integer
+                  concurrentRelationExportLimit:
                     format: int64
                     type: integer
                   containerExpirationPoliciesEnableHistoricEntries:
@@ -1669,6 +1830,8 @@ spec:
                   disableFeedToken:
                     type: boolean
                   disableOverridingApproversPerMergeRequest:
+                    type: boolean
+                  disablePasswordAuthenticationForUsersWithSSOIdentities:
                     type: boolean
                   disablePersonalAccessTokens:
                     type: boolean
@@ -1837,6 +2000,9 @@ spec:
                   geoStatusTimeout:
                     format: int64
                     type: integer
+                  gitPushPipelineLimit:
+                    format: int64
+                    type: integer
                   gitRateLimitUsersAlertlist:
                     items:
                       format: int64
@@ -1891,6 +2057,9 @@ spec:
                   groupRunnerTokenExpirationInterval:
                     format: int64
                     type: integer
+                  groupSecretsLimit:
+                    format: int64
+                    type: integer
                   hashedStorageEnabled:
                     type: boolean
                   helpPageDocumentationBaseUrl:
@@ -1928,6 +2097,9 @@ spec:
                   id:
                     format: int64
                     type: integer
+                  importJobsConcurrencyLimit:
+                    format: int64
+                    type: integer
                   importSources:
                     items:
                       type: string
@@ -1941,6 +2113,9 @@ spec:
                     format: int64
                     type: integer
                   inactiveProjectsSendWarningEmailAfterMonths:
+                    format: int64
+                    type: integer
+                  inactiveResourceAccessTokensDeleteAfterDays:
                     format: int64
                     type: integer
                   includeOptionalMetricsInServicePing:
@@ -1971,6 +2146,8 @@ spec:
                     type: boolean
                   lockMembershipsToLdap:
                     type: boolean
+                  lockMembershipsToSAML:
+                    type: boolean
                   loginRecaptchaProtectionEnabled:
                     type: boolean
                   mailgunEventsEnabled:
@@ -1991,6 +2168,12 @@ spec:
                     format: int64
                     type: integer
                   maxExportSize:
+                    format: int64
+                    type: integer
+                  maxGitHubResponseSizeLimit:
+                    format: int64
+                    type: integer
+                  maxHTTPResponseSizeLimit:
                     format: int64
                     type: integer
                   maxImportRemoteFileSize:
@@ -2070,6 +2253,8 @@ spec:
                     type: integer
                   pagesDomainVerificationEnabled:
                     type: boolean
+                  pagesUniqueDomainDefaultEnabled:
+                    type: boolean
                   passwordAuthenticationEnabledForGit:
                     type: boolean
                   passwordAuthenticationEnabledForWeb:
@@ -2092,6 +2277,9 @@ spec:
                   personalAccessTokenPrefix:
                     type: string
                   pipelineLimitPerProjectUserSha:
+                    format: int64
+                    type: integer
+                  pipelineLimitPerUser:
                     format: int64
                     type: integer
                   plantumlEnabled:
@@ -2121,6 +2309,9 @@ spec:
                   projectRunnerTokenExpirationInterval:
                     format: int64
                     type: integer
+                  projectSecretsLimit:
+                    format: int64
+                    type: integer
                   projectsApiRateLimitUnauthenticated:
                     format: int64
                     type: integer
@@ -2141,6 +2332,9 @@ spec:
                   rateLimitingResponseText:
                     type: string
                   rawBlobRequestLimit:
+                    format: int64
+                    type: integer
+                  rawBlobRequestLimitUnauthenticated:
                     format: int64
                     type: integer
                   recaptchaEnabled:
@@ -2181,7 +2375,22 @@ spec:
                   rsaKeyRestriction:
                     format: int64
                     type: integer
+                  runnerJobsEndpointsApiLimit:
+                    format: int64
+                    type: integer
+                  runnerJobsPatchTraceApiLimit:
+                    format: int64
+                    type: integer
+                  runnerJobsRequestApiLimit:
+                    format: int64
+                    type: integer
                   runnerTokenExpirationInterval:
+                    format: int64
+                    type: integer
+                  scanExecutionPoliciesActionLimit:
+                    format: int64
+                    type: integer
+                  scanExecutionPoliciesScheduleLimit:
                     format: int64
                     type: integer
                   searchRateLimit:
@@ -2196,6 +2405,8 @@ spec:
                     type: boolean
                   secretDetectionTokenRevocationUrl:
                     type: string
+                  secretPushProtectionAvailable:
+                    type: boolean
                   securityApprovalPoliciesLimit:
                     format: int64
                     type: integer
@@ -2218,6 +2429,8 @@ spec:
                   sessionExpireDelay:
                     format: int64
                     type: integer
+                  sessionExpireFromInit:
+                    type: boolean
                   sharedRunnersEnabled:
                     type: boolean
                   sharedRunnersMinutes:
@@ -2272,6 +2485,9 @@ spec:
                     type: string
                   suggestPipelineEnabled:
                     type: boolean
+                  tagsCreateLimit:
+                    format: int64
+                    type: integer
                   terminalMaxSessionTime:
                     format: int64
                     type: integer
@@ -2283,6 +2499,14 @@ spec:
                     format: int64
                     type: integer
                   throttleAuthenticatedApiRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedDependencyProxyEnabled:
+                    type: boolean
+                  throttleAuthenticatedDependencyProxyPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedDependencyProxyRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleAuthenticatedDeprecatedApiEnabled:
@@ -2299,6 +2523,14 @@ spec:
                     format: int64
                     type: integer
                   throttleAuthenticatedFilesApiRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedGitHTTPEnabled:
+                    type: boolean
+                  throttleAuthenticatedGitHTTPPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleAuthenticatedGitHTTPRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleAuthenticatedGitLFSEnabled:
@@ -2365,6 +2597,14 @@ spec:
                     format: int64
                     type: integer
                   throttleUnauthenticatedFilesApiRequestsPerPeriod:
+                    format: int64
+                    type: integer
+                  throttleUnauthenticatedGitHTTPEnabled:
+                    type: boolean
+                  throttleUnauthenticatedGitHTTPPeriodInSeconds:
+                    format: int64
+                    type: integer
+                  throttleUnauthenticatedGitHTTPRequestsPerPeriod:
                     format: int64
                     type: integer
                   throttleUnauthenticatedGitLFSEnabled:
@@ -2441,6 +2681,27 @@ spec:
                     type: boolean
                   userShowAddSshKeyMessage:
                     type: boolean
+                  usersApiLimitFollowers:
+                    format: int64
+                    type: integer
+                  usersApiLimitFollowing:
+                    format: int64
+                    type: integer
+                  usersApiLimitGpgKey:
+                    format: int64
+                    type: integer
+                  usersApiLimitGpgKeys:
+                    format: int64
+                    type: integer
+                  usersApiLimitSshKey:
+                    format: int64
+                    type: integer
+                  usersApiLimitSshKeys:
+                    format: int64
+                    type: integer
+                  usersApiLimitStatus:
+                    format: int64
+                    type: integer
                   usersGetByIdLimit:
                     format: int64
                     type: integer
@@ -2452,6 +2713,15 @@ spec:
                     type: array
                   versionCheckEnabled:
                     type: boolean
+                  virtualRegistriesEndpointsApiLimit:
+                    format: int64
+                    type: integer
+                  webHookEventResendLimit:
+                    format: int64
+                    type: integer
+                  webHookTestLimit:
+                    format: int64
+                    type: integer
                   webIdEClientsidePreviewEnabled:
                     type: boolean
                   whatsNewVariant:
@@ -2506,6 +2776,13 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              lastHandledReconcileAt:
+                description: |-
+                  LastHandledReconcileAt holds the value of the most recent
+                  reconcile-requested-at annotation token that the controller has
+                  processed. Users can compare this to the annotation to determine
+                  whether a reconcile request has been handled.
+                type: string
               observedGeneration:
                 description: |-
                   ObservedGeneration is the latest metadata.generation

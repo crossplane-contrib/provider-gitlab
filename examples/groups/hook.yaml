@@ -1,0 +1,23 @@
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Hook
+metadata:
+  name: example-group-hook
+spec:
+  forProvider:
+    groupIdRef:
+      name: example-group
+    url: https://example.group.url/hook
+    pushEvents: true
+    mergeRequestsEvents: true
+    pipelineEvents: true
+    enableSslVerification: true
+    # token is optional and write-only; reference a secret key holding it
+    # token:
+    #   secretRef:
+    #     name: gitlab-group-hook-token
+    #     key: token
+  providerConfigRef:
+    name: gitlab-provider
+  writeConnectionSecretToRef:
+    name: gitlab-group-example-hook
+    namespace: crossplane-system

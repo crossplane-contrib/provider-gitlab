@@ -24,14 +24,15 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -51,6 +52,7 @@ var (
 	runnerID          = int64(1)
 	extName           = "1"
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: extName}
+	expiredTokenTime  = metav1.NewTime(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))
 )
 
 type args struct {
@@ -62,7 +64,7 @@ type args struct {
 
 type RunnerModifier func(*v1alpha1.Runner)
 
-func withConditions(c ...xpv1.Condition) RunnerModifier {
+func withConditions(c ...v2.Condition) RunnerModifier {
 	return func(cr *v1alpha1.Runner) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -253,7 +255,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: runner(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withExternalName(extName),
 					withSpec(v1alpha1.RunnerParameters{}),
 					// withStatus(v1alpha1.RunnerObservation{Name: name}),
@@ -285,7 +287,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: runner(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withExternalName(extName),
 					withSpec(v1alpha1.RunnerParameters{
 						CommonRunnerParameters: commonv1alpha1.CommonRunnerParameters{
@@ -295,6 +297,44 @@ func TestObserve(t *testing.T) {
 					withAtProvider(v1alpha1.RunnerObservation{
 						CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{
 							Description: "different description",
+						},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
+		"ExpiredToken": {
+			args: args{
+				runnerClient: &runnersfake.MockClient{
+					MockGetRunnerDetails: func(rid any, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerDetails, *gitlab.Response, error) {
+						return &gitlab.RunnerDetails{
+							ID: 1,
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: runner(
+					withExternalName(extName),
+					withSpec(v1alpha1.RunnerParameters{}),
+					withAtProvider(v1alpha1.RunnerObservation{
+						CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{
+							ID:             1,
+							TokenExpiresAt: &expiredTokenTime,
+						},
+					}),
+				),
+			},
+			want: want{
+				cr: runner(
+					withExternalName(extName),
+					withSpec(v1alpha1.RunnerParameters{}),
+					withAtProvider(v1alpha1.RunnerObservation{
+						CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{
+							ID:             1,
+							TokenExpiresAt: &expiredTokenTime,
 						},
 					}),
 				),
@@ -461,6 +501,7 @@ func TestCreate(t *testing.T) {
 				cr: runner(
 					withConnectionSecretRef(),
 					withSpec(v1alpha1.RunnerParameters{}),
+					withConditions(v2.Creating()),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
@@ -482,7 +523,7 @@ func TestCreate(t *testing.T) {
 					withConnectionSecretRef(),
 					withSpec(v1alpha1.RunnerParameters{}),
 					withExternalName(extName),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: nil,
 				result: managed.ExternalCreation{
@@ -510,7 +551,7 @@ func TestCreate(t *testing.T) {
 					withSpec(v1alpha1.RunnerParameters{}),
 					withExternalName(extName),
 					withAtProvider(v1alpha1.RunnerObservation{CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{TokenExpiresAt: func() *metav1.Time { t := metav1.NewTime(expiresAt); return &t }()}}),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: nil,
 				result: managed.ExternalCreation{
@@ -530,7 +571,11 @@ func TestCreate(t *testing.T) {
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
-			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions(),
+				cmpopts.IgnoreFields(commonv1alpha1.CommonRunnerObservation{}, "TokenCreatedAt"),
+				cmpopts.IgnoreMapEntries(func(k, v string) bool {
+					return k == runners.AnnotationKeyTokenCreatedAt || k == runners.AnnotationKeyTokenExpiresAt
+				})); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.result, o); diff != "" {
@@ -624,6 +669,75 @@ func TestUpdate(t *testing.T) {
 				result: managed.ExternalUpdate{},
 			},
 		},
+		"FailedTokenReset": {
+			args: args{
+				runnerClient: &runnersfake.MockClient{
+					MockResetRunnerAuthenticationToken: func(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerAuthenticationToken, *gitlab.Response, error) {
+						return nil, &gitlab.Response{}, errBoom
+					},
+				},
+				cr: runner(
+					withExternalName(extName),
+					withSpec(v1alpha1.RunnerParameters{}),
+					withAtProvider(v1alpha1.RunnerObservation{
+						CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{
+							ID:             1,
+							TokenExpiresAt: &expiredTokenTime,
+						},
+					}),
+				),
+			},
+			want: want{
+				cr: runner(
+					withExternalName(extName),
+					withSpec(v1alpha1.RunnerParameters{}),
+					withAtProvider(v1alpha1.RunnerObservation{
+						CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{
+							ID:             1,
+							TokenExpiresAt: &expiredTokenTime,
+						},
+					}),
+				),
+				err: errors.Wrap(errBoom, errResetFailed),
+			},
+		},
+		"TokenRotation": {
+			args: args{
+				runnerClient: &runnersfake.MockClient{
+					MockResetRunnerAuthenticationToken: func(rid int64, options ...gitlab.RequestOptionFunc) (*gitlab.RunnerAuthenticationToken, *gitlab.Response, error) {
+						token := "newtoken"
+						return &gitlab.RunnerAuthenticationToken{Token: &token}, &gitlab.Response{}, nil
+					},
+				},
+				cr: runner(
+					withExternalName(extName),
+					withSpec(v1alpha1.RunnerParameters{}),
+					withAtProvider(v1alpha1.RunnerObservation{
+						CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{
+							ID:             1,
+							TokenExpiresAt: &expiredTokenTime,
+						},
+					}),
+				),
+			},
+			want: want{
+				cr: runner(
+					withExternalName(extName),
+					withSpec(v1alpha1.RunnerParameters{}),
+					withAtProvider(v1alpha1.RunnerObservation{
+						CommonRunnerObservation: commonv1alpha1.CommonRunnerObservation{
+							ID: 1,
+						},
+					}),
+				),
+				err: nil,
+				result: managed.ExternalUpdate{
+					ConnectionDetails: managed.ConnectionDetails{
+						"token": []byte("newtoken"),
+					},
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -634,7 +748,11 @@ func TestUpdate(t *testing.T) {
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
-			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions(),
+				cmpopts.IgnoreFields(commonv1alpha1.CommonRunnerObservation{}, "TokenCreatedAt"),
+				cmpopts.IgnoreMapEntries(func(k, v string) bool {
+					return k == runners.AnnotationKeyTokenCreatedAt || k == runners.AnnotationKeyTokenExpiresAt
+				})); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.result, o); diff != "" {

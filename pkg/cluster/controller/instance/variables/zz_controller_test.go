@@ -25,7 +25,6 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
@@ -34,15 +33,17 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/events"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,7 +51,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/recorder"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -103,7 +106,7 @@ type args struct {
 
 type modifier func(*v1alpha1.Variable)
 
-func withConditions(c ...xpv1.Condition) modifier {
+func withConditions(c ...v2.Condition) modifier {
 	return func(cr *v1alpha1.Variable) {
 		cr.Status.SetConditions(c...)
 	}
@@ -148,12 +151,16 @@ func (g *recordingGate) Register(callback func(), gvks ...schema.GroupVersionKin
 func (g *recordingGate) Set(schema.GroupVersionKind, bool) bool { return false }
 
 type fakeManager struct {
-	cl       client.Client
-	scheme   *runtime.Scheme
-	addErr   error
-	logger   logr.Logger
-	recorder record.EventRecorder
+	cl                 client.Client
+	scheme             *runtime.Scheme
+	addErr             error
+	logger             logr.Logger
+	deprecatedRecorder record.EventRecorder
+	recorder           recorder.EventRecorder
 }
+
+// type check to make sure fakeManager implements manager.Manager
+var _ manager.Manager = &fakeManager{}
 
 func (m *fakeManager) Add(manager.Runnable) error { return m.addErr }
 func (m *fakeManager) Elected() <-chan struct{} {
@@ -180,13 +187,20 @@ func (m *fakeManager) GetScheme() *runtime.Scheme              { return m.scheme
 func (m *fakeManager) GetClient() client.Client                { return m.cl }
 func (m *fakeManager) GetFieldIndexer() client.FieldIndexer    { return nil }
 func (m *fakeManager) GetEventRecorderFor(string) record.EventRecorder {
+	if m.deprecatedRecorder == nil {
+		m.deprecatedRecorder = record.NewFakeRecorder(32)
+	}
+	return m.deprecatedRecorder
+}
+func (m *fakeManager) GetEventRecorder(name string) recorder.EventRecorder {
 	if m.recorder == nil {
-		m.recorder = record.NewFakeRecorder(32)
+		m.recorder = events.NewFakeRecorder(32)
 	}
 	return m.recorder
 }
-func (m *fakeManager) GetRESTMapper() meta.RESTMapper { return nil }
-func (m *fakeManager) GetAPIReader() client.Reader    { return m.cl }
+func (m *fakeManager) GetRESTMapper() meta.RESTMapper            { return nil }
+func (m *fakeManager) GetAPIReader() client.Reader               { return m.cl }
+func (m *fakeManager) GetConverterRegistry() conversion.Registry { return nil }
 
 func TestSetupVariableGated(t *testing.T) {
 	g := &recordingGate{}
@@ -292,7 +306,7 @@ func TestObserve(t *testing.T) {
 				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: &variableDescription, VariableType: &variableType, Protected: &f, Masked: &f, Raw: &f}})),
 			},
 			want: want{
-				cr: variable(withConditions(xpv1.Available()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: &variableDescription, VariableType: &variableType, Protected: &f, Masked: &f, Raw: &f}}), withObservation(v1alpha1.VariableObservation{
+				cr: variable(withConditions(v2.Available()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: &variableDescription, VariableType: &variableType, Protected: &f, Masked: &f, Raw: &f}}), withObservation(v1alpha1.VariableObservation{
 					CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
 						Key:          variableKey,
 						Description:  variableDescription,
@@ -313,13 +327,13 @@ func TestObserve(t *testing.T) {
 				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: strPtr("local")}})),
 			},
 			want: want{
-				cr: variable(withConditions(xpv1.Available()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
+				cr: variable(withConditions(v2.Available()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{
 					Key:          variableKey,
 					Value:        strPtr("local"),
 					Description:  strPtr(""),
-					Masked:       gitlab.Ptr(false),
-					Protected:    gitlab.Ptr(false),
-					Raw:          gitlab.Ptr(false),
+					Masked:       new(false),
+					Protected:    new(false),
+					Raw:          new(false),
 					VariableType: varTypePtr(commonv1alpha1.VariableType("")),
 				}}), withObservation(v1alpha1.VariableObservation{
 					CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
@@ -352,8 +366,8 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: variable(
-					withConditions(xpv1.Available()),
-					withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: strPtr(""), VariableType: &variableType, Masked: gitlab.Ptr(true), Raw: gitlab.Ptr(true), Protected: gitlab.Ptr(false)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}),
+					withConditions(v2.Available()),
+					withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, Description: strPtr(""), VariableType: &variableType, Masked: new(true), Raw: new(true), Protected: new(false)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}),
 					withObservation(v1alpha1.VariableObservation{
 						CommonVariableObservation: commonv1alpha1.CommonVariableObservation{
 							Key:          variableKey,
@@ -374,9 +388,9 @@ func TestObserve(t *testing.T) {
 				client: &MockClient{MockGetVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
 					return &gitlab.InstanceVariable{Key: variableKey}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 				}},
-				cr: variable(withDeletionTimestamp(), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}), withConditions(xpv1.Deleting())),
+				cr: variable(withDeletionTimestamp(), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}), withConditions(v2.Deleting())),
 			},
-			want: want{cr: variable(withDeletionTimestamp(), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}), withConditions(xpv1.Deleting())), result: managed.ExternalObservation{ResourceExists: true}},
+			want: want{cr: variable(withDeletionTimestamp(), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}), withConditions(v2.Deleting())), result: managed.ExternalObservation{ResourceExists: true}},
 		},
 	}
 
@@ -420,7 +434,7 @@ func TestCreate(t *testing.T) {
 				}},
 				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})),
 			},
-			want: want{cr: variable(withConditions(xpv1.Creating()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})), err: errors.Wrap(errBoom, errCreateFailed)},
+			want: want{cr: variable(withConditions(v2.Creating()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})), err: errors.Wrap(errBoom, errCreateFailed)},
 		},
 		"ValueSecretRef": {
 			args: args{
@@ -441,7 +455,7 @@ func TestCreate(t *testing.T) {
 				}},
 				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, VariableType: &variableType}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")})),
 			},
-			want: want{cr: variable(withConditions(xpv1.Creating()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, VariableType: &variableType, Masked: gitlab.Ptr(true), Raw: gitlab.Ptr(true)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}))},
+			want: want{cr: variable(withConditions(v2.Creating()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, VariableType: &variableType, Masked: new(true), Raw: new(true)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}))},
 		},
 	}
 
@@ -505,7 +519,7 @@ func TestUpdate(t *testing.T) {
 				}},
 				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, VariableType: &variableType}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")})),
 			},
-			want: want{cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, VariableType: &variableType, Masked: gitlab.Ptr(true), Raw: gitlab.Ptr(true)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}))},
+			want: want{cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey, Value: &variableValue, VariableType: &variableType, Masked: new(true), Raw: new(true)}, ValueSecretRef: common.TestCreateSecretKeySelector("", "blah")}))},
 		},
 	}
 
@@ -547,7 +561,7 @@ func TestDelete(t *testing.T) {
 				client: &MockClient{MockRemoveVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) { return nil, errBoom }},
 				cr:     variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})),
 			},
-			want: want{cr: variable(withConditions(xpv1.Deleting()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})), err: errors.Wrap(errBoom, errDeleteFailed)},
+			want: want{cr: variable(withConditions(v2.Deleting()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})), err: errors.Wrap(errBoom, errDeleteFailed)},
 		},
 		"Successful": {
 			args: args{
@@ -556,7 +570,7 @@ func TestDelete(t *testing.T) {
 				}},
 				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})),
 			},
-			want: want{cr: variable(withConditions(xpv1.Deleting()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}}))},
+			want: want{cr: variable(withConditions(v2.Deleting()), withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}}))},
 		},
 	}
 

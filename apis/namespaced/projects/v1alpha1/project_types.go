@@ -17,9 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -115,13 +113,15 @@ type User struct {
 
 // ContainerExpirationPolicy represents the container expiration policy.
 type ContainerExpirationPolicy struct {
-	Cadence         string       `json:"cadence"`
-	KeepN           int64        `json:"keepN"`
-	OlderThan       string       `json:"olderThan"`
-	NameRegexDelete string       `json:"nameRegexDelete"`
-	NameRegexKeep   string       `json:"nameRegexKeep"`
-	Enabled         bool         `json:"enabled"`
-	NextRunAt       *metav1.Time `json:"nextRunAt"`
+	Cadence   string `json:"cadence"`
+	KeepN     int64  `json:"keepN"`
+	OlderThan string `json:"olderThan"`
+	// Regular expression matching the image names to delete, as reported by
+	// GitLab in name_regex.
+	NameRegex     string       `json:"nameRegex"`
+	NameRegexKeep string       `json:"nameRegexKeep"`
+	Enabled       bool         `json:"enabled"`
+	NextRunAt     *metav1.Time `json:"nextRunAt"`
 }
 
 // ProjectLicense represent the license for a project.
@@ -138,15 +138,20 @@ type ProjectLicense struct {
 //
 // GitLab API docs: https://docs.gitlab.com/ee/api/projects.html#create-project
 type ContainerExpirationPolicyAttributes struct {
-	Cadence         *string `json:"cadence,omitempty"`
-	KeepN           *int64  `json:"keepN,omitempty"`
-	OlderThan       *string `json:"olderThan,omitempty"`
-	NameRegexDelete *string `json:"nameRegexDelete,omitempty"`
-	NameRegexKeep   *string `json:"nameRegexKeep,omitempty"`
-	Enabled         *bool   `json:"enabled,omitempty"`
+	Cadence   *string `json:"cadence,omitempty"`
+	KeepN     *int64  `json:"keepN,omitempty"`
+	OlderThan *string `json:"olderThan,omitempty"`
 
-	// Deprecated members
-	NameRegex *string `url:"name_regex,omitempty" json:"name_regex,omitempty"`
+	// Regular expression matching the image names to delete.
+	//
+	// GitLab implements the deletion pattern as name_regex, and that is the only
+	// spelling its API declares. The documentation additionally advertises
+	// name_regex_delete, but that parameter does not exist and is discarded
+	// without an error.
+	// See https://gitlab.com/gitlab-org/api/client-go/-/issues/2303
+	NameRegex     *string `json:"nameRegex,omitempty"`
+	NameRegexKeep *string `json:"nameRegexKeep,omitempty"`
+	Enabled       *bool   `json:"enabled,omitempty"`
 }
 
 // ProjectParameters define the desired state of a Gitlab Project
@@ -154,6 +159,11 @@ type ProjectParameters struct {
 	// Set whether or not merge requests can be merged with skipped jobs.
 	// +optional
 	AllowMergeOnSkippedPipeline *bool `json:"allowMergeOnSkippedPipeline,omitempty"`
+
+	// One of disabled, private, or enabled.
+	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
+	AnalyticsAccessLevel *AccessControlValue `json:"analyticsAccessLevel,omitempty"`
 
 	// How many approvers should approve merge request by default.More actions
 	// To configure approval rules, see Merge request approvals API.
@@ -177,10 +187,6 @@ type ProjectParameters struct {
 	// Set whether auto-closing referenced issues on default branch.
 	// +optional
 	AutocloseReferencedIssues *bool `json:"autocloseReferencedIssues,omitempty"`
-
-	// Test coverage parsing.
-	// +optional
-	BuildCoverageRegex *string `json:"buildCoverageRegex,omitempty"`
 
 	// The Git strategy. Defaults to fetch.
 	// +kubebuilder:validation:Enum:=fetch;clone
@@ -208,7 +214,7 @@ type ProjectParameters struct {
 	CIForwardDeploymentEnabled *bool `json:"ciForwardDeploymentEnabled,omitempty"`
 
 	// Update the image cleanup policy for this project. Accepts: cadence (string), keepN (integer), olderThan (string),
-	// nameRegex (string), nameRegexDelete (string), nameRegexKeep (string), enabled (boolean).
+	// nameRegex (string), nameRegexKeep (string), enabled (boolean).
 	// +optional
 	ContainerExpirationPolicyAttributes *ContainerExpirationPolicyAttributes `json:"containerExpirationPolicyAttributes,omitempty"`
 
@@ -241,9 +247,19 @@ type ProjectParameters struct {
 	// +optional
 	EmailsDisabled *bool `json:"emailsDisabled,omitempty"`
 
+	// One of disabled, private, or enabled.
+	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
+	EnvironmentsAccessLevel *AccessControlValue `json:"environmentsAccessLevel,omitempty"`
+
 	// The classification label for the project.
 	// +optional
 	ExternalAuthorizationClassificationLabel *string `json:"externalAuthorizationClassificationLabel,omitempty"`
+
+	// One of disabled, private, or enabled.
+	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
+	FeatureFlagsAccessLevel *AccessControlValue `json:"featureFlagsAccessLevel,omitempty"`
 
 	// One of disabled, private, or enabled.
 	// +optional
@@ -262,7 +278,12 @@ type ProjectParameters struct {
 	// ImportURLSecretRef is a reference to a Kubernetes secret to retrieve the URL to import repository from.
 	// This is preferable to using ImportURL since it allows users to reference a URL that contains sensitive information such as a personal access token.
 	// +optional
-	ImportURLSecretRef *xpv1.LocalSecretKeySelector `json:"importUrlSecretRef,omitempty"`
+	ImportURLSecretRef *v2.LocalSecretKeySelector `json:"importUrlSecretRef,omitempty"`
+
+	// One of disabled, private, or enabled.
+	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
+	InfrastructureAccessLevel *AccessControlValue `json:"infrastructureAccessLevel,omitempty"`
 
 	// false by default.
 	// +optional
@@ -290,6 +311,18 @@ type ProjectParameters struct {
 	// +optional
 	MergeRequestsAccessLevel *AccessControlValue `json:"mergeRequestsAccessLevel,omitempty"`
 
+	// Enables merge trains.
+	// +optional
+	MergeTrainsEnabled *bool `json:"mergeTrainsEnabled,omitempty"`
+
+	// Enables allowing to skip the merge train.
+	// +optional
+	MergeTrainsSkipTrainAllowed *bool `json:"mergeTrainsSkipTrainAllowed,omitempty"`
+
+	// Enables merge pipelines.
+	// +optional
+	MergePipelinesEnabled *bool `json:"mergePipelinesEnabled,omitempty"`
+
 	// Default description for Merge Requests. Description is parsed with GitLab Flavored Markdown.
 	// See Templates for issues and merge requests.
 	// +optional
@@ -311,6 +344,23 @@ type ProjectParameters struct {
 	// +optional
 	MirrorUserID *int64 `json:"mirrorUserId,omitempty"`
 
+	// One of disabled, private, or enabled.
+	// Requires GitLab 16.5 or later.
+	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
+	ModelExperimentsAccessLevel *AccessControlValue `json:"modelExperimentsAccessLevel,omitempty"`
+
+	// One of disabled, private, or enabled.
+	// Requires GitLab 16.7 or later.
+	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
+	ModelRegistryAccessLevel *AccessControlValue `json:"modelRegistryAccessLevel,omitempty"`
+
+	// One of disabled, private, or enabled.
+	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
+	MonitorAccessLevel *AccessControlValue `json:"monitorAccessLevel,omitempty"`
+
 	// Namespace for the new project (defaults to the current user’s namespace).
 	// +optional
 	NamespaceID *int64 `json:"namespaceId,omitempty"`
@@ -318,11 +368,11 @@ type ProjectParameters struct {
 	// NamespaceIDRef is a reference to a project to retrieve its namespaceId
 	// +optional
 	// +immutable
-	NamespaceIDRef *xpv1.NamespacedReference `json:"namespaceIdRef,omitempty"`
+	NamespaceIDRef *v2.NamespacedReference `json:"namespaceIdRef,omitempty"`
 
 	// NamespaceIDSelector selects reference to a project to retrieve its namespaceId.
 	// +optional
-	NamespaceIDSelector *xpv1.NamespacedSelector `json:"namespaceIdSelector,omitempty"`
+	NamespaceIDSelector *v2.NamespacedSelector `json:"namespaceIdSelector,omitempty"`
 
 	// Set whether merge requests can only be merged when all the discussions are resolved.
 	// +optional
@@ -336,11 +386,17 @@ type ProjectParameters struct {
 	// +optional
 	OnlyMirrorProtectedBranches *bool `json:"onlyMirrorProtectedBranches,omitempty"`
 
-	// One of disabled, private, or enabled.
+	// One of disabled, private, enabled, or public.
+	// Takes precedence over packagesEnabled: when set, packages are enabled
+	// unless this is disabled. Not late-initialized from GitLab.
+	// Requires GitLab 18.4 or later.
 	// +optional
-	OperationsAccessLevel *AccessControlValue `json:"operationsAccessLevel,omitempty"`
+	// +kubebuilder:validation:Enum=disabled;private;enabled;public
+	PackageRegistryAccessLevel *AccessControlValue `json:"packageRegistryAccessLevel,omitempty"`
 
 	// Enable or disable packages repository feature.
+	// Ignored when packageRegistryAccessLevel is set, which GitLab documents
+	// as its replacement.
 	// +optional
 	PackagesEnabled *bool `json:"packagesEnabled,omitempty"`
 
@@ -376,6 +432,11 @@ type ProjectParameters struct {
 	// +optional
 	PushRules *PushRules `json:"pushRules,omitempty"`
 
+	// One of disabled, private, or enabled.
+	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
+	ReleasesAccessLevel *AccessControlValue `json:"releasesAccessLevel,omitempty"`
+
 	// Enable Delete source branch option by default for all new merge requests.
 	// +optional
 	RemoveSourceBranchAfterMerge *bool `json:"removeSourceBranchAfterMerge,omitempty"`
@@ -391,6 +452,11 @@ type ProjectParameters struct {
 	// Automatically resolve merge request diffs discussions on lines changed with a push.
 	// +optional
 	ResolveOutdatedDiffDiscussions *bool `json:"resolveOutdatedDiffDiscussions,omitempty"`
+
+	// One of disabled, private, or enabled.
+	// +optional
+	// +kubebuilder:validation:Enum=disabled;private;enabled
+	SecurityAndComplianceAccessLevel *AccessControlValue `json:"securityAndComplianceAccessLevel,omitempty"`
 
 	// Enable or disable Service Desk feature.
 	// +optional
@@ -590,62 +656,65 @@ type SharedWithGroups struct {
 
 // ProjectObservation is the observed state of a Project.
 type ProjectObservation struct {
-	ID                        int64                      `json:"id,omitempty"`
-	Archived                  bool                       `json:"archived,omitempty"`
-	AvatarURL                 string                     `json:"avatarUrl,omitempty"`
-	ComplianceFrameworks      []string                   `json:"complianceFrameworks,omitempty"`
-	ContainerExpirationPolicy *ContainerExpirationPolicy `json:"containerExpirationPolicy,omitempty"`
-	CreatedAt                 *metav1.Time               `json:"createdAt,omitempty"`
-	CreatorID                 int64                      `json:"creatorId,omitempty"`
-	CustomAttributes          []CustomAttribute          `json:"customAttributes,omitempty"`
-	EmptyRepo                 bool                       `json:"emptyRepo,omitempty"`
-	ForkedFromProject         *ForkParent                `json:"forkedFromProject,omitempty"`
-	ForksCount                int64                      `json:"forksCount,omitempty"`
-	HTTPURLToRepo             string                     `json:"httpUrlToRepo,omitempty"`
-	ImportError               string                     `json:"importError,omitempty"`
-	ImportStatus              string                     `json:"importStatus,omitempty"`
-	IssuesEnabled             bool                       `json:"issuesEnabled,omitempty"`
-	JobsEnabled               bool                       `json:"jobsEnabled,omitempty"`
-	IssuesAccessLevel         AccessControlValue         `json:"issuesAccessLevel,omitempty"`
-	BuildsAccessLevel         AccessControlValue         `json:"buildsAccessLevel,omitempty"`
-	LastActivityAt            *metav1.Time               `json:"lastActivityAt,omitempty"`
-	License                   *ProjectLicense            `json:"license,omitempty"`
-	LicenseURL                string                     `json:"licenseUrl,omitempty"`
-	Links                     *Links                     `json:"links,omitempty"`
-	MarkedForDeletionAt       *metav1.Time               `json:"markedForDeletionAt,omitempty"`
-	MergeRequestsEnabled      bool                       `json:"mergeRequestsEnabled,omitempty"`
-	MarkedForDeletionOn       *metav1.Time               `json:"markedForDeletionOn,omitempty"`
-	MergeRequestsAccessLevel  AccessControlValue         `json:"mergeRequestsAccessLevel,omitempty"`
-	NameWithNamespace         string                     `json:"nameWithNamespace,omitempty"`
-	Namespace                 *ProjectNamespace          `json:"namespace,omitempty"`
-	OpenIssuesCount           int64                      `json:"openIssuesCount,omitempty"`
-	Owner                     *User                      `json:"owner,omitempty"`
-	PathWithNamespace         string                     `json:"pathWithNamespace,omitempty"`
-	Permissions               *Permissions               `json:"permissions,omitempty"`
-	Public                    bool                       `json:"public,omitempty"`
-	ReadmeURL                 string                     `json:"readmeUrl,omitempty"`
-	SSHURLToRepo              string                     `json:"sshUrlToRepo,omitempty"`
-	ServiceDeskAddress        string                     `json:"serviceDeskAddress,omitempty"`
-	SharedWithGroups          []SharedWithGroups         `json:"sharedWithGroups,omitempty"`
-	SnippetsEnabled           bool                       `json:"snippetsEnabled,omitempty"`
-	SnippetsAccessLevel       AccessControlValue         `json:"snippetsAccessLevel,omitempty"`
-	StarCount                 int64                      `json:"starCount,omitempty"`
-	Statistics                *ProjectStatistics         `json:"statistics,omitempty"`
-	WebURL                    string                     `json:"webUrl,omitempty"`
-	WikiEnabled               bool                       `json:"wikiEnabled,omitempty"`
-	WikiAccessLevel           AccessControlValue         `json:"wikiAccessLevel,omitempty"`
+	ID                          int64                      `json:"id,omitempty"`
+	Archived                    bool                       `json:"archived,omitempty"`
+	AvatarURL                   string                     `json:"avatarUrl,omitempty"`
+	ComplianceFrameworks        []string                   `json:"complianceFrameworks,omitempty"`
+	ContainerExpirationPolicy   *ContainerExpirationPolicy `json:"containerExpirationPolicy,omitempty"`
+	CreatedAt                   *metav1.Time               `json:"createdAt,omitempty"`
+	CreatorID                   int64                      `json:"creatorId,omitempty"`
+	CustomAttributes            []CustomAttribute          `json:"customAttributes,omitempty"`
+	EmptyRepo                   bool                       `json:"emptyRepo,omitempty"`
+	ForkedFromProject           *ForkParent                `json:"forkedFromProject,omitempty"`
+	ForksCount                  int64                      `json:"forksCount,omitempty"`
+	HTTPURLToRepo               string                     `json:"httpUrlToRepo,omitempty"`
+	ImportError                 string                     `json:"importError,omitempty"`
+	ImportStatus                string                     `json:"importStatus,omitempty"`
+	IssuesEnabled               bool                       `json:"issuesEnabled,omitempty"`
+	JobsEnabled                 bool                       `json:"jobsEnabled,omitempty"`
+	IssuesAccessLevel           AccessControlValue         `json:"issuesAccessLevel,omitempty"`
+	BuildsAccessLevel           AccessControlValue         `json:"buildsAccessLevel,omitempty"`
+	LastActivityAt              *metav1.Time               `json:"lastActivityAt,omitempty"`
+	License                     *ProjectLicense            `json:"license,omitempty"`
+	LicenseURL                  string                     `json:"licenseUrl,omitempty"`
+	Links                       *Links                     `json:"links,omitempty"`
+	MarkedForDeletionAt         *metav1.Time               `json:"markedForDeletionAt,omitempty"`
+	MergeRequestsEnabled        bool                       `json:"mergeRequestsEnabled,omitempty"`
+	MarkedForDeletionOn         *metav1.Time               `json:"markedForDeletionOn,omitempty"`
+	MergeRequestsAccessLevel    AccessControlValue         `json:"mergeRequestsAccessLevel,omitempty"`
+	MergeTrainsEnabled          bool                       `json:"mergeTrainsEnabled,omitempty"`
+	MergeTrainsSkipTrainAllowed bool                       `json:"mergeTrainsSkipTrainAllowed,omitempty"`
+	MergePipelinesEnabled       bool                       `json:"mergePipelinesEnabled,omitempty"`
+	NameWithNamespace           string                     `json:"nameWithNamespace,omitempty"`
+	Namespace                   *ProjectNamespace          `json:"namespace,omitempty"`
+	OpenIssuesCount             int64                      `json:"openIssuesCount,omitempty"`
+	Owner                       *User                      `json:"owner,omitempty"`
+	PathWithNamespace           string                     `json:"pathWithNamespace,omitempty"`
+	Permissions                 *Permissions               `json:"permissions,omitempty"`
+	Public                      bool                       `json:"public,omitempty"`
+	ReadmeURL                   string                     `json:"readmeUrl,omitempty"`
+	SSHURLToRepo                string                     `json:"sshUrlToRepo,omitempty"`
+	ServiceDeskAddress          string                     `json:"serviceDeskAddress,omitempty"`
+	SharedWithGroups            []SharedWithGroups         `json:"sharedWithGroups,omitempty"`
+	SnippetsEnabled             bool                       `json:"snippetsEnabled,omitempty"`
+	SnippetsAccessLevel         AccessControlValue         `json:"snippetsAccessLevel,omitempty"`
+	StarCount                   int64                      `json:"starCount,omitempty"`
+	Statistics                  *ProjectStatistics         `json:"statistics,omitempty"`
+	WebURL                      string                     `json:"webUrl,omitempty"`
+	WikiEnabled                 bool                       `json:"wikiEnabled,omitempty"`
+	WikiAccessLevel             AccessControlValue         `json:"wikiAccessLevel,omitempty"`
 }
 
 // A ProjectSpec defines the desired state of a Gitlab Project.
 type ProjectSpec struct {
-	xpv2.ManagedResourceSpec `json:",inline"`
-	ForProvider              ProjectParameters `json:"forProvider"`
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            ProjectParameters `json:"forProvider"`
 }
 
 // A ProjectStatus represents the observed state of a Gitlab Project.
 type ProjectStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          ProjectObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               ProjectObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

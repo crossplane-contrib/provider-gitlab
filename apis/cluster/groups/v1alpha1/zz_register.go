@@ -118,6 +118,30 @@ var (
 	ServiceAccountGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountKind)
 )
 
+// ServiceAccountAccessToken type metadata
+var (
+	ServiceAccountAccessTokenKind             = reflect.TypeOf(ServiceAccountAccessToken{}).Name()
+	ServiceAccountAccessTokenGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: ServiceAccountAccessTokenKind}.String()
+	ServiceAccountAccessTokenKindAPIVersion   = ServiceAccountAccessTokenKind + "." + SchemeGroupVersion.String()
+	ServiceAccountAccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountAccessTokenKind)
+)
+
+// Hook type metadata
+var (
+	HookKind             = reflect.TypeOf(Hook{}).Name()
+	HookGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: HookKind}.String()
+	HookKindAPIVersion   = HookKind + "." + SchemeGroupVersion.String()
+	HookGroupVersionKind = SchemeGroupVersion.WithKind(HookKind)
+)
+
+// IntegrationHarbor type metadata
+var (
+	IntegrationHarborKind             = reflect.TypeOf(IntegrationHarbor{}).Name()
+	IntegrationHarborGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: IntegrationHarborKind}.String()
+	IntegrationHarborKindAPIVersion   = IntegrationHarborKind + "." + SchemeGroupVersion.String()
+	IntegrationHarborGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationHarborKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Group{}, &GroupList{})
 	SchemeBuilder.Register(&Member{}, &MemberList{})
@@ -129,4 +153,7 @@ func init() {
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&Badge{}, &BadgeList{})
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
+	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})
+	SchemeBuilder.Register(&Hook{}, &HookList{})
+	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
 }

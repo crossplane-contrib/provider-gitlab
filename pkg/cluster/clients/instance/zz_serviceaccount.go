@@ -19,7 +19,7 @@ limitations under the License.
 package instance
 
 import (
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/instance/v1alpha1"
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -29,7 +29,7 @@ import (
 
 // ServiceAccountClient defines Gitlab Service Account service operations
 type ServiceAccountClient interface {
-	GetUser(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	GetUser(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	CreateServiceAccountUser(opts *gitlab.CreateServiceAccountUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	ModifyUser(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	DeleteUser(user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
@@ -49,6 +49,7 @@ func GenerateServiceAccountObservation(u *gitlab.User) v1alpha1.ServiceAccountOb
 			Name:     u.Name,
 			Username: u.Username,
 			Email:    u.Email,
+			Admin:    u.IsAdmin,
 		},
 	}
 }
@@ -59,6 +60,7 @@ func GenerateUpdateServiceAccountOptions(p *v1alpha1.ServiceAccountParameters) *
 		Name:     p.Name,
 		Username: p.Username,
 		Email:    p.Email,
+		Admin:    p.Admin,
 	}
 }
 
@@ -81,17 +83,8 @@ func IsServiceAccountUpToDate(p *v1alpha1.ServiceAccountParameters, u *gitlab.Us
 		return false
 	}
 
-	if !clients.IsComparableEqualToComparablePtr(p.Name, u.Name) {
-		return false
-	}
-
-	if !clients.IsComparableEqualToComparablePtr(p.Username, u.Username) {
-		return false
-	}
-
-	if !clients.IsComparableEqualToComparablePtr(p.Email, u.Email) {
-		return false
-	}
-
-	return true
+	return clients.IsComparableEqualToComparablePtr(p.Name, u.Name) &&
+		clients.IsComparableEqualToComparablePtr(p.Username, u.Username) &&
+		clients.IsComparableEqualToComparablePtr(p.Email, u.Email) &&
+		clients.IsComparableEqualToComparablePtr(p.Admin, u.IsAdmin)
 }

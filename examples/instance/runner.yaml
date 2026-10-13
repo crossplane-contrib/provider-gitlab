@@ -9,6 +9,7 @@ metadata:
 spec:
   forProvider:
     description: "example instance runner description"
+    tokenRenewBeforeDays: 1
     tagList:
       - "example-tag-1"
       - "example-tag-2"

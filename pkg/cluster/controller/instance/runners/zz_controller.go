@@ -21,8 +21,8 @@ package runners
 import (
 	"context"
 	"strconv"
+	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
@@ -30,8 +30,9 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,8 +51,9 @@ const (
 	errCreateFailed            = "cannot create Gitlab Runner"
 	errUpdateFailed            = "cannot update Gitlab Runner"
 	errDeleteFailed            = "cannot delete Gitlab Runner"
+	errResetFailed             = "cannot reset Gitlab Runner authentication token"
 	errMissingExternalName     = "external name annotation not found"
-	errMissingConnectionSecret = "writeConnectionSecretToRef or publishConnectionDetailsTo must be specified to receive the runner token"
+	errMissingConnectionSecret = "writeConnectionSecretToRef must be specified to receive the runner token"
 )
 
 // SetupRunner adds a controller that reconciles instance runners.
@@ -59,7 +61,7 @@ func SetupRunner(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName("cluster." + v1alpha1.RunnerGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
-		managed.WithExternalConnecter(&connector{
+		managed.WithExternalConnector(&connector{
 			kube:              mgr.GetClient(),
 			newGitlabClientFn: runners.NewRunnerClient,
 			newRunnerClientFn: users.NewRunnerClient,
@@ -152,11 +154,26 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
-	// we need to make sure the token expiration time is preserved as it is not returned by the API
+	// Recover token fields that crossplane-runtime reverted after Create().
+	runners.RestoreTokenFieldsFromAnnotations(cr, &cr.Status.AtProvider.CommonRunnerObservation)
+
+	// Preserve token fields that are not returned by the API.
 	tokenExpiresAt := cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt
+	tokenCreatedAt := cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt
 	cr.Status.AtProvider = runners.GenerateInstanceRunnerObservation(runner)
 	cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = tokenExpiresAt
-	cr.SetConditions(xpv1.Available())
+	cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt = tokenCreatedAt
+
+	cr.Status.TokenRenewAt = runners.ComputeNextRunnerTokenRotation(
+		&cr.Status.AtProvider.CommonRunnerObservation,
+		cr.Spec.ForProvider.TokenRenewBeforeDays,
+	)
+
+	if runners.ShouldRotateRunnerToken(&cr.Status.AtProvider.CommonRunnerObservation, cr.Spec.ForProvider.TokenRenewBeforeDays, time.Now().UTC()) {
+		return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}, nil
+	}
+
+	cr.SetConditions(v2.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
@@ -177,6 +194,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errMissingConnectionSecret)
 	}
 
+	cr.SetConditions(v2.Creating())
+
 	runner, _, err := e.userRunnerClient.CreateUserRunner(
 		users.GenerateInstanceRunnerOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
@@ -187,14 +206,18 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	meta.SetExternalName(cr, strconv.FormatInt(runner.ID, 10))
 
+	now := time.Now().UTC()
+	nowMeta := metav1.NewTime(now)
+	cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt = &nowMeta
 	if runner.TokenExpiresAt != nil {
 		t := metav1.NewTime(*runner.TokenExpiresAt)
 		cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = &t
 	} else {
 		cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = nil
 	}
-
-	cr.SetConditions(xpv1.Creating())
+	// Persist token timestamps in annotations because crossplane-runtime v2 reverts
+	// status changes from Create() before they reach Kubernetes.
+	runners.SetRunnerTokenAnnotations(cr, now, runner.TokenExpiresAt)
 
 	return managed.ExternalCreation{
 		ConnectionDetails: managed.ConnectionDetails{
@@ -220,11 +243,42 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
 
+	if runners.ShouldRotateRunnerToken(&cr.Status.AtProvider.CommonRunnerObservation, cr.Spec.ForProvider.TokenRenewBeforeDays, time.Now().UTC()) {
+		authToken, _, err := e.client.ResetRunnerAuthenticationToken(int64(runnerID), gitlab.WithContext(ctx))
+		if err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errResetFailed)
+		}
+
+		now := time.Now().UTC()
+		nowMeta := metav1.NewTime(now)
+		cr.Status.AtProvider.CommonRunnerObservation.TokenCreatedAt = &nowMeta
+
+		if authToken.TokenExpiresAt != nil {
+			t := metav1.NewTime(*authToken.TokenExpiresAt)
+			cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = &t
+		} else {
+			cr.Status.AtProvider.CommonRunnerObservation.TokenExpiresAt = nil
+		}
+		runners.SetRunnerTokenAnnotations(cr, now, authToken.TokenExpiresAt)
+
+		token := ""
+		if authToken.Token != nil {
+			token = *authToken.Token
+		}
+
+		return managed.ExternalUpdate{
+			ConnectionDetails: managed.ConnectionDetails{
+				"token": []byte(token),
+			},
+		}, nil
+	}
+
 	_, _, err = e.client.UpdateRunnerDetails(
 		runnerID,
 		runners.GenerateEditRunnerOptions(&cr.Spec.ForProvider.CommonRunnerParameters),
 		gitlab.WithContext(ctx),
 	)
+
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}

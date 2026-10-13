@@ -22,7 +22,6 @@ import (
 	"context"
 	"strconv"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
@@ -30,9 +29,10 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -58,7 +58,7 @@ func SetupHook(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName("cluster." + v1alpha1.HookGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
-		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewHookClient}),
+		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewHookClient}),
 		managed.WithInitializers(),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
@@ -142,18 +142,34 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
 		}
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorHookNotFound, err), errGetFailed)
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
 	projects.LateInitializeHook(&cr.Spec.ForProvider, projecthook)
 
+	// GenerateHookObservation rebuilds atProvider from the GitLab response,
+	// which never includes the secret token; preserve the stored token hash.
+	storedTokenHash := cr.Status.AtProvider.TokenHash
 	cr.Status.AtProvider = projects.GenerateHookObservation(projecthook)
-	cr.Status.SetConditions(xpv1.Available())
+	cr.Status.AtProvider.TokenHash = storedTokenHash
+	cr.Status.SetConditions(v2.Available())
+
+	upToDate := projects.IsHookUpToDate(&cr.Spec.ForProvider, projecthook)
+	if upToDate {
+		// Only resolve the secret when every other field already matches:
+		// GitLab never returns the token, so we detect rotation on the desired
+		// side by comparing the current secret's hash to the stored one.
+		token, err := tokenValue(ctx, e.kube, cr)
+		if err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, errSecretRefInvalid)
+		}
+		upToDate = clients.TokenHash(token) == storedTokenHash
+	}
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        projects.IsHookUpToDate(&cr.Spec.ForProvider, projecthook),
+		ResourceUpToDate:        upToDate,
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 	}, nil
 }
@@ -164,7 +180,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotHook)
 	}
 
-	cr.Status.SetConditions(xpv1.Creating())
+	cr.Status.SetConditions(v2.Creating())
 	token, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, cr.Spec.ForProvider.Token.SecretRef)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errSecretRefInvalid)
@@ -194,7 +210,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errProjectIDMissing)
 	}
 
-	token, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, cr.Spec.ForProvider.Token.SecretRef)
+	token, err := tokenValue(ctx, e.kube, cr)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errSecretRefInvalid)
 	}
@@ -206,6 +222,10 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}
 
+	// Record the hash of the token we just pushed so Observe can detect future
+	// rotations of the referenced secret.
+	cr.Status.AtProvider.TokenHash = clients.TokenHash(token)
+
 	return managed.ExternalUpdate{}, nil
 }
 
@@ -215,12 +235,21 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotHook)
 	}
 
-	cr.Status.SetConditions(xpv1.Deleting())
+	cr.Status.SetConditions(v2.Deleting())
 
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalDelete{}, errors.New(errProjectIDMissing)
 	}
-	_, err := e.client.DeleteProjectHook(*cr.Spec.ForProvider.ProjectID, cr.Status.AtProvider.ID, gitlab.WithContext(ctx))
+
+	// The external-name is the authoritative hook id (set on Create and used by
+	// Observe/Update); rely on it rather than status.atProvider.ID, which may be
+	// unset if the resource was never successfully observed.
+	hookid, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64)
+	if err != nil {
+		return managed.ExternalDelete{}, errors.New(errNotHook)
+	}
+
+	_, err = e.client.DeleteProjectHook(*cr.Spec.ForProvider.ProjectID, hookid, gitlab.WithContext(ctx))
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 }
 
@@ -232,4 +261,13 @@ func (e *external) Disconnect(ctx context.Context) error {
 func (e *external) updateExternalName(ctx context.Context, cr *v1alpha1.Hook, projecthook *gitlab.ProjectHook) error {
 	meta.SetExternalName(cr, strconv.FormatInt(projecthook.ID, 10))
 	return e.kube.Update(ctx, cr)
+}
+
+// tokenValue resolves the webhook secret token from the referenced secret.
+// A nil token reference yields a nil value rather than an error.
+func tokenValue(ctx context.Context, kube client.Client, cr *v1alpha1.Hook) (*string, error) {
+	if cr.Spec.ForProvider.Token == nil || cr.Spec.ForProvider.Token.SecretRef == nil {
+		return nil, nil
+	}
+	return common.GetTokenValueFromSecret(ctx, kube, cr, cr.Spec.ForProvider.Token.SecretRef)
 }

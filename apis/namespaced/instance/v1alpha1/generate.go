@@ -30,7 +30,7 @@ import (
 	"time"
 	"unicode"
 
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 )
 
 const outputHeader = `/*
@@ -57,7 +57,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 `
@@ -69,6 +69,22 @@ var (
 		"key",
 		"keyid",
 		"secret",
+	}
+
+	// unreleasedFields are settings that client-go models but no released
+	// GitLab (19.4) declares yet. GitLab drops an undeclared parameter and
+	// never returns it, so a value set for one of them could never converge.
+	// Remove an entry once the provider's supported GitLab releases have it.
+	unreleasedFields = map[string]bool{
+		"GroupAuditEventsAPILimit":                  true,
+		"ProjectAuditEventsAPILimit":                true,
+		"JobPlayLimitPerUserProject":                true,
+		"JobRetryLimitPerUserProject":               true,
+		"PipelineCancelLimitPerUserProject":         true,
+		"PipelineRetryLimitPerUserProject":          true,
+		"ThrottleAuthenticatedMCPEnabled":           true,
+		"ThrottleAuthenticatedMCPPeriodInSeconds":   true,
+		"ThrottleAuthenticatedMCPRequestsPerPeriod": true,
 	}
 )
 
@@ -101,6 +117,10 @@ func generateStruct(out *strings.Builder, name string, t reflect.Type, omitEmpty
 
 		// Skip unexported fields
 		if len(fieldName) > 0 && unicode.IsLower([]rune(fieldName)[0]) {
+			continue
+		}
+
+		if unreleasedFields[fieldName] {
 			continue
 		}
 
@@ -141,7 +161,7 @@ func generateStruct(out *strings.Builder, name string, t reflect.Type, omitEmpty
 		if fieldType.Kind() == reflect.Pointer && fieldType.Elem().Kind() == reflect.String {
 			for _, keyword := range sensitiveFieldsKeywords {
 				if strings.HasSuffix(lowerFieldName, keyword) {
-					fmt.Fprintf(out, "\t// +optional\n\t%sSecretRef *xpv1.LocalSecretKeySelector `json:\"%sSecretRef,omitempty\"`\n", fieldName, jsonTag)
+					fmt.Fprintf(out, "\t// +optional\n\t%sSecretRef *v2.LocalSecretKeySelector `json:\"%sSecretRef,omitempty\"`\n", fieldName, jsonTag)
 					break
 				}
 			}

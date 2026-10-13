@@ -17,11 +17,10 @@ limitations under the License.
 package common
 
 import (
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 )
 
 // GenerateCommonIntegrationObservation generates a CommonIntegrationObservation from a gitlab.Service
@@ -30,8 +29,8 @@ func GenerateCommonIntegrationObservation(integration *gitlab.Service) v1alpha1.
 		ID:                             ptr.To(integration.ID),
 		Title:                          ptr.To(integration.Title),
 		Slug:                           ptr.To(integration.Slug),
-		CreatedAt:                      clients.TimeToMetaTime(integration.CreatedAt),
-		UpdatedAt:                      clients.TimeToMetaTime(integration.UpdatedAt),
+		CreatedAt:                      TimeToMetaTime(integration.CreatedAt),
+		UpdatedAt:                      TimeToMetaTime(integration.UpdatedAt),
 		Active:                         ptr.To(integration.Active),
 		AlertEvents:                    ptr.To(integration.AlertEvents),
 		CommitEvents:                   ptr.To(integration.CommitEvents),

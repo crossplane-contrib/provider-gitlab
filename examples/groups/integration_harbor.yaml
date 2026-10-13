@@ -1,0 +1,18 @@
+---
+apiVersion: groups.gitlab.m.crossplane.io/v1alpha1
+kind: IntegrationHarbor
+metadata:
+  name: harbor-g7
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    groupId: 20
+    url: "https://example.registry.com"
+    projectName: "library"
+    username: "robot$test"
+    passwordSecretRef:
+      name: harbor-credentials
+      key: token

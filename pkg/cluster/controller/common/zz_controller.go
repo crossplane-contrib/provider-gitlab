@@ -21,8 +21,8 @@ package common
 import (
 	"context"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
@@ -30,7 +30,7 @@ import (
 
 // UpdateStringFromSecret fetches a sensitive setting value from a Kubernetes Secret
 // and assigns it to the provided parameter pointer.
-func UpdateStringFromSecret(mg resource.Managed, ctx context.Context, kube client.Client, selector *xpv1.SecretKeySelector, param **string) error {
+func UpdateStringFromSecret(mg resource.Managed, ctx context.Context, kube client.Client, selector *v2.SecretKeySelector, param **string) error {
 	value, err := common.GetTokenValueFromSecret(ctx, kube, mg, selector)
 	if err != nil {
 		return err

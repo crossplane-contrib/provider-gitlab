@@ -23,19 +23,20 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects/fake"
 )
@@ -45,12 +46,22 @@ var (
 	createTime    = time.Now()
 	projectID     = int64(5678)
 	projectHookID = int64(1234)
-	tokenValue    = "test"
+	tokenValueT   = "test"
+	tokenHashT    = clients.TokenHash(&tokenValueT)
 	tokenSecret   = corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "test"},
 		Data: map[string][]byte{
-			"token": []byte(tokenValue),
+			"token": []byte(tokenValueT),
 		},
+	}
+	// kubeWithSecret returns the token secret so Observe/Create/Update can
+	// resolve the referenced webhook token.
+	kubeWithSecret = &test.MockClient{
+		MockUpdate: test.NewMockUpdateFn(nil),
+		MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+			*obj.(*corev1.Secret) = tokenSecret
+			return nil
+		}),
 	}
 )
 
@@ -62,7 +73,7 @@ type args struct {
 
 type projectHookModifier func(*v1alpha1.Hook)
 
-func withConditions(c ...xpv1.Condition) projectHookModifier {
+func withConditions(c ...v2.Condition) projectHookModifier {
 	return func(r *v1alpha1.Hook) { r.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -109,6 +120,10 @@ func withStatus(s v1alpha1.HookObservation) projectHookModifier {
 	return func(r *v1alpha1.Hook) { r.Status.AtProvider = s }
 }
 
+func withTokenHash(h string) projectHookModifier {
+	return func(r *v1alpha1.Hook) { r.Status.AtProvider.TokenHash = h }
+}
+
 func withExternalName(projectHookID int64) projectHookModifier {
 	return func(r *v1alpha1.Hook) { meta.SetExternalName(r, fmt.Sprint(projectHookID)) }
 }
@@ -134,6 +149,7 @@ func TestObserve(t *testing.T) {
 	}{
 		"SuccessfulAvailable": {
 			args: args{
+				kube: kubeWithSecret,
 				projecthook: &fake.MockClient{
 					MockGetHook: func(pid interface{}, projectHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
@@ -146,17 +162,47 @@ func TestObserve(t *testing.T) {
 						ID:        projectHookID,
 						CreatedAt: &metav1.Time{Time: createTime},
 					}),
+					withTokenHash(tokenHashT),
 				),
 			},
 			want: want{
 				cr: projecthook(
 					withDefaultValues(),
 					withExternalName(projectHookID),
-					withConditions(xpv1.Available()),
+					withTokenHash(tokenHashT),
+					withConditions(v2.Available()),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:   true,
 					ResourceUpToDate: true,
+				},
+			},
+		},
+		"TokenRotated": {
+			args: args{
+				kube: kubeWithSecret,
+				projecthook: &fake.MockClient{
+					MockGetHook: func(pid interface{}, projectHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
+						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
+					},
+				},
+				cr: projecthook(
+					withDefaultValues(),
+					withExternalName(projectHookID),
+					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
+					withTokenHash("stale-hash"),
+				),
+			},
+			want: want{
+				cr: projecthook(
+					withDefaultValues(),
+					withExternalName(projectHookID),
+					withTokenHash("stale-hash"),
+					withConditions(v2.Available()),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:   true,
+					ResourceUpToDate: false,
 				},
 			},
 		},
@@ -182,7 +228,7 @@ func TestObserve(t *testing.T) {
 				cr: projecthook(
 					withDefaultValues(),
 					withExternalName(projectHookID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:   true,
@@ -192,6 +238,7 @@ func TestObserve(t *testing.T) {
 		},
 		"LateInitSuccess": {
 			args: args{
+				kube: kubeWithSecret,
 				projecthook: &fake.MockClient{
 					MockGetHook: func(pid interface{}, projectHookID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
 						return &gitlab.ProjectHook{}, &gitlab.Response{}, nil
@@ -205,13 +252,15 @@ func TestObserve(t *testing.T) {
 						ID:        projectHookID,
 						CreatedAt: &metav1.Time{Time: createTime},
 					}),
+					withTokenHash(tokenHashT),
 				),
 			},
 			want: want{
 				cr: projecthook(
 					withDefaultValues(),
 					withExternalName(projectHookID),
-					withConditions(xpv1.Available()),
+					withTokenHash(tokenHashT),
+					withConditions(v2.Available()),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
@@ -293,7 +342,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: projecthook(
 					withDefaultValues(),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 					withExternalName(projectHookID),
 				),
 				result: managed.ExternalCreation{},
@@ -319,7 +368,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				cr: projecthook(
 					withDefaultValues(),
-					withConditions(xpv1.Creating()),
+					withConditions(v2.Creating()),
 				),
 				err: errors.Wrap(errBoom, errCreateFailed),
 			},
@@ -380,6 +429,7 @@ func TestUpdate(t *testing.T) {
 					withTokenRef(),
 					withProjectID(projectID),
 					withStatus(v1alpha1.HookObservation{ID: projectHookID}),
+					withTokenHash(tokenHashT),
 				),
 			},
 		},
@@ -452,19 +502,21 @@ func TestDelete(t *testing.T) {
 				},
 				cr: projecthook(
 					withProjectID(projectID),
+					withExternalName(projectHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 				),
 			},
 			want: want{
 				cr: projecthook(
 					withProjectID(projectID),
+					withExternalName(projectHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
 			},
 		},
@@ -477,19 +529,21 @@ func TestDelete(t *testing.T) {
 				},
 				cr: projecthook(
 					withProjectID(projectID),
+					withExternalName(projectHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 				),
 			},
 			want: want{
 				cr: projecthook(
 					withProjectID(projectID),
+					withExternalName(projectHookID),
 					withStatus(v1alpha1.HookObservation{
 						ID: projectHookID,
 					}),
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
 				err: errors.Wrap(errBoom, errDeleteFailed),
 			},
@@ -503,14 +557,15 @@ func TestDelete(t *testing.T) {
 				},
 				cr: projecthook(
 					withProjectID(projectID),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 				),
 			},
 			want: want{
 				cr: projecthook(
 					withProjectID(projectID),
-					withConditions(xpv1.Deleting()),
+					withConditions(v2.Deleting()),
 				),
+				err: errors.New(errNotHook),
 			},
 		},
 	}

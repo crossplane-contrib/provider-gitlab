@@ -24,12 +24,14 @@ import (
 	instancev1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
 	gitlabv1beta1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/v1beta1"
+	gitlabv1beta2 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/v1beta2"
 )
 
 func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
 		gitlabv1beta1.SchemeBuilder.AddToScheme,
+		gitlabv1beta2.SchemeBuilder.AddToScheme,
 		groupsv1alpha1.SchemeBuilder.AddToScheme,
 		projectsv1alpha1.SchemeBuilder.AddToScheme,
 		instancev1alpha1.SchemeBuilder.AddToScheme,

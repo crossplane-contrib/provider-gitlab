@@ -20,8 +20,10 @@ package projects
 
 import (
 	"strings"
+	"time"
 
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
@@ -32,6 +34,10 @@ type AccessTokenClient interface {
 	GetProjectAccessToken(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
 	CreateProjectAccessToken(pid interface{}, opt *gitlab.CreateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
 	RevokeProjectAccessToken(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	RotateProjectAccessToken(pid interface{}, id int64, opt *gitlab.RotateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error)
+	RotateSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	GetSelf(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
+	RevokeSelf(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // IsErrorProjectAccessTokenNotFound helper function to test for errProjectAccessTokenNotFound error.
@@ -45,7 +51,34 @@ func IsErrorProjectAccessTokenNotFound(err error) bool {
 // NewAccessTokenClient returns a new Gitlab ProjectAccessToken service
 func NewAccessTokenClient(cfg common.Config) AccessTokenClient {
 	git := common.NewClient(cfg)
-	return git.ProjectAccessTokens
+	return &accessTokenClient{
+		ProjectAccessTokensServiceInterface:  git.ProjectAccessTokens,
+		PersonalAccessTokensServiceInterface: git.PersonalAccessTokens,
+	}
+}
+
+// accessTokenClient composes project and personal access token services.
+type accessTokenClient struct {
+	gitlab.ProjectAccessTokensServiceInterface
+	gitlab.PersonalAccessTokensServiceInterface
+}
+
+func (c *accessTokenClient) RotateSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.PersonalAccessTokensServiceInterface.RotatePersonalAccessTokenSelf(opt, options...)
+}
+
+// GetSelf returns the token used to authenticate the request (self-inform),
+// via GET /personal_access_tokens/self. In self-managed mode the project access
+// token authenticates as its own bot user, so this returns the very token the
+// resource manages.
+func (c *accessTokenClient) GetSelf(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+	return c.PersonalAccessTokensServiceInterface.GetSinglePersonalAccessToken(options...)
+}
+
+// RevokeSelf revokes the token used to authenticate the request, via
+// DELETE /personal_access_tokens/self.
+func (c *accessTokenClient) RevokeSelf(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.PersonalAccessTokensServiceInterface.RevokePersonalAccessTokenSelf(options...)
 }
 
 // GenerateCreateProjectAccessTokenOptions generates project creation options
@@ -57,11 +90,127 @@ func GenerateCreateProjectAccessTokenOptions(name string, p *v1alpha1.AccessToke
 
 	if p.ExpiresAt != nil {
 		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
+	} else if p.RenewalPeriodDays != nil {
+		accesstoken.ExpiresAt = common.GenerateRenewalExpiration(*p.RenewalPeriodDays)
 	}
 
 	if p.AccessLevel != nil {
 		accesstoken.AccessLevel = (*gitlab.AccessLevelValue)(p.AccessLevel)
 	}
 
+	if p.Description != nil {
+		accesstoken.Description = ptr.To(*p.Description)
+	}
+
 	return accesstoken
+}
+
+// GenerateProjectAccessTokenObservation generates project access token observation from gitlab.ProjectAccessToken.
+func GenerateProjectAccessTokenObservation(at *gitlab.ProjectAccessToken) v1alpha1.AccessTokenObservation {
+	if at == nil {
+		return v1alpha1.AccessTokenObservation{}
+	}
+
+	return v1alpha1.AccessTokenObservation{
+		ID:          at.ID,
+		Name:        at.Name,
+		Description: at.Description,
+		UserID:      at.UserID,
+		Scopes:      at.Scopes,
+		ExpiresAt:   common.TimeToMetaTime((*time.Time)(at.ExpiresAt)),
+		Active:      at.Active,
+		CreatedAt:   common.TimeToMetaTime(at.CreatedAt),
+		Revoked:     at.Revoked,
+		AccessLevel: int64(at.AccessLevel),
+	}
+}
+
+// GenerateRotateProjectAccessTokenOptions generates project access token rotation options
+func GenerateRotateProjectAccessTokenOptions(p *v1alpha1.AccessTokenParameters) *gitlab.RotateProjectAccessTokenOptions {
+	accesstoken := &gitlab.RotateProjectAccessTokenOptions{}
+
+	if p.ExpiresAt != nil {
+		accesstoken.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
+	} else if p.RenewalPeriodDays != nil {
+		accesstoken.ExpiresAt = common.GenerateRenewalExpiration(*p.RenewalPeriodDays)
+	}
+
+	return accesstoken
+}
+
+// GenerateRotateSelfOptions generates self-rotation options from access token parameters.
+func GenerateRotateSelfOptions(p *v1alpha1.AccessTokenParameters) *gitlab.RotatePersonalAccessTokenOptions {
+	opt := &gitlab.RotatePersonalAccessTokenOptions{}
+
+	if p.ExpiresAt != nil {
+		opt.ExpiresAt = (*gitlab.ISOTime)(&p.ExpiresAt.Time)
+	} else if p.RenewalPeriodDays != nil {
+		opt.ExpiresAt = common.GenerateRenewalExpiration(*p.RenewalPeriodDays)
+	}
+
+	return opt
+}
+
+// GenerateProjectAccessTokenObservationFromPAT builds the access-token observation
+// from a gitlab.PersonalAccessToken, as returned by the self-inform endpoint in
+// self-managed mode. A project access token is backed by a bot-user personal
+// access token, so the self endpoints return a PersonalAccessToken rather than a
+// ProjectAccessToken. AccessLevel is not exposed on the self endpoint and is left
+// zero.
+func GenerateProjectAccessTokenObservationFromPAT(at *gitlab.PersonalAccessToken) v1alpha1.AccessTokenObservation {
+	if at == nil {
+		return v1alpha1.AccessTokenObservation{}
+	}
+
+	return v1alpha1.AccessTokenObservation{
+		ID:          at.ID,
+		Name:        at.Name,
+		Description: at.Description,
+		UserID:      at.UserID,
+		Scopes:      at.Scopes,
+		ExpiresAt:   common.TimeToMetaTime((*time.Time)(at.ExpiresAt)),
+		Active:      at.Active,
+		CreatedAt:   common.TimeToMetaTime(at.CreatedAt),
+		Revoked:     at.Revoked,
+	}
+}
+
+// ShouldRotateAccessTokenFromPAT returns true when the self-managed token must
+// be rotated, evaluated against a gitlab.PersonalAccessToken from the self-inform
+// endpoint.
+func ShouldRotateAccessTokenFromPAT(p *v1alpha1.AccessTokenParameters, a *gitlab.PersonalAccessToken) bool {
+	if a == nil {
+		return true
+	}
+
+	var desiredExpiresAt *time.Time
+	if p.ExpiresAt != nil {
+		desiredExpiresAt = &p.ExpiresAt.Time
+	}
+
+	var createdAt *time.Time
+	if p.RenewalPeriodDays != nil {
+		createdAt = a.CreatedAt
+	}
+
+	return common.ShouldRotateToken(a.Active, createdAt, a.ExpiresAt, desiredExpiresAt, p.RenewBeforeDays, time.Now().UTC())
+}
+
+// ShouldRotateAccessToken returns true when the token must be rotated.
+func ShouldRotateAccessToken(p *v1alpha1.AccessTokenParameters, a *gitlab.ProjectAccessToken) bool {
+	if a == nil {
+		return true
+	}
+
+	var desiredExpiresAt *time.Time
+	if p.ExpiresAt != nil {
+		desiredExpiresAt = &p.ExpiresAt.Time
+	}
+
+	var createdAt *time.Time
+	if p.RenewalPeriodDays != nil {
+		createdAt = a.CreatedAt
+	}
+
+	return common.ShouldRotateToken(a.Active, createdAt, a.ExpiresAt, desiredExpiresAt, p.RenewBeforeDays, time.Now().UTC())
 }

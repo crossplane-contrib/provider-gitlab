@@ -17,9 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -142,11 +140,11 @@ type GroupParameters struct {
 	// ParentIDRef is a reference to a group to retrieve its parentId
 	// +optional
 	// +immutable
-	ParentIDRef *xpv1.NamespacedReference `json:"parentIdRef,omitempty"`
+	ParentIDRef *v2.NamespacedReference `json:"parentIdRef,omitempty"`
 
 	// ParentIDSelector selects reference to a group to retrieve its parentId.
 	// +optional
-	ParentIDSelector *xpv1.NamespacedSelector `json:"parentIdSelector,omitempty"`
+	ParentIDSelector *v2.NamespacedSelector `json:"parentIdSelector,omitempty"`
 
 	// Pipeline minutes quota for this group (included in plan).
 	// Can be nil (default; inherit system default), 0 (unlimited) or > 0.
@@ -232,10 +230,10 @@ type SharedWithGroups struct {
 	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its ID.
-	GroupIDRef *xpv1.NamespacedReference `json:"groupIdRef,omitempty"`
+	GroupIDRef *v2.NamespacedReference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its ID.
-	GroupIDSelector *xpv1.NamespacedSelector `json:"groupIdSelector,omitempty"`
+	GroupIDSelector *v2.NamespacedSelector `json:"groupIdSelector,omitempty"`
 
 	// The role (access_level) to grant the group
 	// https://docs.gitlab.com/ee/api/members.html#roles
@@ -277,14 +275,14 @@ type SharedWithGroupsObservation struct {
 
 // A GroupSpec defines the desired state of a Gitlab Group.
 type GroupSpec struct {
-	xpv2.ManagedResourceSpec `json:",inline"`
-	ForProvider              GroupParameters `json:"forProvider"`
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            GroupParameters `json:"forProvider"`
 }
 
 // A GroupStatus represents the observed state of a Gitlab Group.
 type GroupStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          GroupObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               GroupObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

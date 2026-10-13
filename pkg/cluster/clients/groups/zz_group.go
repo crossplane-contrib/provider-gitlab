@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
@@ -41,6 +41,7 @@ type Client interface {
 	DeleteGroup(gid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	ShareGroupWithGroup(gid interface{}, opt *gitlab.ShareGroupWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	UnshareGroupFromGroup(gid interface{}, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	ListGroups(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error)
 }
 
 // NewGroupClient returns a new Gitlab Group service

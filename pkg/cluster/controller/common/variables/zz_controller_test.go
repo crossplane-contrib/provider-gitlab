@@ -22,12 +22,11 @@ import (
 	"context"
 	"testing"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,7 +46,7 @@ func TestUpdateVariableFromSecret(t *testing.T) {
 
 	type args struct {
 		kube     client.Client
-		selector *xpv1.SecretKeySelector
+		selector *v2.SecretKeySelector
 		params   *commonv1alpha1.CommonVariableParameters
 	}
 
@@ -79,8 +78,8 @@ func TestUpdateVariableFromSecret(t *testing.T) {
 			},
 			want: &commonv1alpha1.CommonVariableParameters{
 				Value:  &secretValue,
-				Masked: gitlab.Ptr(true),
-				Raw:    gitlab.Ptr(true),
+				Masked: new(true),
+				Raw:    new(true),
 			},
 		},
 		"DoesNotOverrideExplicitMaskedRaw": {
@@ -95,14 +94,14 @@ func TestUpdateVariableFromSecret(t *testing.T) {
 				}},
 				selector: common.TestCreateSecretKeySelector("ignored", secretKey),
 				params: &commonv1alpha1.CommonVariableParameters{
-					Masked: gitlab.Ptr(false),
-					Raw:    gitlab.Ptr(false),
+					Masked: new(false),
+					Raw:    new(false),
 				},
 			},
 			want: &commonv1alpha1.CommonVariableParameters{
 				Value:  &secretValue,
-				Masked: gitlab.Ptr(false),
-				Raw:    gitlab.Ptr(false),
+				Masked: new(false),
+				Raw:    new(false),
 			},
 		},
 		"WrongKey": {

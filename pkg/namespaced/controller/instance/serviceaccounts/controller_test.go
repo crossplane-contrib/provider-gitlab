@@ -19,23 +19,26 @@ package serviceaccounts
 import (
 	"context"
 	"net/http"
+	"regexp"
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	pkgerrors "github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	groupsfake "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups/fake"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
 )
 
@@ -44,22 +47,29 @@ var (
 	errBoom        = errors.New("boom")
 )
 
+const invalidBaselinePermissionsFilter = "["
+
+// compileError returns the error raised by the standard library when compiling the given regular expression.
+func compileError(pattern string) error {
+	_, err := regexp.Compile(pattern)
+	return err
+}
+
 const (
 	testServiceAccountName     = "sa"
 	testServiceAccountUsername = "sa-user"
 	testServiceAccountEmail    = "sa@example.org"
 )
 
-// MockClient is a small, purpose-built mock for instance.ServiceAccountClient.
-// We keep it local to this test file to avoid adding any non-test code.
+// MockClient is a small mock for instance.ServiceAccountClient used by controller tests.
 type MockClient struct {
-	MockGetUser                  func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	MockGetUser                  func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	MockCreateServiceAccountUser func(opts *gitlab.CreateServiceAccountUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	MockModifyUser               func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 	MockDeleteUser               func(user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
-func (m *MockClient) GetUser(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+func (m *MockClient) GetUser(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 	return m.MockGetUser(user, opt, options...)
 }
 
@@ -91,7 +101,7 @@ func withSpec(p v1alpha1.ServiceAccountParameters) serviceAccountModifier {
 	return func(r *v1alpha1.ServiceAccount) { r.Spec.ForProvider = p }
 }
 
-func withConditions(c ...xpv1.Condition) serviceAccountModifier {
+func withConditions(c ...v2.Condition) serviceAccountModifier {
 	return func(r *v1alpha1.ServiceAccount) { r.Status.SetConditions(c...) }
 }
 
@@ -166,19 +176,19 @@ func TestObserve(t *testing.T) {
 			want: want{cr: serviceAccount(withSpec(desired)), result: managed.ExternalObservation{ResourceExists: false}},
 		},
 		"NotIDExternalName": {
-			args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 			}}, cr: serviceAccount(withExternalName("fr"), withSpec(desired))},
 			want: want{cr: serviceAccount(withExternalName("fr"), withSpec(desired)), err: errors.New(errIDNotInt)},
 		},
 		"ErrGet": {
-			args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return nil, &gitlab.Response{Response: &http.Response{StatusCode: 500}}, errBoom
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
 			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired)), err: errors.Wrap(errBoom, errGetFailed)},
 		},
 		"ErrGet404": {
-			args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
 			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired)), result: managed.ExternalObservation{}},
@@ -193,38 +203,118 @@ func TestObserve(t *testing.T) {
 				args args
 				want want
 			}{
-				args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
 				}}, cr: sa},
 				want: want{cr: sa, result: managed.ExternalObservation{}},
 			}
 		}(),
 		"SuccessfulAvailableUpToDate": {
-			args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
 			want: want{
 				cr: serviceAccount(
 					withExternalName("123"),
 					withSpec(desired),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withAtProvider(instance.GenerateServiceAccountObservation(&gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail})),
 				),
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true, ResourceLateInitialized: false},
 			},
 		},
 		"SuccessfulAvailableNotUpToDate": {
-			args: args{client: &MockClient{MockGetUser: func(user int64, opt gitlab.GetUsersOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: "different@example.org"}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
 			want: want{
 				cr: serviceAccount(
 					withExternalName("123"),
 					withSpec(desired),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withAtProvider(instance.GenerateServiceAccountObservation(&gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: "different@example.org"})),
 				),
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false, ResourceLateInitialized: false},
+			},
+		},
+		"SuccessfulBaselinePermissionsSortsStatus": {
+			args: args{
+				client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+					return &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+				}},
+				cr: serviceAccount(withExternalName("123"), withSpec(v1alpha1.ServiceAccountParameters{
+					CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+					BaselinePermissions:            ptr.To(accessLevelDeveloper),
+				})),
+			},
+			want: want{
+				cr: serviceAccount(
+					withExternalName("123"),
+					withSpec(v1alpha1.ServiceAccountParameters{
+						CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+						BaselinePermissions:            ptr.To(accessLevelDeveloper),
+					}),
+					withConditions(v2.Available()),
+					func(r *v1alpha1.ServiceAccount) {
+						r.Status.AtProvider = instance.GenerateServiceAccountObservation(&gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail})
+						r.Status.AtProvider.MissingMemberShipGroups = []int64{1, 3}
+						r.Status.AtProvider.WrongPermissionsGroups = []int64{2, 4}
+					},
+				),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false, ResourceLateInitialized: false},
+			},
+		},
+		"SuccessfulBaselinePermissionsFiltersGroups": {
+			args: args{
+				client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+					return &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+				}},
+				cr: serviceAccount(withExternalName("123"), withSpec(v1alpha1.ServiceAccountParameters{
+					CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+					BaselinePermissions:            ptr.To(accessLevelDeveloper),
+					BaselinePermissionsFilters:     []string{"^platform-"},
+				})),
+			},
+			want: want{
+				cr: serviceAccount(
+					withExternalName("123"),
+					withSpec(v1alpha1.ServiceAccountParameters{
+						CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+						BaselinePermissions:            ptr.To(accessLevelDeveloper),
+						BaselinePermissionsFilters:     []string{"^platform-"},
+					}),
+					withConditions(v2.Available()),
+					func(r *v1alpha1.ServiceAccount) {
+						r.Status.AtProvider = instance.GenerateServiceAccountObservation(&gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail})
+						r.Status.AtProvider.MissingMemberShipGroups = []int64{1}
+					},
+				),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false, ResourceLateInitialized: false},
+			},
+		},
+		"BaselinePermissionsInvalidFilter": {
+			args: args{
+				client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+					return &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail}, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
+				}},
+				cr: serviceAccount(withExternalName("123"), withSpec(v1alpha1.ServiceAccountParameters{
+					CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+					BaselinePermissions:            ptr.To(accessLevelDeveloper),
+					BaselinePermissionsFilters:     []string{invalidBaselinePermissionsFilter},
+				})),
+			},
+			want: want{
+				cr: serviceAccount(
+					withExternalName("123"),
+					withSpec(v1alpha1.ServiceAccountParameters{
+						CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Username: sPtr(testServiceAccountUsername), Email: sPtr(testServiceAccountEmail)},
+						BaselinePermissions:            ptr.To(accessLevelDeveloper),
+						BaselinePermissionsFilters:     []string{invalidBaselinePermissionsFilter},
+					}),
+					withConditions(v2.Available()),
+					withAtProvider(instance.GenerateServiceAccountObservation(&gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, Email: testServiceAccountEmail})),
+				),
+				err: errors.Wrapf(compileError(invalidBaselinePermissionsFilter), errInvalidFilter, invalidBaselinePermissionsFilter),
 			},
 		},
 	}
@@ -232,6 +322,36 @@ func TestObserve(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			e := &external{kube: tc.args.kube, client: tc.args.client}
+			if name == "SuccessfulBaselinePermissionsFiltersGroups" {
+				e.groupsClient = &groupsfake.MockClient{MockListGroups: func(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error) {
+					return []*gitlab.Group{{ID: 1, Path: "platform-tooling"}, {ID: 2, Path: "customers"}}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}, NextPage: 0}, nil
+				}}
+				e.groupMemberClient = &groupsfake.MockClient{MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					if gid.(int64) != 1 {
+						t.Fatalf("Observe() checked membership of filtered out group %v", gid)
+					}
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, pkgerrors.New("not found")
+				}}
+			}
+			if name == "SuccessfulBaselinePermissionsSortsStatus" {
+				e.groupsClient = &groupsfake.MockClient{MockListGroups: func(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error) {
+					return []*gitlab.Group{{ID: 4}, {ID: 1}, {ID: 2}, {ID: 3}}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}, NextPage: 0}, nil
+				}}
+				e.groupMemberClient = &groupsfake.MockClient{MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
+					switch gid.(int64) {
+					case 4:
+						return &gitlab.GroupMember{AccessLevel: gitlab.AccessLevelValue(accessLevelReporterValue)}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}}, nil
+					case 1:
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, pkgerrors.New("not found")
+					case 2:
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}}, nil
+					case 3:
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, pkgerrors.New("not found")
+					default:
+						return nil, nil, pkgerrors.New("unexpected group")
+					}
+				}}
+			}
 			got, err := e.Observe(context.Background(), tc.args.cr)
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("Observe(): -want error, +got error:\n%s", diff)
@@ -267,13 +387,13 @@ func TestCreate(t *testing.T) {
 			args: args{client: &MockClient{MockCreateServiceAccountUser: func(opts *gitlab.CreateServiceAccountUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return nil, nil, errBoom
 			}}, cr: serviceAccount(withSpec(desired))},
-			want: want{cr: serviceAccount(withSpec(desired), withConditions(xpv1.Creating())), err: errors.Wrap(errBoom, errCreateFailed)},
+			want: want{cr: serviceAccount(withSpec(desired), withConditions(v2.Creating())), err: errors.Wrap(errBoom, errCreateFailed)},
 		},
 		"Successful": {
 			args: args{client: &MockClient{MockCreateServiceAccountUser: func(opts *gitlab.CreateServiceAccountUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{}, &gitlab.Response{Response: &http.Response{StatusCode: 201}}, nil
 			}}, cr: serviceAccount(withSpec(desired))},
-			want: want{cr: serviceAccount(withSpec(desired), withConditions(xpv1.Creating()), withExternalName("0")), result: managed.ExternalCreation{}},
+			want: want{cr: serviceAccount(withSpec(desired), withConditions(v2.Creating()), withExternalName("0")), result: managed.ExternalCreation{}},
 		},
 	}
 
@@ -315,25 +435,25 @@ func TestUpdate(t *testing.T) {
 			args: args{client: &MockClient{MockModifyUser: func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{}, &gitlab.Response{}, nil
 			}}, cr: serviceAccount(withSpec(desired))},
-			want: want{cr: serviceAccount(withSpec(desired), withConditions(xpv1.Creating())), err: errors.New(errCreateFailed)},
+			want: want{cr: serviceAccount(withSpec(desired), withConditions(v2.Creating())), err: errors.New(errCreateFailed)},
 		},
 		"NotIDExternalName": {
 			args: args{client: &MockClient{MockModifyUser: func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{}, &gitlab.Response{}, nil
 			}}, cr: serviceAccount(withExternalName("fr"), withSpec(desired))},
-			want: want{cr: serviceAccount(withExternalName("fr"), withSpec(desired), withConditions(xpv1.Creating())), err: errors.New(errIDNotInt)},
+			want: want{cr: serviceAccount(withExternalName("fr"), withSpec(desired), withConditions(v2.Creating())), err: errors.New(errIDNotInt)},
 		},
 		"ErrUpdate": {
 			args: args{client: &MockClient{MockModifyUser: func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return nil, nil, errBoom
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
-			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired), withConditions(xpv1.Creating())), err: errors.Wrap(errBoom, errUpdateFailed)},
+			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired), withConditions(v2.Creating())), err: errors.Wrap(errBoom, errUpdateFailed)},
 		},
 		"Successful": {
 			args: args{client: &MockClient{MockModifyUser: func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
 				return &gitlab.User{}, &gitlab.Response{}, nil
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
-			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired), withConditions(xpv1.Creating())), result: managed.ExternalUpdate{}},
+			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired), withConditions(v2.Creating())), result: managed.ExternalUpdate{}},
 		},
 	}
 

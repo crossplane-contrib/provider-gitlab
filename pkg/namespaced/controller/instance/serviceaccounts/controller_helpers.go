@@ -1,0 +1,248 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package serviceaccounts
+
+import (
+	"context"
+	"regexp"
+	"sort"
+	"sync"
+
+	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	"golang.org/x/sync/errgroup"
+	"k8s.io/utils/ptr"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+const baselinePermissionsMaxConcurrentRequests = 16
+
+// addServiceAccountToGroups is a helper function that adds the service account to the specified groups with the specified access level. This is used to satisfy the BaselinePermissions field by adding the service account to all groups that have at least the specified access level.
+func (e *external) addServiceAccountToGroups(ctx context.Context, serviceAccountID int64, groupIDs []int64, accessLevel int) error {
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(baselinePermissionsMaxConcurrentRequests)
+
+	for _, groupID := range groupIDs {
+		g.Go(func() error {
+			_, _, err := e.groupMemberClient.AddGroupMember(
+				groupID,
+				&gitlab.AddGroupMemberOptions{
+					UserID:      ptr.To(serviceAccountID),
+					AccessLevel: ptr.To(gitlab.AccessLevelValue(accessLevel)),
+				},
+				gitlab.WithContext(ctx),
+			)
+			if err != nil {
+				return errors.Wrapf(err, "cannot add service account to Gitlab group with ID %d", groupID)
+			}
+			return nil
+		})
+	}
+
+	return g.Wait()
+}
+
+// updateServiceAccountGroupPermissions is a helper function that updates the service account's permissions for the specified groups to the specified access level. This is used to satisfy the BaselinePermissions field by updating the service account's permissions for all groups that have at least the specified access level.
+func (e *external) updateServiceAccountGroupPermissions(ctx context.Context, serviceAccountID int64, groupIDs []int64, accessLevel int) error {
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(baselinePermissionsMaxConcurrentRequests)
+
+	for _, groupID := range groupIDs {
+		g.Go(func() error {
+			_, _, err := e.groupMemberClient.EditGroupMember(
+				groupID,
+				serviceAccountID,
+				&gitlab.EditGroupMemberOptions{
+					AccessLevel: ptr.To(gitlab.AccessLevelValue(accessLevel)),
+				},
+				gitlab.WithContext(ctx),
+			)
+			if err != nil {
+				return errors.Wrapf(err, "cannot update service account permissions for Gitlab group with ID %d", groupID)
+			}
+			return nil
+		})
+	}
+
+	return g.Wait()
+}
+
+// fetchTopLevelGroupsMissingPermissions is a helper function that returns a list of top level group IDs that the service account is missing permissions for, based on the specified minimum permission level. This is used to determine which groups the service account needs to be added to in order to satisfy the BaselinePermissions field. Top level groups whose path does not match the given filters are ignored.
+func (e *external) fetchTopLevelGroupsMissingPermissions(ctx context.Context, minPermission int, serviceAccountID int64, filters []*regexp.Regexp) (notInGroups []int64, wrongPermsGroups []int64, err error) {
+	var (
+		groupsMissingPermissionsMu sync.Mutex
+	)
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(baselinePermissionsMaxConcurrentRequests)
+
+	for page := int64(1); ; {
+		groups, resp, err := e.fetchTopLevelGroupsPage(page)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		for _, group := range groups {
+			if !matchesBaselinePermissionsFilters(filters, group.Path) {
+				continue
+			}
+			groupID := group.ID
+			g.Go(func() error {
+				isMissingMembership, hasInsufficientPermissions, err := e.getGroupPermissionStatus(ctx, groupID, serviceAccountID, minPermission)
+				if err != nil {
+					return err
+				}
+
+				groupsMissingPermissionsMu.Lock()
+				if isMissingMembership {
+					notInGroups = append(notInGroups, groupID)
+				}
+				if hasInsufficientPermissions {
+					wrongPermsGroups = append(wrongPermsGroups, groupID)
+				}
+				groupsMissingPermissionsMu.Unlock()
+				return nil
+			})
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		page = resp.NextPage
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, nil, err
+	}
+
+	sort.Slice(notInGroups, func(i, j int) bool { return notInGroups[i] < notInGroups[j] })
+	sort.Slice(wrongPermsGroups, func(i, j int) bool { return wrongPermsGroups[i] < wrongPermsGroups[j] })
+
+	return notInGroups, wrongPermsGroups, nil
+}
+
+func (e *external) fetchTopLevelGroupsPage(page int64) ([]*gitlab.Group, *gitlab.Response, error) {
+	groups, resp, err := e.groupsClient.ListGroups(&gitlab.ListGroupsOptions{
+		TopLevelOnly: ptr.To(true),
+		ListOptions: gitlab.ListOptions{
+			PerPage: 100,
+			Page:    page,
+		},
+	})
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "cannot list Gitlab groups")
+	}
+	if resp == nil {
+		return nil, nil, errors.New("no response received when listing Gitlab groups")
+	}
+
+	return groups, resp, nil
+}
+
+func (e *external) getGroupPermissionStatus(ctx context.Context, groupID int64, serviceAccountID int64, minPermission int) (isMissingMembership bool, hasInsufficientPermissions bool, err error) {
+	groupMember, resp, err := e.groupMemberClient.GetGroupMember(groupID, serviceAccountID, gitlab.WithContext(ctx))
+	if err != nil {
+		if clients.IsResponseNotFound(resp) {
+			return true, false, nil
+		}
+		return false, false, errors.Wrap(err, "cannot check Gitlab group member")
+	}
+
+	if groupMember == nil {
+		return false, true, nil
+	}
+
+	if int(groupMember.AccessLevel) < minPermission {
+		return false, true, nil
+	}
+
+	return false, false, nil
+}
+
+// observeBaselinePermissions is a helper function that records in the resource status the top level groups the service account is missing permissions for, and reports whether they are all up to date. It is a no-op when the BaselinePermissions field is unset or set to "no-access".
+func (e *external) observeBaselinePermissions(ctx context.Context, cr *v1alpha1.ServiceAccount, serviceAccountID int64) (bool, error) {
+	minPermission := ptr.Deref(cr.Spec.ForProvider.BaselinePermissions, accessLevelNoAccess)
+	if minPermission == accessLevelNoAccess {
+		return true, nil
+	}
+
+	filters, err := compileBaselinePermissionsFilters(cr.Spec.ForProvider.BaselinePermissionsFilters)
+	if err != nil {
+		return false, err
+	}
+
+	notInGroups, wrongPermsGroups, err := e.fetchTopLevelGroupsMissingPermissions(ctx, getAccessLevelValue(minPermission), serviceAccountID, filters)
+	if err != nil {
+		return false, errors.Wrap(err, "cannot fetch Gitlab groups missing permissions for service account")
+	}
+
+	cr.Status.AtProvider.MissingMemberShipGroups = notInGroups
+	cr.Status.AtProvider.WrongPermissionsGroups = wrongPermsGroups
+
+	return len(notInGroups) == 0 && len(wrongPermsGroups) == 0, nil
+}
+
+// compileBaselinePermissionsFilters is a helper function that compiles the regular expressions of the BaselinePermissionsFilters field. It returns an error as soon as one of the expressions is invalid.
+func compileBaselinePermissionsFilters(filters []string) ([]*regexp.Regexp, error) {
+	compiledFilters := make([]*regexp.Regexp, 0, len(filters))
+	for _, filter := range filters {
+		compiledFilter, err := regexp.Compile(filter)
+		if err != nil {
+			return nil, errors.Wrapf(err, errInvalidFilter, filter)
+		}
+		compiledFilters = append(compiledFilters, compiledFilter)
+	}
+	return compiledFilters, nil
+}
+
+// matchesBaselinePermissionsFilters is a helper function that reports whether the given top level group path matches at least one of the BaselinePermissionsFilters expressions. An empty list of filters matches every group path.
+func matchesBaselinePermissionsFilters(filters []*regexp.Regexp, groupPath string) bool {
+	if len(filters) == 0 {
+		return true
+	}
+
+	for _, filter := range filters {
+		if filter.MatchString(groupPath) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// getAccessLevelValue is a helper function that returns the integer value of the given access level string. This is used to convert the BaselinePermissions field from a string to an integer that can be used with the Gitlab API.
+func getAccessLevelValue(accessLevel string) int {
+	accessLevelsMapping := map[string]int{
+		accessLevelNoAccess:        accessLevelNoAccessValue,
+		accessLevelMinimalAccess:   accessLevelMinimalAccessValue,
+		accessLevelGuest:           accessLevelGuestValue,
+		accessLevelPlanner:         accessLevelPlannerValue,
+		accessLevelReporter:        accessLevelReporterValue,
+		accessLevelSecurityManager: accessLevelSecurityManagerValue,
+		accessLevelDeveloper:       accessLevelDeveloperValue,
+		accessLevelMaintainer:      accessLevelMaintainerValue,
+		accessLevelOwner:           accessLevelOwnerValue,
+	}
+
+	value, ok := accessLevelsMapping[accessLevel]
+	if !ok {
+		return accessLevelNoAccessValue
+	}
+	return value
+}

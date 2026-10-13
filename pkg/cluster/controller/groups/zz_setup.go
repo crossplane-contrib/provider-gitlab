@@ -26,10 +26,13 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/badges"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/hooks"
+	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/integrationharbor"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/ldapgrouplinks"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/samlgrouplinks"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/serviceaccountaccesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/serviceaccounts"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/variables"
 )
@@ -47,6 +50,9 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		runners.SetupRunner,
 		badges.SetupBadge,
 		serviceaccounts.SetupServiceAccount,
+		serviceaccountaccesstokens.SetupServiceAccountAccessToken,
+		hooks.SetupHook,
+		integrationharbor.SetupIntegrationHarbor,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -69,6 +75,9 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		runners.SetupRunnerGated,
 		badges.SetupBadgeGated,
 		serviceaccounts.SetupServiceAccountGated,
+		serviceaccountaccesstokens.SetupServiceAccountAccessTokenGated,
+		hooks.SetupHookGated,
+		integrationharbor.SetupIntegrationHarborGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

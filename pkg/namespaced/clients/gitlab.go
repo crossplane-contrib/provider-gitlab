@@ -17,11 +17,13 @@ limitations under the License.
 package clients
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"net/http"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
 )
@@ -127,13 +129,12 @@ func ContainerExpirationPolicyAttributesV1alpha1ToGitlab(from *v1alpha1.Containe
 		return nil
 	}
 	result := &gitlab.ContainerExpirationPolicyAttributes{
-		Cadence:         from.Cadence,
-		OlderThan:       from.OlderThan,
-		NameRegexDelete: from.NameRegexDelete,
-		NameRegexKeep:   from.NameRegexKeep,
-		Enabled:         from.Enabled,
-		NameRegex:       from.NameRegex,
-		KeepN:           from.KeepN,
+		Cadence:       from.Cadence,
+		OlderThan:     from.OlderThan,
+		NameRegex:     from.NameRegex,
+		NameRegexKeep: from.NameRegexKeep,
+		Enabled:       from.Enabled,
+		KeepN:         from.KeepN,
 	}
 	return result
 }
@@ -181,6 +182,28 @@ func IsComparablePtrEqualToComparablePtr[T comparable](p *T, g *T) bool {
 // IsComparableSliceEqualToComparableSlicePtr compares a *[]T with []T where T is comparable
 func IsComparableSliceEqualToComparableSlicePtr[T comparable](csp *[]T, cs []T) bool {
 	return csp == nil || cmp.Equal(*csp, cs)
+}
+
+// AreStringSlicesEqual compares two slices of comparable types for equality
+// This equality is order insensitive, meaning that the order of elements in the slices does not matter for them to be considered equal.
+func AreStringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	counts := make(map[string]int)
+	for _, item := range a {
+		counts[item]++
+	}
+
+	for _, item := range b {
+		if counts[item] == 0 {
+			return false
+		}
+		counts[item]--
+	}
+
+	return true
 }
 
 // IsMapStringToComparableEqualToMapStringToComparablePtr compares a *map[string]T with map[string]T where T is comparable
@@ -247,10 +270,25 @@ func IsResponseNotFound(res *gitlab.Response) bool {
 	return false
 }
 
-// TimeToMetaTime returns nil if parameter is nil, otherwise metav1.Time value
-func TimeToMetaTime(t *time.Time) *metav1.Time {
-	if t == nil {
-		return nil
+// IsResponseUnauthorized reports whether the GitLab response indicates the
+// credential itself was rejected: 401 Unauthorized or 403 Forbidden. GitLab
+// returns 401 when a token is revoked or expired, and escalates repeated
+// unauthorized requests from the same IP to 403. Both mean the token can no
+// longer authenticate (as opposed to a missing resource or transient failure).
+func IsResponseUnauthorized(res *gitlab.Response) bool {
+	return res != nil && res.Response != nil &&
+		(res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden)
+}
+
+// TokenHash returns a stable hex-encoded SHA-256 digest of the supplied token
+// value, or an empty string when no token is set. GitLab never returns webhook
+// secret tokens, so the digest is stored in status.atProvider to detect when a
+// referenced secret has been rotated on the desired side and must be re-pushed.
+// Only the digest is ever persisted, never the raw token.
+func TokenHash(token *string) string {
+	if token == nil {
+		return ""
 	}
-	return &metav1.Time{Time: *t}
+	sum := sha256.Sum256([]byte(*token))
+	return hex.EncodeToString(sum[:])
 }

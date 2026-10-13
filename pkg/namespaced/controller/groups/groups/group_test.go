@@ -24,14 +24,14 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -74,7 +74,7 @@ type args struct {
 
 type groupModifier func(*v1alpha1.Group)
 
-func withConditions(c ...xpv1.Condition) groupModifier {
+func withConditions(c ...v2.Condition) groupModifier {
 	return func(cr *v1alpha1.Group) { cr.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -224,7 +224,7 @@ func TestObserve(t *testing.T) {
 	v1alpha1VisibilityNew := v1alpha1.VisibilityValue("public")
 	gitlabProjectCreationLevelNew := gitlab.NoOneProjectCreation
 	v1alpha1ProjectCreationLevelNew := v1alpha1.ProjectCreationLevelValue("noone")
-	gitlabSubGroupCreationLevelNew := gitlab.Ptr("owner")
+	gitlabSubGroupCreationLevelNew := new("owner")
 	v1alpha1SubGroupCreationLevelNew := v1alpha1.SubGroupCreationLevelValue("owner")
 
 	type want struct {
@@ -338,7 +338,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				cr: group(
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withPath(path),
 					withAnnotations(extNameAnnotation),
 					withStatus(v1alpha1.GroupObservation{}),
@@ -404,7 +404,7 @@ func TestObserve(t *testing.T) {
 					withExternalName("0"),
 					withClientDefaultValues(),
 					withPath(path),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withDescription(&description),
 					withVisibility(&v1alpha1VisibilityNew),
 					withProjectCreationLevel(&v1alpha1ProjectCreationLevelNew),
@@ -435,7 +435,7 @@ func TestObserve(t *testing.T) {
 				cr: group(
 					withPath(""),
 					withClientDefaultValues(),
-					withConditions(xpv1.Available()),
+					withConditions(v2.Available()),
 					withAnnotations(extNameAnnotation),
 					withExternalName(extName),
 				),
@@ -519,7 +519,7 @@ func TestObserve(t *testing.T) {
 		wantGroupModifier := []groupModifier{
 			withClientDefaultValues(),
 			withExternalName("0"),
-			withConditions(xpv1.Available()),
+			withConditions(v2.Available()),
 			withVisibility(&v1alpha1Visibility),
 			withProjectCreationLevel(&v1alpha1ProjectCreationLevel),
 			withSubGroupCreationLevel(&v1alpha1SubGroupCreationLevel),
@@ -544,7 +544,7 @@ func TestObserve(t *testing.T) {
 			Name:                  name,
 			Visibility:            gitlab.VisibilityValue(visibility),
 			ProjectCreationLevel:  gitlab.ProjectCreationLevelValue(projectCreationLevel),
-			SubGroupCreationLevel: *gitlab.Ptr(gitlab.SubGroupCreationLevelValue(subGroupCreationLevel)),
+			SubGroupCreationLevel: gitlab.SubGroupCreationLevelValue(subGroupCreationLevel),
 		}
 		structValue := reflect.ValueOf(gitlabGroup).Elem()
 		structFieldValue := structValue.FieldByName(name)
@@ -985,22 +985,22 @@ func TestDelete(t *testing.T) {
 				},
 				cr: group(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPermanentlyRemove(new(true)),
 					withPath("group"),
-					withFullPathToRemove(gitlab.Ptr("path/to/group")),
-					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
+					withFullPathToRemove(new("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
 			},
 			want: want{
 				cr: group(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPermanentlyRemove(new(true)),
 					withPath("group"),
-					withFullPathToRemove(gitlab.Ptr("path/to/group")),
-					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
+					withFullPathToRemove(new("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
 				calls: []deleteGroupCalls{
 					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}},
 					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{
-						PermanentlyRemove: gitlab.Ptr(true), FullPath: gitlab.Ptr("group-deletion_scheduled-0"),
+						PermanentlyRemove: new(true), FullPath: new("group-deletion_scheduled-0"),
 					}},
 				},
 				getCalls: []getGroupCalls{{Pid: "0"}},
@@ -1023,18 +1023,18 @@ func TestDelete(t *testing.T) {
 				},
 				cr: group(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPermanentlyRemove(new(true)),
 					withPath("group"),
-					withFullPathToRemove(gitlab.Ptr("path/to/group")),
-					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
+					withFullPathToRemove(new("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
 			},
 			want: want{
 				cr: group(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPermanentlyRemove(new(true)),
 					withPath("group"),
-					withFullPathToRemove(gitlab.Ptr("path/to/group")),
-					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
+					withFullPathToRemove(new("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
 				calls: []deleteGroupCalls{
 					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}},
 				},
@@ -1056,18 +1056,18 @@ func TestDelete(t *testing.T) {
 				},
 				cr: group(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPermanentlyRemove(new(true)),
 					withPath("group"),
-					withFullPathToRemove(gitlab.Ptr("path/to/group")),
-					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
+					withFullPathToRemove(new("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
 			},
 			want: want{
 				cr: group(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPermanentlyRemove(new(true)),
 					withPath("group"),
-					withFullPathToRemove(gitlab.Ptr("path/to/group")),
-					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
+					withFullPathToRemove(new("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
 				calls: []deleteGroupCalls{
 					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}},
 				},
@@ -1089,18 +1089,18 @@ func TestDelete(t *testing.T) {
 				},
 				cr: group(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPermanentlyRemove(new(true)),
 					withPath("group"),
-					withFullPathToRemove(gitlab.Ptr("path/to/group")),
-					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
+					withFullPathToRemove(new("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
 			},
 			want: want{
 				cr: group(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPermanentlyRemove(new(true)),
 					withPath("group"),
-					withFullPathToRemove(gitlab.Ptr("path/to/group")),
-					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("path/to/group")})),
+					withFullPathToRemove(new("path/to/group")),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("path/to/group")})),
 				calls: []deleteGroupCalls{
 					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}},
 				},
@@ -1118,16 +1118,16 @@ func TestDelete(t *testing.T) {
 				},
 				cr: group(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPermanentlyRemove(new(true)),
 					withPath("top-level-group"),
-					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("top-level-group")})),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("top-level-group")})),
 			},
 			want: want{
 				cr: group(
 					withExternalName("0"),
-					withPermanentlyRemove(gitlab.Ptr(true)),
+					withPermanentlyRemove(new(true)),
 					withPath("top-level-group"),
-					withStatus(v1alpha1.GroupObservation{FullPath: gitlab.Ptr("top-level-group")}),
+					withStatus(v1alpha1.GroupObservation{FullPath: new("top-level-group")}),
 				),
 				calls: []deleteGroupCalls{
 					{Pid: "0", Opt: &gitlab.DeleteGroupOptions{}},

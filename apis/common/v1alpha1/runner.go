@@ -67,6 +67,13 @@ type CommonRunnerParameters struct {
 	// This is displayed in the GitLab UI when the runner is offline or paused.
 	// +optional
 	MaintenanceNote *string `json:"maintenanceNote,omitempty"`
+
+	// TokenRenewBeforeDays overrides the default 2/3-lifetime renewal threshold.
+	// When set, the provider rotates the runner token when fewer than TokenRenewBeforeDays
+	// remain before expiry. Only meaningful when the GitLab instance enforces token expiry.
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	TokenRenewBeforeDays *int `json:"tokenRenewBeforeDays,omitempty"`
 }
 
 // CommonRunnerObservation represents the observed state of a user runner
@@ -150,4 +157,10 @@ type CommonRunnerObservation struct {
 	// This field is included for consistency and future extensibility.
 	// +optional
 	TokenExpiresAt *metav1.Time `json:"tokenExpiresAt"`
+
+	// TokenCreatedAt is the timestamp when the current runner token was issued.
+	// Set by the provider when a new runner is created; not returned by the GitLab API.
+	// Used together with TokenExpiresAt to compute the proactive renewal threshold.
+	// +optional
+	TokenCreatedAt *metav1.Time `json:"tokenCreatedAt,omitempty"`
 }

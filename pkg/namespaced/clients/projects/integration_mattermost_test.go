@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"k8s.io/utils/ptr"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 var (
@@ -225,8 +225,8 @@ func TestGenerateIntegrationMattermostObservation(t *testing.T) {
 					ID:                             ptr.To(testID),
 					Title:                          ptr.To(testTitle),
 					Slug:                           ptr.To(testSlug),
-					CreatedAt:                      clients.TimeToMetaTime(&testCreatedAt),
-					UpdatedAt:                      clients.TimeToMetaTime(&testUpdatedAt),
+					CreatedAt:                      common.TimeToMetaTime(&testCreatedAt),
+					UpdatedAt:                      common.TimeToMetaTime(&testUpdatedAt),
 					Active:                         ptr.To(true),
 					AlertEvents:                    ptr.To(false),
 					CommitEvents:                   ptr.To(true),

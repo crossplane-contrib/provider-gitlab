@@ -24,7 +24,6 @@ import (
 	"strconv"
 	"strings"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
@@ -32,10 +31,11 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -66,7 +66,7 @@ func SetupProject(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName("cluster." + v1alpha1.ProjectGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
-		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProjectClient}),
+		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProjectClient}),
 		managed.WithInitializers(),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
@@ -164,12 +164,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 			if ptr.Deref(cr.Spec.ForProvider.RemoveFinalizerOnPendingDeletion, false) {
 				return managed.ExternalObservation{}, nil
 			}
-			cr.SetConditions(xpv1.Deleting().WithMessage("Project is in pending deletion state"))
+			cr.SetConditions(v2.Deleting().WithMessage("Project is in pending deletion state"))
 		} else {
-			cr.SetConditions(xpv1.Unavailable().WithMessage("Project is in pending deletion state but this managed resource is not"))
+			cr.SetConditions(v2.Unavailable().WithMessage("Project is in pending deletion state but this managed resource is not"))
 		}
 	} else {
-		cr.Status.SetConditions(xpv1.Available())
+		cr.Status.SetConditions(v2.Available())
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
@@ -335,7 +335,7 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 		in.AutocloseReferencedIssues = &project.AutocloseReferencedIssues
 	}
 
-	in.BuildCoverageRegex = clients.LateInitializeStringPtr(in.BuildCoverageRegex, project.BuildCoverageRegex)
+	in.AnalyticsAccessLevel = clients.LateInitializeAccessControlValue(in.AnalyticsAccessLevel, project.AnalyticsAccessLevel)
 	in.BuildsAccessLevel = clients.LateInitializeAccessControlValue(in.BuildsAccessLevel, project.BuildsAccessLevel)
 	in.CIConfigPath = clients.LateInitializeStringPtr(in.CIConfigPath, project.CIConfigPath)
 
@@ -355,7 +355,10 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 
 	in.DefaultBranch = clients.LateInitializeStringPtr(in.DefaultBranch, project.DefaultBranch)
 	in.Description = clients.LateInitializeStringPtr(in.Description, project.Description)
+	in.EnvironmentsAccessLevel = clients.LateInitializeAccessControlValue(in.EnvironmentsAccessLevel, project.EnvironmentsAccessLevel)
+	in.FeatureFlagsAccessLevel = clients.LateInitializeAccessControlValue(in.FeatureFlagsAccessLevel, project.FeatureFlagsAccessLevel)
 	in.ForkingAccessLevel = clients.LateInitializeAccessControlValue(in.ForkingAccessLevel, project.ForkingAccessLevel)
+	in.InfrastructureAccessLevel = clients.LateInitializeAccessControlValue(in.InfrastructureAccessLevel, project.InfrastructureAccessLevel)
 	in.IssuesAccessLevel = clients.LateInitializeAccessControlValue(in.IssuesAccessLevel, project.IssuesAccessLevel)
 	in.IssuesTemplate = clients.LateInitializeStringPtr(in.IssuesTemplate, project.IssuesTemplate)
 
@@ -365,35 +368,37 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 
 	in.MergeMethod = clients.LateInitializeMergeMethodValue(in.MergeMethod, project.MergeMethod)
 	in.MergeRequestsAccessLevel = clients.LateInitializeAccessControlValue(in.MergeRequestsAccessLevel, project.MergeRequestsAccessLevel)
+	if in.MergeTrainsEnabled == nil {
+		in.MergeTrainsEnabled = &project.MergeTrainsEnabled
+	}
+	if in.MergeTrainsSkipTrainAllowed == nil {
+		in.MergeTrainsSkipTrainAllowed = &project.MergeTrainsSkipTrainAllowed
+	}
+	if in.MergePipelinesEnabled == nil {
+		in.MergePipelinesEnabled = &project.MergePipelinesEnabled
+	}
 	in.MergeRequestsTemplate = clients.LateInitializeStringPtr(in.MergeRequestsTemplate, project.MergeRequestsTemplate)
 
-	if in.Mirror == nil {
-		in.Mirror = &project.Mirror
-	}
-	if in.MirrorOverwritesDivergedBranches == nil {
-		in.MirrorOverwritesDivergedBranches = &project.MirrorOverwritesDivergedBranches
-	}
-	if in.MirrorTriggerBuilds == nil {
-		in.MirrorTriggerBuilds = &project.MirrorTriggerBuilds
-	}
-	if in.MirrorUserID == nil && project.MirrorUserID != 0 { // since project.MirrorUserID is non-nullable, value `0` treated as `not set`
-		val := project.MirrorUserID
-		in.MirrorUserID = &val
-	}
+	in.ModelExperimentsAccessLevel = clients.LateInitializeAccessControlValue(in.ModelExperimentsAccessLevel, project.ModelExperimentsAccessLevel)
+	in.ModelRegistryAccessLevel = clients.LateInitializeAccessControlValue(in.ModelRegistryAccessLevel, project.ModelRegistryAccessLevel)
+	in.MonitorAccessLevel = clients.LateInitializeAccessControlValue(in.MonitorAccessLevel, project.MonitorAccessLevel)
+
 	if in.OnlyAllowMergeIfAllDiscussionsAreResolved == nil {
 		in.OnlyAllowMergeIfAllDiscussionsAreResolved = &project.OnlyAllowMergeIfAllDiscussionsAreResolved
 	}
 	if in.OnlyAllowMergeIfPipelineSucceeds == nil {
 		in.OnlyAllowMergeIfPipelineSucceeds = &project.OnlyAllowMergeIfPipelineSucceeds
 	}
-	if in.OnlyMirrorProtectedBranches == nil {
-		in.OnlyMirrorProtectedBranches = &project.OnlyMirrorProtectedBranches
-	}
 
-	in.OperationsAccessLevel = clients.LateInitializeAccessControlValue(in.OperationsAccessLevel, project.OperationsAccessLevel)
+	// PackageRegistryAccessLevel is deliberately not late-initialized: when set
+	// it takes precedence over packagesEnabled (see
+	// projects.ResolvePackagesEnabled), so copying it would silently switch
+	// existing resources from packagesEnabled to the access level. For the
+	// same reason packagesEnabled is not late-initialized while the level is
+	// set: the copy would be ignored, and re-applied if the level is removed.
 
-	if in.PackagesEnabled == nil {
-		in.PackagesEnabled = &project.PackagesEnabled
+	if in.PackagesEnabled == nil && in.PackageRegistryAccessLevel == nil {
+		in.PackagesEnabled = &project.PackagesEnabled //nolint:staticcheck
 	}
 
 	in.PagesAccessLevel = clients.LateInitializeAccessControlValue(in.PagesAccessLevel, project.PagesAccessLevel)
@@ -407,6 +412,8 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 		in.PublicBuilds = &project.PublicJobs
 	}
 
+	in.ReleasesAccessLevel = clients.LateInitializeAccessControlValue(in.ReleasesAccessLevel, project.ReleasesAccessLevel)
+
 	if in.RemoveSourceBranchAfterMerge == nil {
 		in.RemoveSourceBranchAfterMerge = &project.RemoveSourceBranchAfterMerge
 	}
@@ -419,6 +426,9 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	if in.ResolveOutdatedDiffDiscussions == nil {
 		in.ResolveOutdatedDiffDiscussions = &project.ResolveOutdatedDiffDiscussions
 	}
+
+	in.SecurityAndComplianceAccessLevel = clients.LateInitializeAccessControlValue(in.SecurityAndComplianceAccessLevel, project.SecurityAndComplianceAccessLevel)
+
 	if in.ServiceDeskEnabled == nil {
 		in.ServiceDeskEnabled = &project.ServiceDeskEnabled
 	}
@@ -438,6 +448,8 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 
 	in.Visibility = clients.LateInitializeVisibilityValue(in.Visibility, project.Visibility)
 	in.WikiAccessLevel = clients.LateInitializeAccessControlValue(in.WikiAccessLevel, project.WikiAccessLevel)
+
+	// Mirror fields are deliberately not late-initialized (see TestLateInitializeSkipsMirrorFields).
 
 	if err := e.lateInitializePushRules(ctx, cr); err != nil {
 		return errors.Wrap(err, errLateInitializePushRules)
@@ -540,7 +552,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.AutocloseReferencedIssues, g.AutocloseReferencedIssues) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr(p.BuildCoverageRegex, g.BuildCoverageRegex) {
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.AnalyticsAccessLevel), string(g.AnalyticsAccessLevel)) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.BuildsAccessLevel), string(g.BuildsAccessLevel)) {
@@ -555,7 +567,7 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.CIForwardDeploymentEnabled, g.CIForwardDeploymentEnabled) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr(p.ContainerRegistryEnabled, g.ContainerRegistryEnabled) { //nolint:staticcheck
+	if !clients.IsComparableEqualToComparablePtr(p.ContainerRegistryEnabled, g.ContainerRegistryEnabled) { //nolint:staticcheck // deprecated but still needed for backward compatibility
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.ContainerRegistryAccessLevel), string(g.ContainerRegistryAccessLevel)) {
@@ -567,7 +579,16 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.Description, g.Description) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.EnvironmentsAccessLevel), string(g.EnvironmentsAccessLevel)) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.FeatureFlagsAccessLevel), string(g.FeatureFlagsAccessLevel)) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.ForkingAccessLevel), string(g.ForkingAccessLevel)) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.InfrastructureAccessLevel), string(g.InfrastructureAccessLevel)) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.IssuesAccessLevel), string(g.IssuesAccessLevel)) {
@@ -585,6 +606,15 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.MergeRequestsAccessLevel), string(g.MergeRequestsAccessLevel)) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr(p.MergeTrainsEnabled, g.MergeTrainsEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.MergeTrainsSkipTrainAllowed, g.MergeTrainsSkipTrainAllowed) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.MergePipelinesEnabled, g.MergePipelinesEnabled) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.MergeRequestsTemplate, g.MergeRequestsTemplate) {
 		return false
 	}
@@ -600,6 +630,15 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.MirrorUserID, g.MirrorUserID) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.ModelExperimentsAccessLevel), string(g.ModelExperimentsAccessLevel)) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.ModelRegistryAccessLevel), string(g.ModelRegistryAccessLevel)) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.MonitorAccessLevel), string(g.MonitorAccessLevel)) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.OnlyAllowMergeIfAllDiscussionsAreResolved, g.OnlyAllowMergeIfAllDiscussionsAreResolved) {
 		return false
 	}
@@ -609,10 +648,10 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(p.OnlyMirrorProtectedBranches, g.OnlyMirrorProtectedBranches) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr((*string)(p.OperationsAccessLevel), string(g.OperationsAccessLevel)) {
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.PackageRegistryAccessLevel), string(g.PackageRegistryAccessLevel)) {
 		return false
 	}
-	if !clients.IsComparableEqualToComparablePtr(p.PackagesEnabled, g.PackagesEnabled) {
+	if !clients.IsComparableEqualToComparablePtr(projects.ResolvePackagesEnabled(p), g.PackagesEnabled) { //nolint:staticcheck // deprecated but still needed for backward compatibility
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr((*string)(p.PagesAccessLevel), string(g.PagesAccessLevel)) {
@@ -627,6 +666,9 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 	if !clients.IsComparableEqualToComparablePtr(effectiveValue, g.PublicJobs) {
 		return false
 	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.ReleasesAccessLevel), string(g.ReleasesAccessLevel)) {
+		return false
+	}
 	if !clients.IsComparableEqualToComparablePtr(p.RemoveSourceBranchAfterMerge, g.RemoveSourceBranchAfterMerge) {
 		return false
 	}
@@ -637,6 +679,9 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ResolveOutdatedDiffDiscussions, g.ResolveOutdatedDiffDiscussions) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr((*string)(p.SecurityAndComplianceAccessLevel), string(g.SecurityAndComplianceAccessLevel)) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ServiceDeskEnabled, g.ServiceDeskEnabled) {

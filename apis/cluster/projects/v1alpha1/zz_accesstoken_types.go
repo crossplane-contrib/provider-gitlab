@@ -19,12 +19,15 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // AccessTokenParameters define the desired state of a Gitlab access token
 // https://docs.gitlab.com/ee/api/access_tokens.html
+// +kubebuilder:validation:XValidation:rule="(has(self.expiresAt) ? 1 : 0) + (has(self.renewalPeriodDays) ? 1 : 0) == 1",message="exactly one of expiresAt or renewalPeriodDays must be set"
+// +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || has(self.renewalPeriodDays)",message="renewBeforeDays requires renewalPeriodDays"
+// +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || !has(self.renewalPeriodDays) || self.renewalPeriodDays > self.renewBeforeDays",message="renewalPeriodDays must be greater than renewBeforeDays"
 type AccessTokenParameters struct {
 	// ProjectID is the ID of the project to create the access token in.
 	// +optional
@@ -35,18 +38,34 @@ type AccessTokenParameters struct {
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
 	// +immutable
-	ProjectIDRef *xpv1.Reference `json:"projectIdRef,omitempty"`
+	ProjectIDRef *v2.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
 	// +optional
-	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
+	ProjectIDSelector *v2.Selector `json:"projectIdSelector,omitempty"`
 
-	// Expiration date of the access token. The date cannot be set later than the maximum allowable lifetime of an access token.
-	// If not set, the maximum allowable lifetime of a personal access token is 365 days.
-	// Expected in ISO 8601 format (2019-03-15T08:00:00Z)
-	// +nullable
-	// +immutable
-	ExpiresAt *metav1.Time `json:"expiresAt"`
+	// ExpiresAt is the expiration date of the access token in ISO 8601 format (2019-03-15T08:00:00Z).
+	// The date cannot be set later than the maximum allowable lifetime of an access token.
+	// Since GitLab 16.0, tokens must have an expiration date.
+	// Mutually exclusive with RenewalPeriodDays.
+	// +optional
+	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
+
+	// RenewalPeriodDays is the number of days each token generation should live.
+	// The provider rotates it shortly before expiry, or once inactive, setting the new
+	// expiry to RenewalPeriodDays days from the rotation time.
+	// Mutually exclusive with ExpiresAt.
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	RenewalPeriodDays *int `json:"renewalPeriodDays,omitempty"`
+
+	// RenewBeforeDays overrides the default 2/3-lifetime renewal threshold.
+	// When set, the provider rotates the token when fewer than RenewBeforeDays
+	// remain before expiry. Only valid with RenewalPeriodDays.
+	// Must be less than RenewalPeriodDays.
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	RenewBeforeDays *int `json:"renewBeforeDays,omitempty"`
 
 	// Access level for the project. Default is 40.
 	// Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
@@ -63,6 +82,11 @@ type AccessTokenParameters struct {
 	// Name of the project access token
 	// +required
 	Name string `json:"name"`
+
+	// Description of the project access token
+	// WARNING: this field is only reconciled on expiration / revokation of the token
+	// +optional
+	Description *string `json:"description,omitempty"`
 }
 
 // AccessTokenObservation represents a access token.
@@ -70,19 +94,33 @@ type AccessTokenParameters struct {
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/project_access_tokens.html
 type AccessTokenObservation struct {
-	TokenID *int64 `json:"id,omitempty"`
+	ID          int64        `json:"id"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	UserID      int64        `json:"userId"`
+	Scopes      []string     `json:"scopes"`
+	ExpiresAt   *metav1.Time `json:"expiresAt,omitempty"`
+	Active      bool         `json:"active"`
+	CreatedAt   *metav1.Time `json:"createdAt"`
+	Revoked     bool         `json:"revoked"`
+	AccessLevel int64        `json:"accessLevel"`
 }
 
 // A AccessTokenSpec defines the desired state of a Gitlab Project.
 type AccessTokenSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       AccessTokenParameters `json:"forProvider"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
+	ForProvider                   AccessTokenParameters `json:"forProvider"`
 }
 
 // A AccessTokenStatus represents the observed state of a Gitlab Project.
 type AccessTokenStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          AccessTokenObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               AccessTokenObservation `json:"atProvider,omitempty"`
+
+	// RenewAt is the computed time at which the provider will renew
+	// the token. Only populated for renewal-managed tokens.
+	// +optional
+	RenewAt *metav1.Time `json:"renewAt,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -90,6 +128,9 @@ type AccessTokenStatus struct {
 // A AccessToken is a managed resource that represents a Gitlab project access token
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
+// +kubebuilder:printcolumn:name="SELF",type="string",JSONPath=".status.conditions[?(@.type=='SelfManaged')].status"
+// +kubebuilder:printcolumn:name="RENEW-AT",type="string",JSONPath=".status.renewAt"
+// +kubebuilder:printcolumn:name="EXPIRES-AT",type="string",JSONPath=".status.atProvider.expiresAt"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab}

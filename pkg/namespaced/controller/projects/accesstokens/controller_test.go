@@ -24,14 +24,15 @@ import (
 	"testing"
 	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -74,7 +75,7 @@ type args struct {
 
 type accessTokenModifier func(*v1alpha1.AccessToken)
 
-func withConditions(c ...xpv1.Condition) accessTokenModifier {
+func withConditions(c ...v2.Condition) accessTokenModifier {
 	return func(r *v1alpha1.AccessToken) { r.Status.ConditionedStatus.Conditions = c }
 }
 
@@ -97,6 +98,10 @@ func accessToken(m ...accessTokenModifier) *v1alpha1.AccessToken {
 	}
 	return cr
 }
+
+// ownerCond is the SelfManaged condition for owner mode, asserted on every
+// non-self reconcile path.
+func ownerCond() v2.Condition { return selfManagedCondition(false) }
 
 func TestObserve(t *testing.T) {
 	type want struct {
@@ -123,7 +128,7 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(),
 			},
 			want: want{
-				cr:     accessToken(),
+				cr:     accessToken(withConditions(ownerCond())),
 				result: managed.ExternalObservation{},
 				err:    nil,
 			},
@@ -133,7 +138,7 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(withExternalName(wrongIDstr)),
 			},
 			want: want{
-				cr:     accessToken(withExternalName(wrongIDstr)),
+				cr:     accessToken(withExternalName(wrongIDstr), withConditions(ownerCond())),
 				result: managed.ExternalObservation{},
 				err:    errors.Wrap(getConversionError(), errFailedParseID),
 			},
@@ -143,7 +148,7 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(withExternalName(sAccessTokenID)),
 			},
 			want: want{
-				cr:     accessToken(withExternalName(sAccessTokenID)),
+				cr:     accessToken(withExternalName(sAccessTokenID), withConditions(ownerCond())),
 				result: managed.ExternalObservation{},
 				err:    errors.New(errMissingProjectID),
 			},
@@ -168,9 +173,10 @@ func TestObserve(t *testing.T) {
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID: &projectID,
 					}),
+					withConditions(ownerCond()),
 				),
 				result: managed.ExternalObservation{},
-				err:    errors.Wrap(errBoom, errAccessTokentNotFound),
+				err:    errors.Wrap(errBoom, errAccessTokenNotFound),
 			},
 		},
 		"GetErr404": {
@@ -191,8 +197,9 @@ func TestObserve(t *testing.T) {
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
 					withSpec(v1alpha1.AccessTokenParameters{ProjectID: &projectID}),
+					withConditions(ownerCond()),
 				),
-				result: managed.ExternalObservation{},
+				result: managed.ExternalObservation{ResourceExists: false},
 				err:    nil,
 			},
 		},
@@ -216,16 +223,17 @@ func TestObserve(t *testing.T) {
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID: &projectID,
 					}),
+					withConditions(ownerCond()),
 				),
 				result: managed.ExternalObservation{},
-				err:    errors.Wrap(errBoom, errAccessTokentNotFound),
+				err:    errors.Wrap(errBoom, errAccessTokenNotFound),
 			},
 		},
 		"ResourceLateInitializedFalse": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
 					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
-						return &gitlab.ProjectAccessToken{}, &gitlab.Response{}, nil
+						return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)}}, &gitlab.Response{}, nil
 					},
 				},
 				cr: accessToken(
@@ -240,7 +248,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(xpv1.Available()),
+					withConditions(ownerCond(), v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -260,6 +268,7 @@ func TestObserve(t *testing.T) {
 					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return &gitlab.ProjectAccessToken{
 							PersonalAccessToken: gitlab.PersonalAccessToken{
+								Active:    true,
 								ExpiresAt: accessTokenObj.ExpiresAt,
 							},
 							AccessLevel: accessTokenObj.AccessLevel,
@@ -276,17 +285,15 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(xpv1.Available()),
+					withConditions(ownerCond(), v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
-						ProjectID:   &projectID,
-						ExpiresAt:   &v1.Time{Time: expiresAt},
-						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ProjectID: &projectID,
 					}),
 				),
 				result: managed.ExternalObservation{
 					ResourceExists:          true,
 					ResourceUpToDate:        true,
-					ResourceLateInitialized: true,
+					ResourceLateInitialized: false,
 				},
 			},
 		},
@@ -319,7 +326,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(),
+					withConditions(ownerCond()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -334,11 +341,76 @@ func TestObserve(t *testing.T) {
 				err: nil,
 			},
 		},
+		"TokenPastTwoThirdsLifetimeWithRenewalPeriod": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						observedCreatedAt := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
+						observedExpiresAt := time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)
+						return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, CreatedAt: &observedCreatedAt, ExpiresAt: (*gitlab.ISOTime)(&observedExpiresAt)}}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:         &projectID,
+						AccessLevel:       (*v1alpha1.AccessLevelValue)(&accessLevel),
+						RenewalPeriodDays: func() *int { v := 30; return &v }(),
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:         &projectID,
+						AccessLevel:       (*v1alpha1.AccessLevelValue)(&accessLevel),
+						RenewalPeriodDays: func() *int { v := 30; return &v }(),
+					}),
+					withConditions(ownerCond()),
+				),
+				result: managed.ExternalObservation{ResourceExists: false},
+			},
+		},
+		"ResourceUpToDateSameDayDifferentTime": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						observedExpiresAt := time.Date(2026, time.June, 15, 0, 0, 0, 0, time.UTC)
+						return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&observedExpiresAt)}}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: time.Date(2026, time.June, 15, 8, 0, 0, 0, time.UTC)},
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(ownerCond(), v2.Available()),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: time.Date(2026, time.June, 15, 8, 0, 0, 0, time.UTC)},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
 		"TokenUpToDate": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
 					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
-						return &gitlab.ProjectAccessToken{}, &gitlab.Response{}, nil
+						return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)}}, &gitlab.Response{}, nil
 					},
 				},
 				cr: accessToken(
@@ -353,7 +425,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: accessToken(
 					withExternalName(sAccessTokenID),
-					withConditions(xpv1.Available()),
+					withConditions(ownerCond(), v2.Available()),
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID:   &projectID,
 						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
@@ -367,6 +439,110 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
+		"TokenUpToDateNoDesiredExpiry": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)}}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(ownerCond(), v2.Available()),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
+		"TokenNotRevokedOrExpired": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						return &gitlab.ProjectAccessToken{
+							PersonalAccessToken: gitlab.PersonalAccessToken{Active: false, Revoked: false, ExpiresAt: (*gitlab.ISOTime)(&expiresAt)},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(ownerCond()),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          false,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
+				},
+				err: nil,
+			},
+		},
+		"TokenExpired": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						expiredAt := time.Now().AddDate(0, 0, -1)
+						return &gitlab.ProjectAccessToken{
+							PersonalAccessToken: gitlab.PersonalAccessToken{Active: false, Revoked: false, ExpiresAt: (*gitlab.ISOTime)(&expiredAt)},
+						}, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withExternalName(sAccessTokenID),
+					withConditions(ownerCond()),
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID:   &projectID,
+						AccessLevel: (*v1alpha1.AccessLevelValue)(&accessLevel),
+						ExpiresAt:   &v1.Time{Time: expiresAt},
+					}),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          false,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
+				},
+				err: nil,
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -377,11 +553,179 @@ func TestObserve(t *testing.T) {
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
-			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
+			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions(), cmpopts.IgnoreFields(v1alpha1.AccessTokenStatus{}, "AtProvider", "RenewAt")); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.result, o); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestObserveSetsAtProvider(t *testing.T) {
+	cr := accessToken(
+		withExternalName(sAccessTokenID),
+		withSpec(v1alpha1.AccessTokenParameters{ProjectID: &projectID}),
+	)
+
+	e := &external{client: &fake.MockClient{
+		MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+			return &accessTokenObj, &gitlab.Response{}, nil
+		},
+	}}
+
+	_, err := e.Observe(context.Background(), cr)
+	if err != nil {
+		t.Fatalf("Observe() error = %v", err)
+	}
+
+	want := projects.GenerateProjectAccessTokenObservation(&accessTokenObj)
+	if diff := cmp.Diff(want, cr.Status.AtProvider); diff != "" {
+		t.Fatalf("AtProvider mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestObserveSetsRenewAt(t *testing.T) {
+	createdAt := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	obsExpiresAt := time.Date(2026, time.January, 31, 0, 0, 0, 0, time.UTC)
+
+	t.Run("NilForExplicitExpiresAt", func(t *testing.T) {
+		cr := accessToken(
+			withExternalName(sAccessTokenID),
+			withSpec(v1alpha1.AccessTokenParameters{
+				ProjectID: &projectID,
+				ExpiresAt: &v1.Time{Time: obsExpiresAt},
+			}),
+		)
+		e := &external{client: &fake.MockClient{
+			MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+				return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+					Active: true, CreatedAt: &createdAt, ExpiresAt: (*gitlab.ISOTime)(&obsExpiresAt),
+				}}, &gitlab.Response{}, nil
+			},
+		}}
+
+		_, err := e.Observe(context.Background(), cr)
+		if err != nil {
+			t.Fatalf("Observe() error = %v", err)
+		}
+		if cr.Status.RenewAt != nil {
+			t.Errorf("expected nil RenewAt for explicit expiresAt, got %v", cr.Status.RenewAt)
+		}
+	})
+
+	t.Run("SetForRenewalPeriodDaysDefault", func(t *testing.T) {
+		renewalDays := 30
+		cr := accessToken(
+			withExternalName(sAccessTokenID),
+			withSpec(v1alpha1.AccessTokenParameters{
+				ProjectID:         &projectID,
+				RenewalPeriodDays: &renewalDays,
+			}),
+		)
+		e := &external{client: &fake.MockClient{
+			MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+				return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+					Active: true, CreatedAt: &createdAt, ExpiresAt: (*gitlab.ISOTime)(&obsExpiresAt),
+				}}, &gitlab.Response{}, nil
+			},
+		}}
+
+		_, err := e.Observe(context.Background(), cr)
+		if err != nil {
+			t.Fatalf("Observe() error = %v", err)
+		}
+		if cr.Status.RenewAt == nil {
+			t.Fatal("expected non-nil RenewAt for renewalPeriodDays")
+		}
+		// 2/3 of 30 days = 20 days → 2026-01-21
+		want := time.Date(2026, time.January, 21, 0, 0, 0, 0, time.UTC)
+		if !cr.Status.RenewAt.Time.Equal(want) {
+			t.Errorf("RenewAt: want %v, got %v", want, cr.Status.RenewAt.Time)
+		}
+	})
+
+	t.Run("SetForRenewBeforeDaysOverride", func(t *testing.T) {
+		renewalDays := 30
+		renewBefore := 5
+		cr := accessToken(
+			withExternalName(sAccessTokenID),
+			withSpec(v1alpha1.AccessTokenParameters{
+				ProjectID:         &projectID,
+				RenewalPeriodDays: &renewalDays,
+				RenewBeforeDays:   &renewBefore,
+			}),
+		)
+		e := &external{client: &fake.MockClient{
+			MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+				return &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+					Active: true, CreatedAt: &createdAt, ExpiresAt: (*gitlab.ISOTime)(&obsExpiresAt),
+				}}, &gitlab.Response{}, nil
+			},
+		}}
+
+		_, err := e.Observe(context.Background(), cr)
+		if err != nil {
+			t.Fatalf("Observe() error = %v", err)
+		}
+		if cr.Status.RenewAt == nil {
+			t.Fatal("expected non-nil RenewAt for renewBeforeDays override")
+		}
+		// expiresAt - 5 days = 2026-01-26
+		want := time.Date(2026, time.January, 26, 0, 0, 0, 0, time.UTC)
+		if !cr.Status.RenewAt.Time.Equal(want) {
+			t.Errorf("RenewAt: want %v, got %v", want, cr.Status.RenewAt.Time)
+		}
+	})
+}
+
+func TestShouldRotateProjectAccessToken(t *testing.T) {
+	otherExpiresAt := expiresAt.Add(24 * time.Hour)
+
+	cases := map[string]struct {
+		params *v1alpha1.AccessTokenParameters
+		at     *gitlab.ProjectAccessToken
+		want   bool
+	}{
+		"NilToken": {
+			params: &v1alpha1.AccessTokenParameters{},
+			at:     nil,
+			want:   true,
+		},
+		"InactiveToken": {
+			params: &v1alpha1.AccessTokenParameters{},
+			at:     &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: false}},
+			want:   true,
+		},
+		"ActiveNoDesiredExpiry": {
+			params: &v1alpha1.AccessTokenParameters{},
+			at:     &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{Active: true}},
+			want:   false,
+		},
+		"ActiveMatchingExpiresAt": {
+			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				ExpiresAt: (*gitlab.ISOTime)(&expiresAt),
+			}},
+			want: false,
+		},
+		"ActiveMismatchingExpiresAt": {
+			params: &v1alpha1.AccessTokenParameters{ExpiresAt: &v1.Time{Time: expiresAt}},
+			at: &gitlab.ProjectAccessToken{PersonalAccessToken: gitlab.PersonalAccessToken{
+				Active:    true,
+				ExpiresAt: (*gitlab.ISOTime)(&otherExpiresAt),
+			}},
+			want: true,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := projects.ShouldRotateAccessToken(tc.params, tc.at)
+			if got != tc.want {
+				t.Errorf("ShouldRotateAccessToken() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -421,6 +765,9 @@ func TestCreate(t *testing.T) {
 		"CreationFailedErr": {
 			args: args{
 				accessTokenClient: &fake.MockClient{
+					MockRotateProjectAccessToken: func(pid interface{}, id int64, opt *gitlab.RotateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						return nil, nil, errBoom
+					},
 					MockCreateProjectAccessToken: func(pid interface{}, opt *gitlab.CreateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return nil, nil, errBoom
 					},
@@ -473,6 +820,9 @@ func TestCreate(t *testing.T) {
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
 				accessTokenClient: &fake.MockClient{
+					MockRotateProjectAccessToken: func(pid interface{}, id int64, opt *gitlab.RotateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						return nil, nil, errBoom
+					},
 					MockCreateProjectAccessToken: func(pid interface{}, opt *gitlab.CreateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return &accessTokenObj, &gitlab.Response{}, nil
 					},
@@ -490,6 +840,32 @@ func TestCreate(t *testing.T) {
 					withSpec(v1alpha1.AccessTokenParameters{
 						ProjectID: &projectID,
 						Name:      "Access Token Name",
+					}),
+					withExternalName(sAccessTokenID),
+				),
+				result: managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)},
+				},
+			},
+		},
+		"RotationSuccessful": {
+			args: args{
+				accessTokenClient: &fake.MockClient{
+					MockRotateProjectAccessToken: func(pid interface{}, id int64, opt *gitlab.RotateProjectAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+						return &accessTokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID: &projectID,
+					}),
+					withAnnotations(extNameAnnotation),
+				),
+			},
+			want: want{
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{
+						ProjectID: &projectID,
 					}),
 					withExternalName(sAccessTokenID),
 				),
@@ -528,13 +904,20 @@ func TestUpdate(t *testing.T) {
 		args
 		want
 	}{
-		"SuccessfulUpdate": {
+		"NoOp": {
 			args: args{
-				cr: accessToken(),
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{ProjectID: &projectID}),
+					withAnnotations(extNameAnnotation),
+				),
 			},
 			want: want{
-				cr:     accessToken(),
+				cr: accessToken(
+					withSpec(v1alpha1.AccessTokenParameters{ProjectID: &projectID}),
+					withAnnotations(extNameAnnotation),
+				),
 				result: managed.ExternalUpdate{},
+				err:    nil,
 			},
 		},
 	}
@@ -664,4 +1047,184 @@ func TestDelete(t *testing.T) {
 func getConversionError() error {
 	_, err := strconv.Atoi(wrongIDstr)
 	return err
+}
+
+func withDeletionTimestamp() accessTokenModifier {
+	return func(r *v1alpha1.AccessToken) {
+		now := v1.Now()
+		r.SetDeletionTimestamp(&now)
+	}
+}
+
+// selfPAT builds a self-inform / self-rotate PersonalAccessToken response.
+func selfPAT(active bool) *gitlab.PersonalAccessToken {
+	return &gitlab.PersonalAccessToken{ID: accessTokenID, Name: name, Token: token, Active: active}
+}
+
+// ---- self-mode Observe ----
+
+func TestObserveSelf(t *testing.T) {
+	selfSpec := v1alpha1.AccessTokenParameters{Name: name}
+
+	type want struct {
+		result         managed.ExternalObservation
+		err            error
+		wantExternalID string
+	}
+
+	cases := map[string]struct {
+		client projects.AccessTokenClient
+		cr     *v1alpha1.AccessToken
+		want   want
+	}{
+		"UpToDateAutoAdopt": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return selfPAT(true), &gitlab.Response{}, nil
+			}},
+			cr:   accessToken(withSpec(selfSpec)),
+			want: want{result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, wantExternalID: sAccessTokenID},
+		},
+		"RotationDue": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return selfPAT(false), &gitlab.Response{}, nil
+			}},
+			cr:   accessToken(withSpec(selfSpec)),
+			want: want{result: managed.ExternalObservation{ResourceExists: false}, wantExternalID: sAccessTokenID},
+		},
+		"DeadTokenTerminalError": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusUnauthorized}}, errBoom
+			}},
+			cr:   accessToken(withSpec(selfSpec)),
+			want: want{err: errors.Wrap(errBoom, errSelfInformFailed)},
+		},
+		"DeletedAfterRevoke401ReportsGone": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusUnauthorized}}, errBoom
+			}},
+			cr:   accessToken(withSpec(selfSpec), withDeletionTimestamp()),
+			want: want{result: managed.ExternalObservation{ResourceExists: false}},
+		},
+		"DeletedAfterRevoke403ReportsGone": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusForbidden}}, errBoom
+			}},
+			cr:   accessToken(withSpec(selfSpec), withDeletionTimestamp()),
+			want: want{result: managed.ExternalObservation{ResourceExists: false}},
+		},
+		"DeletedTransientErrorStillFails": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}, errBoom
+			}},
+			cr:   accessToken(withSpec(selfSpec), withDeletionTimestamp()),
+			want: want{err: errors.Wrap(errBoom, errSelfInformFailed)},
+		},
+		"NameMismatchTerminalError": {
+			client: &fake.MockClient{MockGetSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return &gitlab.PersonalAccessToken{ID: accessTokenID, Name: "some-other-token", Active: true}, &gitlab.Response{}, nil
+			}},
+			cr:   accessToken(withSpec(selfSpec)),
+			want: want{err: errors.New(errSelfNameMismatch)},
+		},
+	}
+
+	for tname, tc := range cases {
+		t.Run(tname, func(t *testing.T) {
+			e := &external{client: tc.client, self: true}
+			o, err := e.Observe(context.Background(), tc.cr)
+
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.result, o); diff != "" {
+				t.Errorf("result: -want, +got:\n%s", diff)
+			}
+			if c := tc.cr.Status.GetCondition(TypeSelfManaged); c.Reason != ReasonProviderConfigReferencesManagedToken {
+				t.Errorf("expected SelfManaged condition reason %q, got %q", ReasonProviderConfigReferencesManagedToken, c.Reason)
+			}
+			if tc.want.wantExternalID != "" {
+				if got := meta.GetExternalName(tc.cr); got != tc.want.wantExternalID {
+					t.Errorf("external-name: want %q, got %q (auto-adopt)", tc.want.wantExternalID, got)
+				}
+			}
+		})
+	}
+}
+
+// ---- self-mode Create ----
+
+func TestCreateSelf(t *testing.T) {
+	cases := map[string]struct {
+		client   projects.AccessTokenClient
+		cr       *v1alpha1.AccessToken
+		wantConn managed.ConnectionDetails
+		wantErr  error
+	}{
+		"SelfRotateSuccessful": {
+			client: &fake.MockClient{MockRotateSelf: func(_ *gitlab.RotatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return selfPAT(true), &gitlab.Response{}, nil
+			}},
+			cr:       accessToken(withSpec(v1alpha1.AccessTokenParameters{Name: name})),
+			wantConn: managed.ConnectionDetails{"token": []byte(token)},
+		},
+		"SelfRotateFailed": {
+			client: &fake.MockClient{MockRotateSelf: func(_ *gitlab.RotatePersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
+				return nil, nil, errBoom
+			}},
+			cr:      accessToken(withSpec(v1alpha1.AccessTokenParameters{Name: name})),
+			wantErr: errors.Wrap(errBoom, errSelfRotateFailed),
+		},
+	}
+	for tname, tc := range cases {
+		t.Run(tname, func(t *testing.T) {
+			e := &external{client: tc.client, self: true}
+			o, err := e.Create(context.Background(), tc.cr)
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.wantConn, o.ConnectionDetails); diff != "" {
+				t.Errorf("conn: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+// ---- self-mode Delete ----
+
+func TestDeleteSelf(t *testing.T) {
+	cases := map[string]struct {
+		client  projects.AccessTokenClient
+		wantErr error
+	}{
+		"SelfSuccessfulRevoke": {
+			client: &fake.MockClient{MockRevokeSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				return &gitlab.Response{}, nil
+			}},
+		},
+		"SelfRevokeFailed": {
+			client: &fake.MockClient{MockRevokeSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				return &gitlab.Response{}, errBoom
+			}},
+			wantErr: errors.Wrap(errBoom, errDeleteFailed),
+		},
+		"SelfRevoke401Idempotent": {
+			client: &fake.MockClient{MockRevokeSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusUnauthorized}}, errBoom
+			}},
+		},
+		"SelfRevoke403Idempotent": {
+			client: &fake.MockClient{MockRevokeSelf: func(_ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+				return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusForbidden}}, errBoom
+			}},
+		},
+	}
+	for tname, tc := range cases {
+		t.Run(tname, func(t *testing.T) {
+			e := &external{client: tc.client, self: true}
+			_, err := e.Delete(context.Background(), accessToken(withExternalName(sAccessTokenID)))
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+		})
+	}
 }

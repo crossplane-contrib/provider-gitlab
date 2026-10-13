@@ -1,0 +1,19 @@
+---
+apiVersion: instance.gitlab.m.crossplane.io/v1alpha1
+kind: Application
+metadata:
+  name: example
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    name: example
+    redirectURI: "https://example.com/callback"
+    scopes:
+      - read_user
+    confidential: true
+    renewalPeriodDays: 1
+  writeConnectionSecretToRef:
+    name: gitlab-example-instance-application

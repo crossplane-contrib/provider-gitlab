@@ -17,9 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -51,16 +49,21 @@ type RunnerObservation struct {
 // This includes the configuration parameters for creating and managing
 // a GitLab Runner linked to a specific instance.
 type RunnerSpec struct {
-	xpv2.ManagedResourceSpec `json:",inline"`
-	ForProvider              RunnerParameters `json:"forProvider"`
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            RunnerParameters `json:"forProvider"`
 }
 
 // RunnerStatus represents the observed state of a instance Runner.
 // This includes the current status and properties of the runner as
 // reported by the GitLab API.
 type RunnerStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          RunnerObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               RunnerObservation `json:"atProvider,omitempty"`
+
+	// TokenRenewAt is the computed time at which the provider will renew
+	// the runner token. Only populated when the token has an expiry.
+	// +optional
+	TokenRenewAt *metav1.Time `json:"tokenRenewAt,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -69,7 +72,7 @@ type RunnerStatus struct {
 // Instance runners can execute CI/CD jobs exclusively for the associated instance
 // and provide dedicated runner resources for a single instance.
 //
-// IMPORTANT: You MUST specify either writeConnectionSecretToRef or publishConnectionDetailsTo
+// IMPORTANT: You MUST specify writeConnectionSecretToRef
 // to receive the runner token. Without the token, the runner cannot be registered and is unusable.
 // The token is required to configure the actual GitLab Runner agent.
 //
@@ -89,6 +92,8 @@ type RunnerStatus struct {
 // https://docs.gitlab.com/ee/api/runners.html
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
+// +kubebuilder:printcolumn:name="TOKEN-RENEW-AT",type="string",JSONPath=".status.tokenRenewAt"
+// +kubebuilder:printcolumn:name="TOKEN-EXPIRES-AT",type="string",JSONPath=".status.atProvider.tokenExpiresAt"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".status.atProvider.id"
 // +kubebuilder:subresource:status

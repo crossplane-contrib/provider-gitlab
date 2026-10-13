@@ -26,6 +26,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/hooks"
+	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationharbor"
 	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationmattermost"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/pipelineschedules"
@@ -35,6 +36,8 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedenvironments"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/repositoryfiles"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/runners"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/serviceaccountaccesstokens"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/serviceaccounts"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/variables"
 )
 
@@ -55,8 +58,11 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		protectedbranches.SetupProtectedBranch,
 		badges.SetupBadge,
 		integrationmattermost.SetupIntegrationMattermost,
+		integrationharbor.SetupIntegrationHarbor,
 		protectedenvironments.SetupProtectedEnvironment,
 		projectsharegroups.SetupProjectShareGroup,
+		serviceaccounts.SetupServiceAccount,
+		serviceaccountaccesstokens.SetupServiceAccountAccessToken,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -83,8 +89,11 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		protectedbranches.SetupProtectedBranchGated,
 		badges.SetupBadgeGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
+		integrationharbor.SetupIntegrationHarborGated,
 		protectedenvironments.SetupProtectedEnvironmentGated,
 		projectsharegroups.SetupProjectShareGroupGated,
+		serviceaccounts.SetupServiceAccountGated,
+		serviceaccountaccesstokens.SetupServiceAccountAccessTokenGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

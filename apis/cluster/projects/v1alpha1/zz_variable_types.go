@@ -19,7 +19,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
@@ -34,7 +34,7 @@ type VariableParameters struct {
 	// have not been set implicitly. Mutually exclusive with Value.
 	// +optional
 	// +nullable
-	ValueSecretRef *xpv1.SecretKeySelector `json:"valueSecretRef,omitempty"`
+	ValueSecretRef *v2.SecretKeySelector `json:"valueSecretRef,omitempty"`
 
 	// ProjectID is the ID of the project to create the variable on.
 	// +optional
@@ -44,11 +44,11 @@ type VariableParameters struct {
 	// ProjectIDRef is a reference to a project to retrieve its projectId.
 	// +optional
 	// +immutable
-	ProjectIDRef *xpv1.Reference `json:"projectIdRef,omitempty"`
+	ProjectIDRef *v2.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
 	// +optional
-	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
+	ProjectIDSelector *v2.Selector `json:"projectIdSelector,omitempty"`
 
 	// EnvironmentScope indicates the environment scope
 	// that this variable is applied to.
@@ -66,7 +66,7 @@ type VariableObservation struct {
 // A VariableSpec defines the desired state of a Gitlab Project CI
 // Variable.
 type VariableSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	v2.ClusterManagedResourceSpec `json:",inline"`
 	// ForProvider specifies the desired state of the Variable
 	ForProvider VariableParameters `json:"forProvider"`
 }
@@ -74,7 +74,7 @@ type VariableSpec struct {
 // A VariableStatus represents the observed state of a Gitlab Project CI
 // Variable.
 type VariableStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	v2.ManagedResourceStatus `json:",inline"`
 	// AtProvider reflects the observed state of a Gitlab Variable.
 	AtProvider VariableObservation `json:"atProvider,omitempty"`
 }

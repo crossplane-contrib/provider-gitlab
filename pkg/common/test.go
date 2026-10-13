@@ -17,14 +17,14 @@ limitations under the License.
 package common
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 // CreateSecretKeySelector creates a SecretKeySelector for testing
-func TestCreateSecretKeySelector(name, key string) *xpv1.SecretKeySelector {
-	return &xpv1.SecretKeySelector{
+func TestCreateSecretKeySelector(name, key string) *v2.SecretKeySelector {
+	return &v2.SecretKeySelector{
 		Key: key,
-		SecretReference: xpv1.SecretReference{
+		SecretReference: v2.SecretReference{
 			Name:      name,
 			Namespace: "default",
 		},
@@ -32,26 +32,26 @@ func TestCreateSecretKeySelector(name, key string) *xpv1.SecretKeySelector {
 }
 
 // CreateLocalSecretKeySelector creates a LocalSecretKeySelector for testing
-func TestCreateLocalSecretKeySelector(name, key string) *xpv1.LocalSecretKeySelector {
-	return &xpv1.LocalSecretKeySelector{
+func TestCreateLocalSecretKeySelector(name, key string) *v2.LocalSecretKeySelector {
+	return &v2.LocalSecretKeySelector{
 		Key: key,
-		LocalSecretReference: xpv1.LocalSecretReference{
+		LocalSecretReference: v2.LocalSecretReference{
 			Name: name,
 		},
 	}
 }
 
 // CreateSecretKeySelector creates a SecretKeySelector for testing
-func TestCreateSecretReference(name string) *xpv1.SecretReference {
-	return &xpv1.SecretReference{
+func TestCreateSecretReference(name string) *v2.SecretReference {
+	return &v2.SecretReference{
 		Name:      name,
 		Namespace: "default",
 	}
 }
 
 // CreateLocalSecretKeySelector creates a LocalSecretKeySelector for testing
-func TestCreateLocalSecretReference(name string) *xpv1.LocalSecretReference {
-	return &xpv1.LocalSecretReference{
+func TestCreateLocalSecretReference(name string) *v2.LocalSecretReference {
+	return &v2.LocalSecretReference{
 		Name: name,
 	}
 }
