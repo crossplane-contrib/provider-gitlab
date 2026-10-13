@@ -64,6 +64,44 @@ spec:
                     description: Set whether or not merge requests can be merged with
                       skipped jobs.
                     type: boolean
+                  approvals:
+                    description: |-
+                      Approvals configures the project's merge request approval
+                      configuration. Fields left unset are not managed by this provider.
+
+                      GitLab API docs:
+                      https://docs.gitlab.com/api/merge_request_approvals/#update-approval-configuration-for-a-project
+                    properties:
+                      disableOverridingApproversPerMergeRequest:
+                        description: |-
+                          DisableOverridingApproversPerMergeRequest prevents users from overriding
+                          approvers per merge request.
+                        type: boolean
+                      mergeRequestsAuthorApproval:
+                        description: |-
+                          MergeRequestsAuthorApproval allows merge request authors to self-approve
+                          their own merge requests.
+                        type: boolean
+                      mergeRequestsDisableCommittersApproval:
+                        description: |-
+                          MergeRequestsDisableCommittersApproval prevents committers from
+                          approving their own merge requests.
+                        type: boolean
+                      requireReauthenticationToApprove:
+                        description: |-
+                          RequireReauthenticationToApprove requires the reauthentication password
+                          to approve merge requests.
+                        type: boolean
+                      resetApprovalsOnPush:
+                        description: ResetApprovalsOnPush resets approvals on a new
+                          push to the merge request.
+                        type: boolean
+                      selectiveCodeOwnerRemovals:
+                        description: |-
+                          SelectiveCodeOwnerRemovals allows removing individual code owner
+                          approval requirements for a merge request.
+                        type: boolean
+                    type: object
                   approvalsBeforeMerge:
                     description: |-
                       How many approvers should approve merge request by default.More actions
