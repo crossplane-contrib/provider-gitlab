@@ -2,7 +2,8 @@
 # and deleting this resource does not delete the file. Add "Delete" to the
 # policies to remove the file together with the resource.
 #
-# Requires the provider to run with --enable-management-policies.
+# Requires management policies, which the provider enables by default
+# (opt out with --no-enable-management-policies).
 apiVersion: projects.gitlab.crossplane.io/v1alpha1
 kind: RepositoryFile
 metadata:
