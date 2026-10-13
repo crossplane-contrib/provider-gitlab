@@ -103,13 +103,13 @@ linters:
         text: 'QF1008:'
       - linters:
           - staticcheck
-        text: 'SA1019: mgr.GetEventRecorderFor is deprecated' # wait for https://github.com/crossplane/crossplane/issues/7152
+        text: 'SA1019: .*GetEventRecorderFor is deprecated' # wait for https://github.com/crossplane/crossplane/issues/7152
       - linters:
           - staticcheck
-        text: 'SA1019: resource.LegacyManaged is deprecated: new namespace-scoped MRs should implement ModernManaged' # still needed to support
+        text: 'SA1019: .*resource\.LegacyManaged is deprecated' # still needed to support
       - linters:
           - staticcheck
-        text: 'SA1019: scheme.Builder is deprecated' # crossplane scaffolding pattern; upstream has not migrated the api register.go helpers
+        text: 'SA1019: .*scheme\.Builder is deprecated' # crossplane scaffolding pattern; upstream has not migrated the api register.go helpers
       - linters:
           - gosec
         text: 'G101:'

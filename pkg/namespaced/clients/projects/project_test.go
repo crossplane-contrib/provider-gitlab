@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
@@ -52,8 +52,6 @@ var (
 	snippetsAccessLevelv1alpha1          = v1alpha1.AccessControlValue(snippetsAccessLevel)
 	pagesAccessLevel                     = "enabled"
 	pagesAccessLevelv1alpha1             = v1alpha1.AccessControlValue(pagesAccessLevel)
-	operationsAccessLevel                = "public"
-	operationsAccessLevelv1alpha1        = v1alpha1.AccessControlValue(operationsAccessLevel)
 	containerRegistryAccessLevel         = "enabled"
 	containerRegistryAccessLevelv1alpha1 = v1alpha1.AccessControlValue(pagesAccessLevel)
 	emailsDisabled                       = true
@@ -61,43 +59,43 @@ var (
 	cadence                              = "Cadence"
 	keepN                                = int64(1)
 	olderThan                            = "OlderThan"
-	nameRegexDelete                      = "NameRegexDelete"
+	nameRegex                            = "NameRegex"
 	nameRegexKeep                        = "NameRegexKeep"
 	enabled                              = false
 	nextRunAt                            = time.Now()
 	gitlabContainerExpirationPolicy      = gitlab.ContainerExpirationPolicy{
-		Cadence:         cadence,
-		KeepN:           keepN,
-		OlderThan:       olderThan,
-		NameRegexDelete: nameRegexDelete,
-		NameRegexKeep:   nameRegexKeep,
-		Enabled:         enabled,
-		NextRunAt:       &nextRunAt,
+		Cadence:       cadence,
+		KeepN:         keepN,
+		OlderThan:     olderThan,
+		NameRegex:     nameRegex,
+		NameRegexKeep: nameRegexKeep,
+		Enabled:       enabled,
+		NextRunAt:     &nextRunAt,
 	}
 	v1alpha1ContainerExpirationPolicy = v1alpha1.ContainerExpirationPolicy{
-		Cadence:         cadence,
-		KeepN:           keepN,
-		OlderThan:       olderThan,
-		NameRegexDelete: nameRegexDelete,
-		NameRegexKeep:   nameRegexKeep,
-		Enabled:         enabled,
-		NextRunAt:       &metav1.Time{Time: nextRunAt},
+		Cadence:       cadence,
+		KeepN:         keepN,
+		OlderThan:     olderThan,
+		NameRegex:     nameRegex,
+		NameRegexKeep: nameRegexKeep,
+		Enabled:       enabled,
+		NextRunAt:     &metav1.Time{Time: nextRunAt},
 	}
 	v1alpha1ContainerExpirationPolicyAttributes = v1alpha1.ContainerExpirationPolicyAttributes{
-		Cadence:         &cadence,
-		KeepN:           func() *int64 { v := keepN; return &v }(),
-		OlderThan:       &olderThan,
-		NameRegexDelete: &nameRegexDelete,
-		NameRegexKeep:   &nameRegexKeep,
-		Enabled:         &enabled,
+		Cadence:       &cadence,
+		KeepN:         func() *int64 { v := keepN; return &v }(),
+		OlderThan:     &olderThan,
+		NameRegex:     &nameRegex,
+		NameRegexKeep: &nameRegexKeep,
+		Enabled:       &enabled,
 	}
 	gitlabContainerExpirationPolicyAttributes = gitlab.ContainerExpirationPolicyAttributes{
-		Cadence:         &cadence,
-		KeepN:           &keepN,
-		OlderThan:       &olderThan,
-		NameRegexDelete: &nameRegexDelete,
-		NameRegexKeep:   &nameRegexKeep,
-		Enabled:         &enabled,
+		Cadence:       &cadence,
+		KeepN:         &keepN,
+		OlderThan:     &olderThan,
+		NameRegex:     &nameRegex,
+		NameRegexKeep: &nameRegexKeep,
+		Enabled:       &enabled,
 	}
 	sharedRunnersEnabled                      = true
 	visibility                                = "private"
@@ -117,7 +115,6 @@ var (
 	buildGitStategy                           = "strategy"
 	buildTimeout                              = int64(60)
 	autoCancelPendingPipelines                = "enabled"
-	buildCoverageRegex                        = "some-regex"
 	ciConfigPath                              = "path/to/ci/config"
 	ciForwardDeploymentEnabled                = false
 	ciDefaultGitDepth                         = int64(50)
@@ -140,6 +137,26 @@ var (
 	suggestionCommitMessage                   = "SuggestionCommitMessage"
 	issuesTemplate                            = "IssuesTemplate"
 	mergeRequestsTemplate                     = "MergeRequestsTemplate"
+	analyticsAccessLevel                      = "enabled"
+	analyticsAccessLevelv1alpha1              = v1alpha1.AccessControlValue(analyticsAccessLevel)
+	releasesAccessLevel                       = "private"
+	releasesAccessLevelv1alpha1               = v1alpha1.AccessControlValue(releasesAccessLevel)
+	environmentsAccessLevel                   = "disabled"
+	environmentsAccessLevelv1alpha1           = v1alpha1.AccessControlValue(environmentsAccessLevel)
+	featureFlagsAccessLevel                   = "enabled"
+	featureFlagsAccessLevelv1alpha1           = v1alpha1.AccessControlValue(featureFlagsAccessLevel)
+	infrastructureAccessLevel                 = "private"
+	infrastructureAccessLevelv1alpha1         = v1alpha1.AccessControlValue(infrastructureAccessLevel)
+	monitorAccessLevel                        = "disabled"
+	monitorAccessLevelv1alpha1                = v1alpha1.AccessControlValue(monitorAccessLevel)
+	packageRegistryAccessLevel                = "public"
+	packageRegistryAccessLevelv1alpha1        = v1alpha1.AccessControlValue(packageRegistryAccessLevel)
+	securityAndComplianceAccessLevel          = "private"
+	securityAndComplianceAccessLevelv1alpha1  = v1alpha1.AccessControlValue(securityAndComplianceAccessLevel)
+	modelExperimentsAccessLevel               = "enabled"
+	modelExperimentsAccessLevelv1alpha1       = v1alpha1.AccessControlValue(modelExperimentsAccessLevel)
+	modelRegistryAccessLevel                  = "disabled"
+	modelRegistryAccessLevelv1alpha1          = v1alpha1.AccessControlValue(modelRegistryAccessLevel)
 )
 
 func TestGenerateObservation(t *testing.T) {
@@ -452,7 +469,16 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					WikiAccessLevel:                           &wikiAccessLevelv1alpha1,
 					SnippetsAccessLevel:                       &snippetsAccessLevelv1alpha1,
 					PagesAccessLevel:                          &pagesAccessLevelv1alpha1,
-					OperationsAccessLevel:                     &operationsAccessLevelv1alpha1,
+					AnalyticsAccessLevel:                      &analyticsAccessLevelv1alpha1,
+					ReleasesAccessLevel:                       &releasesAccessLevelv1alpha1,
+					EnvironmentsAccessLevel:                   &environmentsAccessLevelv1alpha1,
+					FeatureFlagsAccessLevel:                   &featureFlagsAccessLevelv1alpha1,
+					InfrastructureAccessLevel:                 &infrastructureAccessLevelv1alpha1,
+					MonitorAccessLevel:                        &monitorAccessLevelv1alpha1,
+					PackageRegistryAccessLevel:                &packageRegistryAccessLevelv1alpha1,
+					SecurityAndComplianceAccessLevel:          &securityAndComplianceAccessLevelv1alpha1,
+					ModelExperimentsAccessLevel:               &modelExperimentsAccessLevelv1alpha1,
+					ModelRegistryAccessLevel:                  &modelRegistryAccessLevelv1alpha1,
 					EmailsDisabled:                            &emailsDisabled,
 					ResolveOutdatedDiffDiscussions:            &resolveOutdatedDiffDiscussions,
 					ContainerExpirationPolicyAttributes:       &v1alpha1ContainerExpirationPolicyAttributes,
@@ -460,7 +486,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					SharedRunnersEnabled:                      &sharedRunnersEnabled,
 					Visibility:                                &visibilityv1alpha1,
 					ImportURL:                                 &importURL,
-					PublicBuilds:                              &publicBuilds,
+					PublicBuilds:                              &publicBuilds, //nolint:staticcheck
 					AllowMergeOnSkippedPipeline:               &allowMergeOnSkippedPipeline,
 					OnlyAllowMergeIfPipelineSucceeds:          &onlyAllowMergeIfPipelineSucceeds,
 					OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
@@ -473,7 +499,6 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 					BuildGitStrategy:                          &buildGitStategy,
 					BuildTimeout:                              &buildTimeout,
 					AutoCancelPendingPipelines:                &autoCancelPendingPipelines,
-					BuildCoverageRegex:                        &buildCoverageRegex,
 					CIConfigPath:                              &ciConfigPath,
 					CIForwardDeploymentEnabled:                &ciForwardDeploymentEnabled,
 					CIDefaultGitDepth:                         &ciDefaultGitDepth,
@@ -496,60 +521,68 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				},
 			},
 			want: &gitlab.CreateProjectOptions{
-				Name:                                &name,
-				Path:                                &path,
-				NamespaceID:                         &namespaceID,
-				DefaultBranch:                       &defaultBranch,
-				Description:                         &description,
-				IssuesAccessLevel:                   clients.AccessControlValueStringToGitlab(issuesAccessLevel),
-				RepositoryAccessLevel:               clients.AccessControlValueStringToGitlab(repositoryAccessLevel),
-				MergeRequestsAccessLevel:            clients.AccessControlValueStringToGitlab(mergeRequestsAccessLevel),
-				ForkingAccessLevel:                  clients.AccessControlValueStringToGitlab(forkingAccessLevel),
-				BuildsAccessLevel:                   clients.AccessControlValueStringToGitlab(buildsAccessLevel),
-				WikiAccessLevel:                     clients.AccessControlValueStringToGitlab(wikiAccessLevel),
-				SnippetsAccessLevel:                 clients.AccessControlValueStringToGitlab(snippetsAccessLevel),
-				PagesAccessLevel:                    clients.AccessControlValueStringToGitlab(pagesAccessLevel),
-				OperationsAccessLevel:               clients.AccessControlValueStringToGitlab(operationsAccessLevel),
-				EmailsDisabled:                      &emailsDisabled,
-				ResolveOutdatedDiffDiscussions:      &resolveOutdatedDiffDiscussions,
-				ContainerExpirationPolicyAttributes: &gitlabContainerExpirationPolicyAttributes,
-				ContainerRegistryAccessLevel:        clients.AccessControlValueStringToGitlab(containerRegistryAccessLevel),
-				SharedRunnersEnabled:                &sharedRunnersEnabled,
-				Visibility:                          clients.VisibilityValueStringToGitlab(visibility),
-				ImportURL:                           &importURL,
-				PublicBuilds:                        &publicBuilds,
-				AllowMergeOnSkippedPipeline:         &allowMergeOnSkippedPipeline,
-				OnlyAllowMergeIfPipelineSucceeds:    &onlyAllowMergeIfPipelineSucceeds,
+				Name:                                      &name,
+				Path:                                      &path,
+				NamespaceID:                               &namespaceID,
+				DefaultBranch:                             &defaultBranch,
+				Description:                               &description,
+				IssuesAccessLevel:                         clients.AccessControlValueStringToGitlab(issuesAccessLevel),
+				RepositoryAccessLevel:                     clients.AccessControlValueStringToGitlab(repositoryAccessLevel),
+				MergeRequestsAccessLevel:                  clients.AccessControlValueStringToGitlab(mergeRequestsAccessLevel),
+				ForkingAccessLevel:                        clients.AccessControlValueStringToGitlab(forkingAccessLevel),
+				BuildsAccessLevel:                         clients.AccessControlValueStringToGitlab(buildsAccessLevel),
+				WikiAccessLevel:                           clients.AccessControlValueStringToGitlab(wikiAccessLevel),
+				SnippetsAccessLevel:                       clients.AccessControlValueStringToGitlab(snippetsAccessLevel),
+				PagesAccessLevel:                          clients.AccessControlValueStringToGitlab(pagesAccessLevel),
+				AnalyticsAccessLevel:                      clients.AccessControlValueStringToGitlab(analyticsAccessLevel),
+				ReleasesAccessLevel:                       clients.AccessControlValueStringToGitlab(releasesAccessLevel),
+				EnvironmentsAccessLevel:                   clients.AccessControlValueStringToGitlab(environmentsAccessLevel),
+				FeatureFlagsAccessLevel:                   clients.AccessControlValueStringToGitlab(featureFlagsAccessLevel),
+				InfrastructureAccessLevel:                 clients.AccessControlValueStringToGitlab(infrastructureAccessLevel),
+				MonitorAccessLevel:                        clients.AccessControlValueStringToGitlab(monitorAccessLevel),
+				PackageRegistryAccessLevel:                clients.AccessControlValueStringToGitlab(packageRegistryAccessLevel),
+				SecurityAndComplianceAccessLevel:          clients.AccessControlValueStringToGitlab(securityAndComplianceAccessLevel),
+				ModelExperimentsAccessLevel:               clients.AccessControlValueStringToGitlab(modelExperimentsAccessLevel),
+				ModelRegistryAccessLevel:                  clients.AccessControlValueStringToGitlab(modelRegistryAccessLevel),
+				EmailsDisabled:                            &emailsDisabled, //nolint:staticcheck
+				ResolveOutdatedDiffDiscussions:            &resolveOutdatedDiffDiscussions,
+				ContainerExpirationPolicyAttributes:       &gitlabContainerExpirationPolicyAttributes,
+				ContainerRegistryAccessLevel:              clients.AccessControlValueStringToGitlab(containerRegistryAccessLevel),
+				SharedRunnersEnabled:                      &sharedRunnersEnabled,
+				Visibility:                                clients.VisibilityValueStringToGitlab(visibility),
+				ImportURL:                                 &importURL,
+				PublicBuilds:                              &publicBuilds, //nolint:staticcheck
+				AllowMergeOnSkippedPipeline:               &allowMergeOnSkippedPipeline,
+				OnlyAllowMergeIfPipelineSucceeds:          &onlyAllowMergeIfPipelineSucceeds,
 				OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
-				MergeMethod:                              clients.MergeMethodStringToGitlab(mergeMethod),
-				RemoveSourceBranchAfterMerge:             &removeSourceBranchAfterMerge,
-				LFSEnabled:                               &lfsEnabled,
-				RequestAccessEnabled:                     &requestAccessEnabled,
-				TagList:                                  ptr.To[[]string](nil),
-				Topics:                                   &topics,
-				PrintingMergeRequestLinkEnabled:          &printingMergeRequestLinkEnabled,
-				BuildGitStrategy:                         &buildGitStategy,
-				BuildTimeout:                             &buildTimeout,
-				AutoCancelPendingPipelines:               &autoCancelPendingPipelines,
-				BuildCoverageRegex:                       &buildCoverageRegex,
-				CIConfigPath:                             &ciConfigPath,
-				CIForwardDeploymentEnabled:               &ciForwardDeploymentEnabled,
-				AutoDevopsEnabled:                        &autoDevopsEnabled,
-				AutoDevopsDeployStrategy:                 &autoDevopsDeployStrategy,
-				ExternalAuthorizationClassificationLabel: &externalAuthorizationClassificationLabel,
-				Mirror:                                   &mirror,
-				MirrorTriggerBuilds:                      &mirrorTriggerBuilds,
-				InitializeWithReadme:                     &initializeWithReadme,
-				TemplateName:                             &templateName,
-				TemplateProjectID:                        &templateProjectID,
-				UseCustomTemplate:                        &useCustomTemplate,
-				GroupWithProjectTemplatesID:              &groupWithProjectTemplatesID,
-				PackagesEnabled:                          &packagesEnabled,
-				ServiceDeskEnabled:                       &serviceDeskEnabled,
-				AutocloseReferencedIssues:                &autocloseReferencedIssues,
-				SuggestionCommitMessage:                  &suggestionCommitMessage,
-				IssuesTemplate:                           &issuesTemplate,
-				MergeRequestsTemplate:                    &mergeRequestsTemplate,
+				MergeMethod:                               clients.MergeMethodStringToGitlab(mergeMethod),
+				RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
+				LFSEnabled:                                &lfsEnabled,
+				RequestAccessEnabled:                      &requestAccessEnabled,
+				TagList:                                   ptr.To[[]string](nil), //nolint:staticcheck
+				Topics:                                    &topics,
+				PrintingMergeRequestLinkEnabled:           &printingMergeRequestLinkEnabled,
+				BuildGitStrategy:                          &buildGitStategy,
+				BuildTimeout:                              &buildTimeout,
+				AutoCancelPendingPipelines:                &autoCancelPendingPipelines,
+				CIConfigPath:                              &ciConfigPath,
+				CIForwardDeploymentEnabled:                &ciForwardDeploymentEnabled,
+				AutoDevopsEnabled:                         &autoDevopsEnabled,
+				AutoDevopsDeployStrategy:                  &autoDevopsDeployStrategy,
+				ExternalAuthorizationClassificationLabel:  &externalAuthorizationClassificationLabel,
+				Mirror:                                    &mirror,
+				MirrorTriggerBuilds:                       &mirrorTriggerBuilds,
+				InitializeWithReadme:                      &initializeWithReadme,
+				TemplateName:                              &templateName,
+				TemplateProjectID:                         &templateProjectID,
+				UseCustomTemplate:                         &useCustomTemplate,
+				GroupWithProjectTemplatesID:               &groupWithProjectTemplatesID,
+				PackagesEnabled:                           &packagesEnabled, //nolint:staticcheck
+				ServiceDeskEnabled:                        &serviceDeskEnabled,
+				AutocloseReferencedIssues:                 &autocloseReferencedIssues,
+				SuggestionCommitMessage:                   &suggestionCommitMessage,
+				IssuesTemplate:                            &issuesTemplate,
+				MergeRequestsTemplate:                     &mergeRequestsTemplate,
 			},
 		},
 		"SomeFields": {
@@ -570,7 +603,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				IssuesAccessLevel:              clients.AccessControlValueStringToGitlab(issuesAccessLevel),
 				ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
 				MergeMethod:                    clients.MergeMethodStringToGitlab(mergeMethod),
-				TagList:                        ptr.To[[]string](nil),
+				TagList:                        ptr.To[[]string](nil), //nolint:staticcheck
 				Topics:                         &topics,
 				BuildTimeout:                   &buildTimeout,
 			},
@@ -587,7 +620,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 			},
 			want: &gitlab.CreateProjectOptions{
 				Name:    &overrideName,
-				TagList: ptr.To[[]string](nil),
+				TagList: ptr.To[[]string](nil), //nolint:staticcheck
 				Topics:  &topics,
 			},
 		},
@@ -600,6 +633,69 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				t.Errorf("r: -want, +got:\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestResolvePackagesEnabled(t *testing.T) {
+	cases := map[string]struct {
+		reason string
+		p      *v1alpha1.ProjectParameters
+		want   *bool
+	}{
+		"NeitherSet": {
+			reason: "Without either field nothing is sent.",
+			p:      &v1alpha1.ProjectParameters{},
+			want:   nil,
+		},
+		"OnlyPackagesEnabled": {
+			reason: "Without an access level, packagesEnabled is used as before.",
+			p:      &v1alpha1.ProjectParameters{PackagesEnabled: ptr.To(false)},
+			want:   ptr.To(false),
+		},
+		"LevelDisabledOverridesPackagesEnabled": {
+			reason: "GitLab gates package access on packages_enabled, so disabling the level must also send false.",
+			p: &v1alpha1.ProjectParameters{
+				PackageRegistryAccessLevel: ptr.To(v1alpha1.DisabledAccessControl),
+				PackagesEnabled:            ptr.To(true),
+			},
+			want: ptr.To(false),
+		},
+		"LevelPrivateOverridesPackagesEnabled": {
+			reason: "Any level other than disabled enables packages.",
+			p: &v1alpha1.ProjectParameters{
+				PackageRegistryAccessLevel: ptr.To(v1alpha1.PrivateAccessControl),
+				PackagesEnabled:            ptr.To(false),
+			},
+			want: ptr.To(true),
+		},
+		"LevelPublicWithoutPackagesEnabled": {
+			reason: "The derived value is sent even when packagesEnabled is unset.",
+			p:      &v1alpha1.ProjectParameters{PackageRegistryAccessLevel: ptr.To(v1alpha1.PublicAccessControl)},
+			want:   ptr.To(true),
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			if diff := cmp.Diff(tc.want, ResolvePackagesEnabled(tc.p)); diff != "" {
+				t.Errorf("%s\nResolvePackagesEnabled(...): -want, +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+// TestGenerateProjectOptionsDerivePackagesEnabled verifies that create and
+// edit requests send packages_enabled derived from packageRegistryAccessLevel,
+// not the spec's packagesEnabled.
+func TestGenerateProjectOptionsDerivePackagesEnabled(t *testing.T) {
+	p := &v1alpha1.ProjectParameters{
+		PackageRegistryAccessLevel: ptr.To(v1alpha1.DisabledAccessControl),
+		PackagesEnabled:            ptr.To(true),
+	}
+	if diff := cmp.Diff(ptr.To(false), GenerateCreateProjectOptions(name, p).PackagesEnabled); diff != "" { //nolint:staticcheck
+		t.Errorf("GenerateCreateProjectOptions(...).PackagesEnabled: -want, +got:\n%s", diff)
+	}
+	if diff := cmp.Diff(ptr.To(false), GenerateEditProjectOptions(name, p).PackagesEnabled); diff != "" { //nolint:staticcheck
+		t.Errorf("GenerateEditProjectOptions(...).PackagesEnabled: -want, +got:\n%s", diff)
 	}
 }
 
@@ -627,7 +723,16 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					WikiAccessLevel:                           &wikiAccessLevelv1alpha1,
 					SnippetsAccessLevel:                       &snippetsAccessLevelv1alpha1,
 					PagesAccessLevel:                          &pagesAccessLevelv1alpha1,
-					OperationsAccessLevel:                     &operationsAccessLevelv1alpha1,
+					AnalyticsAccessLevel:                      &analyticsAccessLevelv1alpha1,
+					ReleasesAccessLevel:                       &releasesAccessLevelv1alpha1,
+					EnvironmentsAccessLevel:                   &environmentsAccessLevelv1alpha1,
+					FeatureFlagsAccessLevel:                   &featureFlagsAccessLevelv1alpha1,
+					InfrastructureAccessLevel:                 &infrastructureAccessLevelv1alpha1,
+					MonitorAccessLevel:                        &monitorAccessLevelv1alpha1,
+					PackageRegistryAccessLevel:                &packageRegistryAccessLevelv1alpha1,
+					SecurityAndComplianceAccessLevel:          &securityAndComplianceAccessLevelv1alpha1,
+					ModelExperimentsAccessLevel:               &modelExperimentsAccessLevelv1alpha1,
+					ModelRegistryAccessLevel:                  &modelRegistryAccessLevelv1alpha1,
 					EmailsDisabled:                            &emailsDisabled,
 					ResolveOutdatedDiffDiscussions:            &resolveOutdatedDiffDiscussions,
 					ContainerExpirationPolicyAttributes:       &v1alpha1ContainerExpirationPolicyAttributes,
@@ -635,7 +740,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					SharedRunnersEnabled:                      &sharedRunnersEnabled,
 					Visibility:                                &visibilityv1alpha1,
 					ImportURL:                                 &importURL,
-					PublicBuilds:                              &publicBuilds,
+					PublicBuilds:                              &publicBuilds, //nolint:staticcheck
 					AllowMergeOnSkippedPipeline:               &allowMergeOnSkippedPipeline,
 					OnlyAllowMergeIfPipelineSucceeds:          &onlyAllowMergeIfPipelineSucceeds,
 					OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
@@ -647,7 +752,6 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 					BuildGitStrategy:                          &buildGitStategy,
 					BuildTimeout:                              &buildTimeout,
 					AutoCancelPendingPipelines:                &autoCancelPendingPipelines,
-					BuildCoverageRegex:                        &buildCoverageRegex,
 					CIConfigPath:                              &ciConfigPath,
 					CIForwardDeploymentEnabled:                &ciForwardDeploymentEnabled,
 					CIDefaultGitDepth:                         &ciDefaultGitDepth,
@@ -668,57 +772,65 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				},
 			},
 			want: &gitlab.EditProjectOptions{
-				Name:                                &name,
-				Path:                                &path,
-				DefaultBranch:                       &defaultBranch,
-				Description:                         &description,
-				IssuesAccessLevel:                   clients.AccessControlValueStringToGitlab(issuesAccessLevel),
-				RepositoryAccessLevel:               clients.AccessControlValueStringToGitlab(repositoryAccessLevel),
-				MergeRequestsAccessLevel:            clients.AccessControlValueStringToGitlab(mergeRequestsAccessLevel),
-				ForkingAccessLevel:                  clients.AccessControlValueStringToGitlab(forkingAccessLevel),
-				BuildsAccessLevel:                   clients.AccessControlValueStringToGitlab(buildsAccessLevel),
-				WikiAccessLevel:                     clients.AccessControlValueStringToGitlab(wikiAccessLevel),
-				SnippetsAccessLevel:                 clients.AccessControlValueStringToGitlab(snippetsAccessLevel),
-				OperationsAccessLevel:               clients.AccessControlValueStringToGitlab(operationsAccessLevel),
-				EmailsDisabled:                      &emailsDisabled,
-				PagesAccessLevel:                    clients.AccessControlValueStringToGitlab(pagesAccessLevel),
-				ResolveOutdatedDiffDiscussions:      &resolveOutdatedDiffDiscussions,
-				ContainerExpirationPolicyAttributes: &gitlabContainerExpirationPolicyAttributes,
-				ContainerRegistryAccessLevel:        clients.AccessControlValueStringToGitlab(containerRegistryAccessLevel),
-				SharedRunnersEnabled:                &sharedRunnersEnabled,
-				Visibility:                          clients.VisibilityValueStringToGitlab(visibility),
-				ImportURL:                           &importURL,
-				PublicJobs:                          &publicBuilds,
-				AllowMergeOnSkippedPipeline:         &allowMergeOnSkippedPipeline,
-				OnlyAllowMergeIfPipelineSucceeds:    &onlyAllowMergeIfPipelineSucceeds,
+				Name:                                      &name,
+				Path:                                      &path,
+				DefaultBranch:                             &defaultBranch,
+				Description:                               &description,
+				IssuesAccessLevel:                         clients.AccessControlValueStringToGitlab(issuesAccessLevel),
+				RepositoryAccessLevel:                     clients.AccessControlValueStringToGitlab(repositoryAccessLevel),
+				MergeRequestsAccessLevel:                  clients.AccessControlValueStringToGitlab(mergeRequestsAccessLevel),
+				ForkingAccessLevel:                        clients.AccessControlValueStringToGitlab(forkingAccessLevel),
+				BuildsAccessLevel:                         clients.AccessControlValueStringToGitlab(buildsAccessLevel),
+				WikiAccessLevel:                           clients.AccessControlValueStringToGitlab(wikiAccessLevel),
+				SnippetsAccessLevel:                       clients.AccessControlValueStringToGitlab(snippetsAccessLevel),
+				EmailsDisabled:                            &emailsDisabled, //nolint:staticcheck
+				PagesAccessLevel:                          clients.AccessControlValueStringToGitlab(pagesAccessLevel),
+				AnalyticsAccessLevel:                      clients.AccessControlValueStringToGitlab(analyticsAccessLevel),
+				ReleasesAccessLevel:                       clients.AccessControlValueStringToGitlab(releasesAccessLevel),
+				EnvironmentsAccessLevel:                   clients.AccessControlValueStringToGitlab(environmentsAccessLevel),
+				FeatureFlagsAccessLevel:                   clients.AccessControlValueStringToGitlab(featureFlagsAccessLevel),
+				InfrastructureAccessLevel:                 clients.AccessControlValueStringToGitlab(infrastructureAccessLevel),
+				MonitorAccessLevel:                        clients.AccessControlValueStringToGitlab(monitorAccessLevel),
+				PackageRegistryAccessLevel:                clients.AccessControlValueStringToGitlab(packageRegistryAccessLevel),
+				SecurityAndComplianceAccessLevel:          clients.AccessControlValueStringToGitlab(securityAndComplianceAccessLevel),
+				ModelExperimentsAccessLevel:               clients.AccessControlValueStringToGitlab(modelExperimentsAccessLevel),
+				ModelRegistryAccessLevel:                  clients.AccessControlValueStringToGitlab(modelRegistryAccessLevel),
+				ResolveOutdatedDiffDiscussions:            &resolveOutdatedDiffDiscussions,
+				ContainerExpirationPolicyAttributes:       &gitlabContainerExpirationPolicyAttributes,
+				ContainerRegistryAccessLevel:              clients.AccessControlValueStringToGitlab(containerRegistryAccessLevel),
+				SharedRunnersEnabled:                      &sharedRunnersEnabled,
+				Visibility:                                clients.VisibilityValueStringToGitlab(visibility),
+				ImportURL:                                 &importURL,
+				PublicJobs:                                &publicBuilds,
+				AllowMergeOnSkippedPipeline:               &allowMergeOnSkippedPipeline,
+				OnlyAllowMergeIfPipelineSucceeds:          &onlyAllowMergeIfPipelineSucceeds,
 				OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
-				MergeMethod:                              clients.MergeMethodStringToGitlab(mergeMethod),
-				RemoveSourceBranchAfterMerge:             &removeSourceBranchAfterMerge,
-				LFSEnabled:                               &lfsEnabled,
-				RequestAccessEnabled:                     &requestAccessEnabled,
-				TagList:                                  ptr.To[[]string](nil),
-				Topics:                                   &topics,
-				BuildGitStrategy:                         &buildGitStategy,
-				BuildTimeout:                             &buildTimeout,
-				AutoCancelPendingPipelines:               &autoCancelPendingPipelines,
-				BuildCoverageRegex:                       &buildCoverageRegex,
-				CIConfigPath:                             &ciConfigPath,
-				CIForwardDeploymentEnabled:               &ciForwardDeploymentEnabled,
-				CIDefaultGitDepth:                        &ciDefaultGitDepth,
-				AutoDevopsEnabled:                        &autoDevopsEnabled,
-				AutoDevopsDeployStrategy:                 &autoDevopsDeployStrategy,
-				ExternalAuthorizationClassificationLabel: &externalAuthorizationClassificationLabel,
-				Mirror:                                   &mirror,
-				MirrorUserID:                             &mirrorUserID,
-				MirrorTriggerBuilds:                      &mirrorTriggerBuilds,
-				OnlyMirrorProtectedBranches:              &onlyMirrorProtectedBranches,
-				MirrorOverwritesDivergedBranches:         &mirrorOverwritesDivergedBranches,
-				PackagesEnabled:                          &packagesEnabled,
-				ServiceDeskEnabled:                       &serviceDeskEnabled,
-				AutocloseReferencedIssues:                &autocloseReferencedIssues,
-				SuggestionCommitMessage:                  &suggestionCommitMessage,
-				IssuesTemplate:                           &issuesTemplate,
-				MergeRequestsTemplate:                    &mergeRequestsTemplate,
+				MergeMethod:                               clients.MergeMethodStringToGitlab(mergeMethod),
+				RemoveSourceBranchAfterMerge:              &removeSourceBranchAfterMerge,
+				LFSEnabled:                                &lfsEnabled,
+				RequestAccessEnabled:                      &requestAccessEnabled,
+				TagList:                                   ptr.To[[]string](nil), //nolint:staticcheck
+				Topics:                                    &topics,
+				BuildGitStrategy:                          &buildGitStategy,
+				BuildTimeout:                              &buildTimeout,
+				AutoCancelPendingPipelines:                &autoCancelPendingPipelines,
+				CIConfigPath:                              &ciConfigPath,
+				CIForwardDeploymentEnabled:                &ciForwardDeploymentEnabled,
+				CIDefaultGitDepth:                         &ciDefaultGitDepth,
+				AutoDevopsEnabled:                         &autoDevopsEnabled,
+				AutoDevopsDeployStrategy:                  &autoDevopsDeployStrategy,
+				ExternalAuthorizationClassificationLabel:  &externalAuthorizationClassificationLabel,
+				Mirror:                                    &mirror,
+				MirrorUserID:                              &mirrorUserID,
+				MirrorTriggerBuilds:                       &mirrorTriggerBuilds,
+				OnlyMirrorProtectedBranches:               &onlyMirrorProtectedBranches,
+				MirrorOverwritesDivergedBranches:          &mirrorOverwritesDivergedBranches,
+				PackagesEnabled:                           &packagesEnabled, //nolint:staticcheck
+				ServiceDeskEnabled:                        &serviceDeskEnabled,
+				AutocloseReferencedIssues:                 &autocloseReferencedIssues,
+				SuggestionCommitMessage:                   &suggestionCommitMessage,
+				IssuesTemplate:                            &issuesTemplate,
+				MergeRequestsTemplate:                     &mergeRequestsTemplate,
 			},
 		},
 		"SomeFields": {
@@ -739,7 +851,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 				IssuesAccessLevel:              clients.AccessControlValueStringToGitlab(issuesAccessLevel),
 				ResolveOutdatedDiffDiscussions: &resolveOutdatedDiffDiscussions,
 				MergeMethod:                    clients.MergeMethodStringToGitlab(mergeMethod),
-				TagList:                        ptr.To[[]string](nil),
+				TagList:                        ptr.To[[]string](nil), //nolint:staticcheck
 				Topics:                         &topics,
 				BuildTimeout:                   &buildTimeout,
 			},
@@ -756,7 +868,7 @@ func TestGenerateEditProjectOptions(t *testing.T) {
 			},
 			want: &gitlab.EditProjectOptions{
 				Name:    &name,
-				TagList: ptr.To[[]string](nil),
+				TagList: ptr.To[[]string](nil), //nolint:staticcheck
 				Topics:  &topics,
 			},
 		},

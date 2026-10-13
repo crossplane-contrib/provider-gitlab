@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 )
@@ -131,13 +131,12 @@ func ContainerExpirationPolicyAttributesV1alpha1ToGitlab(from *v1alpha1.Containe
 		return nil
 	}
 	result := &gitlab.ContainerExpirationPolicyAttributes{
-		Cadence:         from.Cadence,
-		OlderThan:       from.OlderThan,
-		NameRegexDelete: from.NameRegexDelete,
-		NameRegexKeep:   from.NameRegexKeep,
-		Enabled:         from.Enabled,
-		NameRegex:       from.NameRegex,
-		KeepN:           from.KeepN,
+		Cadence:       from.Cadence,
+		OlderThan:     from.OlderThan,
+		NameRegex:     from.NameRegex,
+		NameRegexKeep: from.NameRegexKeep,
+		Enabled:       from.Enabled,
+		KeepN:         from.KeepN,
 	}
 	return result
 }

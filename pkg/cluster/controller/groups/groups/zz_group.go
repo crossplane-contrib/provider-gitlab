@@ -34,7 +34,7 @@ import (
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -232,7 +232,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 			if notShared(*sh.GroupID, grp) {
 				opt := gitlab.ShareGroupWithGroupOptions{
 					GroupID:     sh.GroupID,
-					GroupAccess: gitlab.Ptr(gitlab.AccessLevelValue(sh.GroupAccessLevel)),
+					GroupAccess: new(gitlab.AccessLevelValue(sh.GroupAccessLevel)),
 				}
 				if sh.ExpiresAt != nil {
 					opt.ExpiresAt = (*gitlab.ISOTime)(&sh.ExpiresAt.Time)

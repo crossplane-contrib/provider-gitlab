@@ -25,7 +25,7 @@ import (
 	"sync"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/utils/ptr"
 
