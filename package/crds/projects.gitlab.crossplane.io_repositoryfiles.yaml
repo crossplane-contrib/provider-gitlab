@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   name: repositoryfiles.projects.gitlab.crossplane.io
 spec:
   group: projects.gitlab.crossplane.io
@@ -76,7 +76,17 @@ spec:
                 - Delete
                 type: string
               forProvider:
-                description: ForProvider specifies the desired state of the RepositoryFile.
+                description: |-
+                  RepositoryFileParameters define the desired state of a file in a GitLab
+                  repository. A file is identified by projectId, branch and filePath, all of
+                  which are immutable.
+
+                  Which actions Crossplane takes on the file is controlled by
+                  spec.managementPolicies, not by fields in here. For example
+                  ["Observe", "Create"] commits the file once and then never overwrites or
+                  deletes it, and ["Observe"] tracks a file without ever committing.
+
+                  https://docs.gitlab.com/api/repository_files/
                 properties:
                   authorEmail:
                     description: AuthorEmail is the commit author email.
@@ -85,18 +95,26 @@ spec:
                     description: AuthorName is the commit author name.
                     type: string
                   branch:
-                    description: Branch is the name of the branch to commit to.
+                    description: |-
+                      Branch is the branch the file lives on. It must already exist unless
+                      the repository is empty; the provider does not create branches.
                     minLength: 1
                     type: string
+                    x-kubernetes-validations:
+                    - message: branch is immutable
+                      rule: self == oldSelf
                   content:
-                    description: Content is the file content. Mutually exclusive with
-                      ContentSecretRef.
+                    description: |-
+                      Content is the file content, encoded as described by Encoding.
+                      Mutually exclusive with ContentSecretRef. One of the two is required
+                      unless managementPolicies allow neither Create nor Update.
                     type: string
                   contentSecretRef:
                     description: |-
-                      ContentSecretRef references a Secret key containing the file content.
-                      Mutually exclusive with Content.
-                    nullable: true
+                      ContentSecretRef references a Secret key holding the file content,
+                      encoded as described by Encoding. Mutually exclusive with Content.
+                      Note that the content is committed to the repository, so it is only
+                      as secret as the repository itself.
                     properties:
                       key:
                         description: The key to select.
@@ -117,13 +135,6 @@ spec:
                       CreateCommitMessage is the commit message used when creating the file.
                       Defaults to "crossplane: create <filePath>".
                     type: string
-                  createOnly:
-                    default: false
-                    description: |-
-                      CreateOnly when true, creates the file once and never updates it.
-                      The file is still deleted from GitLab when the CR is deleted.
-                      Observe only checks for file existence, not content drift.
-                    type: boolean
                   deleteCommitMessage:
                     description: |-
                       DeleteCommitMessage is the commit message used when deleting the file.
@@ -131,8 +142,9 @@ spec:
                     type: string
                   encoding:
                     default: text
-                    description: 'Encoding is the file encoding: "text" (default)
-                      or "base64".'
+                    description: |-
+                      Encoding describes how Content or the referenced Secret value is
+                      encoded.
                     enum:
                     - text
                     - base64
@@ -142,13 +154,19 @@ spec:
                       file.
                     type: boolean
                   filePath:
-                    description: FilePath is the path of the file in the repository.
+                    description: FilePath is the path of the file in the repository,
+                      e.g. "docs/README.md".
                     minLength: 1
                     type: string
+                    x-kubernetes-validations:
+                    - message: filePath is immutable
+                      rule: self == oldSelf
                   projectId:
-                    description: The ID or URL-encoded path of the project owned by
-                      the authenticated user.
+                    description: ProjectID is the ID or URL-encoded path of the project.
                     type: string
+                    x-kubernetes-validations:
+                    - message: projectId is immutable
+                      rule: self == oldSelf
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
                       its projectId.
@@ -225,17 +243,6 @@ spec:
                             type: string
                         type: object
                     type: object
-                  reconcileInterval:
-                    description: |-
-                      ReconcileInterval controls how often this resource is reconciled against
-                      the GitLab API. Examples: "5m", "1h", "8h". If unset, the resource is
-                      reconciled at the controller's default poll interval.
-                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h))+$
-                    type: string
-                  startBranch:
-                    description: StartBranch is the source branch used to create branch
-                      if Branch does not exist yet.
-                    type: string
                   updateCommitMessage:
                     description: |-
                       UpdateCommitMessage is the commit message used when updating the file.
@@ -331,26 +338,34 @@ spec:
             required:
             - forProvider
             type: object
+            x-kubernetes-validations:
+            - message: spec.forProvider.content and spec.forProvider.contentSecretRef
+                are mutually exclusive
+              rule: '!(has(self.forProvider.content) && has(self.forProvider.contentSecretRef))'
+            - message: spec.forProvider.content or spec.forProvider.contentSecretRef
+                is required when managementPolicies allow Create or Update
+              rule: '!(''*'' in self.managementPolicies || ''Create'' in self.managementPolicies
+                || ''Update'' in self.managementPolicies) || has(self.forProvider.content)
+                || has(self.forProvider.contentSecretRef)'
           status:
             description: A RepositoryFileStatus represents the observed state of a
               GitLab Repository File.
             properties:
               atProvider:
-                description: AtProvider reflects the observed state from GitLab.
+                description: RepositoryFileObservation represents the observed state
+                  of a GitLab Repository File.
                 properties:
                   blobId:
                     description: BlobID is the blob SHA of the file.
-                    type: string
-                  commitId:
-                    description: CommitID is the commit SHA when the file was last
-                      read.
                     type: string
                   filePath:
                     description: FilePath is the observed file path.
                     type: string
                   lastCommitId:
-                    description: LastCommitID is the last commit SHA that modified
-                      this file.
+                    description: |-
+                      LastCommitID is the last commit SHA that modified this file. It is sent
+                      with updates and deletes so GitLab rejects them if the file changed in
+                      the meantime.
                     type: string
                   sha256:
                     description: SHA256 is the SHA-256 hash of the file content.
@@ -406,6 +421,13 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              lastHandledReconcileAt:
+                description: |-
+                  LastHandledReconcileAt holds the value of the most recent
+                  reconcile-requested-at annotation token that the controller has
+                  processed. Users can compare this to the annotation to determine
+                  whether a reconcile request has been handled.
+                type: string
               observedGeneration:
                 description: |-
                   ObservedGeneration is the latest metadata.generation
@@ -417,14 +439,6 @@ spec:
         required:
         - spec
         type: object
-        x-kubernetes-validations:
-        - message: exactly one of spec.forProvider.content or spec.forProvider.contentSecretRef
-            must be set
-          rule: has(self.spec.forProvider.content) != has(self.spec.forProvider.contentSecretRef)
-        - message: createOnly=true cannot be combined with managementPolicies=['*']
-          rule: '!has(self.spec.forProvider.createOnly) || !self.spec.forProvider.createOnly
-            || !has(self.spec.managementPolicies) || size(self.spec.managementPolicies)
-            != 1 || self.spec.managementPolicies[0] != ''*'''
     served: true
     storage: true
     subresources:

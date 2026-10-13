@@ -581,42 +581,42 @@ func (mg *ProtectedEnvironment) SetWriteConnectionSecretToReference(r *v2.LocalS
 }
 
 // GetCondition of this RepositoryFile.
-func (mg *RepositoryFile) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
+func (mg *RepositoryFile) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)
 }
 
 // GetManagementPolicies of this RepositoryFile.
-func (mg *RepositoryFile) GetManagementPolicies() xpv1.ManagementPolicies {
+func (mg *RepositoryFile) GetManagementPolicies() v2.ManagementPolicies {
 	return mg.Spec.ManagementPolicies
 }
 
 // GetProviderConfigReference of this RepositoryFile.
-func (mg *RepositoryFile) GetProviderConfigReference() *xpv1.ProviderConfigReference {
+func (mg *RepositoryFile) GetProviderConfigReference() *v2.ProviderConfigReference {
 	return mg.Spec.ProviderConfigReference
 }
 
 // GetWriteConnectionSecretToReference of this RepositoryFile.
-func (mg *RepositoryFile) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
+func (mg *RepositoryFile) GetWriteConnectionSecretToReference() *v2.LocalSecretReference {
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
 // SetConditions of this RepositoryFile.
-func (mg *RepositoryFile) SetConditions(c ...xpv1.Condition) {
+func (mg *RepositoryFile) SetConditions(c ...v2.Condition) {
 	mg.Status.SetConditions(c...)
 }
 
 // SetManagementPolicies of this RepositoryFile.
-func (mg *RepositoryFile) SetManagementPolicies(r xpv1.ManagementPolicies) {
+func (mg *RepositoryFile) SetManagementPolicies(r v2.ManagementPolicies) {
 	mg.Spec.ManagementPolicies = r
 }
 
 // SetProviderConfigReference of this RepositoryFile.
-func (mg *RepositoryFile) SetProviderConfigReference(r *xpv1.ProviderConfigReference) {
+func (mg *RepositoryFile) SetProviderConfigReference(r *v2.ProviderConfigReference) {
 	mg.Spec.ProviderConfigReference = r
 }
 
 // SetWriteConnectionSecretToReference of this RepositoryFile.
-func (mg *RepositoryFile) SetWriteConnectionSecretToReference(r *xpv1.LocalSecretReference) {
+func (mg *RepositoryFile) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 

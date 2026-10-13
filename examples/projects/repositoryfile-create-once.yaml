@@ -1,0 +1,24 @@
+# Commit a file once and then leave it alone: later edits in GitLab are kept,
+# and deleting this resource does not delete the file. Add "Delete" to the
+# policies to remove the file together with the resource.
+#
+# Requires the provider to run with --enable-management-policies.
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: RepositoryFile
+metadata:
+  name: example-repositoryfile-create-once
+  annotations:
+    # Nothing is updated, so there is little point in checking often.
+    crossplane.io/poll-interval: 1h
+spec:
+  managementPolicies: ["Observe", "Create"]
+  forProvider:
+    projectIdRef:
+      name: example-project
+    filePath: docs/bootstrap.md
+    branch: main
+    content: |
+      bootstrap content written once
+    createCommitMessage: "docs: bootstrap file"
+  providerConfigRef:
+    name: gitlab-provider

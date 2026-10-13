@@ -20,81 +20,74 @@ package repositoryfiles
 
 import (
 	"context"
-	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
-	commonclients "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
-	projectclients "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects"
+	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 const (
-	errNotRepositoryFile            = "managed resource is not a Gitlab repository file custom resource"
-	errGetRepositoryFileFailed      = "cannot get Gitlab repository file"
-	errCreateRepositoryFileFailed   = "cannot create Gitlab repository file"
-	errUpdateRepositoryFileFailed   = "cannot update Gitlab repository file"
-	errDeleteRepositoryFileFailed   = "cannot delete Gitlab repository file"
-	errResolveContentFailed         = "cannot resolve Gitlab repository file content"
-	errProjectIDMissing             = "ProjectID is missing"
-	errExternalNameMismatch         = "external-name must match spec.forProvider.filePath"
-	errRepositoryFileContentMissing = "exactly one of content or contentSecretRef must be set"
-	errCreateOnlyPolicyConflict     = "createOnly conflicts with explicit managementPolicies"
+	errNotRepositoryFile   = "managed resource is not a Gitlab repository file custom resource"
+	errProjectIDMissing    = "ProjectID is missing"
+	errGetFailed           = "cannot get Gitlab repository file"
+	errCreateFailed        = "cannot create Gitlab repository file"
+	errUpdateFailed        = "cannot update Gitlab repository file"
+	errDeleteFailed        = "cannot delete Gitlab repository file"
+	errContentFailed       = "cannot resolve Gitlab repository file content"
+	errContentMissing      = "one of content or contentSecretRef must be set"
+	errContentAmbiguous    = "content and contentSecretRef are mutually exclusive"
+	errContentSecretFailed = "cannot read contentSecretRef"
 )
 
 // SetupRepositoryFile adds a controller that reconciles RepositoryFiles.
 func SetupRepositoryFile(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName("cluster." + projectsv1alpha1.RepositoryFileGroupKind)
+	name := managed.ControllerName("cluster." + v1alpha1.RepositoryFileGroupKind)
+	managementPolicies := o.Features.Enabled(feature.EnableBetaManagementPolicies)
 
-	reconcilerOpts := make([]managed.ReconcilerOption, 0, 7)
-	reconcilerOpts = append(reconcilerOpts,
-		managed.WithExternalConnecter(&connector{
-			kube:              mgr.GetClient(),
-			newGitlabClientFn: projectclients.NewRepositoryFileClient,
-			pollInterval:      o.PollInterval,
+	reconcilerOpts := []managed.ReconcilerOption{
+		managed.WithExternalConnector(&connector{
+			kube:                      mgr.GetClient(),
+			newGitlabClientFn:         projects.NewRepositoryFileClient,
+			managementPoliciesEnabled: managementPolicies,
 		}),
-		managed.WithInitializers(managed.NewNameAsExternalName(mgr.GetClient()), createOnlyInitializer{client: mgr.GetClient()}),
+		managed.WithInitializers(),
 		managed.WithPollInterval(o.PollInterval),
-		managed.WithPollIntervalHook(func(mg resource.Managed, pollInterval time.Duration) time.Duration {
-			cr, ok := mg.(*projectsv1alpha1.RepositoryFile)
-			if !ok {
-				return pollInterval
-			}
-			interval, err := projectclients.RepositoryFileReconcileInterval(&cr.Spec.ForProvider, pollInterval)
-			if err != nil {
-				return pollInterval
-			}
-			return interval
-		}),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-		managed.WithManagementPolicies(),
-	)
+	}
+
+	if managementPolicies {
+		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
+	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(projectsv1alpha1.RepositoryFileGroupVersionKind),
+		resource.ManagedKind(v1alpha1.RepositoryFileGroupVersionKind),
 		reconcilerOpts...)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &projectsv1alpha1.RepositoryFileList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.RepositoryFileList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
 		return err
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		For(&projectsv1alpha1.RepositoryFile{}).
+		WithOptions(o.ForControllerRuntime()).
+		For(&v1alpha1.RepositoryFile{}).
 		Complete(r)
 }
 
@@ -102,20 +95,20 @@ func SetupRepositoryFile(mgr ctrl.Manager, o controller.Options) error {
 func SetupRepositoryFileGated(mgr ctrl.Manager, o controller.Options) error {
 	o.Gate.Register(func() {
 		if err := SetupRepositoryFile(mgr, o); err != nil {
-			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", projectsv1alpha1.RepositoryFileGroupVersionKind.String())
+			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.RepositoryFileGroupVersionKind.String())
 		}
-	}, projectsv1alpha1.RepositoryFileGroupVersionKind)
+	}, v1alpha1.RepositoryFileGroupVersionKind)
 	return nil
 }
 
 type connector struct {
-	kube              client.Client
-	newGitlabClientFn func(cfg common.Config) projectclients.RepositoryFileClient
-	pollInterval      time.Duration
+	kube                      client.Client
+	newGitlabClientFn         func(cfg common.Config) projects.RepositoryFileClient
+	managementPoliciesEnabled bool
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	cr, ok := mg.(*projectsv1alpha1.RepositoryFile)
+	cr, ok := mg.(*v1alpha1.RepositoryFile)
 	if !ok {
 		return nil, errors.New(errNotRepositoryFile)
 	}
@@ -123,114 +116,70 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if err != nil {
 		return nil, err
 	}
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), pollInterval: c.pollInterval}, nil
+	return &external{
+		kube:                      c.kube,
+		client:                    c.newGitlabClientFn(*cfg),
+		managementPoliciesEnabled: c.managementPoliciesEnabled,
+	}, nil
 }
 
 type external struct {
-	kube         client.Client
-	client       projectclients.RepositoryFileClient
-	pollInterval time.Duration
-}
-
-type createOnlyInitializer struct {
-	client client.Client
-}
-
-func (i createOnlyInitializer) Initialize(ctx context.Context, mg resource.Managed) error {
-	cr, ok := mg.(*projectsv1alpha1.RepositoryFile)
-	if !ok {
-		return errors.New(errNotRepositoryFile)
-	}
-	if !projectclients.RepositoryFileCreateOnly(&cr.Spec.ForProvider) {
-		return nil
-	}
-
-	createOnlyPolicies := projectclients.RepositoryFileCreateOnlyPolicies()
-	if len(cr.GetManagementPolicies()) > 0 && !projectclients.RepositoryFilePoliciesEqual(cr.GetManagementPolicies(), createOnlyPolicies) {
-		return errors.New(errCreateOnlyPolicyConflict)
-	}
-	if projectclients.RepositoryFilePoliciesEqual(cr.GetManagementPolicies(), createOnlyPolicies) {
-		return nil
-	}
-
-	cr.SetManagementPolicies(createOnlyPolicies)
-	return errors.Wrap(i.client.Update(ctx, cr), "cannot update RepositoryFile managementPolicies")
+	kube                      client.Client
+	client                    projects.RepositoryFileClient
+	managementPoliciesEnabled bool
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*projectsv1alpha1.RepositoryFile)
+	cr, ok := mg.(*v1alpha1.RepositoryFile)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotRepositoryFile)
 	}
-
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
 
-	if err := validateRepositoryFileExternalName(cr); err != nil {
-		return managed.ExternalObservation{}, err
-	}
-
-	file, res, err := e.client.GetFile(
+	file, res, err := e.client.GetFileMetaData(
 		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.FilePath,
-		projectclients.GenerateGetFileOptions(&cr.Spec.ForProvider),
+		projects.GenerateGetFileMetaDataOptions(&cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
-		if commonclients.IsResponseNotFound(res) {
+		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
 		}
-		return managed.ExternalObservation{}, errors.Wrap(err, errGetRepositoryFileFailed)
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
-	projectclients.LateInitializeRepositoryFile(&cr.Spec.ForProvider, file)
-	cr.Status.AtProvider = projectclients.GenerateRepositoryFileObservation(file)
-	cr.Status.SetConditions(xpv1.Available())
+	projects.LateInitializeRepositoryFile(&cr.Spec.ForProvider, file)
+	cr.Status.AtProvider = projects.GenerateRepositoryFileObservation(file)
+	cr.Status.SetConditions(v2.Available())
 
-	if observation, handled := observeCreateOnlyRepositoryFile(cr, current); handled {
-		return observation, nil
-	}
-
-	content, err := e.resolveContent(ctx, mg, &cr.Spec.ForProvider)
-	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(err, errResolveContentFailed)
-	}
-
-	return managed.ExternalObservation{
-		ResourceExists:          true,
-		ResourceUpToDate:        projectclients.IsRepositoryFileUpToDate(&cr.Spec.ForProvider, file, content),
-		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
-	}, nil
-}
-
-func validateRepositoryFileExternalName(cr *projectsv1alpha1.RepositoryFile) error {
-	externalName := meta.GetExternalName(cr)
-	if externalName == "" || externalName == cr.Spec.ForProvider.FilePath {
-		return nil
-	}
-	if meta.WasCreated(cr) || (externalName == cr.GetName() && cr.Status.AtProvider.FilePath == "") {
-		// Newly created resources may still carry metadata.name as external-name
-		// until Create sets the real file path. Do not block initial creation.
-		return nil
-	}
-	return errors.New(errExternalNameMismatch)
-}
-
-func observeCreateOnlyRepositoryFile(cr *projectsv1alpha1.RepositoryFile, current *projectsv1alpha1.RepositoryFileParameters) (managed.ExternalObservation, bool) {
-	if !projectclients.RepositoryFileCreateOnly(&cr.Spec.ForProvider) {
-		return managed.ExternalObservation{}, false
-	}
-	return managed.ExternalObservation{
+	o := managed.ExternalObservation{
 		ResourceExists:          true,
 		ResourceUpToDate:        true,
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
-	}, true
+	}
+
+	// Drift only matters if we are allowed to correct it. Not resolving the
+	// content otherwise means its source may go away once the file exists,
+	// e.g. a one-off bootstrap Secret used with ["Observe", "Create"].
+	policy := managed.NewManagementPoliciesResolver(e.managementPoliciesEnabled, cr.GetManagementPolicies())
+	if !policy.ShouldUpdate() {
+		return o, nil
+	}
+
+	content, err := e.content(ctx, cr)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errContentFailed)
+	}
+	o.ResourceUpToDate = projects.IsRepositoryFileUpToDate(&cr.Spec.ForProvider, file, content)
+	return o, nil
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*projectsv1alpha1.RepositoryFile)
+	cr, ok := mg.(*v1alpha1.RepositoryFile)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotRepositoryFile)
 	}
@@ -238,28 +187,30 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errProjectIDMissing)
 	}
 
-	content, err := e.resolveContent(ctx, mg, &cr.Spec.ForProvider)
+	content, err := e.content(ctx, cr)
 	if err != nil {
-		return managed.ExternalCreation{}, errors.Wrap(err, errResolveContentFailed)
+		return managed.ExternalCreation{}, errors.Wrap(err, errContentFailed)
 	}
 
-	cr.Status.SetConditions(xpv1.Creating())
+	cr.Status.SetConditions(v2.Creating())
 	_, _, err = e.client.CreateFile(
 		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.FilePath,
-		projectclients.GenerateCreateFileOptions(&cr.Spec.ForProvider, content),
+		projects.GenerateCreateFileOptions(&cr.Spec.ForProvider, content),
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
-		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRepositoryFileFailed)
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
 
+	// The file is identified by spec.forProvider; the external name is
+	// informational only.
 	meta.SetExternalName(cr, cr.Spec.ForProvider.FilePath)
 	return managed.ExternalCreation{}, nil
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mg.(*projectsv1alpha1.RepositoryFile)
+	cr, ok := mg.(*v1alpha1.RepositoryFile)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotRepositoryFile)
 	}
@@ -267,26 +218,24 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errProjectIDMissing)
 	}
 
-	content, err := e.resolveContent(ctx, mg, &cr.Spec.ForProvider)
+	content, err := e.content(ctx, cr)
 	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errResolveContentFailed)
+		return managed.ExternalUpdate{}, errors.Wrap(err, errContentFailed)
 	}
 
-	lastCommitID := emptyStringToNil(cr.Status.AtProvider.LastCommitID)
+	// Observe has just refreshed LastCommitID, so GitLab rejects the update
+	// if someone else committed to the file in between.
 	_, _, err = e.client.UpdateFile(
 		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.FilePath,
-		projectclients.GenerateUpdateFileOptions(&cr.Spec.ForProvider, content, lastCommitID),
+		projects.GenerateUpdateFileOptions(&cr.Spec.ForProvider, content, cr.Status.AtProvider.LastCommitID),
 		gitlab.WithContext(ctx),
 	)
-	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateRepositoryFileFailed)
-	}
-	return managed.ExternalUpdate{}, nil
+	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	cr, ok := mg.(*projectsv1alpha1.RepositoryFile)
+	cr, ok := mg.(*v1alpha1.RepositoryFile)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotRepositoryFile)
 	}
@@ -294,48 +243,38 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errProjectIDMissing)
 	}
 
-	cr.Status.SetConditions(xpv1.Deleting())
+	cr.Status.SetConditions(v2.Deleting())
 	res, err := e.client.DeleteFile(
 		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.FilePath,
-		projectclients.GenerateDeleteFileOptions(&cr.Spec.ForProvider, emptyStringToNil(cr.Status.AtProvider.LastCommitID)),
+		projects.GenerateDeleteFileOptions(&cr.Spec.ForProvider, cr.Status.AtProvider.LastCommitID),
 		gitlab.WithContext(ctx),
 	)
-	if err != nil {
-		if commonclients.IsResponseNotFound(res) {
-			return managed.ExternalDelete{}, nil
-		}
-		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepositoryFileFailed)
+	if err != nil && !clients.IsResponseNotFound(res) {
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 	}
 	return managed.ExternalDelete{}, nil
 }
 
-func (e *external) Disconnect(ctx context.Context) error {
+func (e *external) Disconnect(_ context.Context) error {
 	return nil
 }
 
-func (e *external) resolveContent(ctx context.Context, mg resource.Managed, p *projectsv1alpha1.RepositoryFileParameters) (string, error) {
-	inline := p != nil && p.Content != nil
-	secret := p != nil && p.ContentSecretRef != nil
-	if inline == secret {
-		return "", errors.New(errRepositoryFileContentMissing)
+// content returns the bytes the file should contain.
+func (e *external) content(ctx context.Context, cr *v1alpha1.RepositoryFile) ([]byte, error) {
+	p := &cr.Spec.ForProvider
+	switch {
+	case p.Content != nil && p.ContentSecretRef != nil:
+		return nil, errors.New(errContentAmbiguous)
+	case p.Content != nil:
+		return projects.DecodeRepositoryFileContent(*p.Content, p.Encoding)
+	case p.ContentSecretRef != nil:
+		v, err := common.GetTokenValueFromSecret(ctx, e.kube, cr, p.ContentSecretRef)
+		if err != nil {
+			return nil, errors.Wrap(err, errContentSecretFailed)
+		}
+		return projects.DecodeRepositoryFileContent(*v, p.Encoding)
+	default:
+		return nil, errors.New(errContentMissing)
 	}
-	if inline {
-		return *p.Content, nil
-	}
-	content, err := common.GetTokenValueFromSecret(ctx, e.kube, mg, p.ContentSecretRef)
-	if err != nil {
-		return "", err
-	}
-	if content == nil {
-		return "", errors.New(errRepositoryFileContentMissing)
-	}
-	return *content, nil
-}
-
-func emptyStringToNil(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
 }

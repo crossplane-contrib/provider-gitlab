@@ -19,228 +19,270 @@ limitations under the License.
 package projects
 
 import (
-	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
 	"testing"
-	"time"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	"github.com/google/go-cmp/cmp"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"github.com/pkg/errors"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
-	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 )
 
-func TestRepositoryFileContentSHA256(t *testing.T) {
-	plain := "hello world"
-	encoded := base64.StdEncoding.EncodeToString([]byte(plain))
-	plainSum := fmt.Sprintf("%x", sha256.Sum256([]byte(plain)))
+// sha256 of "hello".
+const helloSHA256 = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
 
-	text := "text"
-	base64Encoding := "base64"
+func encodingPtr(e v1alpha1.RepositoryFileEncoding) *v1alpha1.RepositoryFileEncoding {
+	return &e
+}
 
-	cases := map[string]struct {
-		params   *projectsv1alpha1.RepositoryFileParameters
+func TestDecodeRepositoryFileContent(t *testing.T) {
+	type args struct {
 		content  string
-		wantHash string
-	}{
-		"TextContent": {
-			params:   &projectsv1alpha1.RepositoryFileParameters{Encoding: &text},
-			content:  plain,
-			wantHash: plainSum,
-		},
-		"Base64Content": {
-			params:   &projectsv1alpha1.RepositoryFileParameters{Encoding: &base64Encoding},
-			content:  encoded,
-			wantHash: plainSum,
-		},
+		encoding *v1alpha1.RepositoryFileEncoding
+	}
+	type want struct {
+		content []byte
+		err     error
 	}
 
-	for name, tc := range cases {
-		t.Run(name, func(t *testing.T) {
-			got := RepositoryFileContentSHA256(tc.params, tc.content)
-			if diff := cmp.Diff(tc.wantHash, got); diff != "" {
-				t.Fatalf("RepositoryFileContentSHA256(): -want, +got:\n%s", diff)
-			}
-		})
-	}
-}
-
-func TestRepositoryFileReconcileInterval(t *testing.T) {
-	oneHour := "1h"
 	cases := map[string]struct {
-		params      *projectsv1alpha1.RepositoryFileParameters
-		defaultPoll time.Duration
-		want        time.Duration
-		wantErr     bool
+		reason string
+		args   args
+		want   want
 	}{
-		"Default": {
-			params:      &projectsv1alpha1.RepositoryFileParameters{},
-			defaultPoll: time.Minute,
-			want:        time.Minute,
+		"Unset": {
+			reason: "Content without an encoding should be used as-is.",
+			args:   args{content: "hello"},
+			want:   want{content: []byte("hello")},
 		},
-		"Custom": {
-			params:      &projectsv1alpha1.RepositoryFileParameters{ReconcileInterval: &oneHour},
-			defaultPoll: time.Minute,
-			want:        time.Hour,
+		"Text": {
+			reason: "Text content should be used as-is.",
+			args:   args{content: "aGVsbG8=", encoding: encodingPtr(v1alpha1.RepositoryFileEncodingText)},
+			want:   want{content: []byte("aGVsbG8=")},
 		},
-		"Invalid": {
-			params:      &projectsv1alpha1.RepositoryFileParameters{ReconcileInterval: stringPtr("nope")},
-			defaultPoll: time.Minute,
-			wantErr:     true,
+		"Base64": {
+			reason: "Base64 content should be decoded.",
+			args:   args{content: "aGVsbG8=", encoding: encodingPtr(v1alpha1.RepositoryFileEncodingBase64)},
+			want:   want{content: []byte("hello")},
+		},
+		"InvalidBase64": {
+			reason: "Invalid base64 must be an error rather than silently committing the raw string.",
+			args:   args{content: "!!!", encoding: encodingPtr(v1alpha1.RepositoryFileEncodingBase64)},
+			want:   want{err: errors.Wrap(base64.CorruptInputError(0), errDecodeBase64Content)},
+		},
+		"UnknownEncoding": {
+			reason: "An encoding the API does not define must be an error.",
+			args:   args{content: "hello", encoding: encodingPtr("hex")},
+			want:   want{err: errors.Errorf(errFmtUnknownEncoding, "hex")},
 		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got, err := RepositoryFileReconcileInterval(tc.params, tc.defaultPoll)
-			if tc.wantErr {
-				if err == nil {
-					t.Fatal("RepositoryFileReconcileInterval() expected error")
-				}
-				return
+			got, err := DecodeRepositoryFileContent(tc.args.content, tc.args.encoding)
+			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
+				t.Errorf("\n%s\nDecodeRepositoryFileContent(...): -want error, +got error:\n%s", tc.reason, diff)
 			}
-			if err != nil {
-				t.Fatalf("RepositoryFileReconcileInterval() error = %v", err)
-			}
-			if diff := cmp.Diff(tc.want, got); diff != "" {
-				t.Fatalf("RepositoryFileReconcileInterval(): -want, +got:\n%s", diff)
+			if diff := cmp.Diff(tc.want.content, got); diff != "" {
+				t.Errorf("\n%s\nDecodeRepositoryFileContent(...): -want, +got:\n%s", tc.reason, diff)
 			}
 		})
-	}
-}
-
-func TestGenerateRepositoryFileOptions(t *testing.T) {
-	content := "content"
-	branch := "main"
-	startBranch := "main"
-	authorEmail := "dev@example.org"
-	authorName := "Dev"
-	createCommit := "create"
-	updateCommit := "update"
-	deleteCommit := "delete"
-	encoding := "base64"
-	exec := true
-	lastCommitID := "abc123"
-
-	params := &projectsv1alpha1.RepositoryFileParameters{
-		Branch:              branch,
-		StartBranch:         &startBranch,
-		AuthorEmail:         &authorEmail,
-		AuthorName:          &authorName,
-		CreateCommitMessage: &createCommit,
-		UpdateCommitMessage: &updateCommit,
-		DeleteCommitMessage: &deleteCommit,
-		Encoding:            &encoding,
-		ExecuteFilemode:     &exec,
-		FilePath:            "README.md",
-	}
-
-	create := GenerateCreateFileOptions(params, content)
-	update := GenerateUpdateFileOptions(params, content, &lastCommitID)
-	deleteOpts := GenerateDeleteFileOptions(params, &lastCommitID)
-
-	if diff := cmp.Diff(&gitlab.CreateFileOptions{
-		Branch:          &branch,
-		StartBranch:     &startBranch,
-		Encoding:        &encoding,
-		AuthorEmail:     &authorEmail,
-		AuthorName:      &authorName,
-		Content:         &content,
-		CommitMessage:   &createCommit,
-		ExecuteFilemode: &exec,
-	}, create); diff != "" {
-		t.Fatalf("GenerateCreateFileOptions(): -want, +got:\n%s", diff)
-	}
-
-	if diff := cmp.Diff(&gitlab.UpdateFileOptions{
-		Branch:          &branch,
-		StartBranch:     &startBranch,
-		Encoding:        &encoding,
-		AuthorEmail:     &authorEmail,
-		AuthorName:      &authorName,
-		Content:         &content,
-		CommitMessage:   &updateCommit,
-		LastCommitID:    &lastCommitID,
-		ExecuteFilemode: &exec,
-	}, update); diff != "" {
-		t.Fatalf("GenerateUpdateFileOptions(): -want, +got:\n%s", diff)
-	}
-
-	if diff := cmp.Diff(&gitlab.DeleteFileOptions{
-		Branch:        &branch,
-		StartBranch:   &startBranch,
-		AuthorEmail:   &authorEmail,
-		AuthorName:    &authorName,
-		CommitMessage: &deleteCommit,
-		LastCommitID:  &lastCommitID,
-	}, deleteOpts); diff != "" {
-		t.Fatalf("GenerateDeleteFileOptions(): -want, +got:\n%s", diff)
 	}
 }
 
 func TestIsRepositoryFileUpToDate(t *testing.T) {
-	content := "hello"
-	branch := "main"
-	sha := RepositoryFileContentSHA256(&projectsv1alpha1.RepositoryFileParameters{}, content)
+	type args struct {
+		p       *v1alpha1.RepositoryFileParameters
+		file    *gitlab.File
+		content []byte
+	}
 
 	cases := map[string]struct {
-		params   *projectsv1alpha1.RepositoryFileParameters
-		external *gitlab.File
-		content  string
-		want     bool
+		reason string
+		args   args
+		want   bool
 	}{
-		"Matching": {
-			params: &projectsv1alpha1.RepositoryFileParameters{
-				FilePath: "README.md",
-				Branch:   branch,
+		"Match": {
+			reason: "Matching content and filemode should be up to date.",
+			args: args{
+				p:       &v1alpha1.RepositoryFileParameters{ExecuteFilemode: new(true)},
+				file:    &gitlab.File{SHA256: helloSHA256, ExecuteFilemode: true},
+				content: []byte("hello"),
 			},
-			external: &gitlab.File{FilePath: "README.md", Ref: branch, SHA256: sha},
-			content:  content,
-			want:     true,
+			want: true,
 		},
-		"DifferentSHA": {
-			params: &projectsv1alpha1.RepositoryFileParameters{
-				FilePath: "README.md",
-				Branch:   branch,
+		"ContentDrift": {
+			reason: "Different content should not be up to date.",
+			args: args{
+				p:       &v1alpha1.RepositoryFileParameters{},
+				file:    &gitlab.File{SHA256: helloSHA256},
+				content: []byte("hello world"),
 			},
-			external: &gitlab.File{FilePath: "README.md", Ref: branch, SHA256: "different"},
-			content:  content,
-			want:     false,
+			want: false,
+		},
+		"FilemodeDrift": {
+			reason: "A different filemode should not be up to date.",
+			args: args{
+				p:       &v1alpha1.RepositoryFileParameters{ExecuteFilemode: new(false)},
+				file:    &gitlab.File{SHA256: helloSHA256, ExecuteFilemode: true},
+				content: []byte("hello"),
+			},
+			want: false,
+		},
+		"FilemodeUnset": {
+			reason: "An unset filemode should not cause drift.",
+			args: args{
+				p:       &v1alpha1.RepositoryFileParameters{},
+				file:    &gitlab.File{SHA256: helloSHA256, ExecuteFilemode: true},
+				content: []byte("hello"),
+			},
+			want: true,
+		},
+		"NoFile": {
+			reason: "A missing file should not be up to date.",
+			args: args{
+				p:       &v1alpha1.RepositoryFileParameters{},
+				content: []byte("hello"),
+			},
+			want: false,
 		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			got := IsRepositoryFileUpToDate(tc.params, tc.external, tc.content)
+			got := IsRepositoryFileUpToDate(tc.args.p, tc.args.file, tc.args.content)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
-				t.Fatalf("IsRepositoryFileUpToDate(): -want, +got:\n%s", diff)
+				t.Errorf("\n%s\nIsRepositoryFileUpToDate(...): -want, +got:\n%s", tc.reason, diff)
 			}
 		})
 	}
 }
 
-func TestRepositoryFilePoliciesEqual(t *testing.T) {
-	a := xpv1.ManagementPolicies{xpv1.ManagementActionObserve, xpv1.ManagementActionCreate, xpv1.ManagementActionDelete}
-	b := xpv1.ManagementPolicies{xpv1.ManagementActionDelete, xpv1.ManagementActionObserve, xpv1.ManagementActionCreate}
-	c := xpv1.ManagementPolicies{xpv1.ManagementActionAll}
-
-	if !RepositoryFilePoliciesEqual(a, b) {
-		t.Fatal("RepositoryFilePoliciesEqual() = false, want true")
+func TestLateInitializeRepositoryFile(t *testing.T) {
+	cases := map[string]struct {
+		reason string
+		in     *v1alpha1.RepositoryFileParameters
+		file   *gitlab.File
+		want   *v1alpha1.RepositoryFileParameters
+	}{
+		"FillsFilemode": {
+			reason: "An unset filemode should be late initialized.",
+			in:     &v1alpha1.RepositoryFileParameters{},
+			file:   &gitlab.File{ExecuteFilemode: true, Encoding: "base64"},
+			want:   &v1alpha1.RepositoryFileParameters{ExecuteFilemode: new(true)},
+		},
+		"KeepsFilemode": {
+			reason: "A set filemode should be kept.",
+			in:     &v1alpha1.RepositoryFileParameters{ExecuteFilemode: new(false)},
+			file:   &gitlab.File{ExecuteFilemode: true},
+			want:   &v1alpha1.RepositoryFileParameters{ExecuteFilemode: new(false)},
+		},
 	}
-	if RepositoryFilePoliciesEqual(a, c) {
-		t.Fatal("RepositoryFilePoliciesEqual() = true, want false")
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			LateInitializeRepositoryFile(tc.in, tc.file)
+			if diff := cmp.Diff(tc.want, tc.in); diff != "" {
+				t.Errorf("\n%s\nLateInitializeRepositoryFile(...): -want, +got:\n%s", tc.reason, diff)
+			}
+		})
 	}
 }
 
-func TestRepositoryFileCreateOnlyPolicies(t *testing.T) {
-	want := xpv1.ManagementPolicies{xpv1.ManagementActionObserve, xpv1.ManagementActionCreate, xpv1.ManagementActionDelete}
-	if diff := cmp.Diff(want, RepositoryFileCreateOnlyPolicies()); diff != "" {
-		t.Fatalf("RepositoryFileCreateOnlyPolicies(): -want, +got:\n%s", diff)
+func TestGenerateRepositoryFileObservation(t *testing.T) {
+	file := &gitlab.File{
+		FilePath:     "docs/a.md",
+		BlobID:       "blob",
+		CommitID:     "head",
+		LastCommitID: "last",
+		SHA256:       helloSHA256,
+		Size:         5,
+	}
+	want := v1alpha1.RepositoryFileObservation{
+		FilePath:     "docs/a.md",
+		BlobID:       "blob",
+		LastCommitID: "last",
+		SHA256:       helloSHA256,
+		Size:         5,
+	}
+	if diff := cmp.Diff(want, GenerateRepositoryFileObservation(file)); diff != "" {
+		t.Errorf("GenerateRepositoryFileObservation(...): -want, +got:\n%s", diff)
+	}
+	if diff := cmp.Diff(v1alpha1.RepositoryFileObservation{}, GenerateRepositoryFileObservation(nil)); diff != "" {
+		t.Errorf("GenerateRepositoryFileObservation(nil): -want, +got:\n%s", diff)
 	}
 }
 
-func stringPtr(s string) *string {
-	return &s
+func TestGenerateFileOptions(t *testing.T) {
+	p := &v1alpha1.RepositoryFileParameters{
+		Branch:          "main",
+		FilePath:        "docs/a.md",
+		AuthorEmail:     new("bot@example.com"),
+		AuthorName:      new("bot"),
+		ExecuteFilemode: new(true),
+	}
+	custom := p.DeepCopy()
+	custom.CreateCommitMessage = new("custom create")
+	custom.UpdateCommitMessage = new("custom update")
+	custom.DeleteCommitMessage = new("custom delete")
+	content := []byte{0x00, 0xff, 'h', 'i'}
+	encoded := base64.StdEncoding.EncodeToString(content)
+
+	t.Run("Create", func(t *testing.T) {
+		want := &gitlab.CreateFileOptions{
+			Branch:          new("main"),
+			Encoding:        new("base64"),
+			Content:         new(encoded),
+			CommitMessage:   new("crossplane: create docs/a.md"),
+			AuthorEmail:     new("bot@example.com"),
+			AuthorName:      new("bot"),
+			ExecuteFilemode: new(true),
+		}
+		if diff := cmp.Diff(want, GenerateCreateFileOptions(p, content)); diff != "" {
+			t.Errorf("GenerateCreateFileOptions(...): -want, +got:\n%s", diff)
+		}
+		if got := GenerateCreateFileOptions(custom, content).CommitMessage; *got != "custom create" {
+			t.Errorf("GenerateCreateFileOptions(...).CommitMessage: want %q, got %q", "custom create", *got)
+		}
+	})
+
+	t.Run("Update", func(t *testing.T) {
+		want := &gitlab.UpdateFileOptions{
+			Branch:          new("main"),
+			Encoding:        new("base64"),
+			Content:         new(encoded),
+			CommitMessage:   new("crossplane: update docs/a.md"),
+			LastCommitID:    new("last"),
+			AuthorEmail:     new("bot@example.com"),
+			AuthorName:      new("bot"),
+			ExecuteFilemode: new(true),
+		}
+		if diff := cmp.Diff(want, GenerateUpdateFileOptions(p, content, "last")); diff != "" {
+			t.Errorf("GenerateUpdateFileOptions(...): -want, +got:\n%s", diff)
+		}
+		if got := GenerateUpdateFileOptions(p, content, "").LastCommitID; got != nil {
+			t.Errorf("GenerateUpdateFileOptions(..., \"\").LastCommitID: want nil, got %q", *got)
+		}
+		if got := GenerateUpdateFileOptions(custom, content, "").CommitMessage; *got != "custom update" {
+			t.Errorf("GenerateUpdateFileOptions(...).CommitMessage: want %q, got %q", "custom update", *got)
+		}
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		want := &gitlab.DeleteFileOptions{
+			Branch:        new("main"),
+			CommitMessage: new("crossplane: delete docs/a.md"),
+			LastCommitID:  new("last"),
+			AuthorEmail:   new("bot@example.com"),
+			AuthorName:    new("bot"),
+		}
+		if diff := cmp.Diff(want, GenerateDeleteFileOptions(p, "last")); diff != "" {
+			t.Errorf("GenerateDeleteFileOptions(...): -want, +got:\n%s", diff)
+		}
+		if got := GenerateDeleteFileOptions(custom, "").CommitMessage; *got != "custom delete" {
+			t.Errorf("GenerateDeleteFileOptions(...).CommitMessage: want %q, got %q", "custom delete", *got)
+		}
+	})
 }

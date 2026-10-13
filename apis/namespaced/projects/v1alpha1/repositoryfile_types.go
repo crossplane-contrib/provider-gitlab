@@ -1,5 +1,5 @@
 /*
-Copyright 2024 The Crossplane Authors.
+Copyright 2026 The Crossplane Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,18 +17,42 @@ limitations under the License.
 package v1alpha1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	// +cluster-scope:delete=1
-	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// RepositoryFileParameters define the desired state of a GitLab Repository File.
+// RepositoryFileEncoding describes how the content supplied to a
+// RepositoryFile is encoded. It never affects what is stored in the
+// repository: the provider always decodes the supplied content and commits
+// the resulting bytes.
+// +kubebuilder:validation:Enum=text;base64
+type RepositoryFileEncoding string
+
+const (
+	// RepositoryFileEncodingText means the content is used as-is.
+	RepositoryFileEncodingText RepositoryFileEncoding = "text"
+
+	// RepositoryFileEncodingBase64 means the content is standard base64
+	// (RFC 4648) and is decoded before it is committed. Use it for binary
+	// files supplied inline.
+	RepositoryFileEncodingBase64 RepositoryFileEncoding = "base64"
+)
+
+// RepositoryFileParameters define the desired state of a file in a GitLab
+// repository. A file is identified by projectId, branch and filePath, all of
+// which are immutable.
+//
+// Which actions Crossplane takes on the file is controlled by
+// spec.managementPolicies, not by fields in here. For example
+// ["Observe", "Create"] commits the file once and then never overwrites or
+// deletes it, and ["Observe"] tracks a file without ever committing.
+//
 // https://docs.gitlab.com/api/repository_files/
 type RepositoryFileParameters struct {
-	// The ID or URL-encoded path of the project owned by the authenticated user.
+	// ProjectID is the ID or URL-encoded path of the project.
 	// +optional
 	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1.Project
 	// +crossplane:generate:reference:refFieldName=ProjectIDRef
 	// +crossplane:generate:reference:selectorFieldName=ProjectIDSelector
@@ -37,43 +61,48 @@ type RepositoryFileParameters struct {
 	// ProjectIDRef is a reference to a project to retrieve its projectId.
 	// +optional
 	// +immutable
-	ProjectIDRef *xpv1.NamespacedReference `json:"projectIdRef,omitempty"`
+	ProjectIDRef *v2.NamespacedReference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
 	// +optional
 	// +immutable
-	ProjectIDSelector *xpv1.NamespacedSelector `json:"projectIdSelector,omitempty"`
+	ProjectIDSelector *v2.NamespacedSelector `json:"projectIdSelector,omitempty"`
 
-	// FilePath is the path of the file in the repository.
+	// Branch is the branch the file lives on. It must already exist unless
+	// the repository is empty; the provider does not create branches.
 	// +immutable
 	// +kubebuilder:validation:MinLength=1
-	FilePath string `json:"filePath"`
-
-	// Branch is the name of the branch to commit to.
-	// +immutable
-	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="branch is immutable"
 	Branch string `json:"branch"`
 
-	// Content is the file content. Mutually exclusive with ContentSecretRef.
+	// FilePath is the path of the file in the repository, e.g. "docs/README.md".
+	// +immutable
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="filePath is immutable"
+	FilePath string `json:"filePath"`
+
+	// Content is the file content, encoded as described by Encoding.
+	// Mutually exclusive with ContentSecretRef. One of the two is required
+	// unless managementPolicies allow neither Create nor Update.
 	// +optional
 	Content *string `json:"content,omitempty"`
 
-	// ContentSecretRef references a Secret key containing the file content.
-	// Mutually exclusive with Content.
+	// ContentSecretRef references a Secret key holding the file content,
+	// encoded as described by Encoding. Mutually exclusive with Content.
+	// Note that the content is committed to the repository, so it is only
+	// as secret as the repository itself.
 	// +optional
-	// +nullable
-	ContentSecretRef *xpv1.LocalSecretKeySelector `json:"contentSecretRef,omitempty"`
+	ContentSecretRef *v2.LocalSecretKeySelector `json:"contentSecretRef,omitempty"`
 
-	// StartBranch is the source branch used to create branch if Branch does not exist yet.
+	// Encoding describes how Content or the referenced Secret value is
+	// encoded.
 	// +optional
-	// +immutable
-	StartBranch *string `json:"startBranch,omitempty"`
+	// +kubebuilder:default=text
+	Encoding *RepositoryFileEncoding `json:"encoding,omitempty"`
 
-	// Encoding is the file encoding: "text" (default) or "base64".
+	// ExecuteFilemode enables the executable flag on the file.
 	// +optional
-	// +kubebuilder:validation:Enum=text;base64
-	// +kubebuilder:default="text"
-	Encoding *string `json:"encoding,omitempty"`
+	ExecuteFilemode *bool `json:"executeFilemode,omitempty"`
 
 	// CreateCommitMessage is the commit message used when creating the file.
 	// Defaults to "crossplane: create <filePath>".
@@ -97,25 +126,6 @@ type RepositoryFileParameters struct {
 	// AuthorName is the commit author name.
 	// +optional
 	AuthorName *string `json:"authorName,omitempty"`
-
-	// ExecuteFilemode enables the executable flag on the file.
-	// +optional
-	ExecuteFilemode *bool `json:"executeFilemode,omitempty"`
-
-	// ReconcileInterval controls how often this resource is reconciled against
-	// the GitLab API. Examples: "5m", "1h", "8h". If unset, the resource is
-	// reconciled at the controller's default poll interval.
-	// +optional
-	// +kubebuilder:validation:Pattern=`^([0-9]+(ns|us|µs|ms|s|m|h))+$`
-	ReconcileInterval *string `json:"reconcileInterval,omitempty"`
-
-	// CreateOnly when true, creates the file once and never updates it.
-	// The file is still deleted from GitLab when the CR is deleted.
-	// Observe only checks for file existence, not content drift.
-	// +optional
-	// +immutable
-	// +kubebuilder:default=false
-	CreateOnly *bool `json:"createOnly,omitempty"`
 }
 
 // RepositoryFileObservation represents the observed state of a GitLab Repository File.
@@ -126,10 +136,9 @@ type RepositoryFileObservation struct {
 	// BlobID is the blob SHA of the file.
 	BlobID string `json:"blobId,omitempty"`
 
-	// CommitID is the commit SHA when the file was last read.
-	CommitID string `json:"commitId,omitempty"`
-
-	// LastCommitID is the last commit SHA that modified this file.
+	// LastCommitID is the last commit SHA that modified this file. It is sent
+	// with updates and deletes so GitLab rejects them if the file changed in
+	// the meantime.
 	LastCommitID string `json:"lastCommitId,omitempty"`
 
 	// SHA256 is the SHA-256 hash of the file content.
@@ -141,23 +150,19 @@ type RepositoryFileObservation struct {
 
 // A RepositoryFileSpec defines the desired state of a GitLab Repository File.
 type RepositoryFileSpec struct {
-	xpv2.ManagedResourceSpec `json:",inline"`
-	// ForProvider specifies the desired state of the RepositoryFile.
-	ForProvider RepositoryFileParameters `json:"forProvider"`
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            RepositoryFileParameters `json:"forProvider"`
 }
 
 // A RepositoryFileStatus represents the observed state of a GitLab Repository File.
 type RepositoryFileStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
-	// AtProvider reflects the observed state from GitLab.
-	AtProvider RepositoryFileObservation `json:"atProvider,omitempty"`
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               RepositoryFileObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
 // A RepositoryFile is a managed resource that represents a file in a GitLab repository.
-// +kubebuilder:validation:XValidation:rule="has(self.spec.forProvider.content) != has(self.spec.forProvider.contentSecretRef)",message="exactly one of spec.forProvider.content or spec.forProvider.contentSecretRef must be set"
-// +kubebuilder:validation:XValidation:rule="!has(self.spec.forProvider.createOnly) || !self.spec.forProvider.createOnly || !has(self.spec.managementPolicies) || size(self.spec.managementPolicies) != 1 || self.spec.managementPolicies[0] != '*'",message="createOnly=true cannot be combined with managementPolicies=['*']"
 // +kubebuilder:printcolumn:name="FILE",type="string",JSONPath=".spec.forProvider.filePath"
 // +kubebuilder:printcolumn:name="BRANCH",type="string",JSONPath=".spec.forProvider.branch"
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -169,6 +174,8 @@ type RepositoryFile struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// +kubebuilder:validation:XValidation:rule="!(has(self.forProvider.content) && has(self.forProvider.contentSecretRef))",message="spec.forProvider.content and spec.forProvider.contentSecretRef are mutually exclusive"
+	// +kubebuilder:validation:XValidation:rule="!('*' in self.managementPolicies || 'Create' in self.managementPolicies || 'Update' in self.managementPolicies) || has(self.forProvider.content) || has(self.forProvider.contentSecretRef)",message="spec.forProvider.content or spec.forProvider.contentSecretRef is required when managementPolicies allow Create or Update"
 	Spec   RepositoryFileSpec   `json:"spec"`
 	Status RepositoryFileStatus `json:"status,omitempty"`
 }
