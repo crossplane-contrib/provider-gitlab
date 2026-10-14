@@ -433,6 +433,11 @@ func TestUpdate(t *testing.T) {
 			cr:     user(withExternalName(testUserIDString), active, withObservedState("banned")),
 			want:   want{calls: []call{modify}, err: errors.Errorf(errNoStateChange, "banned", v1alpha1.UserStateActive)},
 		},
+		"BannedIsNotBlocked": {
+			client: &MockClient{},
+			cr:     user(withExternalName(testUserIDString), blocked, withObservedState("banned")),
+			want:   want{calls: []call{modify}, err: errors.Errorf(errNoStateChange, "banned", v1alpha1.UserStateBlocked)},
+		},
 		"StateChangeFailed": {
 			client: &MockClient{MockBlockUser: func(int64) (*gitlab.Response, error) { return nil, errBoom }},
 			cr:     user(withExternalName(testUserIDString), blocked, withObservedState("active")),

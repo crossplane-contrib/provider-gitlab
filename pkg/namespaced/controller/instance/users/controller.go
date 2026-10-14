@@ -45,7 +45,7 @@ const (
 	errCreateFailed   = "cannot create Gitlab user"
 	errUpdateFailed   = "cannot update Gitlab user"
 	errStateFailed    = "cannot change Gitlab user state"
-	errNoStateChange  = "GitLab cannot change a user from state %q to %q"
+	errNoStateChange  = "cannot change Gitlab user state from %q to %q"
 	errDeleteFailed   = "cannot delete Gitlab user"
 	errIDNotInt       = "specified ID is not an integer"
 	errPasswordFailed = "cannot read Gitlab user password"

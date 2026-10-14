@@ -35,6 +35,7 @@ const (
 
 // UserParameters define the desired state of a GitLab user.
 // The ProviderConfig must authenticate with an instance administrator token.
+// When Admin Mode is enabled, the token also needs the admin_mode scope.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/users/
@@ -74,9 +75,9 @@ type UserParameters struct {
 	// +optional
 	SkipConfirmation *bool `json:"skipConfirmation,omitempty"`
 
-	// IsAdmin grants instance administrator privileges.
+	// Admin grants instance administrator privileges.
 	// +optional
-	IsAdmin *bool `json:"isAdmin,omitempty"`
+	Admin *bool `json:"admin,omitempty"`
 
 	// CanCreateGroup allows the user to create top level groups.
 	// +optional
@@ -113,8 +114,8 @@ type UserObservation struct {
 	Email string `json:"email"`
 	// State is the state GitLab reports, for example active, blocked, deactivated or banned.
 	State string `json:"state"`
-	// IsAdmin reports whether the user is an instance administrator.
-	IsAdmin bool `json:"isAdmin"`
+	// Admin reports whether the user is an instance administrator.
+	Admin bool `json:"admin"`
 	// CanCreateGroup reports whether the user can create top level groups.
 	CanCreateGroup bool `json:"canCreateGroup"`
 	// ProjectsLimit is the number of personal projects the user can create.
@@ -144,6 +145,7 @@ type UserStatus struct {
 // A User is a managed resource that represents a GitLab instance user.
 // Deleting it deletes the GitLab user. GitLab removes the user's personal
 // projects and moves the user's contributions to the ghost user.
+// GitLab refuses to delete a user who is the sole owner of a group.
 //
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"

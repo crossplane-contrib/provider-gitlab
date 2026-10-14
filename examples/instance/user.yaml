@@ -35,4 +35,4 @@ spec:
     # active or blocked. Leave unset to let GitLab admins change the state.
     state: active
     # WARNING: grants instance administrator privileges
-    # isAdmin: true
+    # admin: true

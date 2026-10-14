@@ -3976,8 +3976,8 @@ func (in *UserParameters) DeepCopyInto(out *UserParameters) {
 		*out = new(bool)
 		**out = **in
 	}
-	if in.IsAdmin != nil {
-		in, out := &in.IsAdmin, &out.IsAdmin
+	if in.Admin != nil {
+		in, out := &in.Admin, &out.Admin
 		*out = new(bool)
 		**out = **in
 	}

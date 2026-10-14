@@ -55,7 +55,8 @@ func NewUserClient(cfg common.Config) UserClient {
 type UserStateChange func(c UserClient, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
 // userStateChanges maps a desired state and the state GitLab reports to the call that converges them.
-// GitLab offers no call out of the other states, such as banned or ldap_blocked.
+// The provider does not unban or approve users, and the GitLab API cannot unblock LDAP-blocked users,
+// so banned, blocked_pending_approval and ldap_blocked have no entry.
 var userStateChanges = map[v1alpha1.UserState]map[string]UserStateChange{
 	v1alpha1.UserStateActive: {
 		gitlabUserStateBlocked:     UserClient.UnblockUser,
@@ -68,7 +69,7 @@ var userStateChanges = map[v1alpha1.UserState]map[string]UserStateChange{
 }
 
 // UserStateChangeFor returns the call that moves a user from the observed GitLab state to the desired state.
-// It returns false when GitLab has no such call.
+// It returns false when the provider does not make that change.
 func UserStateChangeFor(desired v1alpha1.UserState, observed string) (UserStateChange, bool) {
 	change, ok := userStateChanges[desired][observed]
 	return change, ok
@@ -82,7 +83,7 @@ func GenerateUserObservation(u *gitlab.User) v1alpha1.UserObservation {
 		Name:           u.Name,
 		Email:          u.Email,
 		State:          u.State,
-		IsAdmin:        u.IsAdmin,
+		Admin:          u.IsAdmin,
 		CanCreateGroup: u.CanCreateGroup,
 		ProjectsLimit:  u.ProjectsLimit,
 		External:       u.External,
@@ -102,7 +103,7 @@ func GenerateCreateUserOptions(p *v1alpha1.UserParameters, password *string) *gi
 		ResetPassword:       p.ResetPassword,
 		ForceRandomPassword: p.ForceRandomPassword,
 		SkipConfirmation:    p.SkipConfirmation,
-		Admin:               p.IsAdmin,
+		Admin:               p.Admin,
 		CanCreateGroup:      p.CanCreateGroup,
 		ProjectsLimit:       p.ProjectsLimit,
 		External:            p.External,
@@ -118,7 +119,7 @@ func GenerateModifyUserOptions(p *v1alpha1.UserParameters) *gitlab.ModifyUserOpt
 		Name:               ptr.To(p.Name),
 		Email:              ptr.To(p.Email),
 		SkipReconfirmation: ptr.To(true),
-		Admin:              p.IsAdmin,
+		Admin:              p.Admin,
 		CanCreateGroup:     p.CanCreateGroup,
 		ProjectsLimit:      p.ProjectsLimit,
 		External:           p.External,
@@ -132,7 +133,7 @@ func IsUserUpToDate(p *v1alpha1.UserParameters, u *gitlab.User) bool {
 	return p.Username == u.Username &&
 		p.Name == u.Name &&
 		strings.EqualFold(p.Email, u.Email) &&
-		clients.IsComparableEqualToComparablePtr(p.IsAdmin, u.IsAdmin) &&
+		clients.IsComparableEqualToComparablePtr(p.Admin, u.IsAdmin) &&
 		clients.IsComparableEqualToComparablePtr(p.CanCreateGroup, u.CanCreateGroup) &&
 		clients.IsComparableEqualToComparablePtr(p.ProjectsLimit, u.ProjectsLimit) &&
 		clients.IsComparableEqualToComparablePtr(p.External, u.External) &&

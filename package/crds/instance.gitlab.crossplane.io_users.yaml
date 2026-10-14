@@ -38,6 +38,7 @@ spec:
           A User is a managed resource that represents a GitLab instance user.
           Deleting it deletes the GitLab user. GitLab removes the user's personal
           projects and moves the user's contributions to the ghost user.
+          GitLab refuses to delete a user who is the sole owner of a group.
         properties:
           apiVersion:
             description: |-
@@ -77,10 +78,14 @@ spec:
                 description: |-
                   UserParameters define the desired state of a GitLab user.
                   The ProviderConfig must authenticate with an instance administrator token.
+                  When Admin Mode is enabled, the token also needs the admin_mode scope.
 
                   GitLab API docs:
                   https://docs.gitlab.com/api/users/
                 properties:
+                  admin:
+                    description: Admin grants instance administrator privileges.
+                    type: boolean
                   canCreateGroup:
                     description: CanCreateGroup allows the user to create top level
                       groups.
@@ -99,9 +104,6 @@ spec:
                     description: |-
                       ForceRandomPassword sets a random password when the user is created.
                       Use it for users that only sign in through an external identity provider.
-                    type: boolean
-                  isAdmin:
-                    description: IsAdmin grants instance administrator privileges.
                     type: boolean
                   name:
                     description: Name is the display name of the user.
@@ -262,6 +264,9 @@ spec:
                 description: UserObservation represents the observed state of a GitLab
                   user.
                 properties:
+                  admin:
+                    description: Admin reports whether the user is an instance administrator.
+                    type: boolean
                   canCreateGroup:
                     description: CanCreateGroup reports whether the user can create
                       top level groups.
@@ -277,9 +282,6 @@ spec:
                     description: ID is the unique identifier of the user.
                     format: int64
                     type: integer
-                  isAdmin:
-                    description: IsAdmin reports whether the user is an instance administrator.
-                    type: boolean
                   name:
                     description: Name is the display name of the user.
                     type: string
@@ -303,11 +305,11 @@ spec:
                     description: Username is the unique handle of the user.
                     type: string
                 required:
+                - admin
                 - canCreateGroup
                 - email
                 - external
                 - id
-                - isAdmin
                 - name
                 - namespaceId
                 - note
