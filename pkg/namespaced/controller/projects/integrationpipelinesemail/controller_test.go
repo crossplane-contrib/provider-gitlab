@@ -384,14 +384,19 @@ func TestObserve(t *testing.T) {
 func TestCreate(t *testing.T) {
 	type want struct {
 		cr   resource.Managed
+		pid  any
 		opts *gitlab.SetPipelinesEmailServiceOptions
 		err  error
 	}
 
-	var sent *gitlab.SetPipelinesEmailServiceOptions
+	var (
+		sentPid any
+		sent    *gitlab.SetPipelinesEmailServiceOptions
+	)
 	capture := func(err error) *fake.MockPipelinesEmailClient {
 		return &fake.MockPipelinesEmailClient{
 			MockSetPipelinesEmailService: func(pid any, opt *gitlab.SetPipelinesEmailServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
+				sentPid = pid
 				sent = opt
 				return &gitlab.PipelinesEmailService{}, &gitlab.Response{}, err
 			},
@@ -436,6 +441,7 @@ func TestCreate(t *testing.T) {
 					withBranchesToBeNotified("all"),
 					withConditions(v2.Creating()),
 				),
+				pid: testProjectID,
 				opts: &gitlab.SetPipelinesEmailServiceOptions{
 					Recipients:           ptr.To("a@example.com,b@example.com"),
 					BranchesToBeNotified: ptr.To("all"),
@@ -453,6 +459,7 @@ func TestCreate(t *testing.T) {
 					withRecipients(testRecipients...),
 					withConditions(v2.Creating()),
 				),
+				pid:  testProjectID,
 				opts: &gitlab.SetPipelinesEmailServiceOptions{Recipients: ptr.To(testRecipient)},
 				err:  errors.Wrap(errBoom, errCreateFailed),
 			},
@@ -461,7 +468,7 @@ func TestCreate(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			sent = nil
+			sentPid, sent = nil, nil
 			e := &external{client: tc.client}
 			o, err := e.Create(context.Background(), tc.args.cr)
 
@@ -470,6 +477,9 @@ func TestCreate(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
 				t.Errorf("Create(...): -want CR, +got CR:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.pid, sentPid); diff != "" {
+				t.Errorf("Create(...): -want project ID, +got project ID:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.opts, sent); diff != "" {
 				t.Errorf("Create(...): -want options, +got options:\n%s", diff)
@@ -483,14 +493,19 @@ func TestCreate(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	type want struct {
+		pid  any
 		opts *gitlab.SetPipelinesEmailServiceOptions
 		err  error
 	}
 
-	var sent *gitlab.SetPipelinesEmailServiceOptions
+	var (
+		sentPid any
+		sent    *gitlab.SetPipelinesEmailServiceOptions
+	)
 	capture := func(err error) *fake.MockPipelinesEmailClient {
 		return &fake.MockPipelinesEmailClient{
 			MockSetPipelinesEmailService: func(pid any, opt *gitlab.SetPipelinesEmailServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
+				sentPid = pid
 				sent = opt
 				return &gitlab.PipelinesEmailService{}, &gitlab.Response{}, err
 			},
@@ -528,6 +543,7 @@ func TestUpdate(t *testing.T) {
 				),
 			},
 			want: want{
+				pid: testProjectID,
 				opts: &gitlab.SetPipelinesEmailServiceOptions{
 					Recipients:                ptr.To(testRecipient),
 					NotifyOnlyBrokenPipelines: ptr.To(false),
@@ -541,6 +557,7 @@ func TestUpdate(t *testing.T) {
 				cr:     integrationPipelinesEmail(withProjectID(testProjectID), withRecipients(testRecipients...)),
 			},
 			want: want{
+				pid:  testProjectID,
 				opts: &gitlab.SetPipelinesEmailServiceOptions{Recipients: ptr.To(testRecipient)},
 				err:  errors.Wrap(errBoom, errUpdateFailed),
 			},
@@ -549,12 +566,15 @@ func TestUpdate(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			sent = nil
+			sentPid, sent = nil, nil
 			e := &external{client: tc.client}
 			o, err := e.Update(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("Update(...): -want error, +got error:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.pid, sentPid); diff != "" {
+				t.Errorf("Update(...): -want project ID, +got project ID:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.opts, sent); diff != "" {
 				t.Errorf("Update(...): -want options, +got options:\n%s", diff)
