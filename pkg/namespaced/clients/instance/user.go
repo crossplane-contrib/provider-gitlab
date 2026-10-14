@@ -1,0 +1,141 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package instance
+
+import (
+	"strings"
+
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	"k8s.io/utils/ptr"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+)
+
+// GitLab user states that a UserStateChange can leave.
+const (
+	gitlabUserStateActive      = "active"
+	gitlabUserStateBlocked     = "blocked"
+	gitlabUserStateDeactivated = "deactivated"
+)
+
+// UserClient defines Gitlab User service operations
+type UserClient interface {
+	GetUser(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	CreateUser(opt *gitlab.CreateUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	ModifyUser(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	DeleteUser(user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	BlockUser(user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	UnblockUser(user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	ActivateUser(user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// NewUserClient returns a new Gitlab User service
+func NewUserClient(cfg common.Config) UserClient {
+	git := common.NewClient(cfg)
+	return git.Users
+}
+
+// UserStateChange is the GitLab call that moves a user to another state.
+type UserStateChange func(c UserClient, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+// userStateChanges maps a desired state and the state GitLab reports to the call that converges them.
+// GitLab offers no call out of the other states, such as banned or ldap_blocked.
+var userStateChanges = map[v1alpha1.UserState]map[string]UserStateChange{
+	v1alpha1.UserStateActive: {
+		gitlabUserStateBlocked:     UserClient.UnblockUser,
+		gitlabUserStateDeactivated: UserClient.ActivateUser,
+	},
+	v1alpha1.UserStateBlocked: {
+		gitlabUserStateActive:      UserClient.BlockUser,
+		gitlabUserStateDeactivated: UserClient.BlockUser,
+	},
+}
+
+// UserStateChangeFor returns the call that moves a user from the observed GitLab state to the desired state.
+// It returns false when GitLab has no such call.
+func UserStateChangeFor(desired v1alpha1.UserState, observed string) (UserStateChange, bool) {
+	change, ok := userStateChanges[desired][observed]
+	return change, ok
+}
+
+// GenerateUserObservation is used to produce UserObservation from Gitlab User
+func GenerateUserObservation(u *gitlab.User) v1alpha1.UserObservation {
+	return v1alpha1.UserObservation{
+		ID:             u.ID,
+		Username:       u.Username,
+		Name:           u.Name,
+		Email:          u.Email,
+		State:          u.State,
+		IsAdmin:        u.IsAdmin,
+		CanCreateGroup: u.CanCreateGroup,
+		ProjectsLimit:  u.ProjectsLimit,
+		External:       u.External,
+		Note:           u.Note,
+		NamespaceID:    u.NamespaceID,
+	}
+}
+
+// GenerateCreateUserOptions is used to produce CreateUserOptions from UserParameters.
+// password is the value read from PasswordSecretRef, or nil when it is unset.
+func GenerateCreateUserOptions(p *v1alpha1.UserParameters, password *string) *gitlab.CreateUserOptions {
+	return &gitlab.CreateUserOptions{
+		Username:            ptr.To(p.Username),
+		Name:                ptr.To(p.Name),
+		Email:               ptr.To(p.Email),
+		Password:            password,
+		ResetPassword:       p.ResetPassword,
+		ForceRandomPassword: p.ForceRandomPassword,
+		SkipConfirmation:    p.SkipConfirmation,
+		Admin:               p.IsAdmin,
+		CanCreateGroup:      p.CanCreateGroup,
+		ProjectsLimit:       p.ProjectsLimit,
+		External:            p.External,
+		Note:                p.Note,
+	}
+}
+
+// GenerateModifyUserOptions is used to produce ModifyUserOptions from UserParameters.
+// An email change skips reconfirmation so the desired address applies at once.
+func GenerateModifyUserOptions(p *v1alpha1.UserParameters) *gitlab.ModifyUserOptions {
+	return &gitlab.ModifyUserOptions{
+		Username:           ptr.To(p.Username),
+		Name:               ptr.To(p.Name),
+		Email:              ptr.To(p.Email),
+		SkipReconfirmation: ptr.To(true),
+		Admin:              p.IsAdmin,
+		CanCreateGroup:     p.CanCreateGroup,
+		ProjectsLimit:      p.ProjectsLimit,
+		External:           p.External,
+		Note:               p.Note,
+	}
+}
+
+// IsUserUpToDate checks whether the UserParameters are in sync with the Gitlab User.
+// GitLab stores email addresses in lower case, so the email comparison ignores case.
+func IsUserUpToDate(p *v1alpha1.UserParameters, u *gitlab.User) bool {
+	return p.Username == u.Username &&
+		p.Name == u.Name &&
+		strings.EqualFold(p.Email, u.Email) &&
+		clients.IsComparableEqualToComparablePtr(p.IsAdmin, u.IsAdmin) &&
+		clients.IsComparableEqualToComparablePtr(p.CanCreateGroup, u.CanCreateGroup) &&
+		clients.IsComparableEqualToComparablePtr(p.ProjectsLimit, u.ProjectsLimit) &&
+		clients.IsComparableEqualToComparablePtr(p.External, u.External) &&
+		clients.IsComparableEqualToComparablePtr(p.Note, u.Note) &&
+		(p.State == nil || string(*p.State) == u.State)
+}
