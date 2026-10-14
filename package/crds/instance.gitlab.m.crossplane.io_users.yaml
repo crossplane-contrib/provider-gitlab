@@ -73,8 +73,11 @@ spec:
                     description: Admin grants instance administrator privileges.
                     type: boolean
                   canCreateGroup:
-                    description: CanCreateGroup allows the user to create top level
-                      groups.
+                    description: |-
+                      CanCreateGroup allows the user to create top level groups.
+                      GitLab reports whether the user can create groups right now, not the stored setting.
+                      On instances that block group creation for users with Guest access or below, the
+                      reported value can differ from this field and the resource keeps drifting.
                     type: boolean
                   email:
                     description: |-
@@ -92,8 +95,11 @@ spec:
                       Use it for users that only sign in through an external identity provider.
                     type: boolean
                   name:
-                    description: Name is the display name of the user.
+                    description: |-
+                      Name is the display name of the user.
+                      GitLab strips leading and trailing whitespace, so a name with either would never match.
                     minLength: 1
+                    pattern: ^\S(.*\S)?$
                     type: string
                   note:
                     description: Note is an administrator note about the user.

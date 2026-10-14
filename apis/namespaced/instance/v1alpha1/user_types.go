@@ -45,7 +45,9 @@ type UserParameters struct {
 	Username string `json:"username"`
 
 	// Name is the display name of the user.
+	// GitLab strips leading and trailing whitespace, so a name with either would never match.
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^\S(.*\S)?$`
 	Name string `json:"name"`
 
 	// Email is the primary email address of the user.
@@ -78,6 +80,9 @@ type UserParameters struct {
 	Admin *bool `json:"admin,omitempty"`
 
 	// CanCreateGroup allows the user to create top level groups.
+	// GitLab reports whether the user can create groups right now, not the stored setting.
+	// On instances that block group creation for users with Guest access or below, the
+	// reported value can differ from this field and the resource keeps drifting.
 	// +optional
 	CanCreateGroup *bool `json:"canCreateGroup,omitempty"`
 
