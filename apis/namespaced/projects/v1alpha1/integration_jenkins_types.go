@@ -46,8 +46,10 @@ type IntegrationJenkinsParameters struct {
 	// +required
 	URL string `json:"url"`
 
-	// ProjectName is the name of the Jenkins project.
+	// ProjectName is the name of the Jenkins project. GitLab answers a name
+	// with leading or trailing whitespace with HTTP 500.
 	// +required
+	// +kubebuilder:validation:Pattern=`^\S(.*\S)?$`
 	ProjectName string `json:"projectName"`
 
 	// EnableSSLVerification enables SSL verification. GitLab defaults to true.

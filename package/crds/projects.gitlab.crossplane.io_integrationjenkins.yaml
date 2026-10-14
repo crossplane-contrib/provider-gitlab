@@ -184,7 +184,10 @@ spec:
                         type: object
                     type: object
                   projectName:
-                    description: ProjectName is the name of the Jenkins project.
+                    description: |-
+                      ProjectName is the name of the Jenkins project. GitLab answers a name
+                      with leading or trailing whitespace with HTTP 500.
+                    pattern: ^\S(.*\S)?$
                     type: string
                   pushEvents:
                     description: PushEvents triggers a Jenkins build on push events.
