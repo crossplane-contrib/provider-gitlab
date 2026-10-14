@@ -29,7 +29,10 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/hooks"
 	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationharbor"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationjenkins"
 	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationmattermost"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationmicrosoftteams"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationtelegram"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/pipelineschedules"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/projects"
@@ -59,6 +62,9 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		badges.SetupBadge,
 		integrationmattermost.SetupIntegrationMattermost,
 		integrationharbor.SetupIntegrationHarbor,
+		integrationjenkins.SetupIntegrationJenkins,
+		integrationmicrosoftteams.SetupIntegrationMicrosoftTeams,
+		integrationtelegram.SetupIntegrationTelegram,
 		protectedenvironments.SetupProtectedEnvironment,
 		projectsharegroups.SetupProjectShareGroup,
 		serviceaccounts.SetupServiceAccount,
@@ -89,6 +95,9 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		badges.SetupBadgeGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
 		integrationharbor.SetupIntegrationHarborGated,
+		integrationjenkins.SetupIntegrationJenkinsGated,
+		integrationmicrosoftteams.SetupIntegrationMicrosoftTeamsGated,
+		integrationtelegram.SetupIntegrationTelegramGated,
 		protectedenvironments.SetupProtectedEnvironmentGated,
 		projectsharegroups.SetupProjectShareGroupGated,
 		serviceaccounts.SetupServiceAccountGated,
