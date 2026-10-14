@@ -201,6 +201,7 @@ func init() {
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
 	// Harbor
 	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
+	SchemeBuilder.Register(&IntegrationGithub{}, &IntegrationGithubList{})
 	SchemeBuilder.Register(&ProjectShareGroup{}, &ProjectShareGroupList{})
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})
