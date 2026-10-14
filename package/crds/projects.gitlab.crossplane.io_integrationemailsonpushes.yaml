@@ -179,8 +179,9 @@ spec:
                     pattern: \S
                     type: string
                   sendFromCommitterEmail:
-                    description: SendFromCommitterEmail sends the notifications from
-                      the committer's email address.
+                    description: |-
+                      SendFromCommitterEmail sends the notifications from the committer's email address
+                      if its domain matches the domain of the GitLab instance.
                     type: boolean
                   tagPushEvents:
                     description: TagPushEvents enables notifications for tag push

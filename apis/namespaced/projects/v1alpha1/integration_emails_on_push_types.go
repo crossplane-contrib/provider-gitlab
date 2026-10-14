@@ -51,7 +51,8 @@ type IntegrationEmailsOnPushParameters struct {
 	// +optional
 	DisableDiffs *bool `json:"disableDiffs,omitempty"`
 
-	// SendFromCommitterEmail sends the notifications from the committer's email address.
+	// SendFromCommitterEmail sends the notifications from the committer's email address
+	// if its domain matches the domain of the GitLab instance.
 	// +optional
 	SendFromCommitterEmail *bool `json:"sendFromCommitterEmail,omitempty"`
 
