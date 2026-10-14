@@ -32,12 +32,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 	pkgerrors "github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/instance/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	groupsfake "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups/fake"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
 )
@@ -58,6 +61,42 @@ const (
 	testAvatarURL   = "https://gitlab.example.com/uploads/-/system/user/avatar/123/" + testAvatarName + "?v=1"
 	testGravatarURL = "https://secure.gravatar.com/avatar/abc?s=80&d=identicon"
 )
+
+// testSecretAvatar is the GIF signature an avatar Secret holds in the
+// avatarSecretRef cases, distinct from testAvatar so a change is visible.
+var testSecretAvatar = []byte("GIF89a")
+
+const (
+	testSecretAvatarName = "610f5ae4d76e332636a17bd357fd6ce99029316a99d320280d4d77a746bf29e8.gif"
+	testAvatarSecret     = "sa-avatar"
+	testAvatarSecretKey  = "avatar"
+	errAvatarKeyMissing  = `cannot read avatar from key "avatar" of Secret "sa-avatar": Cannot find key in referenced secret`
+	errAvatarSecretGone  = `cannot read avatar from key "avatar" of Secret "sa-avatar": Cannot find referenced secret: secrets "sa-avatar" not found`
+)
+
+// avatarKube returns a kube client that holds the avatar Secret with data, or
+// no Secret at all when data is nil.
+func avatarKube(data map[string][]byte) client.Client {
+	b := fake.NewClientBuilder()
+	if data != nil {
+		b = b.WithObjects(&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: testAvatarSecret}, Data: data})
+	}
+	return b.Build()
+}
+
+func withAvatarSecretRef() serviceAccountModifier {
+	return func(r *v1alpha1.ServiceAccount) {
+		r.Namespace = "default"
+		r.Spec.ForProvider.AvatarSecretRef = common.TestCreateLocalSecretKeySelector(testAvatarSecret, testAvatarSecretKey)
+	}
+}
+
+func errString(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
+}
 
 // compileError returns the error raised by the standard library when compiling the given regular expression.
 func compileError(pattern string) error {
@@ -604,4 +643,75 @@ func TestDisconnect(t *testing.T) {
 
 func sPtr(s string) *string {
 	return &s
+}
+
+func TestObserveAvatarSecretRef(t *testing.T) {
+	cases := map[string]struct {
+		secret  map[string][]byte
+		want    managed.ExternalObservation
+		wantErr string
+	}{
+		"SecretMatchesAvatar": {secret: map[string][]byte{testAvatarSecretKey: testAvatar}, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}},
+		"SecretChanged":       {secret: map[string][]byte{testAvatarSecretKey: testSecretAvatar}, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}},
+		"KeyMissing":          {secret: map[string][]byte{"logo": testAvatar}, wantErr: errAvatarKeyMissing},
+		"SecretMissing":       {wantErr: errAvatarSecretGone},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: avatarKube(tc.secret), client: &MockClient{MockGetUser: func(_ int64, _ *gitlab.GetUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				return &gitlab.User{ID: 123, Name: testServiceAccountName, AvatarURL: testAvatarURL}, &gitlab.Response{}, nil
+			}}}
+			cr := serviceAccount(
+				withExternalName("123"),
+				withSpec(v1alpha1.ServiceAccountParameters{CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName)}}),
+				withAvatarSecretRef(),
+			)
+
+			got, err := e.Observe(context.Background(), cr)
+			if gotErr := errString(err); gotErr != tc.wantErr {
+				t.Errorf("Observe() error = %q, want %q", gotErr, tc.wantErr)
+			}
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("Observe(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUpdateAvatarSecretRef(t *testing.T) {
+	cases := map[string]struct {
+		secret       map[string][]byte
+		wantFilename string
+		wantErr      string
+	}{
+		"UploadsSecretAvatar": {secret: map[string][]byte{testAvatarSecretKey: testSecretAvatar}, wantFilename: testSecretAvatarName},
+		"SecretMissing":       {wantErr: errAvatarSecretGone},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			gotFilename := ""
+			e := &external{kube: avatarKube(tc.secret), client: &MockClient{MockModifyUser: func(_ int64, opt *gitlab.ModifyUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				if opt.Avatar != nil {
+					gotFilename = opt.Avatar.Filename
+				}
+				return &gitlab.User{}, &gitlab.Response{}, nil
+			}}}
+			cr := serviceAccount(
+				withExternalName("123"),
+				withSpec(v1alpha1.ServiceAccountParameters{CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName)}}),
+				withAtProvider(v1alpha1.ServiceAccountObservation{CommonServiceAccountObservation: commonv1alpha1.CommonServiceAccountObservation{AvatarURL: testAvatarURL}}),
+				withAvatarSecretRef(),
+			)
+
+			_, err := e.Update(context.Background(), cr)
+			if gotErr := errString(err); gotErr != tc.wantErr {
+				t.Errorf("Update() error = %q, want %q", gotErr, tc.wantErr)
+			}
+			if gotFilename != tc.wantFilename {
+				t.Errorf("Update() uploaded avatar %q, want %q", gotFilename, tc.wantFilename)
+			}
+		})
+	}
 }

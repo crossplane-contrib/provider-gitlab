@@ -39,6 +39,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/instance"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects"
+	commonController "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
@@ -165,31 +166,37 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	cr.Status.AtProvider = projects.GenerateServiceAccountObservation(serviceAccount)
-	if cr.Status.AtProvider.AvatarURL, err = e.observeAvatarURL(ctx, cr, serviceAccountID); err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
+	avatarUpToDate, err := e.observeAvatar(ctx, cr, serviceAccountID)
+	if err != nil {
+		return managed.ExternalObservation{}, err
 	}
 	cr.Status.SetConditions(v2.Available())
 
 	return managed.ExternalObservation{
-		ResourceExists: true,
-		ResourceUpToDate: projects.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) &&
-			common.IsAvatarUpToDate(cr.Spec.ForProvider.Avatar, cr.Status.AtProvider.AvatarURL),
+		ResourceExists:          true,
+		ResourceUpToDate:        projects.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) && avatarUpToDate,
 		ResourceLateInitialized: false,
 	}, nil
 }
 
-// observeAvatarURL returns the avatar URL of the service account user. The
-// project service account API does not return it, so it costs an extra users
-// API call, made only when the avatar is managed.
-func (e *external) observeAvatarURL(ctx context.Context, cr *v1alpha1.ServiceAccount, serviceAccountID int64) (string, error) {
-	if len(cr.Spec.ForProvider.Avatar) == 0 {
-		return "", nil
+// observeAvatar records the avatar URL of the service account user and reports
+// whether it shows the desired avatar. The project service account API does
+// not return the URL, so it costs an extra users API call, made only when the
+// avatar is managed.
+func (e *external) observeAvatar(ctx context.Context, cr *v1alpha1.ServiceAccount, serviceAccountID int64) (bool, error) {
+	avatar, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return false, err
+	}
+	if len(avatar) == 0 {
+		return true, nil
 	}
 	user, _, err := e.userClient.GetUser(serviceAccountID, &gitlab.GetUserOptions{}, gitlab.WithContext(ctx))
 	if err != nil {
-		return "", err
+		return false, errors.Wrap(err, errGetFailed)
 	}
-	return user.AvatarURL, nil
+	cr.Status.AtProvider.AvatarURL = user.AvatarURL
+	return common.IsAvatarUpToDate(avatar, user.AvatarURL), nil
 }
 
 // Create creates the external resource for Gitlab project Service Account.
@@ -240,7 +247,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
 
-	avatar, err := common.AvatarUpload(cr.Spec.ForProvider.Avatar, cr.Status.AtProvider.AvatarURL)
+	image, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+	avatar, err := common.AvatarUpload(image, cr.Status.AtProvider.AvatarURL)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAvatarFailed)
 	}

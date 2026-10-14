@@ -87,6 +87,5 @@ func IsServiceAccountUpToDate(p *v1alpha1.ServiceAccountParameters, u *gitlab.Us
 	return clients.IsComparableEqualToComparablePtr(p.Name, u.Name) &&
 		clients.IsComparableEqualToComparablePtr(p.Username, u.Username) &&
 		clients.IsComparableEqualToComparablePtr(p.Email, u.Email) &&
-		clients.IsComparableEqualToComparablePtr(p.Admin, u.IsAdmin) &&
-		common.IsAvatarUpToDate(p.Avatar, u.AvatarURL)
+		clients.IsComparableEqualToComparablePtr(p.Admin, u.IsAdmin)
 }

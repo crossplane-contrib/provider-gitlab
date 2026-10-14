@@ -103,5 +103,5 @@ func IsServiceAccountUpToDate(p *v1alpha1.ServiceAccountParameters, u *gitlab.Us
 		return false
 	}
 
-	return common.IsAvatarUpToDate(p.Avatar, u.AvatarURL)
+	return true
 }

@@ -41,6 +41,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/instance"
+	commonController "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
@@ -177,14 +178,21 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.Status.AtProvider = instance.GenerateServiceAccountObservation(serviceAccount)
 	cr.Status.SetConditions(v2.Available())
 
+	avatar, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return managed.ExternalObservation{}, err
+	}
+
 	groupsUpToDate, err := e.observeBaselinePermissions(ctx, cr, serviceAccount.ID)
 	if err != nil {
 		return managed.ExternalObservation{}, err
 	}
 
 	return managed.ExternalObservation{
-		ResourceExists:          true,
-		ResourceUpToDate:        instance.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) && groupsUpToDate,
+		ResourceExists: true,
+		ResourceUpToDate: instance.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) &&
+			common.IsAvatarUpToDate(avatar, serviceAccount.AvatarURL) &&
+			groupsUpToDate,
 		ResourceLateInitialized: false,
 	}, nil
 }
@@ -234,8 +242,13 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
 
+	avatar, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+
 	modifyUserOptions := instance.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider)
-	modifyUserOptions.Avatar, err = common.AvatarUpload(cr.Spec.ForProvider.Avatar, cr.Status.AtProvider.AvatarURL)
+	modifyUserOptions.Avatar, err = common.AvatarUpload(avatar, cr.Status.AtProvider.AvatarURL)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}

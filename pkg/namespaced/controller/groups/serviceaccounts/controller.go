@@ -38,6 +38,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
+	commonController "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/common"
 )
 
 const (
@@ -155,9 +156,15 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.Status.AtProvider = groups.GenerateServiceAccountObservationFromUser(serviceAccount)
 	cr.Status.SetConditions(v2.Available())
 
+	avatar, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return managed.ExternalObservation{}, err
+	}
+
 	return managed.ExternalObservation{
-		ResourceExists:          true,
-		ResourceUpToDate:        groups.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount),
+		ResourceExists: true,
+		ResourceUpToDate: groups.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) &&
+			common.IsAvatarUpToDate(avatar, serviceAccount.AvatarURL),
 		ResourceLateInitialized: false,
 	}, nil
 }
@@ -212,7 +219,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
 
-	avatar, err := common.AvatarUpload(cr.Spec.ForProvider.Avatar, cr.Status.AtProvider.AvatarURL)
+	image, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+	avatar, err := common.AvatarUpload(image, cr.Status.AtProvider.AvatarURL)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAvatarFailed)
 	}

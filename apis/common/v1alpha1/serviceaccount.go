@@ -39,6 +39,7 @@ type CommonServiceAccountParameters struct {
 	// when Admin Mode is on, also for group and project service accounts. The
 	// image is uploaded again whenever the avatar in GitLab differs, including
 	// changes made outside of Crossplane. When unset, the avatar is not managed.
+	// Mutually exclusive with avatarSecretRef.
 	// +optional
 	Avatar []byte `json:"avatar,omitempty"`
 }

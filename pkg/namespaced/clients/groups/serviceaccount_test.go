@@ -33,10 +33,8 @@ const (
 	testServiceAccountEmail    = "sa@example.org"
 )
 
-// testAvatar is the PNG signature, enough for content sniffing. testAvatarURL is
-// where GitLab serves it after an upload under its content addressed name.
-var testAvatar = []byte("\x89PNG\r\n\x1a\n")
-
+// testAvatarURL is where GitLab serves an avatar uploaded under its content
+// addressed name.
 const testAvatarURL = "https://gitlab.example.com/uploads/-/system/user/avatar/123/4c4b6a3be1314ab86138bef4314dde022e600960d8689a2c8f8631802d20dab6.png?v=1"
 
 func TestGenerateServiceAccountObservation(t *testing.T) {
@@ -141,14 +139,6 @@ func TestIsServiceAccountUpToDate(t *testing.T) {
 		"UpToDate": {
 			args: args{params: &v1alpha1.ServiceAccountParameters{CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr("a"), Username: sPtr("u"), Email: sPtr("e")}}, user: &gitlab.User{Name: "a", Username: "u", Email: "e"}},
 			want: true,
-		},
-		"AvatarMatches": {
-			args: args{params: &v1alpha1.ServiceAccountParameters{CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr("a"), Avatar: testAvatar}}, user: &gitlab.User{Name: "a", AvatarURL: testAvatarURL}},
-			want: true,
-		},
-		"AvatarDiffers": {
-			args: args{params: &v1alpha1.ServiceAccountParameters{CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr("a"), Avatar: testAvatar}}, user: &gitlab.User{Name: "a", AvatarURL: "https://secure.gravatar.com/avatar/abc?s=80"}},
-			want: false,
 		},
 	}
 
