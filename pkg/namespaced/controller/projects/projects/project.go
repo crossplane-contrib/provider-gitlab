@@ -402,12 +402,11 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	in.PagesAccessLevel = clients.LateInitializeAccessControlValue(in.PagesAccessLevel, project.PagesAccessLevel)
 	in.Path = clients.LateInitializeStringPtr(in.Path, project.Path)
 
-	// Late-initialize publicJobs and publicBuilds for backward compatibility
-	// Only initialize if both fields are unset
+	// publicJobs is not late-initialized while the deprecated publicBuilds is
+	// set, because publicJobs takes precedence and would override it.
 	//nolint:staticcheck // We intentionally use the deprecated field for backward compatibility
 	if in.PublicBuilds == nil && in.PublicJobs == nil {
 		in.PublicJobs = &project.PublicJobs
-		in.PublicBuilds = &project.PublicJobs
 	}
 
 	in.ReleasesAccessLevel = clients.LateInitializeAccessControlValue(in.ReleasesAccessLevel, project.ReleasesAccessLevel)
