@@ -64,7 +64,7 @@ type IntegrationGithubObservation struct {
 	// RepositoryURL is the URL of the GitHub repository.
 	RepositoryURL string `json:"repositoryUrl,omitempty"`
 	// StaticContext indicates whether the GitLab hostname is appended to the GitHub status check name.
-	StaticContext bool `json:"staticContext,omitempty"`
+	StaticContext bool `json:"staticContext"`
 }
 
 // A IntegrationGithubSpec defines the desired state of a GitLab Project GitHub Integration.

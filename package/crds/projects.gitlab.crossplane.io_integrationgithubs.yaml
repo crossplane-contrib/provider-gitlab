@@ -343,6 +343,8 @@ spec:
                     type: boolean
                   wikiPageEvents:
                     type: boolean
+                required:
+                - staticContext
                 type: object
               conditions:
                 description: Conditions of the resource.
