@@ -39,6 +39,10 @@ type CommonServiceAccountParameters struct {
 	// when Admin Mode is on, also for group and project service accounts. The
 	// image is uploaded again whenever the avatar in GitLab differs, including
 	// changes made outside of Crossplane. When unset, the avatar is not managed.
+	// Client-side kubectl apply stores the whole object in the
+	// last-applied-configuration annotation, which is limited to 256 KiB, so
+	// inline images over about 190 KB fail to apply. Use avatarSecretRef or
+	// server-side apply for larger images.
 	// Mutually exclusive with avatarSecretRef.
 	// +optional
 	Avatar []byte `json:"avatar,omitempty"`
@@ -61,5 +65,8 @@ type CommonServiceAccountObservation struct {
 	// Admin represents whether the service account has admin privileges.
 	Admin bool `json:"admin"`
 	// AvatarURL is the URL of the avatar GitLab shows for the service account.
+	// Project service accounts leave it empty while no avatar is managed. The
+	// project API does not return it, and the provider reads it from the users
+	// API only when an avatar is set.
 	AvatarURL string `json:"avatarUrl,omitempty"`
 }
