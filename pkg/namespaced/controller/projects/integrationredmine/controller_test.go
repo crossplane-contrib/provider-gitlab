@@ -313,6 +313,7 @@ func TestObserve(t *testing.T) {
 func TestCreate(t *testing.T) {
 	type want struct {
 		cr   resource.Managed
+		pid  any
 		opts *gitlab.SetRedmineServiceOptions
 		err  error
 	}
@@ -349,6 +350,7 @@ func TestCreate(t *testing.T) {
 					withURLs(testProjectURL, testIssuesURL, testNewIssueURL),
 					withConditions(v2.Creating()),
 				),
+				pid: testProjectID,
 				opts: &gitlab.SetRedmineServiceOptions{
 					ProjectURL:  &testProjectURL,
 					IssuesURL:   &testIssuesURL,
@@ -370,6 +372,7 @@ func TestCreate(t *testing.T) {
 					withURLs(testProjectURL, testIssuesURL, testNewIssueURL),
 					withConditions(v2.Creating()),
 				),
+				pid: testProjectID,
 				opts: &gitlab.SetRedmineServiceOptions{
 					ProjectURL:  &testProjectURL,
 					IssuesURL:   &testIssuesURL,
@@ -382,9 +385,11 @@ func TestCreate(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
+			var gotPID any
 			var gotOpts *gitlab.SetRedmineServiceOptions
 			e := &external{client: &fake.MockRedmineClient{
 				MockSetRedmineService: func(pid any, opt *gitlab.SetRedmineServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.RedmineService, *gitlab.Response, error) {
+					gotPID = pid
 					gotOpts = opt
 					return &gitlab.RedmineService{}, &gitlab.Response{}, tc.setErr
 				},
@@ -395,6 +400,9 @@ func TestCreate(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
 				t.Errorf("Create(...): -want CR, +got CR:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.pid, gotPID); diff != "" {
+				t.Errorf("Create(...): -want project ID, +got project ID:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.opts, gotOpts); diff != "" {
 				t.Errorf("Create(...): -want options, +got options:\n%s", diff)
@@ -408,6 +416,7 @@ func TestCreate(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	type want struct {
+		pid  any
 		opts *gitlab.SetRedmineServiceOptions
 		err  error
 	}
@@ -433,6 +442,7 @@ func TestUpdate(t *testing.T) {
 				),
 			},
 			want: want{
+				pid: testProjectID,
 				opts: &gitlab.SetRedmineServiceOptions{
 					ProjectURL:  &testProjectURL,
 					IssuesURL:   &testIssuesURL,
@@ -449,6 +459,7 @@ func TestUpdate(t *testing.T) {
 			},
 			setErr: errBoom,
 			want: want{
+				pid: testProjectID,
 				opts: &gitlab.SetRedmineServiceOptions{
 					ProjectURL:  &testProjectURL,
 					IssuesURL:   &testIssuesURL,
@@ -461,9 +472,11 @@ func TestUpdate(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
+			var gotPID any
 			var gotOpts *gitlab.SetRedmineServiceOptions
 			e := &external{client: &fake.MockRedmineClient{
 				MockSetRedmineService: func(pid any, opt *gitlab.SetRedmineServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.RedmineService, *gitlab.Response, error) {
+					gotPID = pid
 					gotOpts = opt
 					return &gitlab.RedmineService{}, &gitlab.Response{}, tc.setErr
 				},
@@ -471,6 +484,9 @@ func TestUpdate(t *testing.T) {
 			o, err := e.Update(context.Background(), tc.args.cr)
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("Update(...): -want error, +got error:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.pid, gotPID); diff != "" {
+				t.Errorf("Update(...): -want project ID, +got project ID:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.opts, gotOpts); diff != "" {
 				t.Errorf("Update(...): -want options, +got options:\n%s", diff)
