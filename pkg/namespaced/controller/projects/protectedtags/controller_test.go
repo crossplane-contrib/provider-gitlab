@@ -318,6 +318,9 @@ func TestCreate(t *testing.T) {
 			e := &external{client: &fake.MockClient{
 				MockProtectRepositoryTags: func(pid any, opt *gitlab.ProtectRepositoryTagsOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedTag, *gitlab.Response, error) {
 					sent = opt
+					if pid != projectID {
+						return nil, notFound(), errBoom
+					}
 					if tc.protectFn != nil {
 						return nil, &gitlab.Response{}, tc.protectFn(pid, opt)
 					}
@@ -345,6 +348,7 @@ func TestCreate(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	type want struct {
 		calls []string
+		sent  *gitlab.ProtectRepositoryTagsOptions
 		err   error
 	}
 
@@ -363,8 +367,19 @@ func TestUpdate(t *testing.T) {
 			want: want{err: errors.New(errProjectIDMissing)},
 		},
 		"UnprotectsThenProtects": {
-			cr:   protectedTag(withProjectID(projectID), withCreateAccessLevel(30)),
-			want: want{calls: []string{"unprotect 1234 v*", "protect 1234 v* 30"}},
+			cr: protectedTag(
+				withProjectID(projectID),
+				withCreateAccessLevel(0),
+				withAllowedToCreate(v1alpha1.TagCreateAccess{DeployKeyID: ptr.To(int64(9))}),
+			),
+			want: want{
+				calls: []string{"unprotect 1234 v*", "protect 1234 v* 0"},
+				sent: &gitlab.ProtectRepositoryTagsOptions{
+					Name:              ptr.To(tagName),
+					CreateAccessLevel: ptr.To(gitlab.AccessLevelValue(0)),
+					AllowedToCreate:   &[]*gitlab.TagsPermissionOptions{{DeployKeyID: ptr.To(int64(9))}},
+				},
+			},
 		},
 		"FailedUnprotectStopsBeforeProtect": {
 			cr:          protectedTag(withProjectID(projectID), withCreateAccessLevel(30)),
@@ -379,7 +394,11 @@ func TestUpdate(t *testing.T) {
 			protectErr: errBoom,
 			want: want{
 				calls: []string{"unprotect 1234 v*", "protect 1234 v* 30"},
-				err:   errors.Wrap(errBoom, errReprotectFailed),
+				sent: &gitlab.ProtectRepositoryTagsOptions{
+					Name:              ptr.To(tagName),
+					CreateAccessLevel: ptr.To(gitlab.AccessLevelValue(30)),
+				},
+				err: errors.Wrap(errBoom, errReprotectFailed),
 			},
 		},
 	}
@@ -387,6 +406,7 @@ func TestUpdate(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			var calls []string
+			var sent *gitlab.ProtectRepositoryTagsOptions
 			e := &external{client: &fake.MockClient{
 				MockUnprotectRepositoryTags: func(pid any, tag string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 					calls = append(calls, fmt.Sprintf("unprotect %v %s", pid, tag))
@@ -397,6 +417,7 @@ func TestUpdate(t *testing.T) {
 				},
 				MockProtectRepositoryTags: func(pid any, opt *gitlab.ProtectRepositoryTagsOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedTag, *gitlab.Response, error) {
 					calls = append(calls, fmt.Sprintf("protect %v %s %d", pid, ptr.Deref(opt.Name, ""), ptr.Deref(opt.CreateAccessLevel, -1)))
+					sent = opt
 					return &gitlab.ProtectedTag{Name: tagName}, &gitlab.Response{}, tc.protectErr
 				},
 			}}
@@ -410,6 +431,9 @@ func TestUpdate(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want.calls, calls); diff != "" {
 				t.Errorf("calls: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.sent, sent); diff != "" {
+				t.Errorf("sent options: -want, +got:\n%s", diff)
 			}
 		})
 	}
