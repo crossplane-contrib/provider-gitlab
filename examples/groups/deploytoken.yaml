@@ -13,3 +13,21 @@ spec:
   writeConnectionSecretToRef:
     name: gitlab-example-deploy-token
     namespace: crossplane-system
+---
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: DeployToken
+metadata:
+  name: example-deploy-token-renewed
+spec:
+  forProvider:
+    groupIdRef:
+      name: example-group
+    renewalPeriodDays: 30
+    renewBeforeDays: 7 # replace the token 7 days before it expires
+    scopes:
+      - "read_repository"
+  providerConfigRef:
+    name: gitlab-provider
+  writeConnectionSecretToRef:
+    name: gitlab-example-deploy-token-renewed
+    namespace: crossplane-system
