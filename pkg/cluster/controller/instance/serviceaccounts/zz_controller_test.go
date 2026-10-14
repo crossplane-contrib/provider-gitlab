@@ -51,6 +51,16 @@ var (
 
 const invalidBaselinePermissionsFilter = "["
 
+// testAvatar is the PNG signature, enough for content sniffing. GitLab serves it
+// from testAvatarURL after an upload under its content addressed name.
+var testAvatar = []byte("\x89PNG\r\n\x1a\n")
+
+const (
+	testAvatarName  = "4c4b6a3be1314ab86138bef4314dde022e600960d8689a2c8f8631802d20dab6.png"
+	testAvatarURL   = "https://gitlab.example.com/uploads/-/system/user/avatar/123/" + testAvatarName + "?v=1"
+	testGravatarURL = "https://secure.gravatar.com/avatar/abc?s=80&d=identicon"
+)
+
 // compileError returns the error raised by the standard library when compiling the given regular expression.
 func compileError(pattern string) error {
 	_, err := regexp.Compile(pattern)
@@ -471,6 +481,60 @@ func TestUpdate(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
 				t.Errorf("Update(): -want cr, +got cr:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUpdateAvatar(t *testing.T) {
+	cases := map[string]struct {
+		avatar       []byte
+		avatarURL    string
+		wantFilename string
+		wantErr      bool
+	}{
+		"UploadsChangedAvatar": {avatar: testAvatar, avatarURL: testGravatarURL, wantFilename: testAvatarName},
+		"SkipsCurrentAvatar":   {avatar: testAvatar, avatarURL: testAvatarURL},
+		"SkipsUnmanagedAvatar": {avatarURL: testGravatarURL},
+		"RejectsUnsupportedAvatar": {
+			avatar:    []byte("not an image"),
+			avatarURL: testGravatarURL,
+			wantErr:   true,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var got *gitlab.ModifyUserOptions
+			e := &external{client: &MockClient{MockModifyUser: func(_ int64, opt *gitlab.ModifyUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				got = opt
+				return &gitlab.User{}, &gitlab.Response{}, nil
+			}}}
+			cr := serviceAccount(
+				withExternalName("123"),
+				withSpec(v1alpha1.ServiceAccountParameters{CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Avatar: tc.avatar}}),
+				withAtProvider(v1alpha1.ServiceAccountObservation{CommonServiceAccountObservation: commonv1alpha1.CommonServiceAccountObservation{AvatarURL: tc.avatarURL}}),
+			)
+
+			_, err := e.Update(context.Background(), cr)
+			if gotErr := err != nil; gotErr != tc.wantErr {
+				t.Fatalf("Update() error = %v, want error %v", err, tc.wantErr)
+			}
+			if tc.wantErr {
+				if got != nil {
+					t.Errorf("Update() called ModifyUser for an unsupported avatar")
+				}
+				return
+			}
+			gotFilename := ""
+			if got.Avatar != nil {
+				gotFilename = got.Avatar.Filename
+			}
+			if gotFilename != tc.wantFilename {
+				t.Errorf("Update() uploaded avatar %q, want %q", gotFilename, tc.wantFilename)
+			}
+			if got.Name == nil || *got.Name != testServiceAccountName {
+				t.Errorf("Update() dropped the name from ModifyUser options")
 			}
 		})
 	}

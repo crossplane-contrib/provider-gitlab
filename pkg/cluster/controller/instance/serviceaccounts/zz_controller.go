@@ -233,6 +233,13 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
+
+	modifyUserOptions := instance.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider)
+	modifyUserOptions.Avatar, err = common.AvatarUpload(cr.Spec.ForProvider.Avatar, cr.Status.AtProvider.AvatarURL)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	}
+
 	updateWaitGroup := sync.WaitGroup{}
 	errorsChannel := make(chan error, 3) // buffer size of 3 to avoid blocking if all operations fail
 
@@ -240,7 +247,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	updateWaitGroup.Go(func() {
 		_, _, err := e.client.ModifyUser(
 			serviceAccountID,
-			instance.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider),
+			modifyUserOptions,
 			gitlab.WithContext(ctx))
 		if err != nil {
 			errorsChannel <- errors.Wrap(err, errUpdateFailed)

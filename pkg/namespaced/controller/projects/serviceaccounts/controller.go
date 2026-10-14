@@ -36,17 +36,19 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects"
 )
 
 const (
-	errNotServiceAccount = "managed resource is not a Gitlab service account custom resource"
-	errGetFailed         = "cannot get Gitlab service account"
-	errCreateFailed      = "cannot create Gitlab service account"
-	errUpdateFailed      = "cannot update Gitlab service account"
-	errDeleteFailed      = "cannot delete Gitlab service account"
-	errIDNotInt          = "specified ID is not an integer"
-	errMissingProjectID  = "missing Spec.ForProvider.ProjectID"
+	errNotServiceAccount  = "managed resource is not a Gitlab service account custom resource"
+	errGetFailed          = "cannot get Gitlab service account"
+	errCreateFailed       = "cannot create Gitlab service account"
+	errUpdateFailed       = "cannot update Gitlab service account"
+	errUpdateAvatarFailed = "cannot update Gitlab service account avatar"
+	errDeleteFailed       = "cannot delete Gitlab service account"
+	errIDNotInt           = "specified ID is not an integer"
+	errMissingProjectID   = "missing Spec.ForProvider.ProjectID"
 )
 
 // SetupServiceAccount adds a controller that reconciles GitLab project Service Accounts.
@@ -107,13 +109,16 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if err != nil {
 		return nil, err
 	}
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
+	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), userClient: instance.NewServiceAccountClient(*cfg)}, nil
 }
 
 // external represents the external client for Gitlab Service Accounts
 type external struct {
 	kube   client.Client
 	client projects.ServiceAccountClient
+	// userClient reads and uploads the avatar, which the project service
+	// account API does not expose.
+	userClient instance.ServiceAccountClient
 }
 
 // Observe checks if the Gitlab Service Account external resource exists and whether
@@ -158,13 +163,31 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	cr.Status.AtProvider = projects.GenerateServiceAccountObservation(serviceAccount)
+	if cr.Status.AtProvider.AvatarURL, err = e.observeAvatarURL(ctx, cr, serviceAccountID); err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
+	}
 	cr.Status.SetConditions(v2.Available())
 
 	return managed.ExternalObservation{
-		ResourceExists:          true,
-		ResourceUpToDate:        projects.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount),
+		ResourceExists: true,
+		ResourceUpToDate: projects.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) &&
+			common.IsAvatarUpToDate(cr.Spec.ForProvider.Avatar, cr.Status.AtProvider.AvatarURL),
 		ResourceLateInitialized: false,
 	}, nil
+}
+
+// observeAvatarURL returns the avatar URL of the service account user. The
+// project service account API does not return it, so it costs an extra users
+// API call, made only when the avatar is managed.
+func (e *external) observeAvatarURL(ctx context.Context, cr *v1alpha1.ServiceAccount, serviceAccountID int64) (string, error) {
+	if len(cr.Spec.ForProvider.Avatar) == 0 {
+		return "", nil
+	}
+	user, _, err := e.userClient.GetUser(serviceAccountID, &gitlab.GetUserOptions{}, gitlab.WithContext(ctx))
+	if err != nil {
+		return "", err
+	}
+	return user.AvatarURL, nil
 }
 
 // Create creates the external resource for Gitlab project Service Account.
@@ -215,6 +238,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
 
+	avatar, err := common.AvatarUpload(cr.Spec.ForProvider.Avatar, cr.Status.AtProvider.AvatarURL)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAvatarFailed)
+	}
+
 	serviceAccount, _, err := e.client.UpdateProjectServiceAccount(
 		*cr.Spec.ForProvider.ProjectID,
 		serviceAccountID,
@@ -225,6 +253,14 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	cr.Status.AtProvider = projects.GenerateServiceAccountObservation(serviceAccount)
+
+	// The project service account API has no avatar parameter, so the avatar
+	// goes through the users API, which needs an administrator token.
+	if avatar != nil {
+		if _, _, err := e.userClient.ModifyUser(serviceAccountID, &gitlab.ModifyUserOptions{Avatar: avatar}, gitlab.WithContext(ctx)); err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAvatarFailed)
+		}
+	}
 
 	return managed.ExternalUpdate{}, nil
 }

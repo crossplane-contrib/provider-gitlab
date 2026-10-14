@@ -54,6 +54,16 @@ const (
 	unexpectedCallMsg          = "unexpected call"
 )
 
+// testAvatar is the PNG signature, enough for content sniffing. GitLab serves it
+// from testAvatarURL after an upload under its content addressed name.
+var testAvatar = []byte("\x89PNG\r\n\x1a\n")
+
+const (
+	testAvatarName  = "4c4b6a3be1314ab86138bef4314dde022e600960d8689a2c8f8631802d20dab6.png"
+	testAvatarURL   = "https://gitlab.example.com/uploads/-/system/user/avatar/123/" + testAvatarName + "?v=1"
+	testGravatarURL = "https://secure.gravatar.com/avatar/abc?s=80&d=identicon"
+)
+
 func assertGroupID(t *testing.T, got any, want *int64) {
 	t.Helper()
 	var gid int64
@@ -130,9 +140,11 @@ func (m *MockGroupsClient) DeleteServiceAccount(gid any, serviceAccount int64, o
 }
 
 // MockUserClient is a minimal mock for instance.ServiceAccountClient. Only GetUser
-// is expected to be called by the group-scoped ServiceAccount controller.
+// and ModifyUser are expected to be called by the group-scoped ServiceAccount
+// controller.
 type MockUserClient struct {
-	MockGetUser func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	MockGetUser    func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	MockModifyUser func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 }
 
 func (m *MockUserClient) GetUser(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
@@ -144,7 +156,10 @@ func (m *MockUserClient) CreateServiceAccountUser(opts *gitlab.CreateServiceAcco
 }
 
 func (m *MockUserClient) ModifyUser(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
-	panic(unexpectedCallMsg)
+	if m.MockModifyUser == nil {
+		panic(unexpectedCallMsg)
+	}
+	return m.MockModifyUser(user, opt, options...)
 }
 
 func (m *MockUserClient) DeleteUser(user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
@@ -434,6 +449,57 @@ func TestUpdate(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
 				t.Errorf("Update(): -want cr, +got cr:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUpdateAvatar(t *testing.T) {
+	groupID := int64(42)
+	updated := &MockGroupsClient{MockUpdateServiceAccount: func(_ any, _ int64, _ *gitlab.UpdateServiceAccountOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.GroupServiceAccount, *gitlab.Response, error) {
+		return &gitlab.GroupServiceAccount{}, &gitlab.Response{}, nil
+	}}
+
+	cases := map[string]struct {
+		avatarURL    string
+		modifyErr    error
+		wantFilename string
+		wantErr      error
+	}{
+		"UploadsChangedAvatar": {avatarURL: testGravatarURL, wantFilename: testAvatarName},
+		"SkipsCurrentAvatar":   {avatarURL: testAvatarURL},
+		"ErrUploadAvatar":      {avatarURL: testGravatarURL, modifyErr: errBoom, wantFilename: testAvatarName, wantErr: errors.Wrap(errBoom, errUpdateAvatarFailed)},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var gotFilename string
+			userClient := &MockUserClient{}
+			if tc.wantFilename != "" {
+				userClient.MockModifyUser = func(user int64, opt *gitlab.ModifyUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+					if user != testServiceAccountID {
+						t.Errorf(serviceAccountMismatchFmt, user, testServiceAccountID)
+					}
+					if opt.Name != nil || opt.Username != nil || opt.Email != nil {
+						t.Errorf("ModifyUser() sent fields besides the avatar: %+v", opt)
+					}
+					gotFilename = opt.Avatar.Filename
+					return &gitlab.User{}, &gitlab.Response{}, tc.modifyErr
+				}
+			}
+			e := &external{client: updated, userClient: userClient}
+			cr := serviceAccount(
+				withExternalName("123"),
+				withSpec(v1alpha1.ServiceAccountParameters{GroupID: &groupID, CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Avatar: testAvatar}}),
+				withAtProvider(v1alpha1.ServiceAccountObservation{CommonServiceAccountObservation: commonv1alpha1.CommonServiceAccountObservation{AvatarURL: tc.avatarURL}}),
+			)
+
+			_, err := e.Update(context.Background(), cr)
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("Update(): -want error, +got error:\n%s", diff)
+			}
+			if gotFilename != tc.wantFilename {
+				t.Errorf("Update() uploaded avatar %q, want %q", gotFilename, tc.wantFilename)
 			}
 		})
 	}

@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/instance"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects"
 )
 
@@ -63,6 +64,46 @@ func (m *mockClient) DeleteProjectServiceAccount(pid any, sa int64, opt *gitlab.
 	return m.MockDelete(pid, sa, opt, options...)
 }
 
+// mockUserClient mocks the users API calls the controller makes for the avatar.
+type mockUserClient struct {
+	MockGetUser    func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	MockModifyUser func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+}
+
+var _ instance.ServiceAccountClient = &mockUserClient{}
+
+func (m *mockUserClient) GetUser(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+	return m.MockGetUser(user, opt, options...)
+}
+
+func (m *mockUserClient) CreateServiceAccountUser(_ *gitlab.CreateServiceAccountUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+	panic("unexpected call")
+}
+
+func (m *mockUserClient) ModifyUser(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+	return m.MockModifyUser(user, opt, options...)
+}
+
+func (m *mockUserClient) DeleteUser(_ int64, _ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	panic("unexpected call")
+}
+
+func userReturning(avatarURL string) func(int64, *gitlab.GetUserOptions, ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+	return func(_ int64, _ *gitlab.GetUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+		return &gitlab.User{ID: saID, AvatarURL: avatarURL}, &gitlab.Response{}, nil
+	}
+}
+
+// testAvatar is the PNG signature, enough for content sniffing. GitLab serves it
+// from testAvatarURL after an upload under its content addressed name.
+var testAvatar = []byte("\x89PNG\r\n\x1a\n")
+
+const (
+	testAvatarName  = "4c4b6a3be1314ab86138bef4314dde022e600960d8689a2c8f8631802d20dab6.png"
+	testAvatarURL   = "https://gitlab.example.com/uploads/-/system/user/avatar/57/" + testAvatarName + "?v=1"
+	testGravatarURL = "https://secure.gravatar.com/avatar/abc?s=80&d=identicon"
+)
+
 var (
 	errBoom      = errors.New("boom")
 	projectID    = int64(42)
@@ -81,6 +122,12 @@ func withParams(name, username string) saModifier {
 		r.Spec.ForProvider.Name = ptr.To(name)
 		r.Spec.ForProvider.Username = ptr.To(username)
 	}
+}
+func withAvatar(image []byte) saModifier {
+	return func(r *v1alpha1.ServiceAccount) { r.Spec.ForProvider.Avatar = image }
+}
+func withAvatarURL(u string) saModifier {
+	return func(r *v1alpha1.ServiceAccount) { r.Status.AtProvider.AvatarURL = u }
 }
 func withExternalName(n string) saModifier {
 	return func(r *v1alpha1.ServiceAccount) { meta.SetExternalName(r, n) }
@@ -105,9 +152,10 @@ func TestObserve(t *testing.T) {
 		err    error
 	}
 	cases := map[string]struct {
-		client projects.ServiceAccountClient
-		cr     resource.Managed
-		want   want
+		client     projects.ServiceAccountClient
+		userClient instance.ServiceAccountClient
+		cr         resource.Managed
+		want       want
 	}{
 		"InvalidInput": {cr: invalidInput, want: want{err: errors.New(errNotServiceAccount)}},
 		"NoExternalName": {
@@ -144,10 +192,30 @@ func TestObserve(t *testing.T) {
 			cr:     sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u")),
 			want:   want{result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}},
 		},
+		"AvatarUpToDate": {
+			client:     &mockClient{MockList: listReturning(&gitlab.ProjectServiceAccount{ID: saID, Name: "n", Username: "u"})},
+			userClient: &mockUserClient{MockGetUser: userReturning(testAvatarURL)},
+			cr:         sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u"), withAvatar(testAvatar)),
+			want:       want{result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}},
+		},
+		"AvatarNotUpToDate": {
+			client:     &mockClient{MockList: listReturning(&gitlab.ProjectServiceAccount{ID: saID, Name: "n", Username: "u"})},
+			userClient: &mockUserClient{MockGetUser: userReturning(testGravatarURL)},
+			cr:         sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u"), withAvatar(testAvatar)),
+			want:       want{result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}},
+		},
+		"ErrGetAvatar": {
+			client: &mockClient{MockList: listReturning(&gitlab.ProjectServiceAccount{ID: saID, Name: "n", Username: "u"})},
+			userClient: &mockUserClient{MockGetUser: func(_ int64, _ *gitlab.GetUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				return nil, nil, errBoom
+			}},
+			cr:   sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u"), withAvatar(testAvatar)),
+			want: want{err: errors.Wrap(errBoom, errGetFailed)},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{client: tc.client}
+			e := &external{client: tc.client, userClient: tc.userClient}
 			o, err := e.Observe(context.Background(), tc.cr)
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("err: -want, +got:\n%s", diff)
@@ -196,6 +264,46 @@ func TestCreate(t *testing.T) {
 				if got := meta.GetExternalName(tc.cr); got != tc.wantExtN {
 					t.Errorf("external-name: want %q got %q", tc.wantExtN, got)
 				}
+			}
+		})
+	}
+}
+
+func TestUpdateAvatar(t *testing.T) {
+	updated := &mockClient{MockUpdate: func(_ any, _ int64, _ *gitlab.UpdateProjectServiceAccountOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.ProjectServiceAccount, *gitlab.Response, error) {
+		return &gitlab.ProjectServiceAccount{ID: saID, Name: "n", Username: "u"}, &gitlab.Response{}, nil
+	}}
+
+	cases := map[string]struct {
+		avatarURL    string
+		modifyErr    error
+		wantFilename string
+		wantErr      error
+	}{
+		"UploadsChangedAvatar": {avatarURL: testGravatarURL, wantFilename: testAvatarName},
+		"SkipsCurrentAvatar":   {avatarURL: testAvatarURL},
+		"ErrUploadAvatar":      {avatarURL: testGravatarURL, modifyErr: errBoom, wantFilename: testAvatarName, wantErr: errors.Wrap(errBoom, errUpdateAvatarFailed)},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var gotFilename string
+			userClient := &mockUserClient{MockModifyUser: func(user int64, opt *gitlab.ModifyUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				if user != saID {
+					t.Errorf("ModifyUser() user = %d, want %d", user, saID)
+				}
+				gotFilename = opt.Avatar.Filename
+				return &gitlab.User{}, &gitlab.Response{}, tc.modifyErr
+			}}
+			e := &external{client: updated, userClient: userClient}
+			cr := sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u"), withAvatar(testAvatar), withAvatarURL(tc.avatarURL))
+
+			_, err := e.Update(context.Background(), cr)
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+			if gotFilename != tc.wantFilename {
+				t.Errorf("Update() uploaded avatar %q, want %q", gotFilename, tc.wantFilename)
 			}
 		})
 	}

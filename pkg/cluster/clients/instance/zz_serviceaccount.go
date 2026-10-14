@@ -45,11 +45,12 @@ func NewServiceAccountClient(cfg common.Config) ServiceAccountClient {
 func GenerateServiceAccountObservation(u *gitlab.User) v1alpha1.ServiceAccountObservation {
 	return v1alpha1.ServiceAccountObservation{
 		CommonServiceAccountObservation: commonv1alpha1.CommonServiceAccountObservation{
-			ID:       u.ID,
-			Name:     u.Name,
-			Username: u.Username,
-			Email:    u.Email,
-			Admin:    u.IsAdmin,
+			ID:        u.ID,
+			Name:      u.Name,
+			Username:  u.Username,
+			Email:     u.Email,
+			Admin:     u.IsAdmin,
+			AvatarURL: u.AvatarURL,
 		},
 	}
 }
@@ -86,5 +87,6 @@ func IsServiceAccountUpToDate(p *v1alpha1.ServiceAccountParameters, u *gitlab.Us
 	return clients.IsComparableEqualToComparablePtr(p.Name, u.Name) &&
 		clients.IsComparableEqualToComparablePtr(p.Username, u.Username) &&
 		clients.IsComparableEqualToComparablePtr(p.Email, u.Email) &&
-		clients.IsComparableEqualToComparablePtr(p.Admin, u.IsAdmin)
+		clients.IsComparableEqualToComparablePtr(p.Admin, u.IsAdmin) &&
+		common.IsAvatarUpToDate(p.Avatar, u.AvatarURL)
 }

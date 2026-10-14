@@ -43,13 +43,14 @@ import (
 )
 
 const (
-	errNotServiceAccount = "managed resource is not a Gitlab service account custom resource"
-	errGetFailed         = "cannot get Gitlab service account"
-	errCreateFailed      = "cannot create Gitlab service account"
-	errUpdateFailed      = "cannot update Gitlab service account"
-	errDeleteFailed      = "cannot delete Gitlab service account"
-	errIDNotInt          = "specified ID is not an integer"
-	errMissingGroupID    = "missing Spec.ForProvider.GroupID"
+	errNotServiceAccount  = "managed resource is not a Gitlab service account custom resource"
+	errGetFailed          = "cannot get Gitlab service account"
+	errCreateFailed       = "cannot create Gitlab service account"
+	errUpdateFailed       = "cannot update Gitlab service account"
+	errUpdateAvatarFailed = "cannot update Gitlab service account avatar"
+	errDeleteFailed       = "cannot delete Gitlab service account"
+	errIDNotInt           = "specified ID is not an integer"
+	errMissingGroupID     = "missing Spec.ForProvider.GroupID"
 )
 
 // SetupServiceAccount adds a controller that reconciles GitLab Service Accounts.
@@ -213,6 +214,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
 
+	avatar, err := common.AvatarUpload(cr.Spec.ForProvider.Avatar, cr.Status.AtProvider.AvatarURL)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAvatarFailed)
+	}
+
 	// Call GitLab Service Accounts API
 	serviceAccount, _, err := e.client.UpdateServiceAccount(
 		*cr.Spec.ForProvider.GroupID,
@@ -224,6 +230,14 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	cr.Status.AtProvider = groups.GenerateServiceAccountObservation(serviceAccount)
+
+	// The group service account API has no avatar parameter, so the avatar
+	// goes through the users API, which needs an administrator token.
+	if avatar != nil {
+		if _, _, err := e.userClient.ModifyUser(serviceAccountID, &gitlab.ModifyUserOptions{Avatar: avatar}, gitlab.WithContext(ctx)); err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAvatarFailed)
+		}
+	}
 
 	return managed.ExternalUpdate{}, nil
 }
