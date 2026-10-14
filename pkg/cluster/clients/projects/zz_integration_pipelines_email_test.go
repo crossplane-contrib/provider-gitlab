@@ -3,6 +3,7 @@
 package projects
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -121,6 +122,24 @@ func TestGenerateIntegrationPipelinesEmailObservation(t *testing.T) {
 				t.Errorf("GenerateIntegrationPipelinesEmailObservation(): -want, +got:\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestIntegrationPipelinesEmailObservationShowsFalse(t *testing.T) {
+	observation := GenerateIntegrationPipelinesEmailObservation(&gitlab.PipelinesEmailService{
+		Properties: &gitlab.PipelinesEmailProperties{Recipients: "a@example.com"},
+	})
+
+	raw, err := json.Marshal(observation)
+	if err != nil {
+		t.Fatalf("marshal observation: %v", err)
+	}
+	fields := map[string]json.RawMessage{}
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		t.Fatalf("unmarshal observation %s: %v", raw, err)
+	}
+	if got := string(fields["notifyOnlyBrokenPipelines"]); got != "false" {
+		t.Errorf("notifyOnlyBrokenPipelines in %s: got %q, want %q", raw, got, "false")
 	}
 }
 

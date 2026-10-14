@@ -73,7 +73,7 @@ type IntegrationPipelinesEmailObservation struct {
 	// Recipients are the email addresses that receive pipeline status emails.
 	Recipients []string `json:"recipients,omitempty"`
 	// NotifyOnlyBrokenPipelines indicates whether notifications are sent for broken pipelines only.
-	NotifyOnlyBrokenPipelines bool `json:"notifyOnlyBrokenPipelines,omitempty"`
+	NotifyOnlyBrokenPipelines bool `json:"notifyOnlyBrokenPipelines"`
 	// BranchesToBeNotified is the set of branches notifications are sent for.
 	BranchesToBeNotified string `json:"branchesToBeNotified,omitempty"`
 }
