@@ -619,6 +619,38 @@ func sPtr(s string) *string {
 	return &s
 }
 
+func TestObserveAvatar(t *testing.T) {
+	cases := map[string]struct {
+		avatar    []byte
+		avatarURL string
+		want      managed.ExternalObservation
+	}{
+		"Unmanaged":     {avatarURL: testGravatarURL, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}},
+		"AvatarMatches": {avatar: testAvatar, avatarURL: testAvatarURL, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}},
+		"AvatarDiffers": {avatar: testAvatar, avatarURL: testGravatarURL, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{userClient: &MockUserClient{MockGetUser: func(_ int64, _ *gitlab.GetUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				return &gitlab.User{ID: testServiceAccountID, Name: testServiceAccountName, AvatarURL: tc.avatarURL}, &gitlab.Response{}, nil
+			}}}
+			cr := serviceAccount(
+				withExternalName("123"),
+				withSpec(v1alpha1.ServiceAccountParameters{CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Avatar: tc.avatar}}),
+			)
+
+			got, err := e.Observe(context.Background(), cr)
+			if err != nil {
+				t.Fatalf("Observe() error = %v", err)
+			}
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("Observe(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestObserveAvatarSecretRef(t *testing.T) {
 	cases := map[string]struct {
 		secret  map[string][]byte

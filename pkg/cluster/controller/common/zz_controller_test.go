@@ -60,6 +60,13 @@ func TestResolveAvatar(t *testing.T) {
 			selector: common.TestCreateSecretKeySelector("sa-avatar", "avatar"),
 			want:     png,
 		},
+		"SecretKeyWinsOverInline": {
+			secret:   avatarSecret("avatar", png),
+			mg:       sa,
+			inline:   inline,
+			selector: common.TestCreateSecretKeySelector("sa-avatar", "avatar"),
+			want:     png,
+		},
 		"SecretMissing": {
 			mg:       sa,
 			selector: common.TestCreateSecretKeySelector("sa-avatar", "avatar"),
