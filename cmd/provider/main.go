@@ -67,13 +67,13 @@ func main() {
 
 	zl := zap.New(zap.UseDevMode(*debug), UseISO8601())
 	log := logging.NewLogrLogger(zl.WithName("provider-gitlab"))
-	// explicitly  provide a no-op logger by default, otherwise controller-runtime gives a warning
-	ctrl.SetLogger(zap.New(zap.WriteTo(io.Discard)))
+	// controller-runtime is *very* verbose even at info level, so it only gets
+	// a real logger in debug mode. It keeps the first SetLogger call and warns
+	// when none is made, so set exactly one logger.
 	if *debug {
-		// The controller-runtime runs with a no-op logger by default. It is
-		// *very* verbose even at info level, so we only provide it a real
-		// logger when we're running in debug mode.
 		ctrl.SetLogger(zl)
+	} else {
+		ctrl.SetLogger(zap.New(zap.WriteTo(io.Discard)))
 	}
 
 	log.Debug("Starting", "sync-period", syncInterval.String())
