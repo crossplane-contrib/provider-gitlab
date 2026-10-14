@@ -17,6 +17,8 @@ limitations under the License.
 package common
 
 import (
+	"time"
+
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
@@ -28,14 +30,20 @@ import (
 // ControllerOptions configure every controller this provider sets up.
 type ControllerOptions struct {
 	controller.Options
+
+	// MinPollInterval is the shortest poll interval a managed resource may
+	// request with the crossplane.io/poll-interval annotation. Shorter
+	// requests are raised to this value.
+	MinPollInterval time.Duration
 }
 
 // NewReconciler returns a managed resource reconciler for the supplied kind
-// that uses the provider-wide poll interval, logger, event recorder and
+// that uses the provider-wide poll intervals, logger, event recorder and
 // feature flags. The supplied options are applied after these.
 func NewReconciler(mgr ctrl.Manager, o ControllerOptions, name string, of resource.ManagedKind, opts ...managed.ReconcilerOption) *managed.Reconciler {
 	ro := []managed.ReconcilerOption{
 		managed.WithPollInterval(o.PollInterval),
+		managed.WithMinPollInterval(o.MinPollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	}

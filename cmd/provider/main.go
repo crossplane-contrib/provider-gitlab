@@ -57,6 +57,7 @@ func main() {
 		debug            = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
 		syncInterval     = app.Flag("sync", "Sync interval controls how often all resources will be double checked for drift.").Short('s').Default("1h").Duration()
 		pollInterval     = app.Flag("poll", "Poll interval controls how often an individual resource should be checked for drift.").Default("1m").Duration()
+		minPollInterval  = app.Flag("min-poll-interval", "Minimum poll interval a resource may request with the crossplane.io/poll-interval annotation. Shorter values are raised to this minimum.").Default("30s").Envar("MIN_POLL_INTERVAL").Duration()
 		leaderElection   = app.Flag("leader-election", "Use leader election for the conroller manager.").Short('l').Default("false").OverrideDefaultFromEnvar("LEADER_ELECTION").Bool()
 		maxReconcileRate = app.Flag("max-reconcile-rate", "The global maximum rate per second at which resources may checked for drift from the desired state.").Default("10").Int()
 
@@ -77,7 +78,7 @@ func main() {
 		ctrl.SetLogger(zl)
 	}
 
-	log.Debug("Starting", "sync-period", syncInterval.String())
+	log.Debug("Starting", "sync-period", syncInterval.String(), "poll-interval", pollInterval.String(), "min-poll-interval", minPollInterval.String())
 
 	cfg, err := ctrl.GetConfig()
 	kingpin.FatalIfError(err, "Cannot get API server rest config")
@@ -128,6 +129,7 @@ func main() {
 			Features:                &feature.Flags{},
 			MetricOptions:           &mo,
 		},
+		MinPollInterval: *minPollInterval,
 	}
 
 	if *enableManagementPolicies {
