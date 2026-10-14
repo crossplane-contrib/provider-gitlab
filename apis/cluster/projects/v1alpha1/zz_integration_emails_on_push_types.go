@@ -80,9 +80,9 @@ type IntegrationEmailsOnPushObservation struct {
 	// Recipients is the whitespace-separated list of email addresses that receive the push notifications.
 	Recipients string `json:"recipients,omitempty"`
 	// DisableDiffs indicates whether code diffs are disabled in the notification emails.
-	DisableDiffs bool `json:"disableDiffs,omitempty"`
+	DisableDiffs bool `json:"disableDiffs"`
 	// SendFromCommitterEmail indicates whether the notifications are sent from the committer's email address.
-	SendFromCommitterEmail bool `json:"sendFromCommitterEmail,omitempty"`
+	SendFromCommitterEmail bool `json:"sendFromCommitterEmail"`
 	// BranchesToBeNotified is the set of branches notifications are sent for.
 	BranchesToBeNotified string `json:"branchesToBeNotified,omitempty"`
 }

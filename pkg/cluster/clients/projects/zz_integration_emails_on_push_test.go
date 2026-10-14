@@ -3,6 +3,7 @@
 package projects
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -140,6 +141,30 @@ func TestGenerateIntegrationEmailsOnPushObservation(t *testing.T) {
 				t.Errorf("GenerateIntegrationEmailsOnPushObservation(): -want, +got:\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestIntegrationEmailsOnPushObservationJSONKeepsFalse(t *testing.T) {
+	type falseFields struct {
+		DisableDiffs           *bool `json:"disableDiffs"`
+		SendFromCommitterEmail *bool `json:"sendFromCommitterEmail"`
+	}
+
+	observation := GenerateIntegrationEmailsOnPushObservation(&gitlab.EmailsOnPushService{
+		Properties: &gitlab.EmailsOnPushServiceProperties{Recipients: testEmailsOnPushRecipients},
+	})
+	raw, err := json.Marshal(observation)
+	if err != nil {
+		t.Fatalf("marshal observation: %v", err)
+	}
+
+	got := falseFields{}
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatalf("unmarshal observation %q: %v", string(raw), err)
+	}
+	want := falseFields{DisableDiffs: ptr.To(false), SendFromCommitterEmail: ptr.To(false)}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("observation JSON %s: -want, +got:\n%s", string(raw), diff)
 	}
 }
 

@@ -317,6 +317,9 @@ spec:
                     type: boolean
                   wikiPageEvents:
                     type: boolean
+                required:
+                - disableDiffs
+                - sendFromCommitterEmail
                 type: object
               conditions:
                 description: Conditions of the resource.
