@@ -170,23 +170,41 @@ includes a namespaced `ProviderConfig`, its credentials `Secret`, and the
 resource that must still delete its GitLab resource then has no credentials. It
 reports `cannot get referenced ProviderConfig ... not found` or
 `Cannot find referenced secret` and keeps its finalizer. The namespace stays in
-`Terminating`, and the GitLab resource is not deleted. See
+`Terminating`, and the GitLab resource can remain. See
 [crossplane/crossplane-runtime#1049](https://github.com/crossplane/crossplane-runtime/issues/1049).
+
+[crossplane/crossplane-runtime#1113](https://github.com/crossplane/crossplane-runtime/pull/1113)
+keeps the `ProviderConfig` until its managed resources are gone. The change is
+merged but not released. This provider uses crossplane-runtime v2.4.2, which
+does not include it. The change also does not protect the credentials `Secret`.
+[crossplane/crossplane#7801](https://github.com/crossplane/crossplane/issues/7801)
+tracks protection for the `Secret`.
 
 To delete a namespace with its managed resources, use one of these options:
 
 * Reference a `ClusterProviderConfig` from managed resources in a namespace that
-  you delete as a whole. Keep its credentials `Secret` in a namespace that you
-  do not delete, for example `crossplane-system`.
+  you delete as a whole. A managed resource without `providerConfigRef` uses the
+  `ClusterProviderConfig` named `default`. Keep its credentials `Secret` in a
+  namespace that you do not delete, for example `crossplane-system`. A
+  terminating namespace refuses to create a new `ProviderConfigUsage`. The
+  provider ignores that refusal while the managed resource is being deleted. See
+  [crossplane/crossplane-runtime#1150](https://github.com/crossplane/crossplane-runtime/issues/1150).
 * Delete the managed resources first and wait until they are gone. Then delete
   the namespace.
 
 If a namespace is already stuck, point each stuck managed resource at a
-`ClusterProviderConfig`. The managed resource then deletes its GitLab resource
-and releases the namespace:
+`ClusterProviderConfig` whose token can manage its GitLab resource. The managed
+resource then deletes its GitLab resource and releases the namespace. If the
+token cannot see the project or group, GitLab answers 404. The managed resource
+then removes its finalizer and leaves the GitLab resource in place.
+
+Patch each resource by the full name that the first command prints, for example
+`variable.projects.gitlab.m.crossplane.io/my-variable`. A short name such as
+`variable` matches several API groups.
 
 ```bash
-kubectl patch -n <namespace> <resource>/<name> --type=merge \
+kubectl get managed -n <namespace> -o name | grep '\.gitlab\.m\.crossplane\.io/'
+kubectl patch -n <namespace> <full-name> --type=merge \
   -p '{"spec":{"providerConfigRef":{"kind":"ClusterProviderConfig","name":"<cluster-provider-config>"}}}'
 ```
 
