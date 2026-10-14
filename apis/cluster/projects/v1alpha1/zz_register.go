@@ -158,6 +158,14 @@ var (
 	IntegrationHarborGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationHarborKind)
 )
 
+// IntegrationPipelinesEmail type metadata
+var (
+	IntegrationPipelinesEmailKind             = reflect.TypeOf(IntegrationPipelinesEmail{}).Name()
+	IntegrationPipelinesEmailGroupKind        = schema.GroupKind{Group: Group, Kind: IntegrationPipelinesEmailKind}.String()
+	IntegrationPipelinesEmailKindAPIVersion   = IntegrationPipelinesEmailKind + "." + SchemeGroupVersion.String()
+	IntegrationPipelinesEmailGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationPipelinesEmailKind)
+)
+
 // ProjectShareGroup type metadata
 var (
 	ProjectShareGroupKind             = reflect.TypeOf(ProjectShareGroup{}).Name()
@@ -201,6 +209,7 @@ func init() {
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
 	// Harbor
 	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
+	SchemeBuilder.Register(&IntegrationPipelinesEmail{}, &IntegrationPipelinesEmailList{})
 	SchemeBuilder.Register(&ProjectShareGroup{}, &ProjectShareGroupList{})
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})
