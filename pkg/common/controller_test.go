@@ -18,6 +18,7 @@ package common
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,20 +29,32 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource/fake"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	xpv2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	namespacedgroupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
 )
 
 type fakeManager struct {
 	fake.Manager
+	runnables []manager.Runnable
 }
 
 func (m *fakeManager) GetEventRecorderFor(string) record.EventRecorder {
 	return record.NewFakeRecorder(8)
+}
+
+func (m *fakeManager) Add(r manager.Runnable) error {
+	m.runnables = append(m.runnables, r)
+	return nil
 }
 
 func firstReconciles(t *testing.T) uint64 {
@@ -60,6 +73,109 @@ func firstReconciles(t *testing.T) uint64 {
 		}
 	}
 	return n
+}
+
+func stateGauges(t *testing.T) map[string]float64 {
+	t.Helper()
+	families, err := metrics.Registry.Gather()
+	if err != nil {
+		t.Fatalf("metrics.Registry.Gather(): %v", err)
+	}
+	got := map[string]float64{}
+	for _, f := range families {
+		if !strings.HasPrefix(f.GetName(), "crossplane_managed_resource_") {
+			continue
+		}
+		for _, m := range f.GetMetric() {
+			for _, l := range m.GetLabel() {
+				if l.GetName() == "gvk" {
+					got[f.GetName()+"{"+l.GetValue()+"}"] = m.GetGauge().GetValue()
+				}
+			}
+		}
+	}
+	return got
+}
+
+func TestAddMRStateRecorder(t *testing.T) {
+	cases := map[string]struct {
+		reason        string
+		metricOptions func(*statemetrics.MRStateMetrics) *controller.MetricOptions
+		wantRunnables int
+		wantGauges    map[string]float64
+	}{
+		"NilMetricOptions": {
+			reason:     "Without metric options no recorder should be added.",
+			wantGauges: map[string]float64{},
+		},
+		"MetricOptionsWithoutStateMetrics": {
+			reason: "Metric options without MRStateMetrics should add no recorder.",
+			metricOptions: func(*statemetrics.MRStateMetrics) *controller.MetricOptions {
+				return &controller.MetricOptions{PollStateMetricInterval: time.Millisecond}
+			},
+			wantGauges: map[string]float64{},
+		},
+		"StateMetrics": {
+			reason: "With MRStateMetrics one recorder should be added that records the supplied list into those metrics.",
+			metricOptions: func(sm *statemetrics.MRStateMetrics) *controller.MetricOptions {
+				return &controller.MetricOptions{MRStateMetrics: sm, PollStateMetricInterval: time.Millisecond}
+			},
+			wantRunnables: 1,
+			wantGauges: map[string]float64{
+				"crossplane_managed_resource_exists{groups.gitlab.m.crossplane.io/v1alpha1, Kind=Variable}": 2,
+				"crossplane_managed_resource_ready{groups.gitlab.m.crossplane.io/v1alpha1, Kind=Variable}":  1,
+				"crossplane_managed_resource_synced{groups.gitlab.m.crossplane.io/v1alpha1, Kind=Variable}": 1,
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			sm := statemetrics.NewMRStateMetrics()
+			if err := metrics.Registry.Register(sm); err != nil {
+				t.Fatalf("metrics.Registry.Register(...): %v", err)
+			}
+			t.Cleanup(func() { metrics.Registry.Unregister(sm) })
+
+			s := runtime.NewScheme()
+			if err := namespacedgroupsv1alpha1.SchemeBuilder.AddToScheme(s); err != nil {
+				t.Fatalf("AddToScheme(...): %v", err)
+			}
+			ready := namespacedgroupsv1alpha1.Variable{}
+			ready.SetConditions(xpv2.Available(), xpv2.ReconcileSuccess())
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			list := &namespacedgroupsv1alpha1.VariableList{}
+			mgr := &fakeManager{Manager: fake.Manager{Client: &test.MockClient{
+				MockScheme: test.NewMockSchemeFn(s),
+				MockList: test.NewMockListFn(nil, func(client.ObjectList) error {
+					list.Items = []namespacedgroupsv1alpha1.Variable{ready, {}}
+					cancel()
+					return nil
+				}),
+			}}}
+			o := ControllerOptions{Options: controller.Options{Logger: logging.NewNopLogger()}}
+			if tc.metricOptions != nil {
+				o.MetricOptions = tc.metricOptions(sm)
+			}
+
+			if err := AddMRStateRecorder(mgr, o, list); err != nil {
+				t.Fatalf("\n%s\nAddMRStateRecorder(...): unexpected error: %v", tc.reason, err)
+			}
+			if diff := cmp.Diff(tc.wantRunnables, len(mgr.runnables)); diff != "" {
+				t.Fatalf("\n%s\nrunnables added: -want, +got:\n%s", tc.reason, diff)
+			}
+			for _, r := range mgr.runnables {
+				if err := r.Start(ctx); err != nil {
+					t.Fatalf("\n%s\nr.Start(...): unexpected error: %v", tc.reason, err)
+				}
+			}
+			if diff := cmp.Diff(tc.wantGauges, stateGauges(t)); diff != "" {
+				t.Errorf("\n%s\nstate gauges: -want, +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
 }
 
 func TestNewReconciler(t *testing.T) {

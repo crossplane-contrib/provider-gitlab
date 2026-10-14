@@ -52,6 +52,9 @@ linters:
         - pattern: ^managed\.NewReconciler$
           pkg: ^github\.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed$
           msg: Use common.NewReconciler so the controller applies the provider-wide reconciler options.
+        - pattern: ^statemetrics\.NewMRStateRecorder$
+          pkg: ^github\.com/crossplane/crossplane-runtime/v2/pkg/statemetrics$
+          msg: Use common.AddMRStateRecorder so the controller skips the recorder when no state metrics are configured.
       analyze-types: true
     goconst:
       min-len: 3

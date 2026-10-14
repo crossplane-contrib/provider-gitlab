@@ -24,6 +24,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -54,4 +55,14 @@ func NewReconciler(mgr ctrl.Manager, o ControllerOptions, name string, of resour
 		ro = append(ro, managed.WithManagementPolicies())
 	}
 	return managed.NewReconciler(mgr, of, append(ro, opts...)...)
+}
+
+// AddMRStateRecorder adds a runnable to mgr that records the exists, ready and
+// synced metrics of the managed resources in list. It adds nothing when the
+// options carry no MRStateMetrics.
+func AddMRStateRecorder(mgr ctrl.Manager, o ControllerOptions, list resource.ManagedList) error {
+	if o.MetricOptions == nil || o.MetricOptions.MRStateMetrics == nil {
+		return nil
+	}
+	return mgr.Add(statemetrics.NewMRStateRecorder(mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, list, o.MetricOptions.PollStateMetricInterval))
 }
