@@ -51,7 +51,7 @@ func SetupCluster(mgr ctrl.Manager, o controller.Options) error {
 
 func SetupClusterGated(mgr ctrl.Manager, o controller.Options) error {
 	o.Gate.Register(func() {
-		if err := Setup(mgr, o); err != nil {
+		if err := SetupCluster(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconcilers", "gvk", v1beta1.ClusterProviderConfigGroupVersionKind.String())
 		}
 	}, v1beta1.ClusterProviderConfigGroupVersionKind, v1beta1.ProviderConfigUsageGroupVersionKind)
