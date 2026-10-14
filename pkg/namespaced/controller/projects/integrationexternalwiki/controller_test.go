@@ -153,8 +153,8 @@ func TestConnect(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			c := &connector{kube: tc.kube, newGitlabClientFn: nil}
 			o, err := c.Connect(context.Background(), tc.args.cr)
-			if diff := cmp.Diff(tc.want.Error(), err.Error()); diff != "" {
-				t.Errorf("Connect(...): -want error, +got error:\n%s", diff)
+			if err == nil || err.Error() != tc.want.Error() {
+				t.Errorf("Connect(...): want error %q, got %v", tc.want, err)
 			}
 			if o != nil {
 				t.Errorf("Connect(...): want nil client, got %v", o)
