@@ -28,6 +28,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/hooks"
+	integrationemailsonpush "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationemailsonpush"
 	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationharbor"
 	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationmattermost"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/members"
@@ -58,6 +59,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		protectedbranches.SetupProtectedBranch,
 		badges.SetupBadge,
 		integrationmattermost.SetupIntegrationMattermost,
+		integrationemailsonpush.SetupIntegrationEmailsOnPush,
 		integrationharbor.SetupIntegrationHarbor,
 		protectedenvironments.SetupProtectedEnvironment,
 		projectsharegroups.SetupProjectShareGroup,
@@ -88,6 +90,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		protectedbranches.SetupProtectedBranchGated,
 		badges.SetupBadgeGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
+		integrationemailsonpush.SetupIntegrationEmailsOnPushGated,
 		integrationharbor.SetupIntegrationHarborGated,
 		protectedenvironments.SetupProtectedEnvironmentGated,
 		projectsharegroups.SetupProjectShareGroupGated,

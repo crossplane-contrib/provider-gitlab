@@ -260,6 +260,46 @@ func (mg *Hook) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) 
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this IntegrationEmailsOnPush.
+func (mg *IntegrationEmailsOnPush) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetManagementPolicies of this IntegrationEmailsOnPush.
+func (mg *IntegrationEmailsOnPush) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationEmailsOnPush.
+func (mg *IntegrationEmailsOnPush) GetProviderConfigReference() *v2.ProviderConfigReference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationEmailsOnPush.
+func (mg *IntegrationEmailsOnPush) GetWriteConnectionSecretToReference() *v2.LocalSecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationEmailsOnPush.
+func (mg *IntegrationEmailsOnPush) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetManagementPolicies of this IntegrationEmailsOnPush.
+func (mg *IntegrationEmailsOnPush) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationEmailsOnPush.
+func (mg *IntegrationEmailsOnPush) SetProviderConfigReference(r *v2.ProviderConfigReference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationEmailsOnPush.
+func (mg *IntegrationEmailsOnPush) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this IntegrationHarbor.
 func (mg *IntegrationHarbor) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)
