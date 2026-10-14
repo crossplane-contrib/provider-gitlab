@@ -316,6 +316,15 @@ func TestObserve(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
+			if tc.client != nil {
+				get := tc.client.MockGetJenkinsCIService
+				tc.client.MockGetJenkinsCIService = func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.JenkinsCIService, *gitlab.Response, error) {
+					if pid != testProjectID {
+						return nil, nil, errors.Errorf("unexpected project id %v", pid)
+					}
+					return get(pid, options...)
+				}
+			}
 			e := &external{client: tc.client}
 			o, err := e.Observe(context.Background(), tc.cr)
 			checkErr(t, "Observe", tc.want.err, err)
@@ -397,6 +406,9 @@ func TestCreateAndUpdate(t *testing.T) {
 		mc := &fake.MockJenkinsClient{
 			MockSetJenkinsCIService: func(pid any, opt *gitlab.SetJenkinsCIServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.JenkinsCIService, *gitlab.Response, error) {
 				got = opt
+				if pid != testProjectID {
+					return nil, nil, errors.Errorf("unexpected project id %v", pid)
+				}
 				return &gitlab.JenkinsCIService{}, &gitlab.Response{}, tc.setErr
 			},
 		}

@@ -208,6 +208,9 @@ func TestObserve(t *testing.T) {
 	get := func(svc *gitlab.MicrosoftTeamsService, status int, err error) *fake.MockMicrosoftTeamsClient {
 		return &fake.MockMicrosoftTeamsClient{
 			MockGetMicrosoftTeamsService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MicrosoftTeamsService, *gitlab.Response, error) {
+				if pid != testProjectID {
+					return nil, nil, errors.Errorf("unexpected project id %v", pid)
+				}
 				return svc, &gitlab.Response{Response: &http.Response{StatusCode: status}}, err
 			},
 		}
@@ -363,6 +366,9 @@ func TestCreateAndUpdate(t *testing.T) {
 		mc := &fake.MockMicrosoftTeamsClient{
 			MockSetMicrosoftTeamsService: func(pid any, opt *gitlab.SetMicrosoftTeamsServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.MicrosoftTeamsService, *gitlab.Response, error) {
 				got = opt
+				if pid != testProjectID {
+					return nil, nil, errors.Errorf("unexpected project id %v", pid)
+				}
 				return &gitlab.MicrosoftTeamsService{}, &gitlab.Response{}, tc.setErr
 			},
 		}

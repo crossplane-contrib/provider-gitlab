@@ -212,6 +212,46 @@ func TestIsIntegrationTelegramUpToDate(t *testing.T) {
 			observation: observed(),
 			want:        false,
 		},
+		"OutOfDatePushEvents": {
+			spec:        &projectsv1alpha1.IntegrationTelegramParameters{Room: "@channel", PushEvents: ptr.To(false)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateIssuesEvents": {
+			spec:        &projectsv1alpha1.IntegrationTelegramParameters{Room: "@channel", IssuesEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateConfidentialIssuesEvents": {
+			spec:        &projectsv1alpha1.IntegrationTelegramParameters{Room: "@channel", ConfidentialIssuesEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateMergeRequestsEvents": {
+			spec:        &projectsv1alpha1.IntegrationTelegramParameters{Room: "@channel", MergeRequestsEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateTagPushEvents": {
+			spec:        &projectsv1alpha1.IntegrationTelegramParameters{Room: "@channel", TagPushEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateNoteEvents": {
+			spec:        &projectsv1alpha1.IntegrationTelegramParameters{Room: "@channel", NoteEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateConfidentialNoteEvents": {
+			spec:        &projectsv1alpha1.IntegrationTelegramParameters{Room: "@channel", ConfidentialNoteEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateWikiPageEvents": {
+			spec:        &projectsv1alpha1.IntegrationTelegramParameters{Room: "@channel", WikiPageEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
 		"NilObservation": {
 			spec: &projectsv1alpha1.IntegrationTelegramParameters{},
 			want: false,

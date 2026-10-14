@@ -196,6 +196,46 @@ func TestIsIntegrationMicrosoftTeamsUpToDate(t *testing.T) {
 			observation: observed(),
 			want:        false,
 		},
+		"OutOfDatePushEvents": {
+			spec:        &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{PushEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateConfidentialIssuesEvents": {
+			spec:        &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{ConfidentialIssuesEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateMergeRequestsEvents": {
+			spec:        &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{MergeRequestsEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateTagPushEvents": {
+			spec:        &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{TagPushEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateNoteEvents": {
+			spec:        &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{NoteEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateConfidentialNoteEvents": {
+			spec:        &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{ConfidentialNoteEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDatePipelineEvents": {
+			spec:        &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{PipelineEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateWikiPageEvents": {
+			spec:        &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{WikiPageEvents: ptr.To(true)},
+			observation: observed(),
+			want:        false,
+		},
 		"NilObservation": {
 			spec: &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{},
 			want: false,

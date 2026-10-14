@@ -210,6 +210,33 @@ func TestIsIntegrationJenkinsUpToDate(t *testing.T) {
 			observation: observed(),
 			want:        false,
 		},
+		"OutOfDateUsername": {
+			spec: &projectsv1alpha1.IntegrationJenkinsParameters{
+				URL:         "https://jenkins.example.com",
+				ProjectName: "my-job",
+				Username:    ptr.To("other"),
+			},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateMergeRequestsEvents": {
+			spec: &projectsv1alpha1.IntegrationJenkinsParameters{
+				URL:                 "https://jenkins.example.com",
+				ProjectName:         "my-job",
+				MergeRequestsEvents: ptr.To(true),
+			},
+			observation: observed(),
+			want:        false,
+		},
+		"OutOfDateTagPushEvents": {
+			spec: &projectsv1alpha1.IntegrationJenkinsParameters{
+				URL:           "https://jenkins.example.com",
+				ProjectName:   "my-job",
+				TagPushEvents: ptr.To(true),
+			},
+			observation: observed(),
+			want:        false,
+		},
 		"NilObservation": {
 			spec: &projectsv1alpha1.IntegrationJenkinsParameters{},
 			want: false,

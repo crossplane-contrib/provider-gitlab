@@ -215,6 +215,9 @@ func TestObserve(t *testing.T) {
 	get := func(svc *gitlab.TelegramService, status int, err error) *fake.MockTelegramClient {
 		return &fake.MockTelegramClient{
 			MockGetTelegramService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.TelegramService, *gitlab.Response, error) {
+				if pid != testProjectID {
+					return nil, nil, errors.Errorf("unexpected project id %v", pid)
+				}
 				return svc, &gitlab.Response{Response: &http.Response{StatusCode: status}}, err
 			},
 		}
@@ -375,6 +378,9 @@ func TestCreateAndUpdate(t *testing.T) {
 		mc := &fake.MockTelegramClient{
 			MockSetTelegramService: func(pid any, opt *gitlab.SetTelegramServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.TelegramService, *gitlab.Response, error) {
 				got = opt
+				if pid != testProjectID {
+					return nil, nil, errors.Errorf("unexpected project id %v", pid)
+				}
 				return &gitlab.TelegramService{}, &gitlab.Response{}, tc.setErr
 			},
 		}
