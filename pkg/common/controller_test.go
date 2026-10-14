@@ -51,7 +51,7 @@ func TestNewReconcilerPollInterval(t *testing.T) {
 		"AnnotationBelowMinimum": {
 			reason:     "An annotation below MinPollInterval should poll at MinPollInterval.",
 			annotation: "2s",
-			want:       reconcile.Result{RequeueAfter: 30 * time.Second},
+			want:       reconcile.Result{RequeueAfter: 10 * time.Second},
 		},
 		"AnnotationAboveMinimum": {
 			reason:     "An annotation above MinPollInterval should poll at the annotation value.",
@@ -80,7 +80,7 @@ func TestNewReconcilerPollInterval(t *testing.T) {
 			}}
 			o := ControllerOptions{
 				Options:         controller.Options{Logger: logging.NewNopLogger(), PollInterval: 10 * time.Minute},
-				MinPollInterval: 30 * time.Second,
+				MinPollInterval: 10 * time.Second,
 			}
 
 			r := NewReconciler(mgr, o, "test", resource.ManagedKind(fake.GVK(&fake.ModernManaged{})),

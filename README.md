@@ -52,7 +52,7 @@ flags set the timer:
 | Flag | Default | Description |
 | --- | --- | --- |
 | `--poll` | `1m` | How often the provider checks each resource. |
-| `--min-poll-interval` | `30s` | The shortest interval a resource can request with the `crossplane.io/poll-interval` annotation. The provider also reads it from `MIN_POLL_INTERVAL`. Set it to `0s` to remove the minimum. |
+| `--min-poll-interval` | `10s` | The shortest interval a resource can request with the `crossplane.io/poll-interval` annotation. The provider also reads it from `MIN_POLL_INTERVAL`. Set it to `0s` to remove the minimum. |
 | `--sync` | `1h` | How often the provider reconciles all resources, whatever their poll interval. |
 
 To poll one resource at a different interval, set the
