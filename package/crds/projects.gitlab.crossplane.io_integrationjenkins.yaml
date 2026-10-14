@@ -366,6 +366,8 @@ spec:
                     type: boolean
                   wikiPageEvents:
                     type: boolean
+                required:
+                - enableSslVerification
                 type: object
               conditions:
                 description: Conditions of the resource.

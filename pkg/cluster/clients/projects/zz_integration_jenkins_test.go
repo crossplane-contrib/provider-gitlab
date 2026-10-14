@@ -3,6 +3,7 @@
 package projects
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -329,5 +330,22 @@ func TestLateInitializeIntegrationJenkins(t *testing.T) {
 				t.Errorf("LateInitializeIntegrationJenkins(): -want, +got:\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestIntegrationJenkinsObservationJSONKeepsFalse(t *testing.T) {
+	obs := GenerateIntegrationJenkinsObservation(&gitlab.JenkinsCIService{
+		Properties: &gitlab.JenkinsCIServiceProperties{EnableSSLVerification: false},
+	})
+	raw, err := json.Marshal(obs)
+	if err != nil {
+		t.Fatalf("json.Marshal(): %v", err)
+	}
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatalf("json.Unmarshal(): %v", err)
+	}
+	if diff := cmp.Diff("false", string(got["enableSslVerification"])); diff != "" {
+		t.Errorf("enableSslVerification: -want, +got:\n%s", diff)
 	}
 }

@@ -89,7 +89,7 @@ type IntegrationJenkinsObservation struct {
 	// ProjectName is the name of the Jenkins project.
 	ProjectName string `json:"projectName,omitempty"`
 	// EnableSSLVerification indicates whether SSL verification is enabled.
-	EnableSSLVerification bool `json:"enableSslVerification,omitempty"`
+	EnableSSLVerification bool `json:"enableSslVerification"`
 	// Username of the Jenkins server.
 	Username string `json:"username,omitempty"`
 }

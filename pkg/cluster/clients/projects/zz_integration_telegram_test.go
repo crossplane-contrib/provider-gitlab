@@ -3,6 +3,7 @@
 package projects
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -370,5 +371,22 @@ func TestLateInitializeIntegrationTelegram(t *testing.T) {
 				t.Errorf("LateInitializeIntegrationTelegram(): -want, +got:\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestIntegrationTelegramObservationJSONKeepsFalse(t *testing.T) {
+	obs := GenerateIntegrationTelegramObservation(&gitlab.TelegramService{
+		Properties: &gitlab.TelegramServiceProperties{NotifyOnlyBrokenPipelines: false},
+	})
+	raw, err := json.Marshal(obs)
+	if err != nil {
+		t.Fatalf("json.Marshal(): %v", err)
+	}
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatalf("json.Unmarshal(): %v", err)
+	}
+	if diff := cmp.Diff("false", string(got["notifyOnlyBrokenPipelines"])); diff != "" {
+		t.Errorf("notifyOnlyBrokenPipelines: -want, +got:\n%s", diff)
 	}
 }

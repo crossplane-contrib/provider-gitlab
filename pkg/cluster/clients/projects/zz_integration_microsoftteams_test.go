@@ -3,6 +3,7 @@
 package projects
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -362,5 +363,22 @@ func TestLateInitializeIntegrationMicrosoftTeams(t *testing.T) {
 				t.Errorf("LateInitializeIntegrationMicrosoftTeams(): -want, +got:\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestIntegrationMicrosoftTeamsObservationJSONKeepsFalse(t *testing.T) {
+	obs := GenerateIntegrationMicrosoftTeamsObservation(&gitlab.MicrosoftTeamsService{
+		Properties: &gitlab.MicrosoftTeamsServiceProperties{NotifyOnlyBrokenPipelines: false},
+	})
+	raw, err := json.Marshal(obs)
+	if err != nil {
+		t.Fatalf("json.Marshal(): %v", err)
+	}
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatalf("json.Unmarshal(): %v", err)
+	}
+	if diff := cmp.Diff("false", string(got["notifyOnlyBrokenPipelines"])); diff != "" {
+		t.Errorf("notifyOnlyBrokenPipelines: -want, +got:\n%s", diff)
 	}
 }

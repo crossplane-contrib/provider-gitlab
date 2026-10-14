@@ -98,7 +98,7 @@ type IntegrationMicrosoftTeamsObservation struct {
 	v1alpha1.CommonIntegrationObservation `json:",inline"`
 
 	// NotifyOnlyBrokenPipelines indicates whether notifications are sent for broken pipelines only.
-	NotifyOnlyBrokenPipelines bool `json:"notifyOnlyBrokenPipelines,omitempty"`
+	NotifyOnlyBrokenPipelines bool `json:"notifyOnlyBrokenPipelines"`
 	// BranchesToBeNotified are the branches notifications are sent for.
 	BranchesToBeNotified string `json:"branchesToBeNotified,omitempty"`
 }

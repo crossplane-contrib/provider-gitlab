@@ -106,7 +106,7 @@ type IntegrationTelegramObservation struct {
 	// Room is the target chat or channel.
 	Room string `json:"room,omitempty"`
 	// NotifyOnlyBrokenPipelines indicates whether notifications are sent for broken pipelines only.
-	NotifyOnlyBrokenPipelines bool `json:"notifyOnlyBrokenPipelines,omitempty"`
+	NotifyOnlyBrokenPipelines bool `json:"notifyOnlyBrokenPipelines"`
 	// BranchesToBeNotified are the branches notifications are sent for.
 	BranchesToBeNotified string `json:"branchesToBeNotified,omitempty"`
 }

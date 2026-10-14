@@ -338,6 +338,8 @@ spec:
                     type: boolean
                   wikiPageEvents:
                     type: boolean
+                required:
+                - notifyOnlyBrokenPipelines
                 type: object
               conditions:
                 description: Conditions of the resource.
