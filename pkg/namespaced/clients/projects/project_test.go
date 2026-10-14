@@ -551,7 +551,7 @@ func TestGenerateCreateProjectOptions(t *testing.T) {
 				SharedRunnersEnabled:                      &sharedRunnersEnabled,
 				Visibility:                                clients.VisibilityValueStringToGitlab(visibility),
 				ImportURL:                                 &importURL,
-				PublicBuilds:                              &publicBuilds, //nolint:staticcheck
+				PublicJobs:                                &publicBuilds,
 				AllowMergeOnSkippedPipeline:               &allowMergeOnSkippedPipeline,
 				OnlyAllowMergeIfPipelineSucceeds:          &onlyAllowMergeIfPipelineSucceeds,
 				OnlyAllowMergeIfAllDiscussionsAreResolved: &OnlyAllowMergeIfAllDiscussionsAreResolved,
