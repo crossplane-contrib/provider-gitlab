@@ -242,7 +242,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				githubClient: &fake.MockGithubClient{
 					MockGetGithubService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: integrationGithub(
@@ -326,6 +326,9 @@ func TestObserve(t *testing.T) {
 			args: args{
 				githubClient: &fake.MockGithubClient{
 					MockGetGithubService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.GithubService, *gitlab.Response, error) {
+						if diff := cmp.Diff(testProjectID, pid); diff != "" {
+							return nil, nil, errors.Errorf("unexpected project id: %s", diff)
+						}
 						return &gitlab.GithubService{
 							Service: gitlab.Service{
 								ID:     testIntegID,
