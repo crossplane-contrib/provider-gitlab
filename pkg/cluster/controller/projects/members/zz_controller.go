@@ -18,9 +18,6 @@ package members
 import (
 	"context"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
@@ -50,28 +47,18 @@ const (
 )
 
 // SetupMember adds a controller that reconciles Project Members.
-func SetupMember(mgr ctrl.Manager, o controller.Options) error {
+func SetupMember(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName("cluster." + v1alpha1.MemberGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.MemberGroupVersionKind),
 		managed.WithExternalConnector(&connector{
 			kube:              mgr.GetClient(),
 			newGitlabClientFn: projects.NewMemberClient,
 			newUserClientFn:   users.NewUserClient,
 		}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.MemberGroupVersionKind),
-		reconcilerOpts...)
+	)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
 		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.MemberList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
@@ -86,7 +73,7 @@ func SetupMember(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupMemberGated adds a controller with CRD gate support.
-func SetupMemberGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupMemberGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupMember(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.MemberGroupVersionKind.String())

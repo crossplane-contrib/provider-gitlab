@@ -19,9 +19,6 @@ package protectedbranches
 import (
 	"context"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
@@ -48,24 +45,14 @@ const (
 )
 
 // SetupProtectedBranch adds a controller that reconciles ProtectedBranches.
-func SetupProtectedBranch(mgr ctrl.Manager, o controller.Options) error {
+func SetupProtectedBranch(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName(v1alpha1.ProtectedBranchGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.ProtectedBranchGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProtectedBranchClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.ProtectedBranchGroupVersionKind),
-		reconcilerOpts...)
+	)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
 		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.ProtectedBranchList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
@@ -80,7 +67,7 @@ func SetupProtectedBranch(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupProtectedBranchGated adds a controller with CRD gate support.
-func SetupProtectedBranchGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupProtectedBranchGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupProtectedBranch(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.ProtectedBranchGroupVersionKind.String())

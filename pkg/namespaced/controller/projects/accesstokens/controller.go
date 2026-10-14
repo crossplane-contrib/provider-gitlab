@@ -20,9 +20,6 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -90,24 +87,14 @@ func selfManagedCondition(self bool) v2.Condition {
 }
 
 // SetupAccessToken adds a controller that reconciles ProjectAccessTokens.
-func SetupAccessToken(mgr ctrl.Manager, o controller.Options) error {
+func SetupAccessToken(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName(v1alpha1.AccessTokenGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.AccessTokenGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewAccessTokenClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.AccessTokenGroupVersionKind),
-		reconcilerOpts...)
+	)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
 		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.AccessTokenList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
@@ -122,7 +109,7 @@ func SetupAccessToken(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupAccessTokenGated adds a controller with CRD gate support.
-func SetupAccessTokenGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupAccessTokenGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupAccessToken(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.AccessTokenGroupVersionKind.String())

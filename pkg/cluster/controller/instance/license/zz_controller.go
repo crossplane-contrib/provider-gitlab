@@ -22,9 +22,6 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -57,26 +54,17 @@ const (
 )
 
 // SetupLicense adds a controller that reconciles instance licenses.
-func SetupLicense(mgr ctrl.Manager, o controller.Options) error {
+func SetupLicense(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName("cluster." + v1alpha1.LicenseGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.LicenseGroupVersionKind),
 		managed.WithExternalConnector(&connector{
 			kube:              mgr.GetClient(),
 			newGitlabClientFn: instance.NewLicenseClient,
 		}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.LicenseGroupVersionKind),
-		reconcilerOpts...)
+	)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
 		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.LicenseList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
@@ -91,7 +79,7 @@ func SetupLicense(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupLicenseGated adds a controller with CRD gate support.
-func SetupLicenseGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupLicenseGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupLicense(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.LicenseGroupVersionKind.String())

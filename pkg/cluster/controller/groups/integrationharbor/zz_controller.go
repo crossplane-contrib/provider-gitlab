@@ -21,10 +21,7 @@ package integrationharbor
 import (
 	"context"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
@@ -50,25 +47,13 @@ const (
 )
 
 // SetupIntegrationHarbor adds a controller that reconciles GitLab Group Harbor integrations.
-func SetupIntegrationHarbor(mgr ctrl.Manager, o controller.Options) error {
+func SetupIntegrationHarbor(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName("cluster." + v1alpha1.IntegrationHarborGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.IntegrationHarborGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewHarborClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(
-		mgr,
-		resource.ManagedKind(v1alpha1.IntegrationHarborGroupVersionKind),
-		reconcilerOpts...,
 	)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
@@ -89,7 +74,7 @@ func SetupIntegrationHarbor(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupIntegrationHarborGated adds a controller with CRD gate support for SafeStart.
-func SetupIntegrationHarborGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupIntegrationHarborGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupIntegrationHarbor(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.IntegrationHarborGroupVersionKind.String())
