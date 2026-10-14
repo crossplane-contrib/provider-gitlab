@@ -17,9 +17,9 @@ limitations under the License.
 package projects
 
 import (
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/accesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/approvalrules"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/badges"
@@ -41,8 +41,8 @@ import (
 )
 
 // Setup all project controllers
-func Setup(mgr ctrl.Manager, o controller.Options) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+func Setup(mgr ctrl.Manager, o common.ControllerOptions) error {
+	for _, setup := range []func(ctrl.Manager, common.ControllerOptions) error{
 		projects.SetupProject,
 		hooks.SetupHook,
 		members.SetupMember,
@@ -71,8 +71,8 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 
 // SetupGated creates all Gitlab API controllers with the supplied logger and adds
 // them to the supplied manager with CRD gate support for SafeStart.
-func SetupGated(mgr ctrl.Manager, o controller.Options) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+func SetupGated(mgr ctrl.Manager, o common.ControllerOptions) error {
+	for _, setup := range []func(ctrl.Manager, common.ControllerOptions) error{
 		projects.SetupProjectGated,
 		hooks.SetupHookGated,
 		members.SetupMemberGated,

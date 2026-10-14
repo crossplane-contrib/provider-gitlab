@@ -202,7 +202,7 @@ func (m *fakeManager) GetConverterRegistry() conversion.Registry { return nil }
 
 func TestSetupVariableGated(t *testing.T) {
 	g := &recordingGate{}
-	o := controller.Options{Gate: g}
+	o := common.ControllerOptions{Options: controller.Options{Gate: g}}
 
 	// mgr is not used until the callback is invoked.
 	if err := SetupVariableGated(nil, o); err != nil {
@@ -228,14 +228,14 @@ func TestSetupVariableReturnsAddError(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).Build()
 
 	mgr := &fakeManager{cl: cl, scheme: s, addErr: errBoom}
-	o := controller.Options{
+	o := common.ControllerOptions{Options: controller.Options{
 		Logger:       logging.NewNopLogger(),
 		PollInterval: time.Second,
 		Features:     &feature.Flags{},
 		MetricOptions: &controller.MetricOptions{
 			MRStateMetrics: &statemetrics.MRStateMetrics{},
 		},
-	}
+	}}
 
 	err := SetupVariable(mgr, o)
 	if !stderrors.Is(err, errBoom) {

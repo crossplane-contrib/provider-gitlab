@@ -19,18 +19,18 @@ limitations under the License.
 package config
 
 import (
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/providerconfig"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/v1beta1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 // Setup adds a controller that reconciles ProviderConfigs by accounting for
 // their current usage.
-func SetupNamespaced(mgr ctrl.Manager, o controller.Options) error {
+func SetupNamespaced(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := providerconfig.ControllerName(v1beta1.ProviderConfigGroupKind)
 
 	of := resource.ProviderConfigKinds{
@@ -49,7 +49,7 @@ func SetupNamespaced(mgr ctrl.Manager, o controller.Options) error {
 			providerconfig.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
 }
 
-func SetupNamespacedGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupNamespacedGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupNamespaced(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconcilers", "gvk", v1beta1.ProviderConfigGroupVersionKind.String())

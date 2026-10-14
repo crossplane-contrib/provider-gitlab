@@ -6,9 +6,6 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -50,24 +47,14 @@ type connector struct {
 }
 
 // SetupDeployKey adds a controller that reconciles ProjectDeployKey.
-func SetupDeployKey(mgr ctrl.Manager, o controller.Options) error {
+func SetupDeployKey(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName("cluster." + v1alpha1.DeployKeyGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.DeployKeyGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: newDeployKeyClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.DeployKeyGroupVersionKind),
-		reconcilerOpts...)
+	)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
 		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.DeployKeyList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
@@ -82,7 +69,7 @@ func SetupDeployKey(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupDeployKeyGated adds a controller with CRD gate support.
-func SetupDeployKeyGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupDeployKeyGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupDeployKey(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.DeployKeyGroupVersionKind.String())

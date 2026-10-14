@@ -9,6 +9,7 @@ linters:
     - durationcheck
     - errchkjson
     - errorlint
+    - forbidigo
     - gocheckcompilerdirectives
     - gochecksumtype
     - goconst
@@ -46,6 +47,12 @@ linters:
       exclude-functions:
         - fmt:.*
         - io/ioutil:^Read.*
+    forbidigo:
+      forbid:
+        - pattern: ^managed\.NewReconciler$
+          pkg: ^github\.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed$
+          msg: Use common.NewReconciler so the controller applies the provider-wide reconciler options.
+      analyze-types: true
     goconst:
       min-len: 3
       min-occurrences: 5
@@ -92,6 +99,9 @@ linters:
           - gocritic
         path: _test\.go
         text: (unnamedResult|exitAfterDefer)
+      - linters:
+          - forbidigo
+        path: pkg/common/controller\.go
       - linters:
           - gocritic
         text: '(hugeParam|rangeValCopy):'

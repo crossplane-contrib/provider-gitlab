@@ -20,10 +20,7 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -51,24 +48,14 @@ const (
 )
 
 // SetupServiceAccount adds a controller that reconciles GitLab Service Accounts.
-func SetupServiceAccount(mgr ctrl.Manager, o controller.Options) error {
+func SetupServiceAccount(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName(v1alpha1.ServiceAccountGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.ServiceAccountGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewServiceAccountClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.ServiceAccountGroupVersionKind),
-		reconcilerOpts...)
+	)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
 		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.ServiceAccountList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
@@ -83,7 +70,7 @@ func SetupServiceAccount(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupServiceAccountGated adds a controller with CRD gate support.
-func SetupServiceAccountGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupServiceAccountGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupServiceAccount(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.ServiceAccountGroupVersionKind.String())

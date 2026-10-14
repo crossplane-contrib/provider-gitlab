@@ -21,10 +21,7 @@ package integrationmattermost
 import (
 	"context"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -51,25 +48,13 @@ const (
 )
 
 // SetupIntegrationMattermost adds a controller that reconciles GitLab Integration Mattermost.
-func SetupIntegrationMattermost(mgr ctrl.Manager, o controller.Options) error {
+func SetupIntegrationMattermost(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName("cluster." + v1alpha1.IntegrationMattermostGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.IntegrationMattermostGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewMattermostClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(
-		mgr,
-		resource.ManagedKind(v1alpha1.IntegrationMattermostGroupVersionKind),
-		reconcilerOpts...,
 	)
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
@@ -90,7 +75,7 @@ func SetupIntegrationMattermost(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupIntegrationMattermostGated adds a controller with CRD gate support.
-func SetupIntegrationMattermostGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupIntegrationMattermostGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupIntegrationMattermost(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.IntegrationMattermostGroupVersionKind.String())
