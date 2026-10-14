@@ -64,6 +64,9 @@ func SetupRepositoryFile(mgr ctrl.Manager, o controller.Options) error {
 			managementPoliciesEnabled: managementPolicies,
 		}),
 		managed.WithInitializers(),
+		// The file is identified by projectId, branch and filePath, which are
+		// immutable, so an interrupted Create can safely be retried.
+		managed.WithDeterministicExternalName(true),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
@@ -162,9 +165,10 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	// Drift only matters if we are allowed to correct it. Not resolving the
 	// content otherwise means its source may go away once the file exists,
-	// e.g. a one-off bootstrap Secret used with ["Observe", "Create"].
+	// e.g. a one-off bootstrap Secret used with ["Observe", "Create"], or a
+	// Secret deleted together with the namespace of this resource.
 	policy := managed.NewManagementPoliciesResolver(e.managementPoliciesEnabled, cr.GetManagementPolicies())
-	if !policy.ShouldUpdate() {
+	if meta.WasDeleted(cr) || !policy.ShouldUpdate() {
 		return o, nil
 	}
 
@@ -197,14 +201,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		projects.GenerateCreateFileOptions(&cr.Spec.ForProvider, content),
 		gitlab.WithContext(ctx),
 	)
-	if err != nil {
-		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
-	}
-
-	// The file is identified by spec.forProvider; the external name is
-	// informational only.
-	meta.SetExternalName(cr, cr.Spec.ForProvider.FilePath)
-	return managed.ExternalCreation{}, nil
+	return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -222,7 +219,8 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	// Observe has just refreshed LastCommitID, so GitLab rejects the update
-	// if someone else committed to the file in between.
+	// if someone else committed to the file in between. This is not a lock:
+	// the next reconcile observes that commit and overwrites it.
 	_, _, err = e.client.UpdateFile(
 		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.FilePath,

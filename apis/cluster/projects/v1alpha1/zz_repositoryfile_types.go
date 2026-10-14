@@ -50,6 +50,7 @@ const (
 // deletes it, and ["Observe"] tracks a file without ever committing.
 //
 // https://docs.gitlab.com/api/repository_files/
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.projectId) || has(self.projectId)",message="projectId cannot be removed once set"
 type RepositoryFileParameters struct {
 	// ProjectID is the ID or URL-encoded path of the project.
 	// +optional
@@ -138,9 +139,11 @@ type RepositoryFileObservation struct {
 	// BlobID is the blob SHA of the file.
 	BlobID string `json:"blobId,omitempty"`
 
-	// LastCommitID is the last commit SHA that modified this file. It is sent
-	// with updates and deletes so GitLab rejects them if the file changed in
-	// the meantime.
+	// LastCommitID is the last commit SHA that modified this file, as seen by
+	// the most recent observation. It is sent with updates and deletes so
+	// GitLab rejects them if the file changed after that observation. This
+	// only guards a single reconcile: the next one observes the new commit
+	// and, if updates are allowed, enforces the desired content again.
 	LastCommitID string `json:"lastCommitId,omitempty"`
 
 	// SHA256 is the SHA-256 hash of the file content.
@@ -165,6 +168,7 @@ type RepositoryFileStatus struct {
 // +kubebuilder:object:root=true
 
 // A RepositoryFile is a managed resource that represents a file in a GitLab repository.
+// +kubebuilder:printcolumn:name="PROJECT",type="string",JSONPath=".spec.forProvider.projectId"
 // +kubebuilder:printcolumn:name="FILE",type="string",JSONPath=".spec.forProvider.filePath"
 // +kubebuilder:printcolumn:name="BRANCH",type="string",JSONPath=".spec.forProvider.branch"
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"

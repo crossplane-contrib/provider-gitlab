@@ -19,6 +19,9 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .spec.forProvider.projectId
+      name: PROJECT
+      type: string
     - jsonPath: .spec.forProvider.filePath
       name: FILE
       type: string
@@ -252,6 +255,9 @@ spec:
                 - branch
                 - filePath
                 type: object
+                x-kubernetes-validations:
+                - message: projectId cannot be removed once set
+                  rule: '!has(oldSelf.projectId) || has(self.projectId)'
               managementPolicies:
                 default:
                 - '*'
@@ -363,9 +369,11 @@ spec:
                     type: string
                   lastCommitId:
                     description: |-
-                      LastCommitID is the last commit SHA that modified this file. It is sent
-                      with updates and deletes so GitLab rejects them if the file changed in
-                      the meantime.
+                      LastCommitID is the last commit SHA that modified this file, as seen by
+                      the most recent observation. It is sent with updates and deletes so
+                      GitLab rejects them if the file changed after that observation. This
+                      only guards a single reconcile: the next one observes the new commit
+                      and, if updates are allowed, enforces the desired content again.
                     type: string
                   sha256:
                     description: SHA256 is the SHA-256 hash of the file content.

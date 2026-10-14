@@ -1,7 +1,8 @@
-apiVersion: projects.gitlab.crossplane.io/v1alpha1
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
 kind: RepositoryFile
 metadata:
   name: example-repositoryfile
+  namespace: default
   annotations:
     # Optional: check this file for drift every hour instead of at the
     # provider's --poll interval. Resources are still reconciled at least
@@ -22,3 +23,4 @@ spec:
     deleteCommitMessage: "docs: delete managed-by-crossplane.md"
   providerConfigRef:
     name: gitlab-provider
+    kind: ProviderConfig

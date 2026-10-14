@@ -23,8 +23,8 @@ import (
 	"encoding/base64"
 	"net/http"
 	"testing"
+	"time"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
@@ -57,16 +57,20 @@ var (
 	notFound    = &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
 	serverError = &gitlab.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}
 
-	// kubeWithContent serves the Secret referenced by withContentSecret.
+	// kubeWithContent serves the Secret referenced by withContentSecret, which
+	// must be looked up in the namespace of the RepositoryFile.
 	kubeWithContent = &test.MockClient{
-		MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+		MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
+			if key != (client.ObjectKey{Namespace: "default", Name: "file-content"}) {
+				return errors.Errorf("unexpected Secret %s", key)
+			}
 			s, ok := obj.(*corev1.Secret)
 			if !ok {
 				return errors.New("unexpected object")
 			}
 			*s = corev1.Secret{Data: map[string][]byte{"content": []byte("hello")}}
 			return nil
-		}),
+		},
 	}
 
 	// kubeBoom fails every read, so tests can assert content is not resolved.
@@ -113,8 +117,8 @@ func withConditions(c ...v2.Condition) modifier {
 	return func(cr *v1alpha1.RepositoryFile) { cr.Status.SetConditions(c...) }
 }
 
-func withExternalName(n string) modifier {
-	return func(cr *v1alpha1.RepositoryFile) { meta.SetExternalName(cr, n) }
+func withDeletionTimestamp() modifier {
+	return func(cr *v1alpha1.RepositoryFile) { cr.SetDeletionTimestamp(&metav1.Time{Time: time.Unix(1, 0)}) }
 }
 
 func repositoryFile(m ...modifier) *v1alpha1.RepositoryFile {
@@ -296,6 +300,18 @@ func TestObserve(t *testing.T) {
 				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true},
 			},
 		},
+		"BeingDeleted": {
+			reason: "Content must not be resolved during deletion, so a Secret deleted first cannot block Delete.",
+			args: args{
+				kube:   kubeBoom,
+				client: &fake.MockClient{MockGetFileMetaData: getFileMetaData(t, observedFile(), &gitlab.Response{}, nil)},
+				mg:     repositoryFile(withContentSecret(), withDeletionTimestamp()),
+			},
+			want: want{
+				cr:     repositoryFile(withContentSecret(), withDeletionTimestamp(), withObservation(observed), withConditions(v2.Available())),
+				result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true},
+			},
+		},
 		"ObserveOnlyWithoutContent": {
 			reason: "An observe-only file needs no content.",
 			args: args{
@@ -384,7 +400,7 @@ func TestCreate(t *testing.T) {
 				mg: repositoryFile(),
 			},
 			want: want{
-				cr: repositoryFile(withConditions(v2.Creating()), withExternalName(testFilePath)),
+				cr: repositoryFile(withConditions(v2.Creating())),
 			},
 		},
 		"Failed": {
@@ -474,6 +490,14 @@ func TestUpdate(t *testing.T) {
 			},
 			want: errors.Wrap(errBoom, errUpdateFailed),
 		},
+		"ContentFailed": {
+			reason: "Content that cannot be resolved must be an error rather than an empty commit.",
+			args: args{
+				client: &fake.MockClient{},
+				mg:     repositoryFile(withoutContent(), withObservation(observed)),
+			},
+			want: errors.Wrap(errors.New(errContentMissing), errContentFailed),
+		},
 	}
 
 	for name, tc := range cases {
@@ -532,8 +556,8 @@ func TestDelete(t *testing.T) {
 				cr: repositoryFile(withObservation(observed), withConditions(v2.Deleting())),
 			},
 		},
-		"AlreadyGone": {
-			reason: "A 404 means the file is already deleted.",
+		"NotFound": {
+			reason: "A 404 (e.g. the branch or project is gone) leaves nothing to delete.",
 			args: args{
 				client: &fake.MockClient{
 					MockDeleteFile: func(_ any, _ string, _ *gitlab.DeleteFileOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {

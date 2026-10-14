@@ -33,6 +33,10 @@ import (
 // sha256 of "hello".
 const helloSHA256 = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
 
+// sha256 GitLab reports for an LFS-tracked file committed with content
+// "lfs payload\n", i.e. the sha256 of its LFS pointer.
+const lfsPayloadPointerSHA256 = "b483d58df375287682f5a9205bcfc900eeeb6079ccc52eca78fe4d83739ff0d2"
+
 func encodingPtr(e v1alpha1.RepositoryFileEncoding) *v1alpha1.RepositoryFileEncoding {
 	return &e
 }
@@ -139,6 +143,24 @@ func TestIsRepositoryFileUpToDate(t *testing.T) {
 				content: []byte("hello"),
 			},
 			want: true,
+		},
+		"LFSPointerMatch": {
+			reason: "An LFS-tracked file stores the pointer to the content; its SHA-256 must count as up to date.",
+			args: args{
+				p:       &v1alpha1.RepositoryFileParameters{},
+				file:    &gitlab.File{SHA256: lfsPayloadPointerSHA256},
+				content: []byte("lfs payload\n"),
+			},
+			want: true,
+		},
+		"LFSPointerDrift": {
+			reason: "An LFS pointer to different content should not be up to date.",
+			args: args{
+				p:       &v1alpha1.RepositoryFileParameters{},
+				file:    &gitlab.File{SHA256: lfsPayloadPointerSHA256},
+				content: []byte("other payload\n"),
+			},
+			want: false,
 		},
 		"NoFile": {
 			reason: "A missing file should not be up to date.",

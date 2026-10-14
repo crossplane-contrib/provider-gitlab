@@ -4,10 +4,11 @@
 #
 # Requires management policies, which the provider enables by default
 # (opt out with --no-enable-management-policies).
-apiVersion: projects.gitlab.crossplane.io/v1alpha1
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
 kind: RepositoryFile
 metadata:
   name: example-repositoryfile-create-once
+  namespace: default
   annotations:
     # Nothing is updated, so there is little point in checking often.
     crossplane.io/poll-interval: 1h
@@ -23,3 +24,4 @@ spec:
     createCommitMessage: "docs: bootstrap file"
   providerConfigRef:
     name: gitlab-provider
+    kind: ProviderConfig

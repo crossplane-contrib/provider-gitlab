@@ -108,6 +108,10 @@ func LateInitializeRepositoryFile(in *v1alpha1.RepositoryFileParameters, file *g
 
 // IsRepositoryFileUpToDate reports whether the external file has the desired
 // content and filemode.
+//
+// For paths tracked by Git LFS, GitLab commits an LFS pointer instead of the
+// content, and the reported SHA-256 is that of the pointer. Both are accepted
+// so LFS-tracked files do not trigger an update on every reconcile.
 func IsRepositoryFileUpToDate(p *v1alpha1.RepositoryFileParameters, file *gitlab.File, content []byte) bool {
 	if p == nil {
 		return true
@@ -120,8 +124,18 @@ func IsRepositoryFileUpToDate(p *v1alpha1.RepositoryFileParameters, file *gitlab
 		return false
 	}
 
-	sum := sha256.Sum256(content)
-	return hex.EncodeToString(sum[:]) == file.SHA256
+	return sha256Hex(content) == file.SHA256 || sha256Hex(gitLFSPointer(content)) == file.SHA256
+}
+
+func sha256Hex(b []byte) string {
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:])
+}
+
+// gitLFSPointer returns the canonical Git LFS pointer for content, as defined
+// by https://github.com/git-lfs/git-lfs/blob/main/docs/spec.md.
+func gitLFSPointer(content []byte) []byte {
+	return fmt.Appendf(nil, "version https://git-lfs.github.com/spec/v1\noid sha256:%s\nsize %d\n", sha256Hex(content), len(content))
 }
 
 // GenerateGetFileMetaDataOptions generates options to observe the file on its branch.
