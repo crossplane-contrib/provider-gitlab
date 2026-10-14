@@ -699,6 +699,21 @@ func TestGenerateProjectOptionsDerivePackagesEnabled(t *testing.T) {
 	}
 }
 
+// TestGenerateProjectOptionsPreferPublicJobs verifies that create and edit
+// requests send publicJobs, not the deprecated publicBuilds, when both are set.
+func TestGenerateProjectOptionsPreferPublicJobs(t *testing.T) {
+	p := &v1alpha1.ProjectParameters{
+		PublicBuilds: ptr.To(false), //nolint:staticcheck
+		PublicJobs:   ptr.To(true),
+	}
+	if diff := cmp.Diff(ptr.To(true), GenerateCreateProjectOptions(name, p).PublicJobs); diff != "" {
+		t.Errorf("GenerateCreateProjectOptions(...).PublicJobs: -want, +got:\n%s", diff)
+	}
+	if diff := cmp.Diff(ptr.To(true), GenerateEditProjectOptions(name, p).PublicJobs); diff != "" {
+		t.Errorf("GenerateEditProjectOptions(...).PublicJobs: -want, +got:\n%s", diff)
+	}
+}
+
 func TestGenerateEditProjectOptions(t *testing.T) {
 	type args struct {
 		name       string
