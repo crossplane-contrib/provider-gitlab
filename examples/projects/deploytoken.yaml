@@ -22,6 +22,8 @@ spec:
   forProvider:
     projectIdRef:
       name: example-project
+    # The old token is deleted before the new one is created, so consumers see
+    # a short gap until the connection secret is updated and picked up.
     renewalPeriodDays: 30 # replace the token 10 days before it expires
     scopes:
       - "read_repository"

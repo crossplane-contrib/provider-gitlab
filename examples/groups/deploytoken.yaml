@@ -22,6 +22,8 @@ spec:
   forProvider:
     groupIdRef:
       name: example-group
+    # The old token is deleted before the new one is created, so consumers see
+    # a short gap until the connection secret is updated and picked up.
     renewalPeriodDays: 30
     renewBeforeDays: 7 # replace the token 7 days before it expires
     scopes:

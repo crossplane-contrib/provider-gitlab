@@ -51,7 +51,9 @@ type DeployTokenParameters struct {
 	// GitLab cannot rotate deploy tokens, so when renewal is due the provider
 	// deletes the token, creates a new one from these parameters, and writes it
 	// to the connection secret. A revoked, expired, or non-expiring token is
-	// replaced at once.
+	// replaced at once. Because the old token is deleted before the new one is
+	// created, consumers see a short gap until the connection secret is updated
+	// and picked up.
 	// Mutually exclusive with ExpiresAt.
 	// +kubebuilder:validation:Minimum=1
 	// +optional
