@@ -1176,9 +1176,11 @@ func TestDelete(t *testing.T) {
 // archiveGitLab is a fake GitLab group that records update, archive, and
 // unarchive calls in order. With AncestorArchived set, it rejects archive and
 // unarchive calls the way GitLab does for a subgroup of an archived group.
+// With RejectArchive set, it rejects archive calls.
 type archiveGitLab struct {
 	Archived         bool
 	AncestorArchived bool
+	RejectArchive    bool
 	Description      string
 	Calls            []string
 }
@@ -1190,6 +1192,9 @@ func (g *archiveGitLab) client() *fake.MockClient {
 		g.Calls = append(g.Calls, call)
 		if g.AncestorArchived {
 			return &gitlab.Response{}, errAncestorArchived
+		}
+		if archived && g.RejectArchive {
+			return &gitlab.Response{}, errBoom
 		}
 		g.Archived = archived
 		return &gitlab.Response{}, nil
@@ -1230,6 +1235,13 @@ func TestArchiveConverges(t *testing.T) {
 			spec:   v1alpha1.GroupParameters{Path: path, Archived: new(true), Description: new("new")},
 			start:  archiveGitLab{Description: "old"},
 			want:   archiveGitLab{Archived: true, Description: "new", Calls: []string{"update", "archive"}},
+		},
+		"ArchiveRejected": {
+			reason:  "If GitLab rejects the archive, Update must fail after it updates.",
+			spec:    v1alpha1.GroupParameters{Path: path, Archived: new(true), Description: new("new")},
+			start:   archiveGitLab{RejectArchive: true, Description: "old"},
+			want:    archiveGitLab{RejectArchive: true, Description: "new", Calls: []string{"update", "archive"}},
+			wantErr: errors.Wrap(errBoom, errArchiveFailed),
 		},
 		"UnarchiveBeforeUpdate": {
 			reason: "Unarchiving must run before the update.",

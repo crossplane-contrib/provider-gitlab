@@ -1854,9 +1854,11 @@ func TestPackageRegistryLevelRemoval(t *testing.T) {
 // archiveGitLab is a fake GitLab project that records edit, archive, and
 // unarchive calls in order. With AncestorArchived set, it rejects archive and
 // unarchive calls the way GitLab does for a project in an archived group.
+// With RejectArchive set, it rejects archive calls.
 type archiveGitLab struct {
 	Archived         bool
 	AncestorArchived bool
+	RejectArchive    bool
 	Description      string
 	Calls            []string
 }
@@ -1868,6 +1870,9 @@ func (g *archiveGitLab) client() *fake.MockClient {
 		g.Calls = append(g.Calls, call)
 		if g.AncestorArchived {
 			return nil, &gitlab.Response{}, errAncestorArchived
+		}
+		if archived && g.RejectArchive {
+			return nil, &gitlab.Response{}, errBoom
 		}
 		g.Archived = archived
 		return &gitlab.Project{}, &gitlab.Response{}, nil
@@ -1911,6 +1916,13 @@ func TestArchiveConverges(t *testing.T) {
 			spec:   v1alpha1.ProjectParameters{Archived: new(true), Description: new("new")},
 			start:  archiveGitLab{Description: "old"},
 			want:   archiveGitLab{Archived: true, Description: "new", Calls: []string{"edit", "archive"}},
+		},
+		"ArchiveRejected": {
+			reason:  "If GitLab rejects the archive, Update must fail after it edits.",
+			spec:    v1alpha1.ProjectParameters{Archived: new(true), Description: new("new")},
+			start:   archiveGitLab{RejectArchive: true, Description: "old"},
+			want:    archiveGitLab{RejectArchive: true, Description: "new", Calls: []string{"edit", "archive"}},
+			wantErr: errors.Wrap(errBoom, errArchiveFailed),
 		},
 		"UnarchiveBeforeEdit": {
 			reason: "Unarchiving must run before the edit.",
