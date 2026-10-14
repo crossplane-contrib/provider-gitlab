@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
@@ -42,11 +43,12 @@ func (m *fakeManager) GetEventRecorderFor(string) record.EventRecorder {
 	return record.NewFakeRecorder(8)
 }
 
-func TestNewReconcilerPollInterval(t *testing.T) {
+func TestNewReconciler(t *testing.T) {
 	cases := map[string]struct {
-		reason     string
-		annotation string
-		want       reconcile.Result
+		reason             string
+		annotation         string
+		managementPolicies bool
+		want               reconcile.Result
 	}{
 		"AnnotationBelowMinimum": {
 			reason:     "An annotation below MinPollInterval should poll at MinPollInterval.",
@@ -61,6 +63,11 @@ func TestNewReconcilerPollInterval(t *testing.T) {
 		"NoAnnotation": {
 			reason: "A resource without the annotation should poll at PollInterval.",
 			want:   reconcile.Result{RequeueAfter: 10 * time.Minute},
+		},
+		"ManagementPoliciesEnabled": {
+			reason:             "With the management policies feature enabled, empty management policies should pause the resource.",
+			managementPolicies: true,
+			want:               reconcile.Result{},
 		},
 	}
 
@@ -78,8 +85,12 @@ func TestNewReconcilerPollInterval(t *testing.T) {
 				},
 				Scheme: fake.SchemeWith(&fake.ModernManaged{}),
 			}}
+			features := &feature.Flags{}
+			if tc.managementPolicies {
+				features.Enable(feature.EnableBetaManagementPolicies)
+			}
 			o := ControllerOptions{
-				Options:         controller.Options{Logger: logging.NewNopLogger(), PollInterval: 10 * time.Minute},
+				Options:         controller.Options{Logger: logging.NewNopLogger(), PollInterval: 10 * time.Minute, Features: features},
 				MinPollInterval: 10 * time.Second,
 			}
 
