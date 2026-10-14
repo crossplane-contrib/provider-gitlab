@@ -53,6 +53,11 @@ func TestDeployTokenRenewAt(t *testing.T) {
 			expiresAt:         &expiresAt,
 			want:              &metav1.Time{Time: time.Date(2026, time.July, 28, 12, 0, 0, 0, time.UTC)},
 		},
+		"LongLifetime": {
+			renewalPeriodDays: intPtr(60000),
+			expiresAt:         &expiresAt,
+			want:              &metav1.Time{Time: time.Date(1971, time.October, 28, 12, 0, 0, 0, time.UTC)},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -68,6 +73,7 @@ func TestShouldRenewDeployToken(t *testing.T) {
 	expiresAt := time.Date(2026, time.July, 31, 12, 0, 0, 0, time.UTC)
 	beforeRenewAt := time.Date(2026, time.July, 21, 11, 59, 59, 0, time.UTC)
 	atRenewAt := time.Date(2026, time.July, 21, 12, 0, 0, 0, time.UTC)
+	longLivedExpiresAt := atRenewAt.AddDate(0, 0, 60000)
 
 	cases := map[string]struct {
 		renewalPeriodDays *int
@@ -105,6 +111,12 @@ func TestShouldRenewDeployToken(t *testing.T) {
 			dt:                &gitlab.DeployToken{},
 			now:               beforeRenewAt,
 			want:              true,
+		},
+		"FreshTokenWithLongLifetime": {
+			renewalPeriodDays: intPtr(60000),
+			dt:                &gitlab.DeployToken{ExpiresAt: &longLivedExpiresAt},
+			now:               atRenewAt,
+			want:              false,
 		},
 		"Revoked": {
 			renewalPeriodDays: intPtr(30),
