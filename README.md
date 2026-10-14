@@ -189,6 +189,10 @@ To delete a namespace with its managed resources, use one of these options:
   terminating namespace refuses to create a new `ProviderConfigUsage`. The
   provider ignores that refusal while the managed resource is being deleted. See
   [crossplane/crossplane-runtime#1150](https://github.com/crossplane/crossplane-runtime/issues/1150).
+  [#450](https://github.com/crossplane-contrib/provider-gitlab/issues/450)
+  tracks removing this workaround once the provider uses a crossplane-runtime
+  release that includes
+  [crossplane/crossplane-runtime#1113](https://github.com/crossplane/crossplane-runtime/pull/1113).
 * Delete the managed resources first and wait until they are gone. Then delete
   the namespace.
 
@@ -206,6 +210,19 @@ Patch each resource by the full name that the first command prints, for example
 kubectl get managed -n <namespace> -o name | grep '\.gitlab\.m\.crossplane\.io/'
 kubectl patch -n <namespace> <full-name> --type=merge \
   -p '{"spec":{"providerConfigRef":{"kind":"ClusterProviderConfig","name":"<cluster-provider-config>"}}}'
+```
+
+If you have no `ClusterProviderConfig`, remove the finalizer of each stuck
+managed resource by hand as a last resort. The namespace then finishes deleting.
+
+> [!WARNING]
+> Kubernetes deletes the managed resource, but the GitLab resource stays. Before
+> you patch, note the `crossplane.io/external-name` annotation. Then delete the
+> GitLab resource by hand.
+
+```bash
+kubectl patch -n <namespace> <full-name> --type=merge \
+  -p '{"metadata":{"finalizers":null}}'
 ```
 
 ## Contributing
