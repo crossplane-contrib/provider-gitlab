@@ -17,8 +17,11 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"reflect"
+
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 )
@@ -113,3 +116,11 @@ type IntegrationPipelinesEmailList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []IntegrationPipelinesEmail `json:"items"`
 }
+
+// IntegrationPipelinesEmail type metadata
+var (
+	IntegrationPipelinesEmailKind             = reflect.TypeOf(IntegrationPipelinesEmail{}).Name()
+	IntegrationPipelinesEmailGroupKind        = schema.GroupKind{Group: Group, Kind: IntegrationPipelinesEmailKind}.String()
+	IntegrationPipelinesEmailKindAPIVersion   = IntegrationPipelinesEmailKind + "." + SchemeGroupVersion.String()
+	IntegrationPipelinesEmailGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationPipelinesEmailKind)
+)

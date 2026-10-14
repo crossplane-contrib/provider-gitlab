@@ -99,10 +99,6 @@ type MockClient struct {
 	MockSetHarborService    func(pid any, opt *gitlab.SetHarborServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborService, *gitlab.Response, error)
 	MockDeleteHarborService func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
-	MockGetPipelinesEmailService    func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error)
-	MockSetPipelinesEmailService    func(pid any, opt *gitlab.SetPipelinesEmailServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error)
-	MockDeletePipelinesEmailService func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
-
 	MockShareProjectWithGroup        func(pid any, opt *gitlab.ShareWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockDeleteSharedProjectFromGroup func(pid any, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
@@ -381,21 +377,6 @@ func (c *MockClient) SetHarborService(pid any, opt *gitlab.SetHarborServiceOptio
 // DeleteHarborService calls the underlying MockDeleteHarborService method.
 func (c *MockClient) DeleteHarborService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteHarborService(pid, options...)
-}
-
-// GetPipelinesEmailService calls the underlying MockGetPipelinesEmailService method.
-func (c *MockClient) GetPipelinesEmailService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
-	return c.MockGetPipelinesEmailService(pid, options...)
-}
-
-// SetPipelinesEmailService calls the underlying MockSetPipelinesEmailService method.
-func (c *MockClient) SetPipelinesEmailService(pid any, opt *gitlab.SetPipelinesEmailServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
-	return c.MockSetPipelinesEmailService(pid, opt, options...)
-}
-
-// DeletePipelinesEmailService calls the underlying MockDeletePipelinesEmailService method.
-func (c *MockClient) DeletePipelinesEmailService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-	return c.MockDeletePipelinesEmailService(pid, options...)
 }
 
 // ShareProjectWithGroup calls the underlying MockShareProjectWithGroup method.

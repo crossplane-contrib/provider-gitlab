@@ -235,7 +235,7 @@ func TestObserve(t *testing.T) {
 		},
 		"NotFound": {
 			args: args{
-				client: &fake.MockClient{
+				client: &fake.MockPipelinesEmailClient{
 					MockGetPipelinesEmailService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
@@ -249,7 +249,7 @@ func TestObserve(t *testing.T) {
 		},
 		"GetFailed": {
 			args: args{
-				client: &fake.MockClient{
+				client: &fake.MockPipelinesEmailClient{
 					MockGetPipelinesEmailService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 500}}, errBoom
 					},
@@ -263,7 +263,7 @@ func TestObserve(t *testing.T) {
 		},
 		"InactiveIntegration": {
 			args: args{
-				client: &fake.MockClient{
+				client: &fake.MockPipelinesEmailClient{
 					MockGetPipelinesEmailService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
 						return &gitlab.PipelinesEmailService{Properties: &gitlab.PipelinesEmailProperties{}}, &gitlab.Response{}, nil
 					},
@@ -277,7 +277,7 @@ func TestObserve(t *testing.T) {
 		},
 		"SuccessUpToDate": {
 			args: args{
-				client: &fake.MockClient{
+				client: &fake.MockPipelinesEmailClient{
 					MockGetPipelinesEmailService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
 						return remoteService(testRecipient), &gitlab.Response{}, nil
 					},
@@ -308,7 +308,7 @@ func TestObserve(t *testing.T) {
 		},
 		"SuccessLateInitialized": {
 			args: args{
-				client: &fake.MockClient{
+				client: &fake.MockPipelinesEmailClient{
 					MockGetPipelinesEmailService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
 						return remoteService(testRecipient), &gitlab.Response{}, nil
 					},
@@ -334,7 +334,7 @@ func TestObserve(t *testing.T) {
 		},
 		"SuccessNeedsUpdate": {
 			args: args{
-				client: &fake.MockClient{
+				client: &fake.MockPipelinesEmailClient{
 					MockGetPipelinesEmailService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
 						return remoteService("other@example.com"), &gitlab.Response{}, nil
 					},
@@ -391,8 +391,8 @@ func TestCreate(t *testing.T) {
 	}
 
 	var sent *gitlab.SetPipelinesEmailServiceOptions
-	capture := func(err error) *fake.MockClient {
-		return &fake.MockClient{
+	capture := func(err error) *fake.MockPipelinesEmailClient {
+		return &fake.MockPipelinesEmailClient{
 			MockSetPipelinesEmailService: func(pid any, opt *gitlab.SetPipelinesEmailServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
 				sent = opt
 				return &gitlab.PipelinesEmailService{}, &gitlab.Response{}, err
@@ -490,8 +490,8 @@ func TestUpdate(t *testing.T) {
 	}
 
 	var sent *gitlab.SetPipelinesEmailServiceOptions
-	capture := func(err error) *fake.MockClient {
-		return &fake.MockClient{
+	capture := func(err error) *fake.MockPipelinesEmailClient {
+		return &fake.MockPipelinesEmailClient{
 			MockSetPipelinesEmailService: func(pid any, opt *gitlab.SetPipelinesEmailServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PipelinesEmailService, *gitlab.Response, error) {
 				sent = opt
 				return &gitlab.PipelinesEmailService{}, &gitlab.Response{}, err
@@ -575,8 +575,8 @@ func TestDelete(t *testing.T) {
 	}
 
 	var deleted any
-	capture := func(err error) *fake.MockClient {
-		return &fake.MockClient{
+	capture := func(err error) *fake.MockPipelinesEmailClient {
+		return &fake.MockPipelinesEmailClient{
 			MockDeletePipelinesEmailService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 				deleted = pid
 				return &gitlab.Response{}, err
