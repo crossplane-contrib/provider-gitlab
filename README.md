@@ -162,6 +162,34 @@ The bootstrap-secret note above applies unchanged. See
 [`examples/projects/accesstoken.yaml`](examples/projects/accesstoken.yaml) for
 full examples of both modes.
 
+### Delete a namespace that holds managed resources
+
+When you delete a namespace, Kubernetes deletes all of its content at once. That
+includes a namespaced `ProviderConfig`, its credentials `Secret`, and the
+`ProviderConfigUsage` objects that keep the `ProviderConfig` in use. A managed
+resource that must still delete its GitLab resource then has no credentials. It
+reports `cannot get referenced ProviderConfig ... not found` or
+`Cannot find referenced secret` and keeps its finalizer. The namespace stays in
+`Terminating`, and the GitLab resource is not deleted. See
+[crossplane/crossplane-runtime#1049](https://github.com/crossplane/crossplane-runtime/issues/1049).
+
+To delete a namespace with its managed resources, use one of these options:
+
+* Reference a `ClusterProviderConfig` from managed resources in a namespace that
+  you delete as a whole. Keep its credentials `Secret` in a namespace that you
+  do not delete, for example `crossplane-system`.
+* Delete the managed resources first and wait until they are gone. Then delete
+  the namespace.
+
+If a namespace is already stuck, point each stuck managed resource at a
+`ClusterProviderConfig`. The managed resource then deletes its GitLab resource
+and releases the namespace:
+
+```bash
+kubectl patch -n <namespace> <resource>/<name> --type=merge \
+  -p '{"spec":{"providerConfigRef":{"kind":"ClusterProviderConfig","name":"<cluster-provider-config>"}}}'
+```
+
 ## Contributing
 
 provider-gitlab is a community driven project and we welcome contributions. See
