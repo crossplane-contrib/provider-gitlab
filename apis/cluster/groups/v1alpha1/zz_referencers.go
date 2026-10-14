@@ -467,3 +467,46 @@ func (mg *IntegrationHarbor) ResolveReferences(ctx context.Context, c client.Rea
 
 	return nil
 }
+
+// ResolveReferences of this GroupShare
+func (mg *GroupShare) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPIResolver(c, mg)
+
+	// resolve spec.forProvider.sharedGroupIdRef
+	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.SharedGroupID),
+		Reference:    mg.Spec.ForProvider.SharedGroupIDRef,
+		Selector:     mg.Spec.ForProvider.SharedGroupIDSelector,
+		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
+		Extract:      reference.ExternalName(),
+	})
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.sharedGroupId")
+	}
+	sharedGroupID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.sharedGroupId")
+	}
+	mg.Spec.ForProvider.SharedGroupID = sharedGroupID
+	mg.Spec.ForProvider.SharedGroupIDRef = rsp.ResolvedReference
+
+	// resolve spec.forProvider.invitedGroupIdRef
+	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.InvitedGroupID),
+		Reference:    mg.Spec.ForProvider.InvitedGroupIDRef,
+		Selector:     mg.Spec.ForProvider.InvitedGroupIDSelector,
+		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
+		Extract:      reference.ExternalName(),
+	})
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.invitedGroupId")
+	}
+	invitedGroupID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.invitedGroupId")
+	}
+	mg.Spec.ForProvider.InvitedGroupID = invitedGroupID
+	mg.Spec.ForProvider.InvitedGroupIDRef = rsp.ResolvedReference
+
+	return nil
+}

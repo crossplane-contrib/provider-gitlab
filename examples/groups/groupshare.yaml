@@ -1,0 +1,35 @@
+---
+# Give the members of the "developers" group Developer access to "example-group".
+# If the provider also manages example-group as a Group, set
+# manageSharedWithGroups: false there, or it removes shares it does not list.
+apiVersion: groups.gitlab.m.crossplane.io/v1alpha1
+kind: GroupShare
+metadata:
+  name: example-group-developers
+  namespace: default
+spec:
+  forProvider:
+    # The group that is shared.
+    sharedGroupIdRef:
+      name: example-group
+    # The group whose members get access.
+    invitedGroupIdRef:
+      name: developers
+    groupAccessLevel: 30
+    # expiresAt: "2027-12-31"
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+---
+# The same for the cluster-scoped API, with group IDs instead of references.
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: GroupShare
+metadata:
+  name: example-group-reporters
+spec:
+  forProvider:
+    sharedGroupId: 7
+    invitedGroupId: 8
+    groupAccessLevel: 20
+  providerConfigRef:
+    name: gitlab-provider

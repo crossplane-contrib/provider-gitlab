@@ -1,0 +1,79 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1alpha1
+
+import (
+	"context"
+	"strings"
+	"testing"
+
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/google/go-cmp/cmp"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+// groupsByName returns a reader that serves Groups with the given external
+// names, keyed by object name.
+func groupsByName(externalNames map[string]string) client.Reader {
+	return &test.MockClient{
+		MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
+			g := obj.(*Group)
+			g.SetName(key.Name)
+			g.SetNamespace(key.Namespace)
+			meta.SetExternalName(g, externalNames[key.Name])
+			return nil
+		},
+	}
+}
+
+func TestGroupShareResolveReferences(t *testing.T) {
+	share := func() *GroupShare {
+		return &GroupShare{
+			ObjectMeta: metav1.ObjectMeta{Name: "share", Namespace: "default"},
+			Spec: GroupShareSpec{ForProvider: GroupShareParameters{
+				SharedGroupIDRef:  &v2.NamespacedReference{Name: "shared"},
+				InvitedGroupIDRef: &v2.NamespacedReference{Name: "team"},
+				GroupAccessLevel:  30,
+			}},
+		}
+	}
+
+	t.Run("ResolvesBothGroups", func(t *testing.T) {
+		mg := share()
+		if err := mg.ResolveReferences(context.Background(), groupsByName(map[string]string{"shared": "11", "team": "22"})); err != nil {
+			t.Fatalf("ResolveReferences(...): %v", err)
+		}
+		got := []*int64{mg.Spec.ForProvider.SharedGroupID, mg.Spec.ForProvider.InvitedGroupID}
+		if diff := cmp.Diff([]*int64{new(int64(11)), new(int64(22))}, got); diff != "" {
+			t.Errorf("ResolveReferences(...): sharedGroupId, invitedGroupId: -want, +got:\n%s", diff)
+		}
+	})
+
+	t.Run("ExternalNameNotAnID", func(t *testing.T) {
+		mg := share()
+		err := mg.ResolveReferences(context.Background(), groupsByName(map[string]string{"shared": "11", "team": "org/team"}))
+		if err == nil || !strings.HasPrefix(err.Error(), "spec.forProvider.invitedGroupId") {
+			t.Errorf("ResolveReferences(...): got error %v, want one about spec.forProvider.invitedGroupId", err)
+		}
+		if mg.Spec.ForProvider.InvitedGroupID != nil {
+			t.Errorf("ResolveReferences(...): invitedGroupId = %d, want unset", *mg.Spec.ForProvider.InvitedGroupID)
+		}
+	})
+}
