@@ -291,7 +291,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{}, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return &gitlab.Group{}, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: group(withExternalName(extName)),
@@ -1018,6 +1018,7 @@ func TestDelete(t *testing.T) {
 						recordedGetCalls = append(recordedGetCalls, getGroupCalls{Pid: pid})
 						return nil, &gitlab.Response{Response: &http.Response{
 							StatusCode: http.StatusNotFound,
+							Header:     http.Header{"Content-Type": {"application/json"}},
 						}}, fmt.Errorf("group not found: 404")
 					},
 				},

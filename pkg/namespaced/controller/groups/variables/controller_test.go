@@ -324,7 +324,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				variable: &fake.MockClient{
 					MockGetGroupVariable: func(gid interface{}, key string, opt *gitlab.GetGroupVariableOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupVariable, *gitlab.Response, error) {
-						return &gitlab.GroupVariable{}, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return &gitlab.GroupVariable{}, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: variable(
