@@ -44,13 +44,14 @@ import (
 )
 
 const (
-	errNotServiceAccount = "managed resource is not a Gitlab service account custom resource"
-	errGetFailed         = "cannot get Gitlab service account"
-	errCreateFailed      = "cannot create Gitlab service account"
-	errUpdateFailed      = "cannot update Gitlab service account"
-	errDeleteFailed      = "cannot delete Gitlab service account"
-	errIDNotInt          = "specified ID is not an integer"
-	errInvalidFilter     = "invalid baseline permissions filter %q"
+	errNotServiceAccount  = "managed resource is not a Gitlab service account custom resource"
+	errGetFailed          = "cannot get Gitlab service account"
+	errCreateFailed       = "cannot create Gitlab service account"
+	errUpdateFailed       = "cannot update Gitlab service account"
+	errUpdateAvatarFailed = "cannot update Gitlab service account avatar"
+	errDeleteFailed       = "cannot delete Gitlab service account"
+	errIDNotInt           = "specified ID is not an integer"
+	errInvalidFilter      = "invalid baseline permissions filter %q"
 
 	accessLevelNoAccess             = "no-access"
 	accessLevelNoAccessValue        = 0
@@ -248,7 +249,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	modifyUserOptions := instance.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider)
 	modifyUserOptions.Avatar, err = common.AvatarUpload(avatar, cr.Status.AtProvider.AvatarURL)
 	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAvatarFailed)
 	}
 
 	updateWaitGroup := sync.WaitGroup{}

@@ -77,8 +77,8 @@ const (
 	testSecretAvatarName = "610f5ae4d76e332636a17bd357fd6ce99029316a99d320280d4d77a746bf29e8.gif"
 	testAvatarSecret     = "sa-avatar"
 	testAvatarSecretKey  = "avatar"
-	errAvatarKeyMissing  = `cannot read avatar from key "avatar" of Secret "sa-avatar": Cannot find key in referenced secret`
-	errAvatarSecretGone  = `cannot read avatar from key "avatar" of Secret "sa-avatar": Cannot find referenced secret: secrets "sa-avatar" not found`
+	errAvatarKeyMissing  = `cannot read avatar from key "avatar" of Secret "sa-avatar" in namespace "default": Cannot find key in referenced secret`
+	errAvatarSecretGone  = `cannot read avatar from key "avatar" of Secret "sa-avatar" in namespace "default": Cannot find referenced secret: secrets "sa-avatar" not found`
 )
 
 // avatarKube returns a kube client that holds the avatar Secret with data, or

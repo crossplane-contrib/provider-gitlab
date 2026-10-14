@@ -68,19 +68,19 @@ func TestResolveAvatar(t *testing.T) {
 		"SecretMissing": {
 			mg:       sa,
 			selector: common.TestCreateLocalSecretKeySelector("sa-avatar", "avatar"),
-			wantErr:  `cannot read avatar from key "avatar" of Secret "sa-avatar": Cannot find referenced secret: secrets "sa-avatar" not found`,
+			wantErr:  `cannot read avatar from key "avatar" of Secret "sa-avatar" in namespace "default": Cannot find referenced secret: secrets "sa-avatar" not found`,
 		},
 		"KeyMissing": {
 			secret:   avatarSecret("logo", png),
 			mg:       sa,
 			selector: common.TestCreateLocalSecretKeySelector("sa-avatar", "avatar"),
-			wantErr:  `cannot read avatar from key "avatar" of Secret "sa-avatar": Cannot find key in referenced secret`,
+			wantErr:  `cannot read avatar from key "avatar" of Secret "sa-avatar" in namespace "default": Cannot find key in referenced secret`,
 		},
 		"KeyEmpty": {
 			secret:   avatarSecret("avatar", []byte{}),
 			mg:       sa,
 			selector: common.TestCreateLocalSecretKeySelector("sa-avatar", "avatar"),
-			wantErr:  `key "avatar" of Secret "sa-avatar" holds no avatar image`,
+			wantErr:  `key "avatar" of Secret "sa-avatar" in namespace "default" holds no avatar image`,
 		},
 		"DeletingSkipsSecret": {
 			mg:       deleting,

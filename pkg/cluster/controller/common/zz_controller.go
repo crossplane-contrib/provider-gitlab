@@ -31,8 +31,8 @@ import (
 )
 
 const (
-	errReadAvatarSecret  = "cannot read avatar from key %q of Secret %q"
-	errEmptyAvatarSecret = "key %q of Secret %q holds no avatar image"
+	errReadAvatarSecret  = "cannot read avatar from key %q of Secret %q in namespace %q"
+	errEmptyAvatarSecret = "key %q of Secret %q in namespace %q holds no avatar image"
 )
 
 // UpdateStringFromSecret fetches a sensitive setting value from a Kubernetes Secret
@@ -57,12 +57,13 @@ func ResolveAvatar(ctx context.Context, kube client.Client, mg resource.Managed,
 		// Deleting needs no avatar, and the Secret may already be gone.
 		return nil, nil
 	}
+	secretNamespace := selector.Namespace
 	image, err := common.GetTokenValueFromSecret(ctx, kube, mg, selector)
 	if err != nil {
-		return nil, errors.Wrapf(err, errReadAvatarSecret, selector.Key, selector.Name)
+		return nil, errors.Wrapf(err, errReadAvatarSecret, selector.Key, selector.Name, secretNamespace)
 	}
 	if len(*image) == 0 {
-		return nil, errors.Errorf(errEmptyAvatarSecret, selector.Key, selector.Name)
+		return nil, errors.Errorf(errEmptyAvatarSecret, selector.Key, selector.Name, secretNamespace)
 	}
 	return []byte(*image), nil
 }
