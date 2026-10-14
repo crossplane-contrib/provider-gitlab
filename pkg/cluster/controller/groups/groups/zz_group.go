@@ -55,6 +55,8 @@ const (
 	errShareFailed       = "cannot share Gitlab Group with: %v"
 	errUnshareFailed     = "cannot unshare Gitlab Group from: %v"
 	errDeleteFailed      = "cannot delete Gitlab Group"
+	errArchiveFailed     = "cannot archive Gitlab Group"
+	errUnarchiveFailed   = "cannot unarchive Gitlab Group"
 	errMissingGroupID    = "missing group ID for group to share with"
 	errSWGMissingGroupID = "FOllowing SharedWithGroup is missing GroupID: %v"
 	errLateInitialize    = "Error during LateInitialization: "
@@ -122,6 +124,10 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type external struct {
 	kube   client.Client
 	client groups.Client
+
+	cache struct {
+		isArchived bool
+	}
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) { //nolint:gocyclo
@@ -177,6 +183,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 	isResourceLateInitialized := !cmp.Equal(current, &cr.Spec.ForProvider)
 
+	e.cache.isArchived = grp.Archived
 	cr.Status.AtProvider = groups.GenerateObservation(grp)
 	isUpToDate, err := isGroupUpToDate(&cr.Spec.ForProvider, grp)
 	if err != nil {
@@ -215,8 +222,17 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotGroup)
 	}
+	gid := meta.GetExternalName(cr)
+	archived := cr.Spec.ForProvider.Archived
+
+	if archived != nil && !*archived && e.cache.isArchived {
+		if _, err := e.client.UnarchiveGroup(gid, gitlab.WithContext(ctx)); err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errUnarchiveFailed)
+		}
+	}
+
 	grp, _, err := e.client.UpdateGroup(
-		meta.GetExternalName(cr),
+		gid,
 		groups.GenerateEditGroupOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
@@ -257,6 +273,12 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 					return managed.ExternalUpdate{}, errors.Wrapf(err, errUnshareFailed, sh.GroupID)
 				}
 			}
+		}
+	}
+
+	if archived != nil && *archived && !e.cache.isArchived {
+		if _, err := e.client.ArchiveGroup(gid, gitlab.WithContext(ctx)); err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errArchiveFailed)
 		}
 	}
 
@@ -327,6 +349,9 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) (bool, error)
 		return false, nil
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.MembershipLock, g.MembershipLock) {
+		return false, nil
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.Archived, g.Archived) {
 		return false, nil
 	}
 	if (p.Visibility != nil) && (!cmp.Equal(string(*p.Visibility), string(g.Visibility))) {

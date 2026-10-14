@@ -37,6 +37,8 @@ type Client interface {
 	CreateGroup(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	UpdateGroup(gid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	DeleteGroup(gid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	ArchiveGroup(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	UnarchiveGroup(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	ShareGroupWithGroup(gid interface{}, opt *gitlab.ShareGroupWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	UnshareGroupFromGroup(gid interface{}, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	ListGroups(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error)
@@ -84,6 +86,7 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { //nolint
 		FullName:  &grp.FullName,
 		FullPath:  &grp.FullPath,
 		LDAPCN:    &grp.LDAPCN,
+		Archived:  &grp.Archived,
 	}
 
 	if grp.CreatedAt != nil {
