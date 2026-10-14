@@ -1,0 +1,14 @@
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: IntegrationYouTrack
+metadata:
+  name: youtrack-p7
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    projectId: 7
+    projectUrl: "https://youtrack.example.com/projects/example"
+    issuesUrl: "https://youtrack.example.com/issue/:id"

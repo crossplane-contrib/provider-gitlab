@@ -26,8 +26,12 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/hooks"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationcustomissuetracker"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationexternalwiki"
 	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationharbor"
 	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationmattermost"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationredmine"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationyoutrack"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/pipelineschedules"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/projects"
@@ -61,6 +65,10 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		projectsharegroups.SetupProjectShareGroup,
 		serviceaccounts.SetupServiceAccount,
 		serviceaccountaccesstokens.SetupServiceAccountAccessToken,
+		integrationcustomissuetracker.SetupIntegrationCustomIssueTracker,
+		integrationexternalwiki.SetupIntegrationExternalWiki,
+		integrationredmine.SetupIntegrationRedmine,
+		integrationyoutrack.SetupIntegrationYouTrack,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -91,6 +99,10 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		projectsharegroups.SetupProjectShareGroupGated,
 		serviceaccounts.SetupServiceAccountGated,
 		serviceaccountaccesstokens.SetupServiceAccountAccessTokenGated,
+		integrationcustomissuetracker.SetupIntegrationCustomIssueTrackerGated,
+		integrationexternalwiki.SetupIntegrationExternalWikiGated,
+		integrationredmine.SetupIntegrationRedmineGated,
+		integrationyoutrack.SetupIntegrationYouTrackGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

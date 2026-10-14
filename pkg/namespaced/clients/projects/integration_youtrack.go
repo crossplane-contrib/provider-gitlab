@@ -1,0 +1,68 @@
+/*
+Copyright 2026 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package projects
+
+import (
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+)
+
+// YouTrackClient defines GitLab YouTrack integration operations for a project.
+type YouTrackClient interface {
+	GetYouTrackService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.YouTrackService, *gitlab.Response, error)
+	SetYouTrackService(pid any, opt *gitlab.SetYouTrackServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.YouTrackService, *gitlab.Response, error)
+	DeleteYouTrackService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// NewYouTrackClient returns a new GitLab Services client for project YouTrack operations.
+func NewYouTrackClient(cfg common.Config) YouTrackClient {
+	git := common.NewClient(cfg)
+	return git.Services
+}
+
+// GenerateSetYouTrackServiceOptions produces SetYouTrackServiceOptions from IntegrationYouTrackParameters.
+func GenerateSetYouTrackServiceOptions(in *v1alpha1.IntegrationYouTrackParameters) *gitlab.SetYouTrackServiceOptions {
+	return &gitlab.SetYouTrackServiceOptions{
+		ProjectURL: &in.ProjectURL,
+		IssuesURL:  &in.IssuesURL,
+	}
+}
+
+// GenerateIntegrationYouTrackObservation converts gitlab.YouTrackService to IntegrationYouTrackObservation.
+func GenerateIntegrationYouTrackObservation(observation *gitlab.YouTrackService) v1alpha1.IntegrationYouTrackObservation {
+	if observation == nil || observation.Properties == nil {
+		return v1alpha1.IntegrationYouTrackObservation{}
+	}
+
+	return v1alpha1.IntegrationYouTrackObservation{
+		CommonIntegrationObservation: common.GenerateCommonIntegrationObservation(&observation.Service),
+		ProjectURL:                   observation.Properties.ProjectURL,
+		IssuesURL:                    observation.Properties.IssuesURL,
+	}
+}
+
+// IsIntegrationYouTrackUpToDate returns true if the desired spec matches the observed YouTrack service.
+func IsIntegrationYouTrackUpToDate(spec *v1alpha1.IntegrationYouTrackParameters, observation *gitlab.YouTrackService) bool {
+	if observation == nil || observation.Properties == nil {
+		return false
+	}
+
+	return spec.ProjectURL == observation.Properties.ProjectURL &&
+		spec.IssuesURL == observation.Properties.IssuesURL
+}

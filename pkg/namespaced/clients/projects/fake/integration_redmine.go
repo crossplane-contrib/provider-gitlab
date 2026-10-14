@@ -1,0 +1,47 @@
+/*
+Copyright 2026 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package fake
+
+import (
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects"
+)
+
+var _ projects.RedmineClient = &MockRedmineClient{}
+
+// MockRedmineClient is a fake implementation of projects.RedmineClient.
+type MockRedmineClient struct {
+	MockGetRedmineService    func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.RedmineService, *gitlab.Response, error)
+	MockSetRedmineService    func(pid any, opt *gitlab.SetRedmineServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.RedmineService, *gitlab.Response, error)
+	MockDeleteRedmineService func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// GetRedmineService calls the underlying MockGetRedmineService method.
+func (c *MockRedmineClient) GetRedmineService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.RedmineService, *gitlab.Response, error) {
+	return c.MockGetRedmineService(pid, options...)
+}
+
+// SetRedmineService calls the underlying MockSetRedmineService method.
+func (c *MockRedmineClient) SetRedmineService(pid any, opt *gitlab.SetRedmineServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.RedmineService, *gitlab.Response, error) {
+	return c.MockSetRedmineService(pid, opt, options...)
+}
+
+// DeleteRedmineService calls the underlying MockDeleteRedmineService method.
+func (c *MockRedmineClient) DeleteRedmineService(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteRedmineService(pid, options...)
+}
