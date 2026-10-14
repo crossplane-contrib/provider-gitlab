@@ -46,7 +46,7 @@ type IntegrationExternalWikiParameters struct {
 
 	// ExternalWikiURL is the URL of the external wiki.
 	// +required
-	// +kubebuilder:validation:Pattern=`^https?://.+`
+	// +kubebuilder:validation:Pattern=`^https?://\S+$`
 	ExternalWikiURL string `json:"externalWikiUrl"`
 }
 

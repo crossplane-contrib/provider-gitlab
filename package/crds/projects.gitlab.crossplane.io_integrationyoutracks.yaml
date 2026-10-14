@@ -80,7 +80,7 @@ spec:
                   issuesUrl:
                     description: IssuesURL is the URL to view an issue in YouTrack.
                       GitLab replaces :id with the issue number.
-                    pattern: ^https?://.+
+                    pattern: ^https?://\S+$
                     type: string
                   projectId:
                     description: ProjectID is the ID of the project.
@@ -164,7 +164,7 @@ spec:
                     type: object
                   projectUrl:
                     description: ProjectURL is the URL of the project in YouTrack.
-                    pattern: ^https?://.+
+                    pattern: ^https?://\S+$
                     type: string
                 required:
                 - issuesUrl

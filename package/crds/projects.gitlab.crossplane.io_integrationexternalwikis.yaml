@@ -78,7 +78,7 @@ spec:
                 properties:
                   externalWikiUrl:
                     description: ExternalWikiURL is the URL of the external wiki.
-                    pattern: ^https?://.+
+                    pattern: ^https?://\S+$
                     type: string
                   projectId:
                     description: ProjectID is the ID of the project.

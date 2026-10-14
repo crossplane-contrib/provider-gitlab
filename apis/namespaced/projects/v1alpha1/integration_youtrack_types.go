@@ -44,12 +44,12 @@ type IntegrationYouTrackParameters struct {
 
 	// ProjectURL is the URL of the project in YouTrack.
 	// +required
-	// +kubebuilder:validation:Pattern=`^https?://.+`
+	// +kubebuilder:validation:Pattern=`^https?://\S+$`
 	ProjectURL string `json:"projectUrl"`
 
 	// IssuesURL is the URL to view an issue in YouTrack. GitLab replaces :id with the issue number.
 	// +required
-	// +kubebuilder:validation:Pattern=`^https?://.+`
+	// +kubebuilder:validation:Pattern=`^https?://\S+$`
 	IssuesURL string `json:"issuesUrl"`
 }
 

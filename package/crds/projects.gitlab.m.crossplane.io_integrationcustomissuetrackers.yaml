@@ -66,13 +66,13 @@ spec:
                   issuesUrl:
                     description: IssuesURL is the URL to view an issue in the custom
                       issue tracker. GitLab replaces :id with the issue number.
-                    pattern: ^https?://.+
+                    pattern: ^https?://\S+$
                     type: string
                   newIssueUrl:
                     description: |-
                       NewIssueURL is the URL to create an issue in the custom issue tracker.
                       GitLab requires this URL but does not use it.
-                    pattern: ^https?://.+
+                    pattern: ^https?://\S+$
                     type: string
                   projectId:
                     description: ProjectID is the ID of the project.
@@ -163,7 +163,7 @@ spec:
                   projectUrl:
                     description: ProjectURL is the URL of the project in the custom
                       issue tracker.
-                    pattern: ^https?://.+
+                    pattern: ^https?://\S+$
                     type: string
                 required:
                 - issuesUrl

@@ -80,11 +80,11 @@ spec:
                   issuesUrl:
                     description: IssuesURL is the URL to view an issue in Redmine.
                       GitLab replaces :id with the issue number.
-                    pattern: ^https?://.+
+                    pattern: ^https?://\S+$
                     type: string
                   newIssueUrl:
                     description: NewIssueURL is the URL to create an issue in Redmine.
-                    pattern: ^https?://.+
+                    pattern: ^https?://\S+$
                     type: string
                   projectId:
                     description: ProjectID is the ID of the project.
@@ -168,7 +168,7 @@ spec:
                     type: object
                   projectUrl:
                     description: ProjectURL is the URL of the project in Redmine.
-                    pattern: ^https?://.+
+                    pattern: ^https?://\S+$
                     type: string
                 required:
                 - issuesUrl

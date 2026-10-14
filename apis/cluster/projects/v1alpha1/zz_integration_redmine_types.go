@@ -46,17 +46,17 @@ type IntegrationRedmineParameters struct {
 
 	// ProjectURL is the URL of the project in Redmine.
 	// +required
-	// +kubebuilder:validation:Pattern=`^https?://.+`
+	// +kubebuilder:validation:Pattern=`^https?://\S+$`
 	ProjectURL string `json:"projectUrl"`
 
 	// IssuesURL is the URL to view an issue in Redmine. GitLab replaces :id with the issue number.
 	// +required
-	// +kubebuilder:validation:Pattern=`^https?://.+`
+	// +kubebuilder:validation:Pattern=`^https?://\S+$`
 	IssuesURL string `json:"issuesUrl"`
 
 	// NewIssueURL is the URL to create an issue in Redmine.
 	// +required
-	// +kubebuilder:validation:Pattern=`^https?://.+`
+	// +kubebuilder:validation:Pattern=`^https?://\S+$`
 	NewIssueURL string `json:"newIssueUrl"`
 }
 
