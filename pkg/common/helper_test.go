@@ -372,6 +372,122 @@ func TestUseProviderConfigResolvesClusterSecretRef(t *testing.T) {
 	}
 }
 
+func TestUseProviderConfigTrackInTerminatingNamespace(t *testing.T) {
+	const (
+		testToken   = "cluster-token-value"
+		mgNamespace = "team-a"
+		usageName   = "6a1c9e0e-0000-4000-8000-000000000429"
+	)
+
+	terminating := apierrors.NewForbidden(
+		schema.GroupResource{Group: "gitlab.m.crossplane.io", Resource: "providerconfigusages"}, usageName,
+		errors.New("unable to create new content in namespace team-a because it is being terminated"))
+	terminating.ErrStatus.Details.Causes = append(terminating.ErrStatus.Details.Causes, metav1.StatusCause{
+		Type:    corev1.NamespaceTerminatingCause,
+		Message: "namespace team-a is being terminated",
+		Field:   "metadata.namespace",
+	})
+	rbac := apierrors.NewForbidden(
+		schema.GroupResource{Group: "gitlab.m.crossplane.io", Resource: "providerconfigusages"}, usageName,
+		errors.New("RBAC: access denied"))
+
+	deleted := metav1.Now()
+
+	type args struct {
+		deletionTimestamp *metav1.Time
+		createErr         error
+	}
+	type want struct {
+		token string
+		err   string
+	}
+
+	cases := map[string]struct {
+		reason string
+		args   args
+		want   want
+	}{
+		"DeletingResourceIgnoresTerminatingNamespace": {
+			reason: "A deleting resource must still connect when its namespace refuses a new usage, so it can delete its external resource.",
+			args:   args{deletionTimestamp: &deleted, createErr: terminating},
+			want:   want{token: testToken},
+		},
+		"LiveResourceReportsTerminatingNamespace": {
+			reason: "A resource that is not being deleted must not connect without a usage.",
+			args:   args{createErr: terminating},
+			want: want{err: `cannot track ProviderConfig usage: cannot apply ProviderConfigUsage: cannot create object: ` +
+				`providerconfigusages.gitlab.m.crossplane.io "6a1c9e0e-0000-4000-8000-000000000429" is forbidden: ` +
+				`unable to create new content in namespace team-a because it is being terminated`},
+		},
+		"DeletingResourceReportsOtherForbidden": {
+			reason: "Only the namespace lifecycle rejection is ignored, not other create failures.",
+			args:   args{deletionTimestamp: &deleted, createErr: rbac},
+			want: want{err: `cannot track ProviderConfig usage: cannot apply ProviderConfigUsage: cannot create object: ` +
+				`providerconfigusages.gitlab.m.crossplane.io "6a1c9e0e-0000-4000-8000-000000000429" is forbidden: RBAC: access denied`},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			mg := &namespacedgroupsv1alpha1.AccessToken{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "at",
+					Namespace:         mgNamespace,
+					UID:               usageName,
+					DeletionTimestamp: tc.args.deletionTimestamp,
+				},
+			}
+			mg.SetProviderConfigReference(&v2.ProviderConfigReference{Kind: "ClusterProviderConfig", Name: "cpc"})
+
+			kube := &test.MockClient{
+				MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
+					switch o := obj.(type) {
+					case *namespacedv1beta1.ClusterProviderConfig:
+						*o = namespacedv1beta1.ClusterProviderConfig{
+							ObjectMeta: metav1.ObjectMeta{Name: "cpc"},
+							Spec: namespacedv1beta1.ProviderConfigSpec{
+								Credentials: namespacedv1beta1.ProviderCredentials{
+									Source: v2.CredentialsSourceSecret,
+									Method: auth.OAuthToken,
+									CommonCredentialSelectors: v2.CommonCredentialSelectors{
+										SecretRef: &v2.SecretKeySelector{
+											Key:             "token",
+											SecretReference: v2.SecretReference{Name: "gitlab-creds", Namespace: "crossplane-system"},
+										},
+									},
+								},
+							},
+						}
+					case *corev1.Secret:
+						*o = corev1.Secret{Data: map[string][]byte{"token": []byte(testToken)}}
+					case *namespacedv1beta1.ProviderConfigUsage:
+						return apierrors.NewNotFound(schema.GroupResource{}, key.Name)
+					}
+					return nil
+				},
+				MockCreate: test.NewMockCreateFn(tc.args.createErr),
+			}
+
+			cfg, err := UseProvicerConfig(context.Background(), kube, mg)
+
+			gotErr := ""
+			if err != nil {
+				gotErr = err.Error()
+			}
+			if diff := cmp.Diff(tc.want.err, gotErr); diff != "" {
+				t.Errorf("%s\nUseProvicerConfig() error -want +got:\n%s", tc.reason, diff)
+			}
+			gotToken := ""
+			if cfg != nil {
+				gotToken = cfg.Token
+			}
+			if diff := cmp.Diff(tc.want.token, gotToken); diff != "" {
+				t.Errorf("%s\nUseProvicerConfig() token -want +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
 func TestGetTokenValueFromLocalSecret(t *testing.T) {
 	testToken := "test-local-token-value"
 	testNamespace := "test-namespace"
