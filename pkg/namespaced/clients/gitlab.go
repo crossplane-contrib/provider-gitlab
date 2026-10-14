@@ -19,6 +19,7 @@ package clients
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"mime"
 	"net/http"
 	"time"
 
@@ -262,12 +263,15 @@ func IsTimePtrEqualToTimePtr(tp1, tp2 *time.Time) bool {
 	return tp1 != nil || tp2 != nil
 }
 
-// IsResponseNotFound returns true of Gitlab Response indicates CR was not found
+// IsResponseNotFound reports whether res is a 404 from the GitLab API itself.
+// GitLab renders API 404s as JSON. A non-JSON 404 comes from a proxy or ingress
+// in front of GitLab and does not prove the resource is gone.
 func IsResponseNotFound(res *gitlab.Response) bool {
-	if res != nil && res.StatusCode == 404 {
-		return true
+	if res == nil || res.Response == nil || res.StatusCode != http.StatusNotFound {
+		return false
 	}
-	return false
+	mediaType, _, err := mime.ParseMediaType(res.Header.Get("Content-Type"))
+	return err == nil && mediaType == "application/json"
 }
 
 // IsResponseUnauthorized reports whether the GitLab response indicates the
