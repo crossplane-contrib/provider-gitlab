@@ -32,6 +32,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -43,12 +44,32 @@ func (m *fakeManager) GetEventRecorderFor(string) record.EventRecorder {
 	return record.NewFakeRecorder(8)
 }
 
+func firstReconciles(t *testing.T) uint64 {
+	t.Helper()
+	families, err := metrics.Registry.Gather()
+	if err != nil {
+		t.Fatalf("metrics.Registry.Gather(): %v", err)
+	}
+	var n uint64
+	for _, f := range families {
+		if f.GetName() != "crossplane_managed_resource_first_time_to_reconcile_seconds" {
+			continue
+		}
+		for _, m := range f.GetMetric() {
+			n += m.GetHistogram().GetSampleCount()
+		}
+	}
+	return n
+}
+
 func TestNewReconciler(t *testing.T) {
 	cases := map[string]struct {
-		reason             string
-		annotation         string
-		managementPolicies bool
-		want               reconcile.Result
+		reason              string
+		annotation          string
+		managementPolicies  bool
+		metricOptions       func(managed.MetricRecorder) *controller.MetricOptions
+		want                reconcile.Result
+		wantFirstReconciles uint64
 	}{
 		"AnnotationBelowMinimum": {
 			reason:     "An annotation below MinPollInterval should poll at MinPollInterval.",
@@ -69,10 +90,31 @@ func TestNewReconciler(t *testing.T) {
 			managementPolicies: true,
 			want:               reconcile.Result{},
 		},
+		"MetricRecorder": {
+			reason: "The MRMetrics recorder from the metric options should record the first reconcile.",
+			metricOptions: func(mr managed.MetricRecorder) *controller.MetricOptions {
+				return &controller.MetricOptions{MRMetrics: mr}
+			},
+			want:                reconcile.Result{RequeueAfter: 10 * time.Minute},
+			wantFirstReconciles: 1,
+		},
+		"MetricOptionsWithoutRecorder": {
+			reason: "Metric options without an MRMetrics recorder should neither record nor panic.",
+			metricOptions: func(managed.MetricRecorder) *controller.MetricOptions {
+				return &controller.MetricOptions{}
+			},
+			want: reconcile.Result{RequeueAfter: 10 * time.Minute},
+		},
 	}
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
+			mr := managed.NewMRMetricRecorder()
+			if err := metrics.Registry.Register(mr); err != nil {
+				t.Fatalf("metrics.Registry.Register(...): %v", err)
+			}
+			t.Cleanup(func() { metrics.Registry.Unregister(mr) })
+
 			mgr := &fakeManager{Manager: fake.Manager{
 				Client: &test.MockClient{
 					MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
@@ -92,6 +134,9 @@ func TestNewReconciler(t *testing.T) {
 			o := ControllerOptions{
 				Options:         controller.Options{Logger: logging.NewNopLogger(), PollInterval: 10 * time.Minute, Features: features},
 				MinPollInterval: 10 * time.Second,
+			}
+			if tc.metricOptions != nil {
+				o.MetricOptions = tc.metricOptions(mr)
 			}
 
 			r := NewReconciler(mgr, o, "test", resource.ManagedKind(fake.GVK(&fake.ModernManaged{})),
@@ -113,6 +158,9 @@ func TestNewReconciler(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("\n%s\nr.Reconcile(...): -want, +got:\n%s", tc.reason, diff)
+			}
+			if diff := cmp.Diff(tc.wantFirstReconciles, firstReconciles(t)); diff != "" {
+				t.Errorf("\n%s\nfirst reconciles recorded: -want, +got:\n%s", tc.reason, diff)
 			}
 		})
 	}

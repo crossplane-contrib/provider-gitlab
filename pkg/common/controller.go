@@ -38,14 +38,17 @@ type ControllerOptions struct {
 }
 
 // NewReconciler returns a managed resource reconciler for the supplied kind
-// that uses the provider-wide poll intervals, logger, event recorder and
-// feature flags. The supplied options are applied after these.
+// that uses the provider-wide poll intervals, logger, event recorder, metric
+// recorder and feature flags. The supplied options are applied after these.
 func NewReconciler(mgr ctrl.Manager, o ControllerOptions, name string, of resource.ManagedKind, opts ...managed.ReconcilerOption) *managed.Reconciler {
 	ro := []managed.ReconcilerOption{
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithMinPollInterval(o.MinPollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
+	}
+	if o.MetricOptions != nil && o.MetricOptions.MRMetrics != nil {
+		ro = append(ro, managed.WithMetricRecorder(o.MetricOptions.MRMetrics))
 	}
 	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
 		ro = append(ro, managed.WithManagementPolicies())
