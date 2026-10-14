@@ -28,8 +28,8 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/v1beta1"
 )
 
-// Setup adds a controller that reconciles ProviderConfigs by accounting for
-// their current usage.
+// SetupCluster adds a controller that reconciles ClusterProviderConfigs by
+// accounting for their current usage.
 func SetupCluster(mgr ctrl.Manager, o controller.Options) error {
 	name := providerconfig.ControllerName(v1beta1.ClusterProviderConfigGroupKind)
 
@@ -42,7 +42,7 @@ func SetupCluster(mgr ctrl.Manager, o controller.Options) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		WithOptions(o.ForControllerRuntime()).
-		For(&v1beta1.ProviderConfig{}).
+		For(&v1beta1.ClusterProviderConfig{}).
 		Watches(&v1beta1.ProviderConfigUsage{}, &resource.EnqueueRequestForProviderConfig{}).
 		Complete(providerconfig.NewReconciler(mgr, of,
 			providerconfig.WithLogger(o.Logger.WithValues("controller", name)),
