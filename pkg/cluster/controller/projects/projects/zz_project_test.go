@@ -42,6 +42,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/projects/fake"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 var (
@@ -51,6 +52,7 @@ var (
 	projectID         = int64(1234)
 	extName           = strconv.FormatInt(projectID, 10)
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: extName}
+	fullPath          = "path/to/example-project"
 	timeNow           = time.Now()
 )
 
@@ -72,6 +74,10 @@ func withPath(p *string) projectModifier {
 
 func withExternalName(projectID string) projectModifier {
 	return func(r *v1alpha1.Project) { meta.SetExternalName(r, projectID) }
+}
+
+func withManagementPolicies(p ...v2.ManagementAction) projectModifier {
+	return func(r *v1alpha1.Project) { r.SetManagementPolicies(p) }
 }
 
 func withStatus(s v1alpha1.ProjectObservation) projectModifier {
@@ -232,18 +238,63 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
-		"NotIDExternalName": {
+		"PathExternalNameObserveOnly": {
 			args: args{
 				project: &fake.MockClient{
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return &gitlab.Project{}, &gitlab.Response{}, nil
+						if pid != fullPath {
+							return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						}
+						return &gitlab.Project{ID: projectID, Name: "example-project"}, &gitlab.Response{}, nil
+					},
+					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+						return &gitlab.ProjectPushRules{}, nil, nil
 					},
 				},
-				cr: project(withExternalName("fr")),
+				cr: project(
+					withClientDefaultValues(),
+					withExternalName(fullPath),
+					withManagementPolicies(v2.ManagementActionObserve),
+				),
 			},
 			want: want{
-				cr:  project(withExternalName("fr")),
-				err: errors.New(errNotProject),
+				cr: project(
+					withClientDefaultValues(),
+					withConditions(v2.Available()),
+					withExternalName(fullPath),
+					withManagementPolicies(v2.ManagementActionObserve),
+					func(p *v1alpha1.Project) { p.Status.AtProvider.ID = projectID },
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		"PathExternalNameNotFound": {
+			args: args{
+				project: &fake.MockClient{
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: project(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionObserve)),
+			},
+			want: want{
+				cr:     project(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionObserve)),
+				result: managed.ExternalObservation{},
+			},
+		},
+		"PathExternalNameWithWritePolicies": {
+			args: args{
+				project: &fake.MockClient{},
+				cr:      project(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionAll)),
+			},
+			want: want{
+				cr:  project(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionAll)),
+				err: errors.New(common.ErrPathExternalNameNotObserveOnly),
 			},
 		},
 		"FailedGetRequest": {
@@ -406,6 +457,9 @@ func TestObserve(t *testing.T) {
 			args: args{
 				project: &fake.MockClient{
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						if pid != extName {
+							return nil, &gitlab.Response{}, errBoom
+						}
 						return &gitlab.Project{Name: "example-project"}, &gitlab.Response{}, nil
 					},
 					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {

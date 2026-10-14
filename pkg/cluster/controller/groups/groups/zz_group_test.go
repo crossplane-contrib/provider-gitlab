@@ -41,6 +41,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups/fake"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 var (
@@ -56,6 +57,7 @@ var (
 	expiresAt          = time.Now()
 	expiresAtIso       = (gitlab.ISOTime)(expiresAt)
 	extNameAnnotation  = map[string]string{meta.AnnotationKeyExternalName: extName}
+	fullPath           = "path/to/example-group"
 	visibility         = "private"
 	v1alpha1Visibility = v1alpha1.VisibilityValue(visibility)
 
@@ -114,6 +116,10 @@ func withSubGroupCreationLevel(s *v1alpha1.SubGroupCreationLevelValue) groupModi
 
 func withExternalName(n string) groupModifier {
 	return func(r *v1alpha1.Group) { meta.SetExternalName(r, n) }
+}
+
+func withManagementPolicies(p ...v2.ManagementAction) groupModifier {
+	return func(r *v1alpha1.Group) { r.SetManagementPolicies(p) }
 }
 
 // Use for testing. When ResourceLateInitialized should it be false
@@ -261,18 +267,62 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
-		"NotIDExternalName": {
+		"PathExternalNameObserveOnly": {
 			args: args{
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{}, &gitlab.Response{}, nil
+						if pid != fullPath {
+							return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						}
+						return &gitlab.Group{ID: groupID, Name: name}, &gitlab.Response{}, nil
 					},
 				},
-				cr: group(withExternalName("fr")),
+				cr: group(
+					withPath(""),
+					withClientDefaultValues(),
+					withExternalName(fullPath),
+					withManagementPolicies(v2.ManagementActionObserve),
+				),
 			},
 			want: want{
-				cr:  group(withExternalName("fr")),
-				err: errors.New(errIDNotInt),
+				cr: group(
+					withPath(""),
+					withClientDefaultValues(),
+					withConditions(v2.Available()),
+					withExternalName(fullPath),
+					withManagementPolicies(v2.ManagementActionObserve),
+					func(g *v1alpha1.Group) { g.Status.AtProvider.ID = &groupID },
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		"PathExternalNameNotFound": {
+			args: args{
+				group: &fake.MockClient{
+					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					},
+				},
+				cr: group(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionObserve)),
+			},
+			want: want{
+				cr:     group(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionObserve)),
+				result: managed.ExternalObservation{},
+			},
+		},
+		"PathExternalNameWithWritePolicies": {
+			args: args{
+				group: &fake.MockClient{},
+				cr:    group(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionAll)),
+			},
+			want: want{
+				cr:  group(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionAll)),
+				err: errors.New(common.ErrPathExternalNameNotObserveOnly),
 			},
 		},
 		"FailedGetRequest": {
@@ -424,6 +474,9 @@ func TestObserve(t *testing.T) {
 			args: args{
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						if pid != extName {
+							return nil, &gitlab.Response{}, errBoom
+						}
 						return &gitlab.Group{Name: name}, &gitlab.Response{}, nil
 					},
 				},

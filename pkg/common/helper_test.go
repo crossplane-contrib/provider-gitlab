@@ -588,3 +588,47 @@ func TestResolvePublicJobsSetting(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateExternalName(t *testing.T) {
+	cases := map[string]struct {
+		externalName string
+		policies     v2.ManagementPolicies
+		want         error
+	}{
+		"IDWithAllPolicies": {
+			externalName: "1234",
+			policies:     v2.ManagementPolicies{v2.ManagementActionAll},
+		},
+		"PathWithObserve": {
+			externalName: "path/to/example-group",
+			policies:     v2.ManagementPolicies{v2.ManagementActionObserve},
+		},
+		"PathWithObserveAndLateInitialize": {
+			externalName: "path/to/example-group",
+			policies:     v2.ManagementPolicies{v2.ManagementActionObserve, v2.ManagementActionLateInitialize},
+		},
+		"PathWithAllPolicies": {
+			externalName: "path/to/example-group",
+			policies:     v2.ManagementPolicies{v2.ManagementActionAll},
+			want:         errors.New(ErrPathExternalNameNotObserveOnly),
+		},
+		"PathWithObserveAndUpdate": {
+			externalName: "path/to/example-group",
+			policies:     v2.ManagementPolicies{v2.ManagementActionObserve, v2.ManagementActionUpdate},
+			want:         errors.New(ErrPathExternalNameNotObserveOnly),
+		},
+		"PathWithoutPolicies": {
+			externalName: "path/to/example-group",
+			want:         errors.New(ErrPathExternalNameNotObserveOnly),
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			err := ValidateExternalName(tc.externalName, tc.policies)
+			if diff := cmp.Diff(tc.want, err, test.EquateErrors()); diff != "" {
+				t.Errorf("ValidateExternalName() diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
