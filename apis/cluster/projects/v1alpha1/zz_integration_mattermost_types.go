@@ -89,7 +89,7 @@ type IntegrationMattermostParameters struct {
 
 	// Enable notifications for confidential note events.
 	// +optional
-	ConfidentialNoteChannel *string `json:"confidentialNoteChannel,omitempty"`
+	ConfidentialNoteEvents *bool `json:"confidentialNoteEvents,omitempty"`
 
 	// Enable notifications for pipeline events.
 	// +optional
@@ -121,7 +121,7 @@ type IntegrationMattermostParameters struct {
 
 	// The name of the channel to receive notifications for confidential note events.
 	// +optional
-	ConfidentialNoteEvents *bool `json:"confidentialNoteEvents,omitempty"`
+	ConfidentialNoteChannel *string `json:"confidentialNoteChannel,omitempty"`
 
 	// The name of the channel to receive notifications for tag push events.
 	// +optional
@@ -192,7 +192,6 @@ type IntegrationMattermostStatus struct {
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:printcolumn:name="BRANCH",type="string",JSONPath=".spec.forProvider.branchName"
 // +kubebuilder:printcolumn:name="PROJECT",type="string",JSONPath=".spec.forProvider.projectId"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab}

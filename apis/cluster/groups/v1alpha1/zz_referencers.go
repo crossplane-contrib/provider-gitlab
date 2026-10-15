@@ -467,3 +467,31 @@ func (mg *IntegrationHarbor) ResolveReferences(ctx context.Context, c client.Rea
 
 	return nil
 }
+
+// ResolveReferences of this IntegrationMattermost
+func (mg *IntegrationMattermost) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPIResolver(c, mg)
+
+	// resolve spec.forProvider.groupIdRef
+	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.GroupID),
+		Reference:    mg.Spec.ForProvider.GroupIDRef,
+		Selector:     mg.Spec.ForProvider.GroupIDSelector,
+		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
+		Extract:      reference.ExternalName(),
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.groupId")
+	}
+
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.groupId")
+	}
+
+	mg.Spec.ForProvider.GroupID = resolvedID
+	mg.Spec.ForProvider.GroupIDRef = rsp.ResolvedReference
+
+	return nil
+}
