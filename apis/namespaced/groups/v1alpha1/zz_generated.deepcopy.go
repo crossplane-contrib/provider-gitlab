@@ -1340,6 +1340,11 @@ func (in *IntegrationMattermostParameters) DeepCopyInto(out *IntegrationMattermo
 		*out = new(string)
 		**out = **in
 	}
+	if in.NotifyOnlyDefaultBranch != nil {
+		in, out := &in.NotifyOnlyDefaultBranch, &out.NotifyOnlyDefaultBranch
+		*out = new(bool)
+		**out = **in
+	}
 	if in.PushEvents != nil {
 		in, out := &in.PushEvents, &out.PushEvents
 		*out = new(bool)

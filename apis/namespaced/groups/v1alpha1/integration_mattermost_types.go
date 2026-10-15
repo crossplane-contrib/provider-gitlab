@@ -56,26 +56,26 @@ type IntegrationMattermostParameters struct {
 	Channel *string `json:"channel,omitempty"`
 
 	// Send notifications for broken pipelines.
-	// WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
 	// +optional
 	NotifyOnlyBrokenPipelines *bool `json:"notifyOnlyBrokenPipelines,omitempty"`
 
 	// Branches to send notifications for. Valid options are all, default, protected, and default_and_protected. The default value is default.
-	// WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
 	// +kubebuilder:validation:Enum:=all;default;protected;default_and_protected
 	// +optional
 	BranchesToBeNotified *string `json:"branchesToBeNotified,omitempty"`
 
 	// Labels to send notifications for. Leave blank to receive notifications for all events.
-	// WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
 	// +optional
 	LabelsToBeNotified *string `json:"labelsToBeNotified,omitempty"`
 
 	// Labels to be notified for. Valid options are match_any and match_all. The default value is match_any.
-	// WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
 	// +kubebuilder:validation:Enum:=match_any;match_all
 	// +optional
 	LabelsToBeNotifiedBehavior *string `json:"labelsToBeNotifiedBehavior,omitempty"`
+
+	// Send notifications only for the default branch.
+	// +optional
+	NotifyOnlyDefaultBranch *bool `json:"notifyOnlyDefaultBranch,omitempty"`
 
 	// Enable notifications for push events.
 	// +optional
@@ -186,6 +186,16 @@ type IntegrationMattermostObservation struct {
 	v1alpha1.CommonIntegrationObservation `json:",inline"`
 	// Mattermost notifications username.
 	Username string `json:"username,omitempty"`
+	// Send notifications for broken pipelines only.
+	NotifyOnlyBrokenPipelines bool `json:"notifyOnlyBrokenPipelines,omitempty"`
+	// Send notifications only for the default branch.
+	NotifyOnlyDefaultBranch bool `json:"notifyOnlyDefaultBranch,omitempty"`
+	// Branches to send notifications for.
+	BranchesToBeNotified string `json:"branchesToBeNotified,omitempty"`
+	// Labels to send notifications for.
+	LabelsToBeNotified string `json:"labelsToBeNotified,omitempty"`
+	// Labels matching behavior (match_any or match_all).
+	LabelsToBeNotifiedBehavior string `json:"labelsToBeNotifiedBehavior,omitempty"`
 	// Default channel to use if no other channel is configured.
 	Channel string `json:"channel,omitempty"`
 	// Channel to use for push events.

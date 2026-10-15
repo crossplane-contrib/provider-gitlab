@@ -54,6 +54,7 @@ func GenerateGroupMattermostIntegrationOptions(in *v1alpha1.IntegrationMattermos
 		Username:                   in.Username,
 		Channel:                    in.Channel,
 		NotifyOnlyBrokenPipelines:  in.NotifyOnlyBrokenPipelines,
+		NotifyOnlyDefaultBranch:    in.NotifyOnlyDefaultBranch,
 		BranchesToBeNotified:       in.BranchesToBeNotified,
 		LabelsToBeNotified:         in.LabelsToBeNotified,
 		LabelsToBeNotifiedBehavior: in.LabelsToBeNotifiedBehavior,
@@ -94,6 +95,11 @@ func GenerateIntegrationMattermostObservation(observation *gitlab.GroupMattermos
 
 	out := v1alpha1.IntegrationMattermostObservation{
 		CommonIntegrationObservation: common.GenerateCommonIntegrationObservation(&observation.Integration),
+		NotifyOnlyBrokenPipelines:    observation.NotifyOnlyBrokenPipelines,
+		NotifyOnlyDefaultBranch:      observation.NotifyOnlyDefaultBranch,
+		BranchesToBeNotified:         observation.BranchesToBeNotified,
+		LabelsToBeNotified:           observation.LabelsToBeNotified,
+		LabelsToBeNotifiedBehavior:   observation.LabelsToBeNotifiedBehavior,
 	}
 
 	if p := observation.Properties; p != nil {
@@ -120,9 +126,7 @@ func GenerateIntegrationMattermostObservation(observation *gitlab.GroupMattermos
 // The inheritance state is compared first. While inheriting, GitLab ignores all other settings,
 // so they are not compared.
 //
-// Note: WebHook is excluded because GitLab does not return it (write-only). NotifyOnlyBrokenPipelines,
-// BranchesToBeNotified, LabelsToBeNotified and LabelsToBeNotifiedBehavior are excluded because the
-// GitLab client does not decode them from the API response properties.
+// Note: WebHook is excluded because GitLab does not return it (write-only).
 func IsIntegrationMattermostUpToDate(spec *v1alpha1.IntegrationMattermostParameters, observation *gitlab.GroupMattermostIntegration) bool { //nolint:gocyclo
 	if spec == nil || observation == nil {
 		return false
@@ -143,6 +147,11 @@ func IsIntegrationMattermostUpToDate(spec *v1alpha1.IntegrationMattermostParamet
 	p := observation.Properties
 	return clients.IsComparableEqualToComparablePtr(spec.Username, p.Username) &&
 		clients.IsComparableEqualToComparablePtr(spec.Channel, p.Channel) &&
+		clients.IsComparableEqualToComparablePtr(spec.NotifyOnlyBrokenPipelines, observation.NotifyOnlyBrokenPipelines) &&
+		clients.IsComparableEqualToComparablePtr(spec.NotifyOnlyDefaultBranch, observation.NotifyOnlyDefaultBranch) &&
+		clients.IsComparableEqualToComparablePtr(spec.BranchesToBeNotified, observation.BranchesToBeNotified) &&
+		clients.IsComparableEqualToComparablePtr(spec.LabelsToBeNotified, observation.LabelsToBeNotified) &&
+		clients.IsComparableEqualToComparablePtr(spec.LabelsToBeNotifiedBehavior, observation.LabelsToBeNotifiedBehavior) &&
 		clients.IsComparableEqualToComparablePtr(spec.PushEvents, observation.PushEvents) &&
 		clients.IsComparableEqualToComparablePtr(spec.IssuesEvents, observation.IssuesEvents) &&
 		clients.IsComparableEqualToComparablePtr(spec.ConfidentialIssuesEvents, observation.ConfidentialIssuesEvents) &&

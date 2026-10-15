@@ -37,6 +37,7 @@ func TestGenerateGroupMattermostIntegrationOptions(t *testing.T) {
 					Username:                   &testMattermostUsername,
 					Channel:                    &testMattermostChannel,
 					NotifyOnlyBrokenPipelines:  ptr.To(true),
+					NotifyOnlyDefaultBranch:    ptr.To(true),
 					BranchesToBeNotified:       &testMattermostBranches,
 					LabelsToBeNotified:         &testMattermostLabels,
 					LabelsToBeNotifiedBehavior: &testMattermostLabelsBehavior,
@@ -71,6 +72,7 @@ func TestGenerateGroupMattermostIntegrationOptions(t *testing.T) {
 				Username:                   &testMattermostUsername,
 				Channel:                    &testMattermostChannel,
 				NotifyOnlyBrokenPipelines:  ptr.To(true),
+				NotifyOnlyDefaultBranch:    ptr.To(true),
 				BranchesToBeNotified:       &testMattermostBranches,
 				LabelsToBeNotified:         &testMattermostLabels,
 				LabelsToBeNotifiedBehavior: &testMattermostLabelsBehavior,
@@ -184,7 +186,12 @@ func TestGenerateIntegrationMattermostObservation(t *testing.T) {
 	}{
 		"ActiveIntegration": {
 			integration: &gitlab.GroupMattermostIntegration{
-				Integration: integration,
+				Integration:                integration,
+				NotifyOnlyBrokenPipelines:  true,
+				NotifyOnlyDefaultBranch:    true,
+				BranchesToBeNotified:       testMattermostBranches,
+				LabelsToBeNotified:         testMattermostLabels,
+				LabelsToBeNotifiedBehavior: testMattermostLabelsBehavior,
 				Properties: &gitlab.GroupMattermostIntegrationProperties{
 					WebHook:              testMattermostWebHook,
 					Username:             testMattermostUsername,
@@ -198,6 +205,11 @@ func TestGenerateIntegrationMattermostObservation(t *testing.T) {
 			},
 			want: groupsv1alpha1.IntegrationMattermostObservation{
 				CommonIntegrationObservation: commonObservation,
+				NotifyOnlyBrokenPipelines:    true,
+				NotifyOnlyDefaultBranch:      true,
+				BranchesToBeNotified:         testMattermostBranches,
+				LabelsToBeNotified:           testMattermostLabels,
+				LabelsToBeNotifiedBehavior:   testMattermostLabelsBehavior,
 				Username:                     testMattermostUsername,
 				Channel:                      testMattermostChannel,
 				PushChannel:                  "push",
@@ -234,6 +246,11 @@ func TestGenerateIntegrationMattermostObservation(t *testing.T) {
 func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 	observation := func(mods ...func(*gitlab.GroupMattermostIntegration)) *gitlab.GroupMattermostIntegration {
 		o := &gitlab.GroupMattermostIntegration{
+			NotifyOnlyBrokenPipelines:  true,
+			NotifyOnlyDefaultBranch:    true,
+			BranchesToBeNotified:       testMattermostBranches,
+			LabelsToBeNotified:         testMattermostLabels,
+			LabelsToBeNotifiedBehavior: testMattermostLabelsBehavior,
 			Integration: gitlab.Integration{
 				Active:                   true,
 				PushEvents:               true,
@@ -271,30 +288,35 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 	}
 	spec := func(mods ...func(*groupsv1alpha1.IntegrationMattermostParameters)) *groupsv1alpha1.IntegrationMattermostParameters {
 		p := &groupsv1alpha1.IntegrationMattermostParameters{
-			Username:                 &testMattermostUsername,
-			Channel:                  &testMattermostChannel,
-			PushEvents:               ptr.To(true),
-			IssuesEvents:             ptr.To(true),
-			ConfidentialIssuesEvents: ptr.To(true),
-			MergeRequestsEvents:      ptr.To(true),
-			TagPushEvents:            ptr.To(true),
-			NoteEvents:               ptr.To(true),
-			ConfidentialNoteEvents:   ptr.To(true),
-			PipelineEvents:           ptr.To(true),
-			WikiPageEvents:           ptr.To(true),
-			DeploymentEvents:         ptr.To(true),
-			VulnerabilityEvents:      ptr.To(true),
-			PushChannel:              ptr.To("push"),
-			IssueChannel:             ptr.To("issue"),
-			ConfidentialIssueChannel: ptr.To("confidential-issue"),
-			MergeRequestChannel:      ptr.To("merge-request"),
-			NoteChannel:              ptr.To("note"),
-			ConfidentialNoteChannel:  ptr.To("confidential-note"),
-			TagPushChannel:           ptr.To("tag-push"),
-			PipelineChannel:          &testMattermostPipelineChannel,
-			WikiPageChannel:          ptr.To("wiki-page"),
-			DeploymentChannel:        ptr.To("deployment"),
-			VulnerabilityChannel:     ptr.To("vulnerability"),
+			Username:                   &testMattermostUsername,
+			Channel:                    &testMattermostChannel,
+			NotifyOnlyBrokenPipelines:  ptr.To(true),
+			NotifyOnlyDefaultBranch:    ptr.To(true),
+			BranchesToBeNotified:       &testMattermostBranches,
+			LabelsToBeNotified:         &testMattermostLabels,
+			LabelsToBeNotifiedBehavior: &testMattermostLabelsBehavior,
+			PushEvents:                 ptr.To(true),
+			IssuesEvents:               ptr.To(true),
+			ConfidentialIssuesEvents:   ptr.To(true),
+			MergeRequestsEvents:        ptr.To(true),
+			TagPushEvents:              ptr.To(true),
+			NoteEvents:                 ptr.To(true),
+			ConfidentialNoteEvents:     ptr.To(true),
+			PipelineEvents:             ptr.To(true),
+			WikiPageEvents:             ptr.To(true),
+			DeploymentEvents:           ptr.To(true),
+			VulnerabilityEvents:        ptr.To(true),
+			PushChannel:                ptr.To("push"),
+			IssueChannel:               ptr.To("issue"),
+			ConfidentialIssueChannel:   ptr.To("confidential-issue"),
+			MergeRequestChannel:        ptr.To("merge-request"),
+			NoteChannel:                ptr.To("note"),
+			ConfidentialNoteChannel:    ptr.To("confidential-note"),
+			TagPushChannel:             ptr.To("tag-push"),
+			PipelineChannel:            &testMattermostPipelineChannel,
+			WikiPageChannel:            ptr.To("wiki-page"),
+			DeploymentChannel:          ptr.To("deployment"),
+			VulnerabilityChannel:       ptr.To("vulnerability"),
 		}
 		for _, m := range mods {
 			m(p)
@@ -314,16 +336,6 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 		},
 		"EmptySpecUpToDate": {
 			spec:        &groupsv1alpha1.IntegrationMattermostParameters{},
-			observation: observation(),
-			want:        true,
-		},
-		"UnobservableFieldsIgnored": {
-			spec: spec(func(p *groupsv1alpha1.IntegrationMattermostParameters) {
-				p.NotifyOnlyBrokenPipelines = ptr.To(true)
-				p.BranchesToBeNotified = &testMattermostBranches
-				p.LabelsToBeNotified = &testMattermostLabels
-				p.LabelsToBeNotifiedBehavior = &testMattermostLabelsBehavior
-			}),
 			observation: observation(),
 			want:        true,
 		},
@@ -391,8 +403,17 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 
 	// Each compared field must, on its own, make the integration out of date.
 	differs := map[string]func(*groupsv1alpha1.IntegrationMattermostParameters){
-		"Username":                 func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.Username = ptr.To("other") },
-		"Channel":                  func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.Channel = ptr.To("other") },
+		"Username": func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.Username = ptr.To("other") },
+		"Channel":  func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.Channel = ptr.To("other") },
+		"NotifyOnlyBrokenPipelines": func(p *groupsv1alpha1.IntegrationMattermostParameters) {
+			p.NotifyOnlyBrokenPipelines = ptr.To(false)
+		},
+		"NotifyOnlyDefaultBranch": func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.NotifyOnlyDefaultBranch = ptr.To(false) },
+		"BranchesToBeNotified":    func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.BranchesToBeNotified = ptr.To("other") },
+		"LabelsToBeNotified":      func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.LabelsToBeNotified = ptr.To("other") },
+		"LabelsToBeNotifiedBehavior": func(p *groupsv1alpha1.IntegrationMattermostParameters) {
+			p.LabelsToBeNotifiedBehavior = ptr.To("other")
+		},
 		"PushEvents":               func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.PushEvents = ptr.To(false) },
 		"IssuesEvents":             func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.IssuesEvents = ptr.To(false) },
 		"ConfidentialIssuesEvents": func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.ConfidentialIssuesEvents = ptr.To(false) },

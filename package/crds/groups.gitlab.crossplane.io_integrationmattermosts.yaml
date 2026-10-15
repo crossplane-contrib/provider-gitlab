@@ -80,9 +80,9 @@ spec:
                   integration.
                 properties:
                   branchesToBeNotified:
-                    description: |-
-                      Branches to send notifications for. Valid options are all, default, protected, and default_and_protected. The default value is default.
-                      WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
+                    description: Branches to send notifications for. Valid options
+                      are all, default, protected, and default_and_protected. The
+                      default value is default.
                     enum:
                     - all
                     - default
@@ -205,14 +205,12 @@ spec:
                     description: Enable notifications for issue events.
                     type: boolean
                   labelsToBeNotified:
-                    description: |-
-                      Labels to send notifications for. Leave blank to receive notifications for all events.
-                      WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
+                    description: Labels to send notifications for. Leave blank to
+                      receive notifications for all events.
                     type: string
                   labelsToBeNotifiedBehavior:
-                    description: |-
-                      Labels to be notified for. Valid options are match_any and match_all. The default value is match_any.
-                      WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
+                    description: Labels to be notified for. Valid options are match_any
+                      and match_all. The default value is match_any.
                     enum:
                     - match_any
                     - match_all
@@ -232,9 +230,10 @@ spec:
                     description: Enable notifications for note events.
                     type: boolean
                   notifyOnlyBrokenPipelines:
-                    description: |-
-                      Send notifications for broken pipelines.
-                      WARNING: This field is NOT reconciled as the GitLab client does not expose its remote value.
+                    description: Send notifications for broken pipelines.
+                    type: boolean
+                  notifyOnlyDefaultBranch:
+                    description: Send notifications only for the default branch.
                     type: boolean
                   pipelineChannel:
                     description: The name of the channel to receive notifications
@@ -409,6 +408,9 @@ spec:
                     type: boolean
                   alertEvents:
                     type: boolean
+                  branchesToBeNotified:
+                    description: Branches to send notifications for.
+                    type: string
                   channel:
                     description: Default channel to use if no other channel is configured.
                     type: string
@@ -452,6 +454,12 @@ spec:
                     type: boolean
                   jobEvents:
                     type: boolean
+                  labelsToBeNotified:
+                    description: Labels to send notifications for.
+                    type: string
+                  labelsToBeNotifiedBehavior:
+                    description: Labels matching behavior (match_any or match_all).
+                    type: string
                   mergeRequestChannel:
                     description: Channel to use for merge request events.
                     type: string
@@ -461,6 +469,12 @@ spec:
                     description: Channel to use for note events.
                     type: string
                   noteEvents:
+                    type: boolean
+                  notifyOnlyBrokenPipelines:
+                    description: Send notifications for broken pipelines only.
+                    type: boolean
+                  notifyOnlyDefaultBranch:
+                    description: Send notifications only for the default branch.
                     type: boolean
                   pipelineChannel:
                     description: Channel to use for pipeline events.
