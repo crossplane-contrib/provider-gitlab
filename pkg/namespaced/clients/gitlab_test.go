@@ -16,7 +16,15 @@ limitations under the License.
 
 package clients
 
-import "testing"
+import (
+	"errors"
+	"fmt"
+	"net/http"
+	"net/url"
+	"testing"
+
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+)
 
 func TestAreStringSlicesEqual(t *testing.T) {
 	cases := map[string]struct {
@@ -55,6 +63,49 @@ func TestAreStringSlicesEqual(t *testing.T) {
 			got := AreStringSlicesEqual(tc.a, tc.b)
 			if got != tc.want {
 				t.Errorf("AreStringSlicesEqual(%v, %v) = %v, want %v", tc.a, tc.b, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestIsAlreadyMarkedForDeletion(t *testing.T) {
+	// GitLab's message, as client-go puts it into ErrorResponse.Message.
+	badRequest := func(msg string) error {
+		return &gitlab.ErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Response: &http.Response{
+				StatusCode: http.StatusBadRequest,
+				Request:    &http.Request{Method: http.MethodDelete, URL: &url.URL{Path: "/api/v4/projects/1"}},
+			},
+			Message: "{message: " + msg + "}",
+		}
+	}
+	cases := map[string]struct {
+		err  error
+		want bool
+	}{
+		"Project":       {err: badRequest("Project has already been marked for deletion"), want: true},
+		"Group":         {err: badRequest("Group has already been marked for deletion"), want: true},
+		"Ancestor":      {err: badRequest("Project ancestor has already been marked for deletion"), want: true},
+		"LegacyGroup":   {err: badRequest("Group has been already marked for deletion"), want: true},
+		"LegacyProject": {err: badRequest("Deletion pending. This project will be deleted on 2026-10-20."), want: true},
+		"Wrapped":       {err: fmt.Errorf("cannot delete: %w", badRequest("Project has already been marked for deletion")), want: true},
+		"ServerErrorWithSameText": {err: &gitlab.ErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Response: &http.Response{
+				StatusCode: http.StatusInternalServerError,
+				Request:    &http.Request{Method: http.MethodDelete, URL: &url.URL{Path: "/api/v4/projects/1"}},
+			},
+			Message: "{message: Project has already been marked for deletion}",
+		}, want: false},
+		"OtherBadRequest":        {err: badRequest("Project must be marked for deletion first."), want: false},
+		"PlainErrorWithSameText": {err: errors.New("Project has already been marked for deletion"), want: false},
+		"Nil":                    {err: nil, want: false},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			if got := IsAlreadyMarkedForDeletion(tc.err); got != tc.want {
+				t.Errorf("IsAlreadyMarkedForDeletion(%v) = %t, want %t", tc.err, got, tc.want)
 			}
 		})
 	}
