@@ -56,11 +56,12 @@ func GenerateServiceAccountObservation(u *gitlab.GroupServiceAccount) v1alpha1.S
 func GenerateServiceAccountObservationFromUser(u *gitlab.User) v1alpha1.ServiceAccountObservation {
 	return v1alpha1.ServiceAccountObservation{
 		CommonServiceAccountObservation: commonv1alpha1.CommonServiceAccountObservation{
-			ID:       u.ID,
-			Name:     u.Name,
-			Username: u.Username,
-			Email:    u.Email,
-			Admin:    u.IsAdmin,
+			ID:        u.ID,
+			Name:      u.Name,
+			Username:  u.Username,
+			Email:     u.Email,
+			Admin:     u.IsAdmin,
+			AvatarURL: u.AvatarURL,
 		},
 	}
 }
