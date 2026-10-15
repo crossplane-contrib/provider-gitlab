@@ -264,7 +264,7 @@ func TestLateInitializeIntegrationMicrosoftTeams(t *testing.T) {
 		svc  *gitlab.MicrosoftTeamsService
 		want *projectsv1alpha1.IntegrationMicrosoftTeamsParameters
 	}{
-		"FillsNilFields": {
+		"FillsBranchesOnly": {
 			spec: &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{},
 			svc: &gitlab.MicrosoftTeamsService{
 				Service: gitlab.Service{PushEvents: true, ConfidentialNoteEvents: true},
@@ -274,17 +274,15 @@ func TestLateInitializeIntegrationMicrosoftTeams(t *testing.T) {
 				},
 			},
 			want: &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{
-				NotifyOnlyBrokenPipelines: ptr.To(true),
-				BranchesToBeNotified:      ptr.To("default"),
-				PushEvents:                ptr.To(true),
-				IssuesEvents:              ptr.To(false),
-				ConfidentialIssuesEvents:  ptr.To(false),
-				MergeRequestsEvents:       ptr.To(false),
-				TagPushEvents:             ptr.To(false),
-				NoteEvents:                ptr.To(false),
-				ConfidentialNoteEvents:    ptr.To(true),
-				PipelineEvents:            ptr.To(false),
-				WikiPageEvents:            ptr.To(false),
+				BranchesToBeNotified: ptr.To("default"),
+			},
+		},
+		"NullBoolsNotInitialized": {
+			spec: &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{},
+			svc: decodeMicrosoftTeams(t, `{"push_events":null,"issues_events":null,"confidential_issues_events":null,"merge_requests_events":null,"tag_push_events":null,"note_events":null,"confidential_note_events":null,"pipeline_events":null,"wiki_page_events":null,`+
+				`"properties":{"notify_only_broken_pipelines":null,"branches_to_be_notified":"default"}}`),
+			want: &projectsv1alpha1.IntegrationMicrosoftTeamsParameters{
+				BranchesToBeNotified: ptr.To("default"),
 			},
 		},
 		"KeepsExistingValues": {
@@ -364,6 +362,15 @@ func TestLateInitializeIntegrationMicrosoftTeams(t *testing.T) {
 			}
 		})
 	}
+}
+
+func decodeMicrosoftTeams(t *testing.T, raw string) *gitlab.MicrosoftTeamsService {
+	t.Helper()
+	svc := &gitlab.MicrosoftTeamsService{}
+	if err := json.Unmarshal([]byte(raw), svc); err != nil {
+		t.Fatalf("json.Unmarshal(): %v", err)
+	}
+	return svc
 }
 
 func TestIntegrationMicrosoftTeamsObservationJSONKeepsFalse(t *testing.T) {

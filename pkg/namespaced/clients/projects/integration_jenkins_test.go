@@ -271,7 +271,7 @@ func TestLateInitializeIntegrationJenkins(t *testing.T) {
 		svc  *gitlab.JenkinsCIService
 		want *projectsv1alpha1.IntegrationJenkinsParameters
 	}{
-		"FillsNilFields": {
+		"FillsUsernameOnly": {
 			spec: &projectsv1alpha1.IntegrationJenkinsParameters{},
 			svc: &gitlab.JenkinsCIService{
 				Service: gitlab.Service{PushEvents: true, MergeRequestsEvents: false, TagPushEvents: true},
@@ -281,10 +281,7 @@ func TestLateInitializeIntegrationJenkins(t *testing.T) {
 				},
 			},
 			want: &projectsv1alpha1.IntegrationJenkinsParameters{
-				Username:            ptr.To("bot"),
-				PushEvents:          ptr.To(true),
-				MergeRequestsEvents: ptr.To(false),
-				TagPushEvents:       ptr.To(true),
+				Username: ptr.To("bot"),
 			},
 		},
 		"EmptyUsernameNotInitialized": {
@@ -292,20 +289,12 @@ func TestLateInitializeIntegrationJenkins(t *testing.T) {
 			svc: &gitlab.JenkinsCIService{
 				Properties: &gitlab.JenkinsCIServiceProperties{},
 			},
-			want: &projectsv1alpha1.IntegrationJenkinsParameters{
-				PushEvents:          ptr.To(false),
-				MergeRequestsEvents: ptr.To(false),
-				TagPushEvents:       ptr.To(false),
-			},
+			want: &projectsv1alpha1.IntegrationJenkinsParameters{},
 		},
-		"NullEnableSSLVerificationNotInitialized": {
+		"NullBoolsNotInitialized": {
 			spec: &projectsv1alpha1.IntegrationJenkinsParameters{},
-			svc:  decodeJenkins(t, `{"properties":{"enable_ssl_verification":null}}`),
-			want: &projectsv1alpha1.IntegrationJenkinsParameters{
-				PushEvents:          ptr.To(false),
-				MergeRequestsEvents: ptr.To(false),
-				TagPushEvents:       ptr.To(false),
-			},
+			svc:  decodeJenkins(t, `{"push_events":null,"merge_requests_events":null,"tag_push_events":null,"properties":{"enable_ssl_verification":null}}`),
+			want: &projectsv1alpha1.IntegrationJenkinsParameters{},
 		},
 		"KeepsExistingValues": {
 			spec: &projectsv1alpha1.IntegrationJenkinsParameters{

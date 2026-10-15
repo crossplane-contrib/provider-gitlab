@@ -278,7 +278,7 @@ func TestLateInitializeIntegrationTelegram(t *testing.T) {
 		svc  *gitlab.TelegramService
 		want *projectsv1alpha1.IntegrationTelegramParameters
 	}{
-		"FillsNilFields": {
+		"FillsBranchesOnly": {
 			spec: &projectsv1alpha1.IntegrationTelegramParameters{Room: "@channel"},
 			svc: &gitlab.TelegramService{
 				Service: gitlab.Service{PushEvents: true, WikiPageEvents: true},
@@ -289,46 +289,17 @@ func TestLateInitializeIntegrationTelegram(t *testing.T) {
 				},
 			},
 			want: &projectsv1alpha1.IntegrationTelegramParameters{
-				Room:                      "@channel",
-				NotifyOnlyBrokenPipelines: ptr.To(true),
-				BranchesToBeNotified:      ptr.To("default"),
-				PushEvents:                ptr.To(true),
-				IssuesEvents:              ptr.To(false),
-				ConfidentialIssuesEvents:  ptr.To(false),
-				MergeRequestsEvents:       ptr.To(false),
-				TagPushEvents:             ptr.To(false),
-				NoteEvents:                ptr.To(false),
-				ConfidentialNoteEvents:    ptr.To(false),
-				PipelineEvents:            ptr.To(false),
-				WikiPageEvents:            ptr.To(true),
+				Room:                 "@channel",
+				BranchesToBeNotified: ptr.To("default"),
 			},
 		},
-		"EmptyBranchesNotInitialized": {
-			spec: &projectsv1alpha1.IntegrationTelegramParameters{
-				PushEvents:               ptr.To(true),
-				IssuesEvents:             ptr.To(true),
-				ConfidentialIssuesEvents: ptr.To(true),
-				MergeRequestsEvents:      ptr.To(true),
-				TagPushEvents:            ptr.To(true),
-				NoteEvents:               ptr.To(true),
-				ConfidentialNoteEvents:   ptr.To(true),
-				PipelineEvents:           ptr.To(true),
-				WikiPageEvents:           ptr.To(true),
-			},
-			svc: &gitlab.TelegramService{
-				Properties: &gitlab.TelegramServiceProperties{},
-			},
+		"NullBoolsNotInitialized": {
+			spec: &projectsv1alpha1.IntegrationTelegramParameters{Room: "@channel"},
+			svc: decodeTelegram(t, `{"push_events":null,"issues_events":null,"confidential_issues_events":null,"merge_requests_events":null,"tag_push_events":null,"note_events":null,"confidential_note_events":null,"pipeline_events":null,"wiki_page_events":null,`+
+				`"properties":{"room":"@channel","notify_only_broken_pipelines":null,"branches_to_be_notified":"default"}}`),
 			want: &projectsv1alpha1.IntegrationTelegramParameters{
-				NotifyOnlyBrokenPipelines: ptr.To(false),
-				PushEvents:                ptr.To(true),
-				IssuesEvents:              ptr.To(true),
-				ConfidentialIssuesEvents:  ptr.To(true),
-				MergeRequestsEvents:       ptr.To(true),
-				TagPushEvents:             ptr.To(true),
-				NoteEvents:                ptr.To(true),
-				ConfidentialNoteEvents:    ptr.To(true),
-				PipelineEvents:            ptr.To(true),
-				WikiPageEvents:            ptr.To(true),
+				Room:                 "@channel",
+				BranchesToBeNotified: ptr.To("default"),
 			},
 		},
 		"KeepsExistingValues": {
@@ -345,16 +316,14 @@ func TestLateInitializeIntegrationTelegram(t *testing.T) {
 			want: &projectsv1alpha1.IntegrationTelegramParameters{
 				NotifyOnlyBrokenPipelines: ptr.To(false),
 				BranchesToBeNotified:      ptr.To("all"),
-				PushEvents:                ptr.To(false),
-				IssuesEvents:              ptr.To(false),
-				ConfidentialIssuesEvents:  ptr.To(false),
-				MergeRequestsEvents:       ptr.To(false),
-				TagPushEvents:             ptr.To(false),
-				NoteEvents:                ptr.To(false),
-				ConfidentialNoteEvents:    ptr.To(false),
-				PipelineEvents:            ptr.To(false),
-				WikiPageEvents:            ptr.To(false),
 			},
+		},
+		"EmptyBranchesNotInitialized": {
+			spec: &projectsv1alpha1.IntegrationTelegramParameters{},
+			svc: &gitlab.TelegramService{
+				Properties: &gitlab.TelegramServiceProperties{},
+			},
+			want: &projectsv1alpha1.IntegrationTelegramParameters{},
 		},
 		"NilSpecIsNoop": {
 			svc:  &gitlab.TelegramService{Properties: &gitlab.TelegramServiceProperties{}},
@@ -370,6 +339,15 @@ func TestLateInitializeIntegrationTelegram(t *testing.T) {
 			}
 		})
 	}
+}
+
+func decodeTelegram(t *testing.T, raw string) *gitlab.TelegramService {
+	t.Helper()
+	svc := &gitlab.TelegramService{}
+	if err := json.Unmarshal([]byte(raw), svc); err != nil {
+		t.Fatalf("json.Unmarshal(): %v", err)
+	}
+	return svc
 }
 
 func TestIntegrationTelegramObservationJSONKeepsFalse(t *testing.T) {

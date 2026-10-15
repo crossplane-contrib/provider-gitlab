@@ -100,20 +100,11 @@ func IsIntegrationMicrosoftTeamsUpToDate(spec *v1alpha1.IntegrationMicrosoftTeam
 
 // LateInitializeIntegrationMicrosoftTeams fills nil spec fields using values from the remote Microsoft Teams service.
 // It mutates the spec in place and does NOT touch write-only fields like the webhook.
+// Bool fields are skipped: GitLab may return null, which client-go decodes as false.
 func LateInitializeIntegrationMicrosoftTeams(in *v1alpha1.IntegrationMicrosoftTeamsParameters, svc *gitlab.MicrosoftTeamsService) {
 	if in == nil || svc == nil || svc.Properties == nil {
 		return
 	}
 
-	in.NotifyOnlyBrokenPipelines = clients.LateInitializeFromValue(in.NotifyOnlyBrokenPipelines, bool(svc.Properties.NotifyOnlyBrokenPipelines))
 	in.BranchesToBeNotified = clients.LateInitializeStringPtr(in.BranchesToBeNotified, svc.Properties.BranchesToBeNotified)
-	in.PushEvents = clients.LateInitializeFromValue(in.PushEvents, svc.PushEvents)
-	in.IssuesEvents = clients.LateInitializeFromValue(in.IssuesEvents, svc.IssuesEvents)
-	in.ConfidentialIssuesEvents = clients.LateInitializeFromValue(in.ConfidentialIssuesEvents, svc.ConfidentialIssuesEvents)
-	in.MergeRequestsEvents = clients.LateInitializeFromValue(in.MergeRequestsEvents, svc.MergeRequestsEvents)
-	in.TagPushEvents = clients.LateInitializeFromValue(in.TagPushEvents, svc.TagPushEvents)
-	in.NoteEvents = clients.LateInitializeFromValue(in.NoteEvents, svc.NoteEvents)
-	in.ConfidentialNoteEvents = clients.LateInitializeFromValue(in.ConfidentialNoteEvents, svc.ConfidentialNoteEvents)
-	in.PipelineEvents = clients.LateInitializeFromValue(in.PipelineEvents, svc.PipelineEvents)
-	in.WikiPageEvents = clients.LateInitializeFromValue(in.WikiPageEvents, svc.WikiPageEvents)
 }

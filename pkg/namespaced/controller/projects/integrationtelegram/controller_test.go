@@ -73,17 +73,7 @@ func withBranchesToBeNotified(b string) telegramModifier {
 func withLateInit() telegramModifier {
 	return func(r *v1alpha1.IntegrationTelegram) {
 		p := &r.Spec.ForProvider
-		p.NotifyOnlyBrokenPipelines = ptr.To(true)
 		p.BranchesToBeNotified = ptr.To("default")
-		p.PushEvents = ptr.To(true)
-		p.IssuesEvents = ptr.To(false)
-		p.ConfidentialIssuesEvents = ptr.To(false)
-		p.MergeRequestsEvents = ptr.To(false)
-		p.TagPushEvents = ptr.To(false)
-		p.NoteEvents = ptr.To(false)
-		p.ConfidentialNoteEvents = ptr.To(false)
-		p.PipelineEvents = ptr.To(true)
-		p.WikiPageEvents = ptr.To(false)
 	}
 }
 

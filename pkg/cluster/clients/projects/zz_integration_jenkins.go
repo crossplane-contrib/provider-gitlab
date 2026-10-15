@@ -93,14 +93,11 @@ func IsIntegrationJenkinsUpToDate(spec *v1alpha1.IntegrationJenkinsParameters, o
 
 // LateInitializeIntegrationJenkins fills nil spec fields using values from the remote Jenkins service.
 // It mutates the spec in place and does NOT touch write-only fields like the password.
-// EnableSSLVerification is skipped: GitLab may return null, which client-go decodes as false.
+// Bool fields are skipped: GitLab may return null, which client-go decodes as false.
 func LateInitializeIntegrationJenkins(in *v1alpha1.IntegrationJenkinsParameters, svc *gitlab.JenkinsCIService) {
 	if in == nil || svc == nil || svc.Properties == nil {
 		return
 	}
 
 	in.Username = clients.LateInitializeStringPtr(in.Username, svc.Properties.Username)
-	in.PushEvents = clients.LateInitializeFromValue(in.PushEvents, svc.PushEvents)
-	in.MergeRequestsEvents = clients.LateInitializeFromValue(in.MergeRequestsEvents, svc.MergeRequestsEvents)
-	in.TagPushEvents = clients.LateInitializeFromValue(in.TagPushEvents, svc.TagPushEvents)
 }

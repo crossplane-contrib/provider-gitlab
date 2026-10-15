@@ -64,12 +64,9 @@ func withRequired() jenkinsModifier {
 	}
 }
 
-func withLateInit(username string, push, mr, tag bool) jenkinsModifier {
+func withLateInit(username string) jenkinsModifier {
 	return func(r *v1alpha1.IntegrationJenkins) {
 		r.Spec.ForProvider.Username = &username
-		r.Spec.ForProvider.PushEvents = &push
-		r.Spec.ForProvider.MergeRequestsEvents = &mr
-		r.Spec.ForProvider.TagPushEvents = &tag
 	}
 }
 
@@ -257,12 +254,12 @@ func TestObserve(t *testing.T) {
 					return activeJenkins(), &gitlab.Response{}, nil
 				},
 			},
-			cr: integrationJenkins(withProjectID(testProjectID), withRequired(), withLateInit(testUsername, true, false, false)),
+			cr: integrationJenkins(withProjectID(testProjectID), withRequired(), withLateInit(testUsername)),
 			want: want{
 				cr: integrationJenkins(
 					withProjectID(testProjectID),
 					withRequired(),
-					withLateInit(testUsername, true, false, false),
+					withLateInit(testUsername),
 					withConditions(v2.Available()),
 					withStatus(activeJenkinsObservation()),
 				),
@@ -280,7 +277,7 @@ func TestObserve(t *testing.T) {
 				cr: integrationJenkins(
 					withProjectID(testProjectID),
 					withRequired(),
-					withLateInit(testUsername, true, false, false),
+					withLateInit(testUsername),
 					withConditions(v2.Available()),
 					withStatus(activeJenkinsObservation()),
 				),
@@ -295,12 +292,12 @@ func TestObserve(t *testing.T) {
 					return svc, &gitlab.Response{}, nil
 				},
 			},
-			cr: integrationJenkins(withProjectID(testProjectID), withRequired(), withLateInit(testUsername, true, false, false)),
+			cr: integrationJenkins(withProjectID(testProjectID), withRequired(), withLateInit(testUsername)),
 			want: want{
 				cr: integrationJenkins(
 					withProjectID(testProjectID),
 					withRequired(),
-					withLateInit(testUsername, true, false, false),
+					withLateInit(testUsername),
 					withConditions(v2.Available()),
 					withStatus(func() v1alpha1.IntegrationJenkinsObservation {
 						o := activeJenkinsObservation()
