@@ -1,0 +1,148 @@
+/*
+Copyright 2026 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package projects
+
+import (
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	"k8s.io/utils/ptr"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
+	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+)
+
+func TestGenerateSetExternalWikiServiceOptions(t *testing.T) {
+	got := GenerateSetExternalWikiServiceOptions(&projectsv1alpha1.IntegrationExternalWikiParameters{
+		ProjectID:       ptr.To[int64](123),
+		ExternalWikiURL: "https://wiki.example.com",
+	})
+	want := &gitlab.SetExternalWikiServiceOptions{
+		ExternalWikiURL: ptr.To("https://wiki.example.com"),
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("GenerateSetExternalWikiServiceOptions(): -want, +got:\n%s", diff)
+	}
+}
+
+func TestGenerateIntegrationExternalWikiObservation(t *testing.T) {
+	cases := map[string]struct {
+		service *gitlab.ExternalWikiService
+		want    projectsv1alpha1.IntegrationExternalWikiObservation
+	}{
+		"FullObservation": {
+			service: &gitlab.ExternalWikiService{
+				Service: gitlab.Service{
+					ID:     7,
+					Title:  "External wiki",
+					Slug:   "external-wiki",
+					Active: true,
+				},
+				Properties: &gitlab.ExternalWikiServiceProperties{
+					ExternalWikiURL: "https://wiki.example.com",
+				},
+			},
+			want: projectsv1alpha1.IntegrationExternalWikiObservation{
+				CommonIntegrationObservation: v1alpha1.CommonIntegrationObservation{
+					ID:                             ptr.To[int64](7),
+					Title:                          ptr.To("External wiki"),
+					Slug:                           ptr.To("external-wiki"),
+					Active:                         ptr.To(true),
+					AlertEvents:                    ptr.To(false),
+					CommitEvents:                   ptr.To(false),
+					ConfidentialIssuesEvents:       ptr.To(false),
+					ConfidentialNoteEvents:         ptr.To(false),
+					DeploymentEvents:               ptr.To(false),
+					GroupConfidentialMentionEvents: ptr.To(false),
+					GroupMentionEvents:             ptr.To(false),
+					IncidentEvents:                 ptr.To(false),
+					IssuesEvents:                   ptr.To(false),
+					JobEvents:                      ptr.To(false),
+					MergeRequestsEvents:            ptr.To(false),
+					NoteEvents:                     ptr.To(false),
+					PipelineEvents:                 ptr.To(false),
+					PushEvents:                     ptr.To(false),
+					TagPushEvents:                  ptr.To(false),
+					VulnerabilityEvents:            ptr.To(false),
+					WikiPageEvents:                 ptr.To(false),
+					CommentOnEventEnabled:          ptr.To(false),
+					Inherited:                      ptr.To(false),
+				},
+				ExternalWikiURL: "https://wiki.example.com",
+			},
+		},
+		"NilService": {
+			service: nil,
+			want:    projectsv1alpha1.IntegrationExternalWikiObservation{},
+		},
+		"NilProperties": {
+			service: &gitlab.ExternalWikiService{Service: gitlab.Service{ID: 7}},
+			want:    projectsv1alpha1.IntegrationExternalWikiObservation{},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateIntegrationExternalWikiObservation(tc.service)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("GenerateIntegrationExternalWikiObservation(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestIsIntegrationExternalWikiUpToDate(t *testing.T) {
+	spec := &projectsv1alpha1.IntegrationExternalWikiParameters{
+		ExternalWikiURL: "https://wiki.example.com",
+	}
+
+	cases := map[string]struct {
+		observation *gitlab.ExternalWikiService
+		want        bool
+	}{
+		"UpToDate": {
+			observation: &gitlab.ExternalWikiService{
+				Properties: &gitlab.ExternalWikiServiceProperties{ExternalWikiURL: "https://wiki.example.com"},
+			},
+			want: true,
+		},
+		"OutOfDateExternalWikiURL": {
+			observation: &gitlab.ExternalWikiService{
+				Properties: &gitlab.ExternalWikiServiceProperties{ExternalWikiURL: "https://other.example.com"},
+			},
+			want: false,
+		},
+		"NilProperties": {
+			observation: &gitlab.ExternalWikiService{},
+			want:        false,
+		},
+		"NilObservation": {
+			observation: nil,
+			want:        false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsIntegrationExternalWikiUpToDate(spec, tc.observation)
+			if got != tc.want {
+				t.Errorf("IsIntegrationExternalWikiUpToDate(): got %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

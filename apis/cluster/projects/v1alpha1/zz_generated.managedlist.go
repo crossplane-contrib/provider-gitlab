@@ -74,6 +74,24 @@ func (l *HookList) GetItems() []resource.Managed {
 	return items
 }
 
+// GetItems of this IntegrationCustomIssueTrackerList.
+func (l *IntegrationCustomIssueTrackerList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
+// GetItems of this IntegrationExternalWikiList.
+func (l *IntegrationExternalWikiList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
 // GetItems of this IntegrationHarborList.
 func (l *IntegrationHarborList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
@@ -85,6 +103,24 @@ func (l *IntegrationHarborList) GetItems() []resource.Managed {
 
 // GetItems of this IntegrationMattermostList.
 func (l *IntegrationMattermostList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
+// GetItems of this IntegrationRedmineList.
+func (l *IntegrationRedmineList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
+// GetItems of this IntegrationYouTrackList.
+func (l *IntegrationYouTrackList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
 	for i := range l.Items {
 		items[i] = &l.Items[i]

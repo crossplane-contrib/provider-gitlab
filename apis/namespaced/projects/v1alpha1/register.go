@@ -202,4 +202,8 @@ func init() {
 	SchemeBuilder.Register(&ProjectShareGroup{}, &ProjectShareGroupList{})
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})
+	SchemeBuilder.Register(&IntegrationCustomIssueTracker{}, &IntegrationCustomIssueTrackerList{})
+	SchemeBuilder.Register(&IntegrationExternalWiki{}, &IntegrationExternalWikiList{})
+	SchemeBuilder.Register(&IntegrationRedmine{}, &IntegrationRedmineList{})
+	SchemeBuilder.Register(&IntegrationYouTrack{}, &IntegrationYouTrackList{})
 }
