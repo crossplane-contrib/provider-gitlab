@@ -35,6 +35,9 @@ type MockClient struct {
 	MockEditProject   func(pid any, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	MockDeleteProject func(pid any, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
+	MockArchiveProject   func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
+	MockUnarchiveProject func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
+
 	MockGetHook    func(pid any, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
 	MockAddHook    func(pid any, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
 	MockEditHook   func(pid any, hook int64, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
@@ -156,6 +159,16 @@ func (c *MockClient) EditProject(pid any, opt *gitlab.EditProjectOptions, option
 // DeleteProject calls the underlying MockDeleteProject method
 func (c *MockClient) DeleteProject(pid any, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteProject(pid, opt)
+}
+
+// ArchiveProject calls the underlying MockArchiveProject method.
+func (c *MockClient) ArchiveProject(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+	return c.MockArchiveProject(pid, options...)
+}
+
+// UnarchiveProject calls the underlying MockUnarchiveProject method.
+func (c *MockClient) UnarchiveProject(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+	return c.MockUnarchiveProject(pid, options...)
 }
 
 // GetProjectHook calls the underlying MockGetProjectHook method.

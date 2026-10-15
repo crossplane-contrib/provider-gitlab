@@ -968,6 +968,7 @@ func TestObserve(t *testing.T) {
 		"AutocloseReferencedIssues":                 true,
 		"AllowMergeOnSkippedPipeline":               true,
 		"CIForwardDeploymentEnabled":                true,
+		"Archived":                                  true,
 	}
 
 	f := false
@@ -1032,6 +1033,7 @@ func TestObserve(t *testing.T) {
 		AutocloseReferencedIssues:                 &f,
 		AllowMergeOnSkippedPipeline:               &f,
 		CIForwardDeploymentEnabled:                &f,
+		Archived:                                  &f,
 		PushRules: &v1alpha1.PushRules{
 			AuthorEmailRegex:           ptr.To(""),
 			BranchNameRegex:            ptr.To(""),
@@ -1148,6 +1150,7 @@ func TestObserve(t *testing.T) {
 				MergeTrainsEnabled:          gitlabProject.MergeTrainsEnabled,
 				MergeTrainsSkipTrainAllowed: gitlabProject.MergeTrainsSkipTrainAllowed,
 				MergePipelinesEnabled:       gitlabProject.MergePipelinesEnabled,
+				Archived:                    gitlabProject.Archived,
 			}),
 		}
 		cases["IsProjectUpToDate"+name] = struct {
@@ -1901,5 +1904,138 @@ func TestPackageRegistryLevelRemoval(t *testing.T) {
 	}{gitlab.DisabledAccessControl, false, 0}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("after removing the level: -want, +got:\n%s", diff)
+	}
+}
+
+// archiveGitLab is a fake GitLab project that records edit, archive, and
+// unarchive calls in order. With AncestorArchived set, it rejects archive and
+// unarchive calls the way GitLab does for a project in an archived group.
+// With RejectArchive set, it rejects archive calls.
+type archiveGitLab struct {
+	Archived         bool
+	AncestorArchived bool
+	RejectArchive    bool
+	Description      string
+	Calls            []string
+}
+
+var errAncestorArchived = errors.New("Cannot unarchive project since one of the ancestors is archived.")
+
+func (g *archiveGitLab) client() *fake.MockClient {
+	setArchived := func(call string, archived bool) (*gitlab.Project, *gitlab.Response, error) {
+		g.Calls = append(g.Calls, call)
+		if g.AncestorArchived {
+			return nil, &gitlab.Response{}, errAncestorArchived
+		}
+		if archived && g.RejectArchive {
+			return nil, &gitlab.Response{}, errBoom
+		}
+		g.Archived = archived
+		return &gitlab.Project{}, &gitlab.Response{}, nil
+	}
+	return &fake.MockClient{
+		MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+			return &gitlab.Project{Archived: g.Archived, Description: g.Description}, &gitlab.Response{}, nil
+		},
+		MockEditProject: func(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+			g.Calls = append(g.Calls, "edit")
+			if opt.Description != nil {
+				g.Description = *opt.Description
+			}
+			return &gitlab.Project{}, &gitlab.Response{}, nil
+		},
+		MockArchiveProject: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+			return setArchived("archive", true)
+		},
+		MockUnarchiveProject: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+			return setArchived("unarchive", false)
+		},
+		MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+		},
+	}
+}
+
+// TestArchiveConverges runs Observe and Update against a fake GitLab until the
+// project is up to date or Update fails, and checks the archive state, the
+// applied edit, and the order of the GitLab calls.
+func TestArchiveConverges(t *testing.T) {
+	cases := map[string]struct {
+		reason  string
+		spec    v1alpha1.ProjectParameters
+		start   archiveGitLab
+		want    archiveGitLab
+		wantErr error
+	}{
+		"ArchiveAfterEdit": {
+			reason: "Archiving must run after the edit.",
+			spec:   v1alpha1.ProjectParameters{Archived: new(true), Description: new("new")},
+			start:  archiveGitLab{Description: "old"},
+			want:   archiveGitLab{Archived: true, Description: "new", Calls: []string{"edit", "archive"}},
+		},
+		"ArchiveRejected": {
+			reason:  "If GitLab rejects the archive, Update must fail after it edits.",
+			spec:    v1alpha1.ProjectParameters{Archived: new(true), Description: new("new")},
+			start:   archiveGitLab{RejectArchive: true, Description: "old"},
+			want:    archiveGitLab{RejectArchive: true, Description: "new", Calls: []string{"edit", "archive"}},
+			wantErr: errors.Wrap(errBoom, errArchiveFailed),
+		},
+		"UnarchiveBeforeEdit": {
+			reason: "Unarchiving must run before the edit.",
+			spec:   v1alpha1.ProjectParameters{Archived: new(false), Description: new("new")},
+			start:  archiveGitLab{Archived: true, Description: "old"},
+			want:   archiveGitLab{Description: "new", Calls: []string{"unarchive", "edit"}},
+		},
+		"EditStaysArchived": {
+			reason: "A project that stays archived must not be unarchived to apply an edit.",
+			spec:   v1alpha1.ProjectParameters{Archived: new(true), Description: new("new")},
+			start:  archiveGitLab{Archived: true, Description: "old"},
+			want:   archiveGitLab{Archived: true, Description: "new", Calls: []string{"edit"}},
+		},
+		"UnsetLeavesArchiveState": {
+			reason: "Without archived in the spec, the archive state must not change.",
+			spec:   v1alpha1.ProjectParameters{Description: new("new")},
+			start:  archiveGitLab{Archived: true, Description: "old"},
+			want:   archiveGitLab{Archived: true, Description: "new", Calls: []string{"edit"}},
+		},
+		"AncestorArchived": {
+			reason:  "If GitLab rejects the unarchive, Update must fail before it edits.",
+			spec:    v1alpha1.ProjectParameters{Archived: new(false), Description: new("new")},
+			start:   archiveGitLab{Archived: true, AncestorArchived: true, Description: "old"},
+			want:    archiveGitLab{Archived: true, AncestorArchived: true, Description: "old", Calls: []string{"unarchive"}},
+			wantErr: errors.Wrap(errAncestorArchived, errUnarchiveFailed),
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			gl := tc.start
+			e := &external{client: gl.client()}
+			cr := project(withExternalName(extName), withSpec(tc.spec))
+
+			var err error
+			upToDate := false
+			for range 4 {
+				obs, oerr := e.Observe(context.Background(), cr)
+				if oerr != nil {
+					t.Fatalf("Observe(...): %v", oerr)
+				}
+				if upToDate = obs.ResourceUpToDate; upToDate {
+					break
+				}
+				if _, err = e.Update(context.Background(), cr); err != nil {
+					break
+				}
+			}
+
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("%s\nUpdate(...): -want error, +got error:\n%s", tc.reason, diff)
+			}
+			if tc.wantErr == nil && !upToDate {
+				t.Errorf("%s\nproject never became up to date: %+v", tc.reason, gl)
+			}
+			if diff := cmp.Diff(tc.want, gl); diff != "" {
+				t.Errorf("%s\nfinal GitLab state: -want, +got:\n%s", tc.reason, diff)
+			}
+		})
 	}
 }

@@ -32,6 +32,8 @@ type MockClient struct {
 	MockCreateGroup           func(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	MockUpdateGroup           func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	MockDeleteGroup           func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockArchiveGroup          func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockUnarchiveGroup        func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockShareGroupWithGroup   func(gid interface{}, opt *gitlab.ShareGroupWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	MockUnshareGroupFromGroup func(gid interface{}, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockListGroups            func(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error)
@@ -139,6 +141,16 @@ func (c *MockClient) UpdateGroup(pid interface{}, opt *gitlab.UpdateGroupOptions
 // DeleteGroup calls the underlying MockDeleteGroup method
 func (c *MockClient) DeleteGroup(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteGroup(pid, opt)
+}
+
+// ArchiveGroup calls the underlying MockArchiveGroup method.
+func (c *MockClient) ArchiveGroup(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockArchiveGroup(gid, options...)
+}
+
+// UnarchiveGroup calls the underlying MockUnarchiveGroup method.
+func (c *MockClient) UnarchiveGroup(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockUnarchiveGroup(gid, options...)
 }
 
 // ShareGroupWithGroup calls the underlying MockShareGroupWithGroup method

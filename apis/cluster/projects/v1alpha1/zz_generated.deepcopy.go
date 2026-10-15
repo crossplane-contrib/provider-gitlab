@@ -2402,6 +2402,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 		*out = new(int64)
 		**out = **in
 	}
+	if in.Archived != nil {
+		in, out := &in.Archived, &out.Archived
+		*out = new(bool)
+		**out = **in
+	}
 	if in.AutoCancelPendingPipelines != nil {
 		in, out := &in.AutoCancelPendingPipelines, &out.AutoCancelPendingPipelines
 		*out = new(string)

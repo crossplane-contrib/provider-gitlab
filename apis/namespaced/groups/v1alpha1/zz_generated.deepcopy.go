@@ -640,6 +640,11 @@ func (in *GroupObservation) DeepCopyInto(out *GroupObservation) {
 		in, out := &in.MarkedForDeletionOn, &out.MarkedForDeletionOn
 		*out = (*in).DeepCopy()
 	}
+	if in.Archived != nil {
+		in, out := &in.Archived, &out.Archived
+		*out = new(bool)
+		**out = **in
+	}
 	if in.CreatedAt != nil {
 		in, out := &in.CreatedAt, &out.CreatedAt
 		*out = (*in).DeepCopy()
@@ -772,6 +777,11 @@ func (in *GroupParameters) DeepCopyInto(out *GroupParameters) {
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.Archived != nil {
+		in, out := &in.Archived, &out.Archived
+		*out = new(bool)
+		**out = **in
 	}
 	if in.PermanentlyRemove != nil {
 		in, out := &in.PermanentlyRemove, &out.PermanentlyRemove

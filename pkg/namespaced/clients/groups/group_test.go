@@ -131,6 +131,7 @@ func TestGenerateObservation(t *testing.T) {
 						},
 					},
 					MarkedForDeletionOn: &gitlabMarkedForDeletionOn,
+					Archived:            true,
 					CreatedAt:           &gitlabCreatedAt,
 				},
 			},
@@ -157,6 +158,7 @@ func TestGenerateObservation(t *testing.T) {
 					},
 				},
 				MarkedForDeletionOn: v1alpha1MarkedForDeletionOn,
+				Archived:            new(true),
 				CreatedAt:           v1alpha1CreatedAt,
 				SharedWithGroups: []v1alpha1.SharedWithGroupsObservation{
 					{
@@ -186,6 +188,7 @@ func TestGenerateObservation(t *testing.T) {
 				FullName:  &s,
 				FullPath:  &s,
 				LDAPCN:    &s,
+				Archived:  new(false),
 
 				SharedWithGroups: []v1alpha1.SharedWithGroupsObservation{{
 					GroupID:          &i64,
