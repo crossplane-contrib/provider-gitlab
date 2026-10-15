@@ -34,6 +34,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/projectsharegroups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedbranches"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedenvironments"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedtags"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/serviceaccountaccesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/serviceaccounts"
@@ -54,6 +55,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		approvalrules.SetupRules,
 		runners.SetupRunner,
 		protectedbranches.SetupProtectedBranch,
+		protectedtags.SetupProtectedTag,
 		badges.SetupBadge,
 		integrationmattermost.SetupIntegrationMattermost,
 		integrationharbor.SetupIntegrationHarbor,
@@ -84,6 +86,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		approvalrules.SetupRulesGated,
 		runners.SetupRunnerGated,
 		protectedbranches.SetupProtectedBranchGated,
+		protectedtags.SetupProtectedTagGated,
 		badges.SetupBadgeGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
 		integrationharbor.SetupIntegrationHarborGated,
