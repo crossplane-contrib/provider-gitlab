@@ -26,6 +26,7 @@ import (
 )
 
 // IntegrationMattermostParameters defines the desired state of a GitLab Group Mattermost Integration.
+// +kubebuilder:validation:XValidation:rule="has(self.webhookSecretRef) || (has(self.useInheritedSettings) && self.useInheritedSettings)",message="webhookSecretRef is required unless useInheritedSettings is true"
 type IntegrationMattermostParameters struct {
 	// GroupID is the ID of the group.
 	// +optional
@@ -75,10 +76,6 @@ type IntegrationMattermostParameters struct {
 	// +kubebuilder:validation:Enum:=match_any;match_all
 	// +optional
 	LabelsToBeNotifiedBehavior *string `json:"labelsToBeNotifiedBehavior,omitempty"`
-
-	// Send notifications only for the default branch.
-	// +optional
-	NotifyOnlyDefaultBranch *bool `json:"notifyOnlyDefaultBranch,omitempty"`
 
 	// Enable notifications for push events.
 	// +optional
@@ -192,8 +189,6 @@ type IntegrationMattermostObservation struct {
 	Username string `json:"username,omitempty"`
 	// Send notifications for broken pipelines only.
 	NotifyOnlyBrokenPipelines bool `json:"notifyOnlyBrokenPipelines,omitempty"`
-	// Send notifications only for the default branch.
-	NotifyOnlyDefaultBranch bool `json:"notifyOnlyDefaultBranch,omitempty"`
 	// Branches to send notifications for.
 	BranchesToBeNotified string `json:"branchesToBeNotified,omitempty"`
 	// Labels to send notifications for.

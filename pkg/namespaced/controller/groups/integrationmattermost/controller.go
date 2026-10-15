@@ -148,7 +148,7 @@ func (e *external) resolveWebHook(ctx context.Context, cr *v1alpha1.IntegrationM
 // inherited integration exists when cr asks to inherit, even if inactive, so
 // that it is not created over and over. It cannot be removed, so it is
 // considered gone while cr is being deleted.
-func exists(cr *v1alpha1.IntegrationMattermost, mattermost *gitlab.GroupMattermostIntegration) bool {
+func exists(cr *v1alpha1.IntegrationMattermost, mattermost *groups.GroupMattermostIntegration) bool {
 	switch {
 	case mattermost == nil:
 		return false

@@ -224,9 +224,6 @@ spec:
                   notifyOnlyBrokenPipelines:
                     description: Send notifications for broken pipelines.
                     type: boolean
-                  notifyOnlyDefaultBranch:
-                    description: Send notifications only for the default branch.
-                    type: boolean
                   pipelineChannel:
                     description: The name of the channel to receive notifications
                       for pipeline events.
@@ -297,6 +294,11 @@ spec:
                     description: Enable notifications for wiki page events.
                     type: boolean
                 type: object
+                x-kubernetes-validations:
+                - message: webhookSecretRef is required unless useInheritedSettings
+                    is true
+                  rule: has(self.webhookSecretRef) || (has(self.useInheritedSettings)
+                    && self.useInheritedSettings)
               managementPolicies:
                 default:
                 - '*'
@@ -431,9 +433,6 @@ spec:
                     type: boolean
                   notifyOnlyBrokenPipelines:
                     description: Send notifications for broken pipelines only.
-                    type: boolean
-                  notifyOnlyDefaultBranch:
-                    description: Send notifications only for the default branch.
                     type: boolean
                   pipelineChannel:
                     description: Channel to use for pipeline events.

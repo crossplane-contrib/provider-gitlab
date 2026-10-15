@@ -124,15 +124,17 @@ func mockKubeWithSecret(webhook string) client.Client {
 	}
 }
 
-func activeMattermost() *gitlab.GroupMattermostIntegration {
-	return &gitlab.GroupMattermostIntegration{
+func activeMattermost() *groupclients.GroupMattermostIntegration {
+	return &groupclients.GroupMattermostIntegration{
 		Integration: gitlab.Integration{
 			ID:     testIntegID,
 			Title:  "Mattermost",
 			Slug:   "mattermost",
 			Active: true,
 		},
-		Properties: &gitlab.GroupMattermostIntegrationProperties{Channel: testChannel},
+		Properties: &groupclients.GroupMattermostIntegrationProperties{
+			GroupMattermostIntegrationProperties: gitlab.GroupMattermostIntegrationProperties{Channel: testChannel},
+		},
 	}
 }
 
@@ -167,7 +169,7 @@ func activeMattermostObservation() v1alpha1.IntegrationMattermostObservation {
 	}
 }
 
-func inheritedMattermost(active bool) *gitlab.GroupMattermostIntegration {
+func inheritedMattermost(active bool) *groupclients.GroupMattermostIntegration {
 	m := activeMattermost()
 	m.Active = active
 	m.Inherited = true
@@ -266,15 +268,17 @@ func TestObserve(t *testing.T) {
 		"DeletingResourceStillExists": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						return &gitlab.GroupMattermostIntegration{
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
+						return &groupclients.GroupMattermostIntegration{
 							Integration: gitlab.Integration{
 								ID:     testIntegID,
 								Title:  "Mattermost",
 								Slug:   "mattermost",
 								Active: true,
 							},
-							Properties: &gitlab.GroupMattermostIntegrationProperties{Channel: testChannel},
+							Properties: &groupclients.GroupMattermostIntegrationProperties{
+								GroupMattermostIntegrationProperties: gitlab.GroupMattermostIntegrationProperties{Channel: testChannel},
+							},
 						}, &gitlab.Response{}, nil
 					},
 				},
@@ -328,7 +332,7 @@ func TestObserve(t *testing.T) {
 		"DeletingResourceAlreadyGone": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
@@ -357,7 +361,7 @@ func TestObserve(t *testing.T) {
 		"NotFound": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
 					},
 				},
@@ -377,7 +381,7 @@ func TestObserve(t *testing.T) {
 		"GetFailed": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 500}}, errBoom
 					},
 				},
@@ -398,7 +402,7 @@ func TestObserve(t *testing.T) {
 		"NilIntegration": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 200}}, nil
 					},
 				},
@@ -418,7 +422,7 @@ func TestObserve(t *testing.T) {
 		"SuccessActive": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
 						return activeMattermost(), &gitlab.Response{}, nil
 					},
 				},
@@ -446,7 +450,7 @@ func TestObserve(t *testing.T) {
 		"SettingsDrift": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
 						return activeMattermost(), &gitlab.Response{}, nil
 					},
 				},
@@ -473,7 +477,7 @@ func TestObserve(t *testing.T) {
 		"InheritedAsRequested": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
 						return inheritedMattermost(false), &gitlab.Response{}, nil
 					},
 				},
@@ -500,7 +504,7 @@ func TestObserve(t *testing.T) {
 		"InheritedNotRequested": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
 						return inheritedMattermost(true), &gitlab.Response{}, nil
 					},
 				},
@@ -527,7 +531,7 @@ func TestObserve(t *testing.T) {
 		"InactiveInheritedNotRequested": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
 						return inheritedMattermost(false), &gitlab.Response{}, nil
 					},
 				},
@@ -549,7 +553,7 @@ func TestObserve(t *testing.T) {
 		"InheritedLateInitialized": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
 						return inheritedMattermost(true), &gitlab.Response{}, nil
 					},
 				},
@@ -572,7 +576,7 @@ func TestObserve(t *testing.T) {
 		"DeletingInheritedIsGone": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
 						return inheritedMattermost(true), &gitlab.Response{}, nil
 					},
 				},
@@ -594,8 +598,8 @@ func TestObserve(t *testing.T) {
 		"SuccessInactive": {
 			args: args{
 				mattermostClient: &fake.MockClient{
-					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
-						return &gitlab.GroupMattermostIntegration{
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
+						return &groupclients.GroupMattermostIntegration{
 							Integration: gitlab.Integration{
 								ID:     testIntegID,
 								Title:  "Mattermost",

@@ -88,13 +88,13 @@ type MockClient struct {
 	MockSetUpGroupHarbor       func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error)
 	MockDisableGroupHarbor     func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
-	MockGetGroupMattermostIntegration    func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error)
+	MockGetGroupMattermostIntegration    func(gid any, options ...gitlab.RequestOptionFunc) (*groups.GroupMattermostIntegration, *gitlab.Response, error)
 	MockSetGroupMattermostIntegration    func(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error)
 	MockDeleteGroupMattermostIntegration func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // GetGroupMattermostIntegration calls the underlying MockGetGroupMattermostIntegration method.
-func (c *MockClient) GetGroupMattermostIntegration(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+func (c *MockClient) GetGroupMattermostIntegration(gid any, options ...gitlab.RequestOptionFunc) (*groups.GroupMattermostIntegration, *gitlab.Response, error) {
 	return c.MockGetGroupMattermostIntegration(gid, options...)
 }
 

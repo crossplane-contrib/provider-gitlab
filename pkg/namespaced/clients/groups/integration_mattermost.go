@@ -17,6 +17,9 @@ limitations under the License.
 package groups
 
 import (
+	"fmt"
+	"net/http"
+
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"k8s.io/utils/ptr"
 
@@ -27,15 +30,66 @@ import (
 
 // MattermostClient defines GitLab Mattermost integration operations for a group.
 type MattermostClient interface {
-	GetGroupMattermostIntegration(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error)
+	GetGroupMattermostIntegration(gid any, options ...gitlab.RequestOptionFunc) (*GroupMattermostIntegration, *gitlab.Response, error)
 	SetGroupMattermostIntegration(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error)
 	DeleteGroupMattermostIntegration(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// GroupMattermostIntegration represents a Mattermost integration for a group, as returned by GitLab.
+//
+// It replaces gitlab.GroupMattermostIntegration, which decodes notify_only_broken_pipelines,
+// branches_to_be_notified, labels_to_be_notified and labels_to_be_notified_behavior from the
+// top level of the response, where GitLab returns null: GitLab returns them in the properties.
+type GroupMattermostIntegration struct {
+	gitlab.Integration
+	Properties *GroupMattermostIntegrationProperties `json:"properties"`
+}
+
+// GroupMattermostIntegrationProperties represents the properties of a group Mattermost integration.
+type GroupMattermostIntegrationProperties struct {
+	gitlab.GroupMattermostIntegrationProperties
+	NotifyOnlyBrokenPipelines  gitlab.BoolValue `json:"notify_only_broken_pipelines"`
+	BranchesToBeNotified       string           `json:"branches_to_be_notified"`
+	LabelsToBeNotified         string           `json:"labels_to_be_notified"`
+	LabelsToBeNotifiedBehavior string           `json:"labels_to_be_notified_behavior"`
+}
+
+// mattermostClient implements MattermostClient, decoding the group Mattermost integration
+// into GroupMattermostIntegration.
+type mattermostClient struct {
+	gitlab.IntegrationsServiceInterface
+	git *gitlab.Client
 }
 
 // NewMattermostClient returns a new GitLab Integrations client for group Mattermost operations.
 func NewMattermostClient(cfg common.Config) MattermostClient {
 	git := common.NewClient(cfg)
-	return git.Integrations
+	return &mattermostClient{IntegrationsServiceInterface: git.Integrations, git: git}
+}
+
+// GetGroupMattermostIntegration retrieves the Mattermost integration for a group.
+func (c *mattermostClient) GetGroupMattermostIntegration(gid any, options ...gitlab.RequestOptionFunc) (*GroupMattermostIntegration, *gitlab.Response, error) {
+	var group string
+	switch v := gid.(type) {
+	case int, int64:
+		group = fmt.Sprint(v)
+	case string:
+		group = gitlab.PathEscape(v)
+	default:
+		return nil, nil, fmt.Errorf("invalid ID type %#v, %w", gid, gitlab.ErrInvalidIDType)
+	}
+
+	req, err := c.git.NewRequest(http.MethodGet, fmt.Sprintf("groups/%s/integrations/mattermost", group), nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	mattermost := new(GroupMattermostIntegration)
+	resp, err := c.git.Do(req, mattermost)
+	if err != nil {
+		return nil, resp, err
+	}
+	return mattermost, resp, nil
 }
 
 // GenerateGroupMattermostIntegrationOptions produces GroupMattermostIntegrationOptions from IntegrationMattermostParameters.
@@ -62,7 +116,6 @@ func GenerateGroupMattermostIntegrationOptions(in *v1alpha1.IntegrationMattermos
 		Username:                   in.Username,
 		Channel:                    in.Channel,
 		NotifyOnlyBrokenPipelines:  in.NotifyOnlyBrokenPipelines,
-		NotifyOnlyDefaultBranch:    in.NotifyOnlyDefaultBranch,
 		BranchesToBeNotified:       in.BranchesToBeNotified,
 		LabelsToBeNotified:         in.LabelsToBeNotified,
 		LabelsToBeNotifiedBehavior: in.LabelsToBeNotifiedBehavior,
@@ -94,23 +147,22 @@ func GenerateGroupMattermostIntegrationOptions(in *v1alpha1.IntegrationMattermos
 	}
 }
 
-// GenerateIntegrationMattermostObservation converts gitlab.GroupMattermostIntegration to IntegrationMattermostObservation.
+// GenerateIntegrationMattermostObservation converts GroupMattermostIntegration to IntegrationMattermostObservation.
 // The webhook is intentionally not surfaced as it is a secret.
-func GenerateIntegrationMattermostObservation(observation *gitlab.GroupMattermostIntegration) v1alpha1.IntegrationMattermostObservation {
+func GenerateIntegrationMattermostObservation(observation *GroupMattermostIntegration) v1alpha1.IntegrationMattermostObservation {
 	if observation == nil {
 		return v1alpha1.IntegrationMattermostObservation{}
 	}
 
 	out := v1alpha1.IntegrationMattermostObservation{
 		CommonIntegrationObservation: common.GenerateCommonIntegrationObservation(&observation.Integration),
-		NotifyOnlyBrokenPipelines:    observation.NotifyOnlyBrokenPipelines,
-		NotifyOnlyDefaultBranch:      observation.NotifyOnlyDefaultBranch,
-		BranchesToBeNotified:         observation.BranchesToBeNotified,
-		LabelsToBeNotified:           observation.LabelsToBeNotified,
-		LabelsToBeNotifiedBehavior:   observation.LabelsToBeNotifiedBehavior,
 	}
 
 	if p := observation.Properties; p != nil {
+		out.NotifyOnlyBrokenPipelines = bool(p.NotifyOnlyBrokenPipelines)
+		out.BranchesToBeNotified = p.BranchesToBeNotified
+		out.LabelsToBeNotified = p.LabelsToBeNotified
+		out.LabelsToBeNotifiedBehavior = p.LabelsToBeNotifiedBehavior
 		out.Username = p.Username
 		out.Channel = p.Channel
 		out.PushChannel = p.PushChannel
@@ -135,7 +187,7 @@ func GenerateIntegrationMattermostObservation(observation *gitlab.GroupMattermos
 // so they are not compared.
 //
 // Note: WebHook is excluded because GitLab does not return it (write-only).
-func IsIntegrationMattermostUpToDate(spec *v1alpha1.IntegrationMattermostParameters, observation *gitlab.GroupMattermostIntegration) bool { //nolint:gocyclo
+func IsIntegrationMattermostUpToDate(spec *v1alpha1.IntegrationMattermostParameters, observation *GroupMattermostIntegration) bool { //nolint:gocyclo
 	if spec == nil || observation == nil {
 		return false
 	}
@@ -156,15 +208,14 @@ func IsIntegrationMattermostUpToDate(spec *v1alpha1.IntegrationMattermostParamet
 	// so that the resource converges instead of being updated on every poll.
 	p := observation.Properties
 	if p == nil {
-		p = &gitlab.GroupMattermostIntegrationProperties{}
+		p = &GroupMattermostIntegrationProperties{}
 	}
 	return clients.IsComparableEqualToComparablePtr(spec.Username, p.Username) &&
 		clients.IsComparableEqualToComparablePtr(spec.Channel, p.Channel) &&
-		clients.IsComparableEqualToComparablePtr(spec.NotifyOnlyBrokenPipelines, observation.NotifyOnlyBrokenPipelines) &&
-		clients.IsComparableEqualToComparablePtr(spec.NotifyOnlyDefaultBranch, observation.NotifyOnlyDefaultBranch) &&
-		clients.IsComparableEqualToComparablePtr(spec.BranchesToBeNotified, observation.BranchesToBeNotified) &&
-		clients.IsComparableEqualToComparablePtr(spec.LabelsToBeNotified, observation.LabelsToBeNotified) &&
-		clients.IsComparableEqualToComparablePtr(spec.LabelsToBeNotifiedBehavior, observation.LabelsToBeNotifiedBehavior) &&
+		clients.IsComparableEqualToComparablePtr(spec.NotifyOnlyBrokenPipelines, bool(p.NotifyOnlyBrokenPipelines)) &&
+		clients.IsComparableEqualToComparablePtr(spec.BranchesToBeNotified, p.BranchesToBeNotified) &&
+		clients.IsComparableEqualToComparablePtr(spec.LabelsToBeNotified, p.LabelsToBeNotified) &&
+		clients.IsComparableEqualToComparablePtr(spec.LabelsToBeNotifiedBehavior, p.LabelsToBeNotifiedBehavior) &&
 		clients.IsComparableEqualToComparablePtr(spec.PushEvents, observation.PushEvents) &&
 		clients.IsComparableEqualToComparablePtr(spec.IssuesEvents, observation.IssuesEvents) &&
 		clients.IsComparableEqualToComparablePtr(spec.ConfidentialIssuesEvents, observation.ConfidentialIssuesEvents) &&

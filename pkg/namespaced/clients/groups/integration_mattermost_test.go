@@ -37,7 +37,6 @@ func TestGenerateGroupMattermostIntegrationOptions(t *testing.T) {
 					Username:                   &testMattermostUsername,
 					Channel:                    &testMattermostChannel,
 					NotifyOnlyBrokenPipelines:  ptr.To(true),
-					NotifyOnlyDefaultBranch:    ptr.To(true),
 					BranchesToBeNotified:       &testMattermostBranches,
 					LabelsToBeNotified:         &testMattermostLabels,
 					LabelsToBeNotifiedBehavior: &testMattermostLabelsBehavior,
@@ -72,7 +71,6 @@ func TestGenerateGroupMattermostIntegrationOptions(t *testing.T) {
 				Username:                   &testMattermostUsername,
 				Channel:                    &testMattermostChannel,
 				NotifyOnlyBrokenPipelines:  ptr.To(true),
-				NotifyOnlyDefaultBranch:    ptr.To(true),
 				BranchesToBeNotified:       &testMattermostBranches,
 				LabelsToBeNotified:         &testMattermostLabels,
 				LabelsToBeNotifiedBehavior: &testMattermostLabelsBehavior,
@@ -184,32 +182,32 @@ func TestGenerateIntegrationMattermostObservation(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		integration *gitlab.GroupMattermostIntegration
+		integration *GroupMattermostIntegration
 		want        groupsv1alpha1.IntegrationMattermostObservation
 	}{
 		"ActiveIntegration": {
-			integration: &gitlab.GroupMattermostIntegration{
-				Integration:                integration,
-				NotifyOnlyBrokenPipelines:  true,
-				NotifyOnlyDefaultBranch:    true,
-				BranchesToBeNotified:       testMattermostBranches,
-				LabelsToBeNotified:         testMattermostLabels,
-				LabelsToBeNotifiedBehavior: testMattermostLabelsBehavior,
-				Properties: &gitlab.GroupMattermostIntegrationProperties{
-					WebHook:              testMattermostWebHook,
-					Username:             testMattermostUsername,
-					Channel:              testMattermostChannel,
-					PushChannel:          "push",
-					IssueChannel:         "issue",
-					PipelineChannel:      testMattermostPipelineChannel,
-					DeploymentChannel:    "deployment",
-					VulnerabilityChannel: "vulnerability",
+			integration: &GroupMattermostIntegration{
+				Integration: integration,
+				Properties: &GroupMattermostIntegrationProperties{
+					GroupMattermostIntegrationProperties: gitlab.GroupMattermostIntegrationProperties{
+						WebHook:              testMattermostWebHook,
+						Username:             testMattermostUsername,
+						Channel:              testMattermostChannel,
+						PushChannel:          "push",
+						IssueChannel:         "issue",
+						PipelineChannel:      testMattermostPipelineChannel,
+						DeploymentChannel:    "deployment",
+						VulnerabilityChannel: "vulnerability",
+					},
+					NotifyOnlyBrokenPipelines:  true,
+					BranchesToBeNotified:       testMattermostBranches,
+					LabelsToBeNotified:         testMattermostLabels,
+					LabelsToBeNotifiedBehavior: testMattermostLabelsBehavior,
 				},
 			},
 			want: groupsv1alpha1.IntegrationMattermostObservation{
 				CommonIntegrationObservation: commonObservation,
 				NotifyOnlyBrokenPipelines:    true,
-				NotifyOnlyDefaultBranch:      true,
 				BranchesToBeNotified:         testMattermostBranches,
 				LabelsToBeNotified:           testMattermostLabels,
 				LabelsToBeNotifiedBehavior:   testMattermostLabelsBehavior,
@@ -223,7 +221,7 @@ func TestGenerateIntegrationMattermostObservation(t *testing.T) {
 			},
 		},
 		"NilProperties": {
-			integration: &gitlab.GroupMattermostIntegration{
+			integration: &GroupMattermostIntegration{
 				Integration: integration,
 			},
 			want: groupsv1alpha1.IntegrationMattermostObservation{
@@ -247,13 +245,8 @@ func TestGenerateIntegrationMattermostObservation(t *testing.T) {
 }
 
 func TestIsIntegrationMattermostUpToDate(t *testing.T) {
-	observation := func(mods ...func(*gitlab.GroupMattermostIntegration)) *gitlab.GroupMattermostIntegration {
-		o := &gitlab.GroupMattermostIntegration{
-			NotifyOnlyBrokenPipelines:  true,
-			NotifyOnlyDefaultBranch:    true,
-			BranchesToBeNotified:       testMattermostBranches,
-			LabelsToBeNotified:         testMattermostLabels,
-			LabelsToBeNotifiedBehavior: testMattermostLabelsBehavior,
+	observation := func(mods ...func(*GroupMattermostIntegration)) *GroupMattermostIntegration {
+		o := &GroupMattermostIntegration{
 			Integration: gitlab.Integration{
 				Active:                   true,
 				PushEvents:               true,
@@ -268,20 +261,26 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 				DeploymentEvents:         true,
 				VulnerabilityEvents:      true,
 			},
-			Properties: &gitlab.GroupMattermostIntegrationProperties{
-				Username:                 testMattermostUsername,
-				Channel:                  testMattermostChannel,
-				PushChannel:              "push",
-				IssueChannel:             "issue",
-				ConfidentialIssueChannel: "confidential-issue",
-				MergeRequestChannel:      "merge-request",
-				NoteChannel:              "note",
-				ConfidentialNoteChannel:  "confidential-note",
-				TagPushChannel:           "tag-push",
-				PipelineChannel:          testMattermostPipelineChannel,
-				WikiPageChannel:          "wiki-page",
-				DeploymentChannel:        "deployment",
-				VulnerabilityChannel:     "vulnerability",
+			Properties: &GroupMattermostIntegrationProperties{
+				GroupMattermostIntegrationProperties: gitlab.GroupMattermostIntegrationProperties{
+					Username:                 testMattermostUsername,
+					Channel:                  testMattermostChannel,
+					PushChannel:              "push",
+					IssueChannel:             "issue",
+					ConfidentialIssueChannel: "confidential-issue",
+					MergeRequestChannel:      "merge-request",
+					NoteChannel:              "note",
+					ConfidentialNoteChannel:  "confidential-note",
+					TagPushChannel:           "tag-push",
+					PipelineChannel:          testMattermostPipelineChannel,
+					WikiPageChannel:          "wiki-page",
+					DeploymentChannel:        "deployment",
+					VulnerabilityChannel:     "vulnerability",
+				},
+				NotifyOnlyBrokenPipelines:  true,
+				BranchesToBeNotified:       testMattermostBranches,
+				LabelsToBeNotified:         testMattermostLabels,
+				LabelsToBeNotifiedBehavior: testMattermostLabelsBehavior,
 			},
 		}
 		for _, m := range mods {
@@ -294,7 +293,6 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 			Username:                   &testMattermostUsername,
 			Channel:                    &testMattermostChannel,
 			NotifyOnlyBrokenPipelines:  ptr.To(true),
-			NotifyOnlyDefaultBranch:    ptr.To(true),
 			BranchesToBeNotified:       &testMattermostBranches,
 			LabelsToBeNotified:         &testMattermostLabels,
 			LabelsToBeNotifiedBehavior: &testMattermostLabelsBehavior,
@@ -329,7 +327,7 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 
 	cases := map[string]struct {
 		spec        *groupsv1alpha1.IntegrationMattermostParameters
-		observation *gitlab.GroupMattermostIntegration
+		observation *GroupMattermostIntegration
 		want        bool
 	}{
 		"UpToDate": {
@@ -351,7 +349,7 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 		},
 		"InheritanceNotRequested": {
 			spec: spec(),
-			observation: observation(func(o *gitlab.GroupMattermostIntegration) {
+			observation: observation(func(o *GroupMattermostIntegration) {
 				o.Inherited = true
 			}),
 			want: false,
@@ -360,7 +358,7 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 			spec: spec(func(p *groupsv1alpha1.IntegrationMattermostParameters) {
 				p.UseInheritedSettings = ptr.To(false)
 			}),
-			observation: observation(func(o *gitlab.GroupMattermostIntegration) {
+			observation: observation(func(o *GroupMattermostIntegration) {
 				o.Inherited = true
 			}),
 			want: false,
@@ -371,7 +369,7 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 				p.Channel = ptr.To("other-channel")
 				p.PushEvents = ptr.To(false)
 			}),
-			observation: observation(func(o *gitlab.GroupMattermostIntegration) {
+			observation: observation(func(o *GroupMattermostIntegration) {
 				o.Inherited = true
 				o.Active = false
 				o.Properties = nil
@@ -380,21 +378,21 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 		},
 		"InactiveIntegration": {
 			spec: spec(),
-			observation: observation(func(o *gitlab.GroupMattermostIntegration) {
+			observation: observation(func(o *GroupMattermostIntegration) {
 				o.Active = false
 			}),
 			want: false,
 		},
 		"NilProperties": {
 			spec: &groupsv1alpha1.IntegrationMattermostParameters{},
-			observation: observation(func(o *gitlab.GroupMattermostIntegration) {
+			observation: observation(func(o *GroupMattermostIntegration) {
 				o.Properties = nil
 			}),
 			want: true,
 		},
 		"NilPropertiesWithDesiredChannel": {
 			spec: &groupsv1alpha1.IntegrationMattermostParameters{Channel: ptr.To("alerts")},
-			observation: observation(func(o *gitlab.GroupMattermostIntegration) {
+			observation: observation(func(o *GroupMattermostIntegration) {
 				o.Properties = nil
 			}),
 			want: false,
@@ -418,9 +416,8 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 		"NotifyOnlyBrokenPipelines": func(p *groupsv1alpha1.IntegrationMattermostParameters) {
 			p.NotifyOnlyBrokenPipelines = ptr.To(false)
 		},
-		"NotifyOnlyDefaultBranch": func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.NotifyOnlyDefaultBranch = ptr.To(false) },
-		"BranchesToBeNotified":    func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.BranchesToBeNotified = ptr.To("other") },
-		"LabelsToBeNotified":      func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.LabelsToBeNotified = ptr.To("other") },
+		"BranchesToBeNotified": func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.BranchesToBeNotified = ptr.To("other") },
+		"LabelsToBeNotified":   func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.LabelsToBeNotified = ptr.To("other") },
 		"LabelsToBeNotifiedBehavior": func(p *groupsv1alpha1.IntegrationMattermostParameters) {
 			p.LabelsToBeNotifiedBehavior = ptr.To("other")
 		},
@@ -450,7 +447,7 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 	for field, mod := range differs {
 		cases[field+"Differs"] = struct {
 			spec        *groupsv1alpha1.IntegrationMattermostParameters
-			observation *gitlab.GroupMattermostIntegration
+			observation *GroupMattermostIntegration
 			want        bool
 		}{spec: spec(mod), observation: observation(), want: false}
 	}
