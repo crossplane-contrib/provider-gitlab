@@ -60,6 +60,13 @@ var (
 	}
 
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: fmt.Sprint(deployTokenID)}
+
+	previousDeployTokenID  = int64(1233)
+	sPreviousDeployTokenID = strconv.FormatInt(previousDeployTokenID, 10)
+	renewalPeriodDays      = 30
+	// With a 30-day period the default threshold renews 10 days before expiry.
+	dueExpiresAt    = time.Now().UTC().Truncate(time.Second).AddDate(0, 0, 5)
+	notDueExpiresAt = time.Now().UTC().Truncate(time.Second).AddDate(0, 0, 25)
 )
 
 type args struct {
@@ -84,6 +91,14 @@ func withExternalName(deployTokenID string) deployTokenModifier {
 
 func withAnnotations(a map[string]string) deployTokenModifier {
 	return func(p *v1alpha1.DeployToken) { meta.AddAnnotations(p, a) }
+}
+
+func withRenewAt(t time.Time) deployTokenModifier {
+	return func(r *v1alpha1.DeployToken) { r.Status.RenewAt = &metav1.Time{Time: t} }
+}
+
+func withDeletionTimestamp() deployTokenModifier {
+	return func(r *v1alpha1.DeployToken) { r.SetDeletionTimestamp(&metav1.Time{Time: time.Unix(0, 0)}) }
 }
 
 func deployToken(m ...deployTokenModifier) *v1alpha1.DeployToken {
@@ -257,6 +272,105 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
+		"RenewalNotDue": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockGetProjectDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &gitlab.DeployToken{ID: deployTokenID, Username: username, ExpiresAt: &notDueExpiresAt}, &gitlab.Response{}, nil
+					},
+				},
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID:         &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withExternalName(sDeployTokenID),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID:         &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withConditions(v2.Available()),
+					withRenewAt(notDueExpiresAt.AddDate(0, 0, -10)),
+					withExternalName(sDeployTokenID),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:   true,
+					ResourceUpToDate: true,
+				},
+			},
+		},
+		"RenewalDue": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockGetProjectDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &gitlab.DeployToken{ID: deployTokenID, Username: username, ExpiresAt: &dueExpiresAt}, &gitlab.Response{}, nil
+					},
+				},
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID:         &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withExternalName(sDeployTokenID),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID:         &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withRenewAt(dueExpiresAt.AddDate(0, 0, -10)),
+					withExternalName(sDeployTokenID),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists: false,
+				},
+			},
+		},
+		"RenewalDueWhileDeleting": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockGetProjectDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &gitlab.DeployToken{ID: deployTokenID, Username: username, ExpiresAt: &dueExpiresAt}, &gitlab.Response{}, nil
+					},
+				},
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID:         &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withExternalName(sDeployTokenID),
+					withDeletionTimestamp(),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID:         &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withConditions(v2.Available()),
+					withRenewAt(dueExpiresAt.AddDate(0, 0, -10)),
+					withExternalName(sDeployTokenID),
+					withDeletionTimestamp(),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:   true,
+					ResourceUpToDate: true,
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -308,7 +422,6 @@ func TestCreate(t *testing.T) {
 					},
 				},
 				cr: deployToken(
-					withAnnotations(extNameAnnotation),
 					withSpec(v1alpha1.DeployTokenParameters{
 						ProjectID: &deployTokenID,
 					}),
@@ -324,6 +437,91 @@ func TestCreate(t *testing.T) {
 				result: managed.ExternalCreation{
 					ConnectionDetails: managed.ConnectionDetails{"token": []byte("Token")},
 				},
+			},
+		},
+		"ReplaceDeletesPreviousToken": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockDeleteDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						if deployToken != previousDeployTokenID {
+							return nil, errors.Errorf("deleted token %d, want %d", deployToken, previousDeployTokenID)
+						}
+						return &gitlab.Response{}, nil
+					},
+					MockCreateDeployToken: func(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &deployTokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: deployToken(
+					withExternalName(sPreviousDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID: &deployTokenID,
+					}),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withExternalName(sDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID: &deployTokenID,
+					}),
+				),
+				result: managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{"token": []byte("Token")},
+				},
+			},
+		},
+		"ReplacePreviousTokenAlreadyGone": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockDeleteDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+					},
+					MockCreateDeployToken: func(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &deployTokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: deployToken(
+					withExternalName(sPreviousDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID: &deployTokenID,
+					}),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withExternalName(sDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID: &deployTokenID,
+					}),
+				),
+				result: managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{"token": []byte("Token")},
+				},
+			},
+		},
+		"ReplaceDeleteFailedKeepsPreviousToken": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockDeleteDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusForbidden}}, errBoom
+					},
+				},
+				cr: deployToken(
+					withExternalName(sPreviousDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID: &deployTokenID,
+					}),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withExternalName(sPreviousDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						ProjectID: &deployTokenID,
+					}),
+				),
+				err: errors.Wrap(errBoom, errReplaceFailed),
 			},
 		},
 		"FailedCreation": {
