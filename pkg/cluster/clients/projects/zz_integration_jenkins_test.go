@@ -193,6 +193,14 @@ func TestIsIntegrationJenkinsUpToDate(t *testing.T) {
 			observation: observed(),
 			want:        false,
 		},
+		"UnsetEnableSSLVerificationIgnoresNullRemote": {
+			spec: &projectsv1alpha1.IntegrationJenkinsParameters{
+				URL:         "https://jenkins.example.com",
+				ProjectName: "my-job",
+			},
+			observation: decodeJenkins(t, `{"properties":{"jenkins_url":"https://jenkins.example.com","project_name":"my-job","enable_ssl_verification":null}}`),
+			want:        true,
+		},
 		"OutOfDateEnableSSLVerification": {
 			spec: &projectsv1alpha1.IntegrationJenkinsParameters{
 				URL:                   "https://jenkins.example.com",
@@ -275,11 +283,10 @@ func TestLateInitializeIntegrationJenkins(t *testing.T) {
 				},
 			},
 			want: &projectsv1alpha1.IntegrationJenkinsParameters{
-				EnableSSLVerification: ptr.To(true),
-				Username:              ptr.To("bot"),
-				PushEvents:            ptr.To(true),
-				MergeRequestsEvents:   ptr.To(false),
-				TagPushEvents:         ptr.To(true),
+				Username:            ptr.To("bot"),
+				PushEvents:          ptr.To(true),
+				MergeRequestsEvents: ptr.To(false),
+				TagPushEvents:       ptr.To(true),
 			},
 		},
 		"EmptyUsernameNotInitialized": {
@@ -288,10 +295,18 @@ func TestLateInitializeIntegrationJenkins(t *testing.T) {
 				Properties: &gitlab.JenkinsCIServiceProperties{},
 			},
 			want: &projectsv1alpha1.IntegrationJenkinsParameters{
-				EnableSSLVerification: ptr.To(false),
-				PushEvents:            ptr.To(false),
-				MergeRequestsEvents:   ptr.To(false),
-				TagPushEvents:         ptr.To(false),
+				PushEvents:          ptr.To(false),
+				MergeRequestsEvents: ptr.To(false),
+				TagPushEvents:       ptr.To(false),
+			},
+		},
+		"NullEnableSSLVerificationNotInitialized": {
+			spec: &projectsv1alpha1.IntegrationJenkinsParameters{},
+			svc:  decodeJenkins(t, `{"properties":{"enable_ssl_verification":null}}`),
+			want: &projectsv1alpha1.IntegrationJenkinsParameters{
+				PushEvents:          ptr.To(false),
+				MergeRequestsEvents: ptr.To(false),
+				TagPushEvents:       ptr.To(false),
 			},
 		},
 		"KeepsExistingValues": {
@@ -331,6 +346,15 @@ func TestLateInitializeIntegrationJenkins(t *testing.T) {
 			}
 		})
 	}
+}
+
+func decodeJenkins(t *testing.T, raw string) *gitlab.JenkinsCIService {
+	t.Helper()
+	svc := &gitlab.JenkinsCIService{}
+	if err := json.Unmarshal([]byte(raw), svc); err != nil {
+		t.Fatalf("json.Unmarshal(): %v", err)
+	}
+	return svc
 }
 
 func TestIntegrationJenkinsObservationJSONKeepsFalse(t *testing.T) {
