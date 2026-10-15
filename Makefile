@@ -71,7 +71,7 @@ xpkg.build.provider-gitlab: do.build.images
 
 # ====================================================================================
 # End to End Testing
-CROSSPLANE_VERSION = 1.18.1
+CROSSPLANE_VERSION = 2.4.2
 CROSSPLANE_NAMESPACE = crossplane-system
 -include build/makelib/local.xpkg.mk
 -include build/makelib/controlplane.mk
