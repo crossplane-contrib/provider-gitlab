@@ -46,11 +46,19 @@ func NewMattermostClient(cfg common.Config) MattermostClient {
 // inheriting settings and ignores all the other submitted attributes.
 func GenerateGroupMattermostIntegrationOptions(in *v1alpha1.IntegrationMattermostParameters, webhook string) *gitlab.GroupMattermostIntegrationOptions {
 	if in == nil {
-		return &gitlab.GroupMattermostIntegrationOptions{}
+		return &gitlab.GroupMattermostIntegrationOptions{
+			WebHook:              ptr.To(webhook),
+			UseInheritedSettings: ptr.To(false),
+		}
+	}
+
+	var hook *string
+	if webhook != "" {
+		hook = &webhook
 	}
 
 	return &gitlab.GroupMattermostIntegrationOptions{
-		WebHook:                    &webhook,
+		WebHook:                    hook,
 		Username:                   in.Username,
 		Channel:                    in.Channel,
 		NotifyOnlyBrokenPipelines:  in.NotifyOnlyBrokenPipelines,
@@ -140,11 +148,16 @@ func IsIntegrationMattermostUpToDate(spec *v1alpha1.IntegrationMattermostParamet
 		return true
 	}
 
-	if !observation.Active || observation.Properties == nil {
+	if !observation.Active {
 		return false
 	}
 
+	// GitLab may omit the properties when none is set: compare against empty ones
+	// so that the resource converges instead of being updated on every poll.
 	p := observation.Properties
+	if p == nil {
+		p = &gitlab.GroupMattermostIntegrationProperties{}
+	}
 	return clients.IsComparableEqualToComparablePtr(spec.Username, p.Username) &&
 		clients.IsComparableEqualToComparablePtr(spec.Channel, p.Channel) &&
 		clients.IsComparableEqualToComparablePtr(spec.NotifyOnlyBrokenPipelines, observation.NotifyOnlyBrokenPipelines) &&

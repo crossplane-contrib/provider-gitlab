@@ -133,7 +133,10 @@ func TestGenerateGroupMattermostIntegrationOptions(t *testing.T) {
 				parameters: nil,
 				webhook:    testMattermostWebHook,
 			},
-			want: &gitlab.GroupMattermostIntegrationOptions{},
+			want: &gitlab.GroupMattermostIntegrationOptions{
+				WebHook:              ptr.To(testMattermostWebHook),
+				UseInheritedSettings: ptr.To(false),
+			},
 		},
 	}
 
@@ -386,6 +389,13 @@ func TestIsIntegrationMattermostUpToDate(t *testing.T) {
 		},
 		"NilProperties": {
 			spec: &groupsv1alpha1.IntegrationMattermostParameters{},
+			observation: observation(func(o *gitlab.GroupMattermostIntegration) {
+				o.Properties = nil
+			}),
+			want: true,
+		},
+		"NilPropertiesWithDesiredChannel": {
+			spec: &groupsv1alpha1.IntegrationMattermostParameters{Channel: ptr.To("alerts")},
 			observation: observation(func(o *gitlab.GroupMattermostIntegration) {
 				o.Properties = nil
 			}),

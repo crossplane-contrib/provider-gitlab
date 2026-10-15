@@ -1309,7 +1309,11 @@ func (in *IntegrationMattermostParameters) DeepCopyInto(out *IntegrationMattermo
 		*out = new(v2.Selector)
 		(*in).DeepCopyInto(*out)
 	}
-	out.WebHookSecretRef = in.WebHookSecretRef
+	if in.WebHookSecretRef != nil {
+		in, out := &in.WebHookSecretRef, &out.WebHookSecretRef
+		*out = new(v2.SecretKeySelector)
+		**out = **in
+	}
 	if in.Username != nil {
 		in, out := &in.Username, &out.Username
 		*out = new(string)

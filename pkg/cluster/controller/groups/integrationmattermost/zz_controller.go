@@ -44,6 +44,7 @@ import (
 const (
 	errNotIntegrationMattermost = "managed resource is not a Gitlab group integration mattermost custom resource"
 	errGroupIDMissing           = "GroupID is missing"
+	errWebHookRefMissing        = "webhookSecretRef is required unless useInheritedSettings is true"
 	errWebHookMissing           = "cannot resolve Mattermost webhook from secret reference"
 	errWebHookEmpty             = "Mattermost webhook from secret reference is empty"
 	errGetFailed                = "cannot get Gitlab group integration mattermost"
@@ -128,7 +129,10 @@ type external struct {
 
 // resolveWebHook reads the Mattermost webhook from the referenced secret.
 func (e *external) resolveWebHook(ctx context.Context, cr *v1alpha1.IntegrationMattermost) (string, error) {
-	webhook, err := common.GetTokenValueFromSecret(ctx, e.kube, cr, &cr.Spec.ForProvider.WebHookSecretRef)
+	if cr.Spec.ForProvider.WebHookSecretRef == nil {
+		return "", errors.New(errWebHookRefMissing)
+	}
+	webhook, err := common.GetTokenValueFromSecret(ctx, e.kube, cr, cr.Spec.ForProvider.WebHookSecretRef)
 	if err != nil {
 		return "", errors.Wrap(err, errWebHookMissing)
 	}
@@ -161,11 +165,15 @@ func exists(cr *v1alpha1.IntegrationMattermost, mattermost *gitlab.GroupMattermo
 
 // applyMattermost applies the desired Mattermost settings to the GitLab group.
 func (e *external) applyMattermost(ctx context.Context, cr *v1alpha1.IntegrationMattermost) error {
-	webhook, err := e.resolveWebHook(ctx, cr)
-	if err != nil {
-		return err
+	// GitLab ignores the webhook while inheriting, so the secret is not needed.
+	var webhook string
+	if !ptr.Deref(cr.Spec.ForProvider.UseInheritedSettings, false) {
+		var err error
+		if webhook, err = e.resolveWebHook(ctx, cr); err != nil {
+			return err
+		}
 	}
-	_, _, err = e.client.SetGroupMattermostIntegration(
+	_, _, err := e.client.SetGroupMattermostIntegration(
 		*cr.Spec.ForProvider.GroupID,
 		groups.GenerateGroupMattermostIntegrationOptions(&cr.Spec.ForProvider, webhook),
 		gitlab.WithContext(ctx),
@@ -194,6 +202,15 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
+
+	// Late initialize useInheritedSettings from an inherited integration, so that a group
+	// inheriting its settings is not detached from them by a spec that leaves it unset.
+	lateInitialized := false
+	if mattermost != nil && mattermost.Inherited && cr.Spec.ForProvider.UseInheritedSettings == nil && !meta.WasDeleted(cr) {
+		cr.Spec.ForProvider.UseInheritedSettings = ptr.To(true)
+		lateInitialized = true
+	}
+
 	if !exists(cr, mattermost) {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
@@ -204,6 +221,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	return managed.ExternalObservation{
 		ResourceExists:   true,
 		ResourceUpToDate: groups.IsIntegrationMattermostUpToDate(&cr.Spec.ForProvider, mattermost),
+
+		ResourceLateInitialized: lateInitialized,
 	}, nil
 }
 

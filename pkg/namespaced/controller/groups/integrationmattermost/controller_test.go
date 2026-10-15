@@ -72,7 +72,7 @@ func withChannel(c string) mattermostModifier {
 
 func withWebHookSecretRef(name, key string) mattermostModifier {
 	return func(r *v1alpha1.IntegrationMattermost) {
-		r.Spec.ForProvider.WebHookSecretRef = v2.LocalSecretKeySelector{
+		r.Spec.ForProvider.WebHookSecretRef = &v2.LocalSecretKeySelector{
 			LocalSecretReference: v2.LocalSecretReference{Name: name},
 			Key:                  key,
 		}
@@ -507,12 +507,14 @@ func TestObserve(t *testing.T) {
 				cr: integrationMattermost(
 					withGroupID(testGroupID),
 					withChannel(testChannel),
+					withUseInheritedSettings(false),
 				),
 			},
 			want: want{
 				cr: integrationMattermost(
 					withGroupID(testGroupID),
 					withChannel(testChannel),
+					withUseInheritedSettings(false),
 					withConditions(v2.Available()),
 					withStatus(inheritedMattermostObservation(true)),
 				),
@@ -532,14 +534,39 @@ func TestObserve(t *testing.T) {
 				cr: integrationMattermost(
 					withGroupID(testGroupID),
 					withChannel(testChannel),
+					withUseInheritedSettings(false),
 				),
 			},
 			want: want{
 				cr: integrationMattermost(
 					withGroupID(testGroupID),
 					withChannel(testChannel),
+					withUseInheritedSettings(false),
 				),
 				result: managed.ExternalObservation{ResourceExists: false},
+			},
+		},
+		"InheritedLateInitialized": {
+			args: args{
+				mattermostClient: &fake.MockClient{
+					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+						return inheritedMattermost(true), &gitlab.Response{}, nil
+					},
+				},
+				cr: integrationMattermost(withGroupID(testGroupID)),
+			},
+			want: want{
+				cr: integrationMattermost(
+					withGroupID(testGroupID),
+					withUseInheritedSettings(true),
+					withConditions(v2.Available()),
+					withStatus(inheritedMattermostObservation(true)),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: true,
+				},
 			},
 		},
 		"DeletingInheritedIsGone": {

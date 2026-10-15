@@ -44,8 +44,9 @@ type IntegrationMattermostParameters struct {
 	// The webhook must not be empty. The GitLab API never returns the webhook, so changes to the
 	// secret value are NOT detected: they are only applied when another setting of the integration
 	// changes.
-	// +required
-	WebHookSecretRef v2.LocalSecretKeySelector `json:"webhookSecretRef"`
+	// Required unless UseInheritedSettings is true, in which case GitLab ignores the webhook.
+	// +optional
+	WebHookSecretRef *v2.LocalSecretKeySelector `json:"webhookSecretRef,omitempty"`
 
 	// Mattermost notifications username.
 	// +optional
@@ -176,7 +177,8 @@ type IntegrationMattermostParameters struct {
 	// UseInheritedSettings indicates whether to inherit the Mattermost settings instead of using
 	// the ones of this resource. Settings are inherited from the closest ancestor group with custom
 	// settings, or else from the instance. While inheriting, all other settings are ignored by GitLab
-	// and are not compared. Defaults to false, which detaches the group from inherited settings.
+	// and are not compared. Late initialized to true when unset and the integration is inherited, so that
+	// a group inheriting its settings is not detached from them.
 	// +optional
 	UseInheritedSettings *bool `json:"useInheritedSettings,omitempty"`
 }
