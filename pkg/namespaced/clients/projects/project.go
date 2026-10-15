@@ -17,7 +17,6 @@ limitations under the License.
 package projects
 
 import (
-	"strings"
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
@@ -51,14 +50,6 @@ type Client interface {
 func NewProjectClient(cfg common.Config) Client {
 	git := common.NewClient(cfg)
 	return git.Projects
-}
-
-// IsErrorProjectNotFound helper function to test for errProjectNotFound error.
-func IsErrorProjectNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errProjectNotFound)
 }
 
 // GenerateObservation is used to produce v1alpha1.ProjectObservation from

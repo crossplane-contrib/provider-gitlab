@@ -17,7 +17,6 @@ limitations under the License.
 package groups
 
 import (
-	"strings"
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
@@ -36,14 +35,6 @@ type AccessTokenClient interface {
 	RotateSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 	GetSelf(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 	RevokeSelf(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
-}
-
-// IsErrorGroupAccessTokenNotFound helper function to test for errGroupAccessTokenNotFound error.
-func IsErrorGroupAccessTokenNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errGroupNotFound)
 }
 
 // NewAccessTokenClient returns a new Gitlab GroupAccessToken service

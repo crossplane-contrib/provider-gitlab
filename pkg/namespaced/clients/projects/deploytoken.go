@@ -17,8 +17,6 @@ limitations under the License.
 package projects
 
 import (
-	"strings"
-
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
@@ -30,14 +28,6 @@ type DeployTokenClient interface {
 	CreateProjectDeployToken(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
 	DeleteProjectDeployToken(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	GetProjectDeployToken(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
-}
-
-// IsErrorProjectDeployTokenNotFound helper function to test for errProjectDeployTokenNotFound error.
-func IsErrorProjectDeployTokenNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errProjectNotFound)
 }
 
 // NewDeployTokenClient returns a new Gitlab ProjectDeployToken service

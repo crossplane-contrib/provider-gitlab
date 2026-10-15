@@ -232,6 +232,32 @@ func TestObserve(t *testing.T) {
 				err:    nil,
 			},
 		},
+		"ErrGet404ClientGoNotFound": {
+			args: args{
+				samlGroupLink: &fake.MockClient{
+					MockGetGroupSAMLLink: func(gid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{
+							StatusCode: http.StatusNotFound,
+							Header:     http.Header{"Content-Type": []string{"application/json"}},
+						}}, gitlab.ErrNotFound
+					},
+				},
+				cr: samlGroupLink(
+					withGroupID(),
+					withExternalName(name),
+					withSpec(v1alpha1.SamlGroupLinkParameters{GroupID: &groupID, Name: &name}),
+				),
+			},
+			want: want{
+				cr: samlGroupLink(
+					withGroupID(),
+					withExternalName(name),
+					withSpec(v1alpha1.SamlGroupLinkParameters{GroupID: &groupID, Name: &name}),
+				),
+				result: managed.ExternalObservation{ResourceExists: false},
+				err:    nil,
+			},
+		},
 		"SuccessfulAvailable": {
 			args: args{
 				samlGroupLink: &fake.MockClient{
