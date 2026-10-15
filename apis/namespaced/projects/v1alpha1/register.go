@@ -199,6 +199,9 @@ func init() {
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
 	// Harbor
 	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
+	SchemeBuilder.Register(&IntegrationJenkins{}, &IntegrationJenkinsList{})
+	SchemeBuilder.Register(&IntegrationMicrosoftTeams{}, &IntegrationMicrosoftTeamsList{})
+	SchemeBuilder.Register(&IntegrationTelegram{}, &IntegrationTelegramList{})
 	SchemeBuilder.Register(&ProjectShareGroup{}, &ProjectShareGroupList{})
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})
