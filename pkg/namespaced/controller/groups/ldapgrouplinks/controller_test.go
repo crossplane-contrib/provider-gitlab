@@ -212,7 +212,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				ldapGroupLink: &fake.MockClient{
 					MockListGroupLDAPLinks: func(gid interface{}, options ...gitlab.RequestOptionFunc) ([]*gitlab.LDAPGroupLink, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("404 Not Found")
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("404 Not Found")
 					},
 				},
 				cr: ldapGroupLink(
@@ -232,6 +232,31 @@ func TestObserve(t *testing.T) {
 				),
 				result: managed.ExternalObservation{ResourceExists: false},
 				err:    nil,
+			},
+		},
+		"ErrGet404FromProxy": {
+			args: args{
+				ldapGroupLink: &fake.MockClient{
+					MockListGroupLDAPLinks: func(gid interface{}, options ...gitlab.RequestOptionFunc) ([]*gitlab.LDAPGroupLink, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"text/plain; charset=utf-8"}}}}, errors.New("404 Not Found")
+					},
+				},
+				cr: ldapGroupLink(
+					withGroupID(),
+					withExternalName(cn),
+					withGroupAccess(10),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
+				),
+			},
+			want: want{
+				cr: ldapGroupLink(
+					withGroupID(),
+					withExternalName(cn),
+					withGroupAccess(10),
+					withSpec(v1alpha1.LdapGroupLinkParameters{GroupID: &groupID, CN: strPtr(cn)}),
+				),
+				result: managed.ExternalObservation{},
+				err:    errors.Wrap(errors.New("404 Not Found"), errGetFailed),
 			},
 		},
 		"SuccessfulAvailable": {

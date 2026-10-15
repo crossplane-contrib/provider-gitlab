@@ -191,9 +191,15 @@ func TestObserve(t *testing.T) {
 		},
 		"ErrGet404": {
 			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
-				return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("not found")
 			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
 			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired)), result: managed.ExternalObservation{}},
+		},
+		"ErrGet404FromProxy": {
+			args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"text/plain; charset=utf-8"}}}}, errBoom
+			}}, cr: serviceAccount(withExternalName("123"), withSpec(desired))},
+			want: want{cr: serviceAccount(withExternalName("123"), withSpec(desired)), err: errors.Wrap(errBoom, errGetFailed)},
 		},
 		"DeletingShouldAllowCRDeletion": func() struct {
 			args args
@@ -206,7 +212,7 @@ func TestObserve(t *testing.T) {
 				want want
 			}{
 				args: args{client: &MockClient{MockGetUser: func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
-					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("not found")
 				}}, cr: sa},
 				want: want{cr: sa, result: managed.ExternalObservation{}},
 			}
@@ -332,7 +338,7 @@ func TestObserve(t *testing.T) {
 					if gid.(int64) != 1 {
 						t.Fatalf("Observe() checked membership of filtered out group %v", gid)
 					}
-					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, pkgerrors.New("not found")
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, pkgerrors.New("not found")
 				}}
 			}
 			if name == "SuccessfulBaselinePermissionsSortsStatus" {
@@ -344,11 +350,11 @@ func TestObserve(t *testing.T) {
 					case 4:
 						return &gitlab.GroupMember{AccessLevel: gitlab.AccessLevelValue(accessLevelReporterValue)}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}}, nil
 					case 1:
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, pkgerrors.New("not found")
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, pkgerrors.New("not found")
 					case 2:
 						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}}, nil
 					case 3:
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, pkgerrors.New("not found")
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, pkgerrors.New("not found")
 					default:
 						return nil, nil, pkgerrors.New("unexpected group")
 					}

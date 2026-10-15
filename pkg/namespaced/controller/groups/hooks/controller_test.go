@@ -278,7 +278,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				grouphook: &fake.MockClient{
 					MockGetGroupHook: func(gid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupHook, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: grouphook(

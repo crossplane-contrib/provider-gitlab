@@ -186,7 +186,7 @@ func TestObserve(t *testing.T) {
 				accessTokenClient: &fake.MockClient{
 					MockGetProjectAccessToken: func(pid interface{}, id int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectAccessToken, *gitlab.Response, error) {
 						return nil, &gitlab.Response{
-							Response: &http.Response{StatusCode: http.StatusNotFound},
+							Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}},
 						}, errBoom
 					},
 				},

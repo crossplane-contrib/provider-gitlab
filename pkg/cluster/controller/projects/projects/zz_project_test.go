@@ -316,7 +316,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				project: &fake.MockClient{
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: project(withExternalName(extName)),
@@ -335,7 +335,7 @@ func TestObserve(t *testing.T) {
 					},
 					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
 						// Simulate GitLab Community Edition where push rules feature is not available
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: project(
@@ -541,7 +541,7 @@ func TestObserve(t *testing.T) {
 						}, &gitlab.Response{}, nil
 					},
 					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: project(
@@ -602,7 +602,7 @@ func TestObserve(t *testing.T) {
 						}, &gitlab.Response{}, nil
 					},
 					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: project(
@@ -662,7 +662,7 @@ func TestObserve(t *testing.T) {
 						}, &gitlab.Response{}, nil
 					},
 					MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: project(
@@ -1629,7 +1629,7 @@ func TestSanitizeImportURL(t *testing.T) {
 func TestLateInitializeSkipsMirrorFields(t *testing.T) {
 	e := &external{client: &fake.MockClient{
 		MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
-			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, nil
+			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, nil
 		},
 	}}
 	cr := &v1alpha1.Project{}
@@ -1660,7 +1660,7 @@ func TestLateInitializeSkipsMirrorFields(t *testing.T) {
 func TestLateInitializeProjectFeatureAccessLevels(t *testing.T) {
 	e := &external{client: &fake.MockClient{
 		MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
-			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 		},
 	}}
 	cr := &v1alpha1.Project{}
@@ -1805,7 +1805,7 @@ func TestPackageRegistryConverges(t *testing.T) {
 					return gl.project(), &gitlab.Response{}, nil
 				},
 				MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
-					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 				},
 			}}
 			cr := project(withExternalName(extName), withSpec(tc.spec))
@@ -1859,7 +1859,7 @@ func TestPackageRegistryLevelRemoval(t *testing.T) {
 			return gl.project(), &gitlab.Response{}, nil
 		},
 		MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
-			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 		},
 	}}
 	cr := project(withExternalName(extName), withSpec(v1alpha1.ProjectParameters{
