@@ -17,7 +17,6 @@ limitations under the License.
 package groups
 
 import (
-	"strings"
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
@@ -25,10 +24,6 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-)
-
-const (
-	errGroupNotFound = "404 Group Not Found"
 )
 
 // Client defines Gitlab Group service operations
@@ -46,14 +41,6 @@ type Client interface {
 func NewGroupClient(cfg common.Config) Client {
 	git := common.NewClient(cfg)
 	return git.Groups
-}
-
-// IsErrorGroupNotFound helper function to test for errGroupNotFound error.
-func IsErrorGroupNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errGroupNotFound)
 }
 
 // VisibilityValueV1alpha1ToGitlab converts *v1alpha1.VisibilityValue to *gitlab.VisibilityValue

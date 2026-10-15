@@ -375,7 +375,7 @@ func TestObserve(t *testing.T) {
 
 				result: managed.ExternalObservation{ResourceExists: false},
 
-				err: errors.Wrap(resource.Ignore(projects.IsErrorProtectedEnvironmentNotFound, errBoom), errGetFailed),
+				err: errors.Wrap(errBoom, errGetFailed),
 			},
 		},
 
