@@ -3818,6 +3818,11 @@ func (in *ServiceAccountObservation) DeepCopy() *ServiceAccountObservation {
 func (in *ServiceAccountParameters) DeepCopyInto(out *ServiceAccountParameters) {
 	*out = *in
 	in.CommonServiceAccountParameters.DeepCopyInto(&out.CommonServiceAccountParameters)
+	if in.AvatarSecretRef != nil {
+		in, out := &in.AvatarSecretRef, &out.AvatarSecretRef
+		*out = new(v2.LocalSecretKeySelector)
+		**out = **in
+	}
 	if in.Admin != nil {
 		in, out := &in.Admin, &out.Admin
 		*out = new(bool)
