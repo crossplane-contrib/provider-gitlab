@@ -1,0 +1,189 @@
+/*
+Copyright 2026 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package projects
+
+import (
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	"k8s.io/utils/ptr"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+)
+
+func TestGenerateProtectRepositoryTagsOptions(t *testing.T) {
+	cases := map[string]struct {
+		params *v1alpha1.ProtectedTagParameters
+		want   *gitlab.ProtectRepositoryTagsOptions
+	}{
+		"RoleOnly": {
+			params: &v1alpha1.ProtectedTagParameters{TagName: "v*", CreateAccessLevel: 30},
+			want: &gitlab.ProtectRepositoryTagsOptions{
+				Name:              ptr.To("v*"),
+				CreateAccessLevel: ptr.To(gitlab.AccessLevelValue(30)),
+			},
+		},
+		"NoOneRoleIsSentExplicitly": {
+			params: &v1alpha1.ProtectedTagParameters{TagName: "v*", CreateAccessLevel: 0},
+			want: &gitlab.ProtectRepositoryTagsOptions{
+				Name:              ptr.To("v*"),
+				CreateAccessLevel: ptr.To(gitlab.AccessLevelValue(0)),
+			},
+		},
+		"UserGroupAndDeployKeyArePreserved": {
+			params: &v1alpha1.ProtectedTagParameters{
+				TagName:           "release-*",
+				CreateAccessLevel: 40,
+				AllowedToCreate: []v1alpha1.TagCreateAccess{
+					{UserID: ptr.To(int64(5))},
+					{GroupID: ptr.To(int64(7))},
+					{DeployKeyID: ptr.To(int64(9))},
+				},
+			},
+			want: &gitlab.ProtectRepositoryTagsOptions{
+				Name:              ptr.To("release-*"),
+				CreateAccessLevel: ptr.To(gitlab.AccessLevelValue(40)),
+				AllowedToCreate: &[]*gitlab.TagsPermissionOptions{
+					{UserID: ptr.To(int64(5))},
+					{GroupID: ptr.To(int64(7))},
+					{DeployKeyID: ptr.To(int64(9))},
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateProtectRepositoryTagsOptions(tc.params)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("GenerateProtectRepositoryTagsOptions() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGenerateProtectedTagObservation(t *testing.T) {
+	pt := &gitlab.ProtectedTag{
+		Name: "v*",
+		CreateAccessLevels: []*gitlab.TagAccessDescription{
+			{ID: 1, AccessLevel: 40, AccessLevelDescription: "Maintainers"},
+			{ID: 2, AccessLevel: 40, AccessLevelDescription: "Administrator", UserID: 5},
+		},
+	}
+	want := v1alpha1.ProtectedTagObservation{
+		CreateAccessLevels: []v1alpha1.TagAccessObservation{
+			{ID: 1, AccessLevel: 40, AccessLevelDescription: "Maintainers"},
+			{ID: 2, AccessLevel: 40, AccessLevelDescription: "Administrator", UserID: 5},
+		},
+	}
+	if diff := cmp.Diff(want, GenerateProtectedTagObservation(pt)); diff != "" {
+		t.Errorf("GenerateProtectedTagObservation() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestIsProtectedTagUpToDate(t *testing.T) {
+	cases := map[string]struct {
+		params *v1alpha1.ProtectedTagParameters
+		pt     *gitlab.ProtectedTag
+		want   bool
+	}{
+		"RoleMatches": {
+			params: &v1alpha1.ProtectedTagParameters{CreateAccessLevel: 40},
+			pt: &gitlab.ProtectedTag{CreateAccessLevels: []*gitlab.TagAccessDescription{
+				{ID: 1, AccessLevel: 40},
+			}},
+			want: true,
+		},
+		"RoleChangedInGitLab": {
+			params: &v1alpha1.ProtectedTagParameters{CreateAccessLevel: 40},
+			pt: &gitlab.ProtectedTag{CreateAccessLevels: []*gitlab.TagAccessDescription{
+				{ID: 1, AccessLevel: 30},
+			}},
+			want: false,
+		},
+		"RoleMissingInGitLab": {
+			params: &v1alpha1.ProtectedTagParameters{CreateAccessLevel: 0},
+			pt:     &gitlab.ProtectedTag{},
+			want:   false,
+		},
+		"UserEntryMatchesRegardlessOfReportedAccessLevel": {
+			params: &v1alpha1.ProtectedTagParameters{
+				CreateAccessLevel: 0,
+				AllowedToCreate:   []v1alpha1.TagCreateAccess{{UserID: ptr.To(int64(5))}},
+			},
+			pt: &gitlab.ProtectedTag{CreateAccessLevels: []*gitlab.TagAccessDescription{
+				{ID: 1, AccessLevel: 0},
+				{ID: 2, AccessLevel: 40, UserID: 5},
+			}},
+			want: true,
+		},
+		"EntriesMatchInAnyOrder": {
+			params: &v1alpha1.ProtectedTagParameters{
+				CreateAccessLevel: 30,
+				AllowedToCreate: []v1alpha1.TagCreateAccess{
+					{GroupID: ptr.To(int64(7))},
+					{DeployKeyID: ptr.To(int64(9))},
+				},
+			},
+			pt: &gitlab.ProtectedTag{CreateAccessLevels: []*gitlab.TagAccessDescription{
+				{ID: 3, DeployKeyID: 9, AccessLevel: 40},
+				{ID: 2, GroupID: 7},
+				{ID: 1, AccessLevel: 30},
+			}},
+			want: true,
+		},
+		"ExtraUserAddedInGitLab": {
+			params: &v1alpha1.ProtectedTagParameters{CreateAccessLevel: 40},
+			pt: &gitlab.ProtectedTag{CreateAccessLevels: []*gitlab.TagAccessDescription{
+				{ID: 1, AccessLevel: 40},
+				{ID: 2, AccessLevel: 40, UserID: 5},
+			}},
+			want: false,
+		},
+		"UserRemovedInGitLab": {
+			params: &v1alpha1.ProtectedTagParameters{
+				CreateAccessLevel: 40,
+				AllowedToCreate:   []v1alpha1.TagCreateAccess{{UserID: ptr.To(int64(5))}},
+			},
+			pt: &gitlab.ProtectedTag{CreateAccessLevels: []*gitlab.TagAccessDescription{
+				{ID: 1, AccessLevel: 40},
+			}},
+			want: false,
+		},
+		"DifferentUserInGitLab": {
+			params: &v1alpha1.ProtectedTagParameters{
+				CreateAccessLevel: 40,
+				AllowedToCreate:   []v1alpha1.TagCreateAccess{{UserID: ptr.To(int64(5))}},
+			},
+			pt: &gitlab.ProtectedTag{CreateAccessLevels: []*gitlab.TagAccessDescription{
+				{ID: 1, AccessLevel: 40},
+				{ID: 2, AccessLevel: 40, UserID: 6},
+			}},
+			want: false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsProtectedTagUpToDate(tc.params, tc.pt)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("IsProtectedTagUpToDate() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}

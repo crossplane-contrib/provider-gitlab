@@ -91,6 +91,10 @@ type MockClient struct {
 	MockProtectRepositoryBranches   func(pid any, opt *gitlab.ProtectRepositoryBranchesOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error)
 	MockUnprotectRepositoryBranches func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
+	MockGetProtectedTag         func(pid any, tag string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedTag, *gitlab.Response, error)
+	MockProtectRepositoryTags   func(pid any, opt *gitlab.ProtectRepositoryTagsOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedTag, *gitlab.Response, error)
+	MockUnprotectRepositoryTags func(pid any, tag string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
 	MockGetMattermostService    func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
 	MockSetMattermostService    func(pid any, opt *gitlab.SetMattermostServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
 	MockDeleteMattermostService func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
@@ -347,6 +351,21 @@ func (c *MockClient) ProtectRepositoryBranches(pid any, opt *gitlab.ProtectRepos
 // UnprotectRepositoryBranches calls the underlying MockUnprotectRepositoryBranches method.
 func (c *MockClient) UnprotectRepositoryBranches(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockUnprotectRepositoryBranches(pid, branch, options...)
+}
+
+// GetProtectedTag calls the underlying MockGetProtectedTag method.
+func (c *MockClient) GetProtectedTag(pid any, tag string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedTag, *gitlab.Response, error) {
+	return c.MockGetProtectedTag(pid, tag, options...)
+}
+
+// ProtectRepositoryTags calls the underlying MockProtectRepositoryTags method.
+func (c *MockClient) ProtectRepositoryTags(pid any, opt *gitlab.ProtectRepositoryTagsOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedTag, *gitlab.Response, error) {
+	return c.MockProtectRepositoryTags(pid, opt, options...)
+}
+
+// UnprotectRepositoryTags calls the underlying MockUnprotectRepositoryTags method.
+func (c *MockClient) UnprotectRepositoryTags(pid any, tag string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockUnprotectRepositoryTags(pid, tag, options...)
 }
 
 // GetMattermostService calls the underlying MockGetMattermostService method.
