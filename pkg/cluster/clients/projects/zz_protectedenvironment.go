@@ -3,8 +3,6 @@
 package projects
 
 import (
-	"strings"
-
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"k8s.io/utils/ptr"
 
@@ -12,8 +10,6 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
-
-const errProtectedEnvironmentNotFound = "404 Not found"
 
 // ProtectedEnvironmentClient defines GitLab Protected Environments service operations.
 type ProtectedEnvironmentClient interface {
@@ -27,14 +23,6 @@ type ProtectedEnvironmentClient interface {
 func NewProtectedEnvironmentClient(cfg common.Config) ProtectedEnvironmentClient {
 	git := common.NewClient(cfg)
 	return git.ProtectedEnvironments
-}
-
-// IsErrorProtectedEnvironmentNotFound helper function to test for errProtectedEnvironmentNotFound error.
-func IsErrorProtectedEnvironmentNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errProtectedEnvironmentNotFound)
 }
 
 // LateInitializeProtectedEnvironment fills empty fields in spec with values from GitLab.

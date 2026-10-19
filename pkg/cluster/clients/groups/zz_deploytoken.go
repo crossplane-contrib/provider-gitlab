@@ -19,7 +19,6 @@ limitations under the License.
 package groups
 
 import (
-	"strings"
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
@@ -33,14 +32,6 @@ type DeployTokenClient interface {
 	GetGroupDeployToken(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
 	CreateGroupDeployToken(gid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
 	DeleteGroupDeployToken(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
-}
-
-// IsErrorGroupDeployTokenNotFound helper function to test for errGroupDeployTokenNotFound error.
-func IsErrorGroupDeployTokenNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errGroupNotFound)
 }
 
 // NewDeployTokenClient returns a new Gitlab GroupDeployToken service
