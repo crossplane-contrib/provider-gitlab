@@ -1,0 +1,14 @@
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Group
+metadata:
+  name: example-group-observed
+  annotations:
+    # Numeric ID, or full path with observe-only management policies.
+    crossplane.io/external-name: path/to/example-group
+spec:
+  managementPolicies:
+    - Observe
+  forProvider:
+    path: "" # required by the CRD, not used for the lookup
+  providerConfigRef:
+    name: gitlab-provider

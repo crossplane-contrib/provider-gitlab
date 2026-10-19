@@ -29,14 +29,17 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/hooks"
 	integrationemailsonpush "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationemailsonpush"
+	integrationgithub "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationgithub"
 	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationharbor"
 	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationmattermost"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationpipelinesemail"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/pipelineschedules"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/projectsharegroups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/protectedbranches"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/protectedenvironments"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/protectedtags"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/serviceaccountaccesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/serviceaccounts"
@@ -57,10 +60,13 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		approvalrules.SetupRules,
 		runners.SetupRunner,
 		protectedbranches.SetupProtectedBranch,
+		protectedtags.SetupProtectedTag,
 		badges.SetupBadge,
 		integrationmattermost.SetupIntegrationMattermost,
 		integrationemailsonpush.SetupIntegrationEmailsOnPush,
 		integrationharbor.SetupIntegrationHarbor,
+		integrationpipelinesemail.SetupIntegrationPipelinesEmail,
+		integrationgithub.SetupIntegrationGithub,
 		protectedenvironments.SetupProtectedEnvironment,
 		projectsharegroups.SetupProjectShareGroup,
 		serviceaccounts.SetupServiceAccount,
@@ -88,10 +94,13 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		approvalrules.SetupRulesGated,
 		runners.SetupRunnerGated,
 		protectedbranches.SetupProtectedBranchGated,
+		protectedtags.SetupProtectedTagGated,
 		badges.SetupBadgeGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
 		integrationemailsonpush.SetupIntegrationEmailsOnPushGated,
 		integrationharbor.SetupIntegrationHarborGated,
+		integrationpipelinesemail.SetupIntegrationPipelinesEmailGated,
+		integrationgithub.SetupIntegrationGithubGated,
 		protectedenvironments.SetupProtectedEnvironmentGated,
 		projectsharegroups.SetupProjectShareGroupGated,
 		serviceaccounts.SetupServiceAccountGated,

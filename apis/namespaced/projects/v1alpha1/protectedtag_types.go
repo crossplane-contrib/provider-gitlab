@@ -1,0 +1,147 @@
+/*
+Copyright 2026 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1alpha1
+
+import (
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// TagCreateAccess grants one user, group, or deploy key the right to create
+// tags that match a protected tag. User and group grants need GitLab Premium
+// or Ultimate.
+// +kubebuilder:validation:XValidation:rule="(has(self.userId) ? 1 : 0) + (has(self.groupId) ? 1 : 0) + (has(self.deployKeyId) ? 1 : 0) == 1",message="exactly one of userId, groupId or deployKeyId must be set"
+type TagCreateAccess struct {
+	// UserID is the ID of a user with access to the project.
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	UserID *int64 `json:"userId,omitempty"`
+
+	// GroupID is the ID of a group the project is shared with.
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	GroupID *int64 `json:"groupId,omitempty"`
+
+	// DeployKeyID is the ID of a deploy key with write access to the project.
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	DeployKeyID *int64 `json:"deployKeyId,omitempty"`
+}
+
+// ProtectedTagParameters defines the desired state of a GitLab Protected Tag.
+type ProtectedTagParameters struct {
+	// TagName is the name of the tag to protect, or a wildcard such as v*.
+	// +kubebuilder:validation:MinLength=1
+	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="tagName is immutable"
+	TagName string `json:"tagName"`
+
+	// ProjectID is the ID of the project.
+	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1.Project
+	// +optional
+	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
+	ProjectID *string `json:"projectId,omitempty"`
+
+	// ProjectIDRef is a reference to a project to retrieve its projectId.
+	// +optional
+	ProjectIDRef *v2.NamespacedReference `json:"projectIdRef,omitempty"`
+
+	// ProjectIDSelector selects reference to a project to retrieve its projectId.
+	// +optional
+	ProjectIDSelector *v2.NamespacedSelector `json:"projectIdSelector,omitempty"`
+
+	// CreateAccessLevel is the role allowed to create matching tags:
+	// 0 (no one), 30 (developers and maintainers), 40 (maintainers),
+	// or 60 (instance admins, GitLab Self-Managed only).
+	// Use 0 to grant access only to the entries in allowedToCreate.
+	// +kubebuilder:validation:Enum=0;30;40;60
+	// +kubebuilder:default=40
+	// +optional
+	CreateAccessLevel AccessLevelValue `json:"createAccessLevel"`
+
+	// AllowedToCreate lists the users, groups, and deploy keys that can also
+	// create matching tags.
+	// +optional
+	AllowedToCreate []TagCreateAccess `json:"allowedToCreate,omitempty"`
+}
+
+// TagAccessObservation is one create access entry of a GitLab Protected Tag.
+type TagAccessObservation struct {
+	// ID is the ID of the access entry.
+	ID int64 `json:"id"`
+
+	// AccessLevel is the role of the entry.
+	AccessLevel AccessLevelValue `json:"accessLevel"`
+
+	// AccessLevelDescription is the description GitLab shows for the entry.
+	AccessLevelDescription string `json:"accessLevelDescription,omitempty"`
+
+	// UserID is the ID of the user of the entry.
+	UserID int64 `json:"userId,omitempty"`
+
+	// GroupID is the ID of the group of the entry.
+	GroupID int64 `json:"groupId,omitempty"`
+
+	// DeployKeyID is the ID of the deploy key of the entry.
+	DeployKeyID int64 `json:"deployKeyId,omitempty"`
+}
+
+// ProtectedTagObservation represents the observed state of a GitLab Protected Tag.
+type ProtectedTagObservation struct {
+	// CreateAccessLevels lists who GitLab allows to create matching tags.
+	CreateAccessLevels []TagAccessObservation `json:"createAccessLevels,omitempty"`
+}
+
+// A ProtectedTagSpec defines the desired state of a GitLab Protected Tag.
+type ProtectedTagSpec struct {
+	v2.ManagedResourceSpec `json:",inline"`
+	ForProvider            ProtectedTagParameters `json:"forProvider"`
+}
+
+// A ProtectedTagStatus represents the observed state of a GitLab Protected Tag.
+type ProtectedTagStatus struct {
+	v2.ManagedResourceStatus `json:",inline"`
+	AtProvider               ProtectedTagObservation `json:"atProvider,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// A ProtectedTag is a managed resource that represents a GitLab Protected Tag
+// +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+// +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="TAG",type="string",JSONPath=".spec.forProvider.tagName"
+// +kubebuilder:printcolumn:name="PROJECT",type="string",JSONPath=".spec.forProvider.projectId"
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitlab}
+type ProtectedTag struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   ProtectedTagSpec   `json:"spec"`
+	Status ProtectedTagStatus `json:"status,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// ProtectedTagList contains a list of Protected Tag items
+type ProtectedTagList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []ProtectedTag `json:"items"`
+}

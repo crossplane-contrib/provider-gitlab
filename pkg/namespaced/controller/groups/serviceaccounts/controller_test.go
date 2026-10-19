@@ -31,11 +31,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	pkgerrors "github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	commonv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
 )
@@ -53,6 +56,52 @@ const (
 	serviceAccountMismatchFmt  = "got serviceAccount %d, want %d"
 	unexpectedCallMsg          = "unexpected call"
 )
+
+// testAvatar is the PNG signature, enough for content sniffing. GitLab serves it
+// from testAvatarURL after an upload under its content addressed name.
+var testAvatar = []byte("\x89PNG\r\n\x1a\n")
+
+const (
+	testAvatarName  = "4c4b6a3be1314ab86138bef4314dde022e600960d8689a2c8f8631802d20dab6.png"
+	testAvatarURL   = "https://gitlab.example.com/uploads/-/system/user/avatar/123/" + testAvatarName + "?v=1"
+	testGravatarURL = "https://secure.gravatar.com/avatar/abc?s=80&d=identicon"
+)
+
+// testSecretAvatar is the GIF signature an avatar Secret holds in the
+// avatarSecretRef cases, distinct from testAvatar so a change is visible.
+var testSecretAvatar = []byte("GIF89a")
+
+const (
+	testSecretAvatarName = "610f5ae4d76e332636a17bd357fd6ce99029316a99d320280d4d77a746bf29e8.gif"
+	testAvatarSecret     = "sa-avatar"
+	testAvatarSecretKey  = "avatar"
+	errAvatarKeyMissing  = `cannot read avatar from key "avatar" of Secret "sa-avatar" in namespace "default": Cannot find key in referenced secret`
+	errAvatarSecretGone  = `cannot read avatar from key "avatar" of Secret "sa-avatar" in namespace "default": Cannot find referenced secret: secrets "sa-avatar" not found`
+)
+
+// avatarKube returns a kube client that holds the avatar Secret with data, or
+// no Secret at all when data is nil.
+func avatarKube(data map[string][]byte) client.Client {
+	b := fake.NewClientBuilder()
+	if data != nil {
+		b = b.WithObjects(&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: testAvatarSecret}, Data: data})
+	}
+	return b.Build()
+}
+
+func withAvatarSecretRef() serviceAccountModifier {
+	return func(r *v1alpha1.ServiceAccount) {
+		r.Namespace = "default"
+		r.Spec.ForProvider.AvatarSecretRef = common.TestCreateLocalSecretKeySelector(testAvatarSecret, testAvatarSecretKey)
+	}
+}
+
+func errString(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
+}
 
 func assertGroupID(t *testing.T, got any, want *int64) {
 	t.Helper()
@@ -130,9 +179,11 @@ func (m *MockGroupsClient) DeleteServiceAccount(gid any, serviceAccount int64, o
 }
 
 // MockUserClient is a minimal mock for instance.ServiceAccountClient. Only GetUser
-// is expected to be called by the group-scoped ServiceAccount controller.
+// and ModifyUser are expected to be called by the group-scoped ServiceAccount
+// controller.
 type MockUserClient struct {
-	MockGetUser func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	MockGetUser    func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	MockModifyUser func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
 }
 
 func (m *MockUserClient) GetUser(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
@@ -144,7 +195,10 @@ func (m *MockUserClient) CreateServiceAccountUser(opts *gitlab.CreateServiceAcco
 }
 
 func (m *MockUserClient) ModifyUser(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
-	panic(unexpectedCallMsg)
+	if m.MockModifyUser == nil {
+		panic(unexpectedCallMsg)
+	}
+	return m.MockModifyUser(user, opt, options...)
 }
 
 func (m *MockUserClient) DeleteUser(user int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
@@ -439,6 +493,57 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
+func TestUpdateAvatar(t *testing.T) {
+	groupID := int64(42)
+	updated := &MockGroupsClient{MockUpdateServiceAccount: func(_ any, _ int64, _ *gitlab.UpdateServiceAccountOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.GroupServiceAccount, *gitlab.Response, error) {
+		return &gitlab.GroupServiceAccount{}, &gitlab.Response{}, nil
+	}}
+
+	cases := map[string]struct {
+		avatarURL    string
+		modifyErr    error
+		wantFilename string
+		wantErr      error
+	}{
+		"UploadsChangedAvatar": {avatarURL: testGravatarURL, wantFilename: testAvatarName},
+		"SkipsCurrentAvatar":   {avatarURL: testAvatarURL},
+		"ErrUploadAvatar":      {avatarURL: testGravatarURL, modifyErr: errBoom, wantFilename: testAvatarName, wantErr: errors.Wrap(errBoom, errUpdateAvatarFailed)},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var gotFilename string
+			userClient := &MockUserClient{}
+			if tc.wantFilename != "" {
+				userClient.MockModifyUser = func(user int64, opt *gitlab.ModifyUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+					if user != testServiceAccountID {
+						t.Errorf(serviceAccountMismatchFmt, user, testServiceAccountID)
+					}
+					if opt.Name != nil || opt.Username != nil || opt.Email != nil {
+						t.Errorf("ModifyUser() sent fields besides the avatar: %+v", opt)
+					}
+					gotFilename = opt.Avatar.Filename
+					return &gitlab.User{}, &gitlab.Response{}, tc.modifyErr
+				}
+			}
+			e := &external{client: updated, userClient: userClient}
+			cr := serviceAccount(
+				withExternalName("123"),
+				withSpec(v1alpha1.ServiceAccountParameters{GroupID: &groupID, CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Avatar: testAvatar}}),
+				withAtProvider(v1alpha1.ServiceAccountObservation{CommonServiceAccountObservation: commonv1alpha1.CommonServiceAccountObservation{AvatarURL: tc.avatarURL}}),
+			)
+
+			_, err := e.Update(context.Background(), cr)
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("Update(): -want error, +got error:\n%s", diff)
+			}
+			if gotFilename != tc.wantFilename {
+				t.Errorf("Update() uploaded avatar %q, want %q", gotFilename, tc.wantFilename)
+			}
+		})
+	}
+}
+
 func TestDelete(t *testing.T) {
 	type want struct {
 		err error
@@ -512,4 +617,112 @@ func TestDisconnect(t *testing.T) {
 
 func sPtr(s string) *string {
 	return &s
+}
+
+func TestObserveAvatar(t *testing.T) {
+	cases := map[string]struct {
+		avatar    []byte
+		avatarURL string
+		want      managed.ExternalObservation
+	}{
+		"Unmanaged":     {avatarURL: testGravatarURL, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}},
+		"AvatarMatches": {avatar: testAvatar, avatarURL: testAvatarURL, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}},
+		"AvatarDiffers": {avatar: testAvatar, avatarURL: testGravatarURL, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{userClient: &MockUserClient{MockGetUser: func(_ int64, _ *gitlab.GetUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				return &gitlab.User{ID: testServiceAccountID, Name: testServiceAccountName, AvatarURL: tc.avatarURL}, &gitlab.Response{}, nil
+			}}}
+			cr := serviceAccount(
+				withExternalName("123"),
+				withSpec(v1alpha1.ServiceAccountParameters{CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName), Avatar: tc.avatar}}),
+			)
+
+			got, err := e.Observe(context.Background(), cr)
+			if err != nil {
+				t.Fatalf("Observe() error = %v", err)
+			}
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("Observe(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestObserveAvatarSecretRef(t *testing.T) {
+	cases := map[string]struct {
+		secret  map[string][]byte
+		want    managed.ExternalObservation
+		wantErr string
+	}{
+		"SecretMatchesAvatar": {secret: map[string][]byte{testAvatarSecretKey: testAvatar}, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}},
+		"SecretChanged":       {secret: map[string][]byte{testAvatarSecretKey: testSecretAvatar}, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}},
+		"KeyMissing":          {secret: map[string][]byte{"logo": testAvatar}, wantErr: errAvatarKeyMissing},
+		"SecretMissing":       {wantErr: errAvatarSecretGone},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{kube: avatarKube(tc.secret), userClient: &MockUserClient{MockGetUser: func(_ int64, _ *gitlab.GetUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				return &gitlab.User{ID: testServiceAccountID, Name: testServiceAccountName, AvatarURL: testAvatarURL}, &gitlab.Response{}, nil
+			}}}
+			cr := serviceAccount(
+				withExternalName("123"),
+				withSpec(v1alpha1.ServiceAccountParameters{CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName)}}),
+				withAvatarSecretRef(),
+			)
+
+			got, err := e.Observe(context.Background(), cr)
+			if gotErr := errString(err); gotErr != tc.wantErr {
+				t.Errorf("Observe() error = %q, want %q", gotErr, tc.wantErr)
+			}
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("Observe(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUpdateAvatarSecretRef(t *testing.T) {
+	groupID := int64(42)
+	cases := map[string]struct {
+		secret       map[string][]byte
+		wantFilename string
+		wantErr      string
+	}{
+		"UploadsSecretAvatar": {secret: map[string][]byte{testAvatarSecretKey: testSecretAvatar}, wantFilename: testSecretAvatarName},
+		"SecretMissing":       {wantErr: errAvatarSecretGone},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			gotFilename := ""
+			e := &external{
+				kube: avatarKube(tc.secret),
+				client: &MockGroupsClient{MockUpdateServiceAccount: func(_ any, _ int64, _ *gitlab.UpdateServiceAccountOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.GroupServiceAccount, *gitlab.Response, error) {
+					return &gitlab.GroupServiceAccount{}, &gitlab.Response{}, nil
+				}},
+				userClient: &MockUserClient{MockModifyUser: func(_ int64, opt *gitlab.ModifyUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+					gotFilename = opt.Avatar.Filename
+					return &gitlab.User{}, &gitlab.Response{}, nil
+				}},
+			}
+			cr := serviceAccount(
+				withExternalName("123"),
+				withSpec(v1alpha1.ServiceAccountParameters{GroupID: &groupID, CommonServiceAccountParameters: commonv1alpha1.CommonServiceAccountParameters{Name: sPtr(testServiceAccountName)}}),
+				withAtProvider(v1alpha1.ServiceAccountObservation{CommonServiceAccountObservation: commonv1alpha1.CommonServiceAccountObservation{AvatarURL: testAvatarURL}}),
+				withAvatarSecretRef(),
+			)
+
+			_, err := e.Update(context.Background(), cr)
+			if gotErr := errString(err); gotErr != tc.wantErr {
+				t.Errorf("Update() error = %q, want %q", gotErr, tc.wantErr)
+			}
+			if gotFilename != tc.wantFilename {
+				t.Errorf("Update() uploaded avatar %q, want %q", gotFilename, tc.wantFilename)
+			}
+		})
+	}
 }

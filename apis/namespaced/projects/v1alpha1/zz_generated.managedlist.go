@@ -83,6 +83,15 @@ func (l *IntegrationEmailsOnPushList) GetItems() []resource.Managed {
 	return items
 }
 
+// GetItems of this IntegrationGithubList.
+func (l *IntegrationGithubList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
 // GetItems of this IntegrationHarborList.
 func (l *IntegrationHarborList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
@@ -94,6 +103,15 @@ func (l *IntegrationHarborList) GetItems() []resource.Managed {
 
 // GetItems of this IntegrationMattermostList.
 func (l *IntegrationMattermostList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
+// GetItems of this IntegrationPipelinesEmailList.
+func (l *IntegrationPipelinesEmailList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
 	for i := range l.Items {
 		items[i] = &l.Items[i]
@@ -148,6 +166,15 @@ func (l *ProtectedBranchList) GetItems() []resource.Managed {
 
 // GetItems of this ProtectedEnvironmentList.
 func (l *ProtectedEnvironmentList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
+// GetItems of this ProtectedTagList.
+func (l *ProtectedTagList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
 	for i := range l.Items {
 		items[i] = &l.Items[i]
