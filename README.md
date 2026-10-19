@@ -44,6 +44,45 @@ spec:
 kubectl apply -f examples/providerconfig/provider.yaml
 ```
 
+### Observing groups and projects by full path
+
+Set the `crossplane.io/external-name` annotation of an observe-only `Group` or
+`Project` to its full path when you do not know the numeric ID:
+
+```yaml
+apiVersion: groups.gitlab.crossplane.io/v1alpha1
+kind: Group
+metadata:
+  name: example-group-observed
+  annotations:
+    crossplane.io/external-name: path/to/example-group
+spec:
+  managementPolicies:
+    - Observe
+  forProvider:
+    path: "" # required by the CRD, not used for the lookup
+  providerConfigRef:
+    name: gitlab-provider
+```
+
+A full path is only accepted with the management policies `[Observe]` or
+`[Observe, LateInitialize]`, which require the provider flag
+`--enable-management-policies`. Any other policy reports an error, since a
+write through a moved path could change the wrong resource.
+
+Other resources can reference an observed `Group` or `Project` as usual. The
+reference resolves to the numeric ID once the resource has been observed, and
+by default the referencing resource keeps that ID.
+
+Keep in mind:
+
+* GitLab still finds a renamed project by its old path, but not a renamed
+  group. Update the annotation after renaming an observed group.
+* If another group or project takes over the path, the resource observes that
+  one instead.
+* A top-level group whose path is only digits, such as `1234`, is looked up as
+  a numeric ID.
+
 ### Self-rotating service account tokens
 
 The namespaced `groups.gitlab.m.crossplane.io/v1alpha1` `ServiceAccountAccessToken`
@@ -161,6 +200,69 @@ The bootstrap-secret note above applies unchanged. See
 [`examples/groups/accesstoken.yaml`](examples/groups/accesstoken.yaml) and
 [`examples/projects/accesstoken.yaml`](examples/projects/accesstoken.yaml) for
 full examples of both modes.
+
+### Delete a namespace that holds managed resources
+
+When you delete a namespace, Kubernetes deletes all of its content at once. That
+includes a namespaced `ProviderConfig`, its credentials `Secret`, and the
+`ProviderConfigUsage` objects that keep the `ProviderConfig` in use. A managed
+resource that must still delete its GitLab resource then has no credentials. It
+reports `cannot get referenced ProviderConfig ... not found` or
+`Cannot find referenced secret` and keeps its finalizer. The namespace stays in
+`Terminating`, and the GitLab resource can remain. See
+[crossplane/crossplane-runtime#1049](https://github.com/crossplane/crossplane-runtime/issues/1049).
+
+[crossplane/crossplane-runtime#1113](https://github.com/crossplane/crossplane-runtime/pull/1113)
+keeps the `ProviderConfig` until its managed resources are gone. The change is
+merged but not released. This provider uses crossplane-runtime v2.4.2, which
+does not include it. The change also does not protect the credentials `Secret`.
+[crossplane/crossplane#7801](https://github.com/crossplane/crossplane/issues/7801)
+tracks protection for the `Secret`.
+
+To delete a namespace with its managed resources, use one of these options:
+
+* Reference a `ClusterProviderConfig` from managed resources in a namespace that
+  you delete as a whole. A managed resource without `providerConfigRef` uses the
+  `ClusterProviderConfig` named `default`. Keep its credentials `Secret` in a
+  namespace that you do not delete, for example `crossplane-system`. A
+  terminating namespace refuses to create a new `ProviderConfigUsage`. The
+  provider ignores that refusal while the managed resource is being deleted. See
+  [crossplane/crossplane-runtime#1150](https://github.com/crossplane/crossplane-runtime/issues/1150).
+  [#450](https://github.com/crossplane-contrib/provider-gitlab/issues/450)
+  tracks removing this workaround once the provider uses a crossplane-runtime
+  release that includes
+  [crossplane/crossplane-runtime#1113](https://github.com/crossplane/crossplane-runtime/pull/1113).
+* Delete the managed resources first and wait until they are gone. Then delete
+  the namespace.
+
+If a namespace is already stuck, point each stuck managed resource at a
+`ClusterProviderConfig` whose token can manage its GitLab resource. The managed
+resource then deletes its GitLab resource and releases the namespace. If the
+token cannot see the project or group, GitLab answers 404. The managed resource
+then removes its finalizer and leaves the GitLab resource in place.
+
+Patch each resource by the full name that the first command prints, for example
+`variable.projects.gitlab.m.crossplane.io/my-variable`. A short name such as
+`variable` matches several API groups.
+
+```bash
+kubectl get managed -n <namespace> -o name | grep '\.gitlab\.m\.crossplane\.io/'
+kubectl patch -n <namespace> <full-name> --type=merge \
+  -p '{"spec":{"providerConfigRef":{"kind":"ClusterProviderConfig","name":"<cluster-provider-config>"}}}'
+```
+
+If you have no `ClusterProviderConfig`, remove the finalizer of each stuck
+managed resource by hand as a last resort. The namespace then finishes deleting.
+
+> [!WARNING]
+> Kubernetes deletes the managed resource, but the GitLab resource stays. Before
+> you patch, note the `crossplane.io/external-name` annotation. Then delete the
+> GitLab resource by hand.
+
+```bash
+kubectl patch -n <namespace> <full-name> --type=merge \
+  -p '{"metadata":{"finalizers":null}}'
+```
 
 ## Contributing
 

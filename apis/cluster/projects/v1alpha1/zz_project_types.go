@@ -174,6 +174,18 @@ type ProjectParameters struct {
 	// +optional
 	ApprovalsBeforeMerge *int64 `json:"approvalsBeforeMerge,omitempty"`
 
+	// Archived sets whether the project is archived. If unset, the provider
+	// does not change the archive state. Unarchiving runs before other
+	// updates and archiving runs after them. The provider never unarchives a
+	// project only to apply other updates.
+	// Not late-initialized, because GitLab also reports a project in an
+	// archived group as archived and rejects archiving or unarchiving it.
+	// To keep the project when this resource is deleted, leave Delete out of
+	// managementPolicies (requires --enable-management-policies), or set
+	// deletionPolicy to Orphan on the cluster-scoped resource.
+	// +optional
+	Archived *bool `json:"archived,omitempty"`
+
 	// Auto-cancel pending pipelines. This isn’t a boolean, but enabled/disabled.
 	// +optional
 	AutoCancelPendingPipelines *string `json:"autoCancelPendingPipelines,omitempty"`

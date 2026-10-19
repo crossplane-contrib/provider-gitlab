@@ -263,6 +263,9 @@ func getReplacements() []replacement {
 		// SecretReference that carries its own namespace, so it must compare
 		// against the write reference's namespace instead.
 		{"ref.Namespace == cr.GetNamespace()", "ref.Namespace == w.Namespace"},
+		// A namespaced resource reads a local Secret from its own namespace. A
+		// cluster-scoped resource has no namespace, so the selector names it.
+		{"secretNamespace := mg.GetNamespace()", "secretNamespace := selector.Namespace"},
 		{"reference.NewAPINamespacedResolver", "reference.NewAPIResolver"},
 		{"reference.NamespacedResolutionRequest", "reference.ResolutionRequest"},
 		{"reference.NamespacedResolutionResponse", "reference.ResolutionResponse"},

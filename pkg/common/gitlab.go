@@ -22,12 +22,15 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"golang.org/x/oauth2"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -170,7 +173,15 @@ func UseProvicerConfig(ctx context.Context, c client.Client, mg resource.ModernM
 	// it implies) is never created for a reference that does not exist.
 	track := func() error {
 		t := resource.NewProviderConfigUsageTracker(c, &namespacedV1Beta1.ProviderConfigUsage{})
-		return errors.Wrap(t.Track(ctx, mg), "cannot track ProviderConfig usage")
+		err := t.Track(ctx, mg)
+		// A terminating namespace refuses to recreate a usage it already
+		// deleted. A deleting resource must still connect to delete its
+		// external resource, otherwise its finalizer blocks the namespace.
+		// https://github.com/crossplane/crossplane-runtime/issues/1150
+		if meta.WasDeleted(mg) && apierrors.HasStatusCause(err, corev1.NamespaceTerminatingCause) {
+			return nil
+		}
+		return errors.Wrap(err, "cannot track ProviderConfig usage")
 	}
 
 	switch pcRef.Kind {

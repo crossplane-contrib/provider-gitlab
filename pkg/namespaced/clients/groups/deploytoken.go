@@ -18,6 +18,7 @@ package groups
 
 import (
 	"strings"
+	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
@@ -55,6 +56,8 @@ func GenerateCreateGroupDeployTokenOptions(name string, p *v1alpha1.DeployTokenP
 
 	if p.ExpiresAt != nil {
 		deploytoken.ExpiresAt = &p.ExpiresAt.Time
+	} else if p.RenewalPeriodDays != nil {
+		deploytoken.ExpiresAt = (*time.Time)(common.GenerateRenewalExpiration(*p.RenewalPeriodDays))
 	}
 
 	if p.Username != nil {

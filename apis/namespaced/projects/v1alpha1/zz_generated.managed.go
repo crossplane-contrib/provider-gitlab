@@ -260,6 +260,46 @@ func (mg *Hook) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) 
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this IntegrationGithub.
+func (mg *IntegrationGithub) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetManagementPolicies of this IntegrationGithub.
+func (mg *IntegrationGithub) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationGithub.
+func (mg *IntegrationGithub) GetProviderConfigReference() *v2.ProviderConfigReference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationGithub.
+func (mg *IntegrationGithub) GetWriteConnectionSecretToReference() *v2.LocalSecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationGithub.
+func (mg *IntegrationGithub) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetManagementPolicies of this IntegrationGithub.
+func (mg *IntegrationGithub) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationGithub.
+func (mg *IntegrationGithub) SetProviderConfigReference(r *v2.ProviderConfigReference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationGithub.
+func (mg *IntegrationGithub) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this IntegrationHarbor.
 func (mg *IntegrationHarbor) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)
@@ -617,6 +657,46 @@ func (mg *ProtectedEnvironment) SetProviderConfigReference(r *v2.ProviderConfigR
 
 // SetWriteConnectionSecretToReference of this ProtectedEnvironment.
 func (mg *ProtectedEnvironment) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
+// GetCondition of this ProtectedTag.
+func (mg *ProtectedTag) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetManagementPolicies of this ProtectedTag.
+func (mg *ProtectedTag) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this ProtectedTag.
+func (mg *ProtectedTag) GetProviderConfigReference() *v2.ProviderConfigReference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this ProtectedTag.
+func (mg *ProtectedTag) GetWriteConnectionSecretToReference() *v2.LocalSecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this ProtectedTag.
+func (mg *ProtectedTag) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetManagementPolicies of this ProtectedTag.
+func (mg *ProtectedTag) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this ProtectedTag.
+func (mg *ProtectedTag) SetProviderConfigReference(r *v2.ProviderConfigReference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this ProtectedTag.
+func (mg *ProtectedTag) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
