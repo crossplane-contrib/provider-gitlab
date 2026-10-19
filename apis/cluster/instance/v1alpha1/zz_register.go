@@ -103,6 +103,14 @@ var (
 	ServiceAccountAccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(ServiceAccountAccessTokenKind)
 )
 
+// User type metadata
+var (
+	UserKind             = reflect.TypeOf(User{}).Name()
+	UserGroupKind        = schema.GroupKind{Group: Group, Kind: UserKind}.String()
+	UserKindAPIVersion   = UserKind + "." + SchemeGroupVersion.String()
+	UserGroupVersionKind = SchemeGroupVersion.WithKind(UserKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&ApplicationSettings{}, &ApplicationSettingsList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
@@ -112,4 +120,5 @@ func init() {
 	SchemeBuilder.Register(&Variable{}, &VariableList{})
 	SchemeBuilder.Register(&Application{}, &ApplicationList{})
 	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})
+	SchemeBuilder.Register(&User{}, &UserList{})
 }

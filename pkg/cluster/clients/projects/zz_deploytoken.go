@@ -19,6 +19,8 @@ limitations under the License.
 package projects
 
 import (
+	"time"
+
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
@@ -47,6 +49,8 @@ func GenerateCreateProjectDeployTokenOptions(name string, p *v1alpha1.DeployToke
 
 	if p.ExpiresAt != nil {
 		deploytoken.ExpiresAt = &p.ExpiresAt.Time
+	} else if p.RenewalPeriodDays != nil {
+		deploytoken.ExpiresAt = (*time.Time)(common.GenerateRenewalExpiration(*p.RenewalPeriodDays))
 	}
 
 	if p.Username != nil {

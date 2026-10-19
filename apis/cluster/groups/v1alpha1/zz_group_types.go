@@ -161,6 +161,19 @@ type GroupParameters struct {
 	// +optional
 	SharedWithGroups []SharedWithGroups `json:"sharedWithGroups,omitempty"`
 
+	// Archived sets whether the group is archived. If unset, the provider
+	// does not change the archive state. Unarchiving runs before other
+	// updates and archiving runs after them. The provider never unarchives a
+	// group only to apply other updates.
+	// Not late-initialized, because GitLab also reports a subgroup of an
+	// archived group as archived and rejects archiving or unarchiving it.
+	// To keep the group when this resource is deleted, leave Delete out of
+	// managementPolicies (requires --enable-management-policies), or set
+	// deletionPolicy to Orphan on the cluster-scoped resource.
+	// Requires GitLab 18.9 or later.
+	// +optional
+	Archived *bool `json:"archived,omitempty"`
+
 	// Force the immediate deletion of the group when removed. In GitLab Premium and Ultimate a group is by default
 	// just marked for deletion and removed permanently after seven days. Defaults to false.
 	// +optional
@@ -262,6 +275,7 @@ type GroupObservation struct {
 	LDAPAccess          *AccessLevelValue             `json:"ldapAccess,omitempty"`
 	LDAPGroupLinks      []LDAPGroupLink               `json:"ldapGroupLinks,omitempty"`
 	MarkedForDeletionOn *metav1.Time                  `json:"markedForDeletionOn,omitempty"`
+	Archived            *bool                         `json:"archived,omitempty"`
 	CreatedAt           *metav1.Time                  `json:"createdAt,omitempty"`
 	SharedWithGroups    []SharedWithGroupsObservation `json:"sharedWithGroups,omitempty"`
 }
