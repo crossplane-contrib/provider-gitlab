@@ -41,17 +41,19 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/instance"
+	commonController "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 const (
-	errNotServiceAccount = "managed resource is not a Gitlab service account custom resource"
-	errGetFailed         = "cannot get Gitlab service account"
-	errCreateFailed      = "cannot create Gitlab service account"
-	errUpdateFailed      = "cannot update Gitlab service account"
-	errDeleteFailed      = "cannot delete Gitlab service account"
-	errIDNotInt          = "specified ID is not an integer"
-	errInvalidFilter     = "invalid baseline permissions filter %q"
+	errNotServiceAccount  = "managed resource is not a Gitlab service account custom resource"
+	errGetFailed          = "cannot get Gitlab service account"
+	errCreateFailed       = "cannot create Gitlab service account"
+	errUpdateFailed       = "cannot update Gitlab service account"
+	errUpdateAvatarFailed = "cannot update Gitlab service account avatar"
+	errDeleteFailed       = "cannot delete Gitlab service account"
+	errIDNotInt           = "specified ID is not an integer"
+	errInvalidFilter      = "invalid baseline permissions filter %q"
 
 	accessLevelNoAccess             = "no-access"
 	accessLevelNoAccessValue        = 0
@@ -177,14 +179,21 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.Status.AtProvider = instance.GenerateServiceAccountObservation(serviceAccount)
 	cr.Status.SetConditions(v2.Available())
 
+	avatar, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return managed.ExternalObservation{}, err
+	}
+
 	groupsUpToDate, err := e.observeBaselinePermissions(ctx, cr, serviceAccount.ID)
 	if err != nil {
 		return managed.ExternalObservation{}, err
 	}
 
 	return managed.ExternalObservation{
-		ResourceExists:          true,
-		ResourceUpToDate:        instance.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) && groupsUpToDate,
+		ResourceExists: true,
+		ResourceUpToDate: instance.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) &&
+			common.IsAvatarUpToDate(avatar, serviceAccount.AvatarURL) &&
+			groupsUpToDate,
 		ResourceLateInitialized: false,
 	}, nil
 }
@@ -233,6 +242,18 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
+
+	avatar, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+
+	modifyUserOptions := instance.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider)
+	modifyUserOptions.Avatar, err = common.AvatarUpload(avatar, cr.Status.AtProvider.AvatarURL)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAvatarFailed)
+	}
+
 	updateWaitGroup := sync.WaitGroup{}
 	errorsChannel := make(chan error, 3) // buffer size of 3 to avoid blocking if all operations fail
 
@@ -240,7 +261,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	updateWaitGroup.Go(func() {
 		_, _, err := e.client.ModifyUser(
 			serviceAccountID,
-			instance.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider),
+			modifyUserOptions,
 			gitlab.WithContext(ctx))
 		if err != nil {
 			errorsChannel <- errors.Wrap(err, errUpdateFailed)

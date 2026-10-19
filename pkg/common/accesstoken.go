@@ -89,8 +89,8 @@ func RotationTime(createdAt, expiresAt time.Time, renewBeforeDays *int) (time.Ti
 		return time.Time{}, false
 	}
 
-	renewAt := createdAt.Add(lifetime * 2 / 3)
-	return renewAt, true
+	// lifetime * 2 overflows time.Duration for lifetimes over 53375 days.
+	return expiresAt.Add(-lifetime / 3), true
 }
 
 // ComputeNextRotation returns the next rotation time for a renewal-managed

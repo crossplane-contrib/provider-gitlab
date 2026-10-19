@@ -1,0 +1,20 @@
+# Retire a project without deleting it: archive it, and leave Delete out of
+# managementPolicies so deleting this resource keeps the archived project.
+# Requires the provider flag --enable-management-policies.
+# On the cluster-scoped kind (projects.gitlab.crossplane.io), set
+# deletionPolicy: Orphan instead.
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Project
+metadata:
+  name: example-archived-project
+  namespace: default
+spec:
+  managementPolicies: ["Observe", "Create", "Update", "LateInitialize"]
+  forProvider:
+    namespaceIdRef:
+      name: example-group
+    description: "retired project"
+    archived: true
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig

@@ -126,6 +126,14 @@ var (
 	ProtectedBranchGroupVersionKind = SchemeGroupVersion.WithKind(ProtectedBranchKind)
 )
 
+// Protected Tag type metadata
+var (
+	ProtectedTagKind             = reflect.TypeOf(ProtectedTag{}).Name()
+	ProtectedTagGroupKind        = schema.GroupKind{Group: Group, Kind: ProtectedTagKind}.String()
+	ProtectedTagKindAPIVersion   = ProtectedTagKind + "." + SchemeGroupVersion.String()
+	ProtectedTagGroupVersionKind = SchemeGroupVersion.WithKind(ProtectedTagKind)
+)
+
 // Protected Environment type metadata
 var (
 	ProtectedEnvironmentKind             = reflect.TypeOf(ProtectedEnvironment{}).Name()
@@ -194,6 +202,7 @@ func init() {
 	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&ProtectedBranch{}, &ProtectedBranchList{})
+	SchemeBuilder.Register(&ProtectedTag{}, &ProtectedTagList{})
 	SchemeBuilder.Register(&ProtectedEnvironment{}, &ProtectedEnvironmentList{})
 	SchemeBuilder.Register(&Badge{}, &BadgeList{})
 
@@ -201,6 +210,7 @@ func init() {
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
 	// Harbor
 	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
+	SchemeBuilder.Register(&IntegrationGithub{}, &IntegrationGithubList{})
 	SchemeBuilder.Register(&ProjectShareGroup{}, &ProjectShareGroupList{})
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})

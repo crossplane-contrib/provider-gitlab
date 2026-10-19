@@ -33,6 +33,10 @@ const (
 	testServiceAccountEmail    = "sa@example.org"
 )
 
+// testAvatarURL is where GitLab serves an avatar uploaded under its content
+// addressed name.
+const testAvatarURL = "https://gitlab.example.com/uploads/-/system/user/avatar/123/4c4b6a3be1314ab86138bef4314dde022e600960d8689a2c8f8631802d20dab6.png?v=1"
+
 func TestGenerateServiceAccountObservation(t *testing.T) {
 	type args struct {
 		user *gitlab.User
@@ -43,8 +47,8 @@ func TestGenerateServiceAccountObservation(t *testing.T) {
 		want v1alpha1.ServiceAccountObservation
 	}{
 		"Full": {
-			args: args{user: &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername}},
-			want: v1alpha1.ServiceAccountObservation{CommonServiceAccountObservation: commonv1alpha1.CommonServiceAccountObservation{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername}},
+			args: args{user: &gitlab.User{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, AvatarURL: testAvatarURL}},
+			want: v1alpha1.ServiceAccountObservation{CommonServiceAccountObservation: commonv1alpha1.CommonServiceAccountObservation{ID: 123, Name: testServiceAccountName, Username: testServiceAccountUsername, AvatarURL: testAvatarURL}},
 		},
 		"Empty": {
 			args: args{user: &gitlab.User{}},
