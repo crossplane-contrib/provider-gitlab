@@ -1090,7 +1090,7 @@ func TestObserve(t *testing.T) {
 			ContainerRegistryAccessLevel:              gitlab.PublicAccessControl,
 			SharedRunnersEnabled:                      f,
 			Visibility:                                gitlab.PublicVisibility,
-			PublicBuilds:                              f, //nolint:staticcheck
+			PublicJobs:                                f,
 			OnlyAllowMergeIfPipelineSucceeds:          f,
 			OnlyAllowMergeIfAllDiscussionsAreResolved: f,
 			MergeMethod:                               gitlab.FastForwardMerge,
@@ -1649,6 +1649,55 @@ func TestLateInitializeSkipsMirrorFields(t *testing.T) {
 	if p.Mirror != nil || p.MirrorUserID != nil || p.MirrorTriggerBuilds != nil ||
 		p.OnlyMirrorProtectedBranches != nil || p.MirrorOverwritesDivergedBranches != nil {
 		t.Errorf("mirror fields must stay nil, got %+v", p)
+	}
+}
+
+// TestLateInitializePublicJobs verifies that the observed public_jobs fills
+// publicJobs only, and that a spec using the deprecated publicBuilds is left
+// as is, because a late-initialized publicJobs would take precedence over it.
+func TestLateInitializePublicJobs(t *testing.T) {
+	type want struct {
+		publicBuilds *bool
+		publicJobs   *bool
+	}
+	cases := map[string]struct {
+		spec v1alpha1.ProjectParameters
+		want want
+	}{
+		"NeitherSet": {
+			spec: v1alpha1.ProjectParameters{},
+			want: want{publicJobs: ptr.To(true)},
+		},
+		"PublicBuildsSet": {
+			spec: v1alpha1.ProjectParameters{PublicBuilds: ptr.To(false)}, //nolint:staticcheck
+			want: want{publicBuilds: ptr.To(false)},
+		},
+		"PublicJobsSet": {
+			spec: v1alpha1.ProjectParameters{PublicJobs: ptr.To(false)},
+			want: want{publicJobs: ptr.To(false)},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: &fake.MockClient{
+				MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, nil
+				},
+			}}
+			cr := &v1alpha1.Project{Spec: v1alpha1.ProjectSpec{ForProvider: tc.spec}}
+
+			if err := e.lateInitialize(context.Background(), cr, &gitlab.Project{PublicJobs: true}); err != nil {
+				t.Fatalf("lateInitialize(...): %v", err)
+			}
+
+			got := want{
+				publicBuilds: cr.Spec.ForProvider.PublicBuilds, //nolint:staticcheck
+				publicJobs:   cr.Spec.ForProvider.PublicJobs,
+			}
+			if diff := cmp.Diff(tc.want, got, cmp.AllowUnexported(want{})); diff != "" {
+				t.Errorf("lateInitialize(...): -want, +got:\n%s", diff)
+			}
+		})
 	}
 }
 
