@@ -19,17 +19,11 @@ limitations under the License.
 package projects
 
 import (
-	"strings"
-
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-)
-
-const (
-	errMemberNotFound = "404 Project Member Not Found"
 )
 
 // MemberClient defines Gitlab Member service operations
@@ -44,14 +38,6 @@ type MemberClient interface {
 func NewMemberClient(cfg common.Config) MemberClient {
 	git := common.NewClient(cfg)
 	return git.ProjectMembers
-}
-
-// IsErrorMemberNotFound helper function to test for errMemberNotFound error.
-func IsErrorMemberNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errMemberNotFound)
 }
 
 // GenerateMemberObservation is used to produce v1alpha1.MemberObservation from

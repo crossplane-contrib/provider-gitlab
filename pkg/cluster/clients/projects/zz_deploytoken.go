@@ -19,7 +19,7 @@ limitations under the License.
 package projects
 
 import (
-	"strings"
+	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
@@ -32,14 +32,6 @@ type DeployTokenClient interface {
 	CreateProjectDeployToken(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
 	DeleteProjectDeployToken(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	GetProjectDeployToken(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
-}
-
-// IsErrorProjectDeployTokenNotFound helper function to test for errProjectDeployTokenNotFound error.
-func IsErrorProjectDeployTokenNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errProjectNotFound)
 }
 
 // NewDeployTokenClient returns a new Gitlab ProjectDeployToken service
@@ -57,6 +49,8 @@ func GenerateCreateProjectDeployTokenOptions(name string, p *v1alpha1.DeployToke
 
 	if p.ExpiresAt != nil {
 		deploytoken.ExpiresAt = &p.ExpiresAt.Time
+	} else if p.RenewalPeriodDays != nil {
+		deploytoken.ExpiresAt = (*time.Time)(common.GenerateRenewalExpiration(*p.RenewalPeriodDays))
 	}
 
 	if p.Username != nil {

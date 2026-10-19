@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-user-password
+  namespace: default
+type: Opaque
+stringData:
+  password: change-me-to-a-strong-password
+---
+apiVersion: instance.gitlab.m.crossplane.io/v1alpha1
+kind: User
+metadata:
+  name: example-user
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    username: example-user
+    name: Example User
+    email: example-user@example.com
+    # Sent only on creation. Mutually exclusive with resetPassword and forceRandomPassword.
+    passwordSecretRef:
+      name: example-user-password
+      key: password
+    # resetPassword: true
+    # forceRandomPassword: true
+    skipConfirmation: true
+    canCreateGroup: false
+    projectsLimit: 10
+    external: false
+    note: Managed by Crossplane
+    # active or blocked. Leave unset to let GitLab admins change the state.
+    state: active
+    # WARNING: grants instance administrator privileges
+    # admin: true

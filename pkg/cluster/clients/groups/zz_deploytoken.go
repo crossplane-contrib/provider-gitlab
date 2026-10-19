@@ -19,7 +19,7 @@ limitations under the License.
 package groups
 
 import (
-	"strings"
+	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
@@ -32,14 +32,6 @@ type DeployTokenClient interface {
 	GetGroupDeployToken(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
 	CreateGroupDeployToken(gid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error)
 	DeleteGroupDeployToken(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
-}
-
-// IsErrorGroupDeployTokenNotFound helper function to test for errGroupDeployTokenNotFound error.
-func IsErrorGroupDeployTokenNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errGroupNotFound)
 }
 
 // NewDeployTokenClient returns a new Gitlab GroupDeployToken service
@@ -57,6 +49,8 @@ func GenerateCreateGroupDeployTokenOptions(name string, p *v1alpha1.DeployTokenP
 
 	if p.ExpiresAt != nil {
 		deploytoken.ExpiresAt = &p.ExpiresAt.Time
+	} else if p.RenewalPeriodDays != nil {
+		deploytoken.ExpiresAt = (*time.Time)(common.GenerateRenewalExpiration(*p.RenewalPeriodDays))
 	}
 
 	if p.Username != nil {

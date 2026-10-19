@@ -19,16 +19,10 @@ limitations under the License.
 package groups
 
 import (
-	"strings"
-
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-)
-
-const (
-	errorSamlGroupLinkNotFound = "Linked SAML group link not found"
 )
 
 // SamlGroupLinkClient defines Gitlab Saml Group Link Service Operations
@@ -36,14 +30,6 @@ type SamlGroupLinkClient interface {
 	GetGroupSAMLLink(gid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error)
 	AddGroupSAMLLink(gid interface{}, opt *gitlab.AddGroupSAMLLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error)
 	DeleteGroupSAMLLink(gid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
-}
-
-// IsErrorSamlGroupLinkNotFound helper function to test for errSamlGroupLinkNotFound error.
-func IsErrorSamlGroupLinkNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errorSamlGroupLinkNotFound)
 }
 
 // NewSamlGroupLinkClient returns a new Giltab Group Service
