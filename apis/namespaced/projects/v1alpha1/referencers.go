@@ -59,7 +59,7 @@ func (mg *Hook) ResolveReferences(ctx context.Context, c client.Reader) error {
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -87,7 +87,7 @@ func (mg *ApprovalRule) ResolveReferences(ctx context.Context, c client.Reader) 
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -115,7 +115,7 @@ func (mg *Project) ResolveReferences(ctx context.Context, c client.Reader) error
 		Reference:    mg.Spec.ForProvider.NamespaceIDRef,
 		Selector:     mg.Spec.ForProvider.NamespaceIDSelector,
 		To:           reference.To{Managed: &v1alpha1.Group{}, List: &v1alpha1.GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      v1alpha1.GroupID(),
 	})
 
 	if err != nil {
@@ -143,7 +143,7 @@ func (mg *DeployToken) ResolveReferences(ctx context.Context, c client.Reader) e
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -171,7 +171,7 @@ func (mg *Member) ResolveReferences(ctx context.Context, c client.Reader) error 
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -199,7 +199,7 @@ func (mg *Variable) ResolveReferences(ctx context.Context, c client.Reader) erro
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -227,7 +227,7 @@ func (mg *Runner) ResolveReferences(ctx context.Context, c client.Reader) error 
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -255,7 +255,7 @@ func (mg *Badge) ResolveReferences(ctx context.Context, c client.Reader) error {
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -283,7 +283,7 @@ func (mg *IntegrationMattermost) ResolveReferences(ctx context.Context, c client
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -300,6 +300,34 @@ func (mg *IntegrationMattermost) ResolveReferences(ctx context.Context, c client
 	return nil
 }
 
+// ResolveReferences of this IntegrationHarbor
+func (mg *IntegrationHarbor) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPINamespacedResolver(c, mg)
+
+	// resolve spec.forProvider.projectIdRef
+	rsp, err := r.Resolve(ctx, reference.NamespacedResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.ProjectID),
+		Reference:    mg.Spec.ForProvider.ProjectIDRef,
+		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
+		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
+		Extract:      ProjectID(),
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.projectId")
+	}
+
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.projectId")
+	}
+
+	mg.Spec.ForProvider.ProjectID = resolvedID
+	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
+
+	return nil
+}
+
 // ResolveReferences of this ServiceAccount
 func (mg *ServiceAccount) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPINamespacedResolver(c, mg)
@@ -310,7 +338,7 @@ func (mg *ServiceAccount) ResolveReferences(ctx context.Context, c client.Reader
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {
@@ -338,7 +366,7 @@ func (mg *ServiceAccountAccessToken) ResolveReferences(ctx context.Context, c cl
 		Reference:    mg.Spec.ForProvider.ProjectIDRef,
 		Selector:     mg.Spec.ForProvider.ProjectIDSelector,
 		To:           reference.To{Managed: &Project{}, List: &ProjectList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      ProjectID(),
 	})
 
 	if err != nil {

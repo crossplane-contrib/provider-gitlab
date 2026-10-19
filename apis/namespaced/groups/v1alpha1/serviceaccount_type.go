@@ -26,6 +26,7 @@ import (
 )
 
 // ServiceAccountParameters defines the desired state of Gitlab Group ServiceAccount
+// +kubebuilder:validation:XValidation:rule="!(has(self.avatar) && has(self.avatarSecretRef))",message="avatar and avatarSecretRef are mutually exclusive"
 type ServiceAccountParameters struct {
 	// GroupID is the ID of the group to create the deploy token in.
 	// +optional
@@ -42,6 +43,13 @@ type ServiceAccountParameters struct {
 	GroupIDSelector *v2.NamespacedSelector `json:"groupIdSelector,omitempty"`
 
 	commonv1alpha1.CommonServiceAccountParameters `json:",inline"`
+
+	// AvatarSecretRef selects a Secret key that holds the avatar image as raw
+	// bytes, as `kubectl create secret generic <name> --from-file=avatar=<image>`
+	// stores it. The rules of avatar apply. The Secret is read on every poll, so
+	// a changed image is uploaded on the next poll. Mutually exclusive with avatar.
+	// +optional
+	AvatarSecretRef *v2.LocalSecretKeySelector `json:"avatarSecretRef,omitempty"`
 }
 
 // ServiceAccountObservation represents the observed state of the Gitlab Group ServiceAccount

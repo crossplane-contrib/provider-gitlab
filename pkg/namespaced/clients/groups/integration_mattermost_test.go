@@ -1,0 +1,463 @@
+package groups
+
+import (
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	"k8s.io/utils/ptr"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
+	groupsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
+)
+
+var (
+	testMattermostWebHook               = "https://mattermost.example.com/hooks/abc123"
+	testMattermostUsername              = "gitlab-bot"
+	testMattermostChannel               = "gitlab-notifications"
+	testMattermostPipelineChannel       = "gitlab-pipelines"
+	testMattermostBranches              = "protected"
+	testMattermostLabels                = "bug,security"
+	testMattermostLabelsBehavior        = "match_all"
+	testMattermostIntegrationID   int64 = 1000
+)
+
+func TestGenerateGroupMattermostIntegrationOptions(t *testing.T) {
+	type args struct {
+		parameters *groupsv1alpha1.IntegrationMattermostParameters
+		webhook    string
+	}
+	cases := map[string]struct {
+		args args
+		want *gitlab.GroupMattermostIntegrationOptions
+	}{
+		"AllFieldsSet": {
+			args: args{
+				parameters: &groupsv1alpha1.IntegrationMattermostParameters{
+					Username:                   &testMattermostUsername,
+					Channel:                    &testMattermostChannel,
+					NotifyOnlyBrokenPipelines:  ptr.To(true),
+					BranchesToBeNotified:       &testMattermostBranches,
+					LabelsToBeNotified:         &testMattermostLabels,
+					LabelsToBeNotifiedBehavior: &testMattermostLabelsBehavior,
+					UseInheritedSettings:       ptr.To(false),
+					PushEvents:                 ptr.To(true),
+					IssuesEvents:               ptr.To(false),
+					ConfidentialIssuesEvents:   ptr.To(true),
+					MergeRequestsEvents:        ptr.To(false),
+					TagPushEvents:              ptr.To(true),
+					NoteEvents:                 ptr.To(false),
+					ConfidentialNoteEvents:     ptr.To(true),
+					PipelineEvents:             ptr.To(false),
+					WikiPageEvents:             ptr.To(true),
+					DeploymentEvents:           ptr.To(false),
+					VulnerabilityEvents:        ptr.To(false),
+					PushChannel:                ptr.To("push"),
+					IssueChannel:               ptr.To("issue"),
+					ConfidentialIssueChannel:   ptr.To("confidential-issue"),
+					MergeRequestChannel:        ptr.To("merge-request"),
+					NoteChannel:                ptr.To("note"),
+					ConfidentialNoteChannel:    ptr.To("confidential-note"),
+					TagPushChannel:             ptr.To("tag-push"),
+					PipelineChannel:            &testMattermostPipelineChannel,
+					WikiPageChannel:            ptr.To("wiki-page"),
+					DeploymentChannel:          ptr.To("deployment"),
+					VulnerabilityChannel:       ptr.To("vulnerability"),
+				},
+				webhook: testMattermostWebHook,
+			},
+			want: &gitlab.GroupMattermostIntegrationOptions{
+				WebHook:                    &testMattermostWebHook,
+				Username:                   &testMattermostUsername,
+				Channel:                    &testMattermostChannel,
+				NotifyOnlyBrokenPipelines:  ptr.To(true),
+				BranchesToBeNotified:       &testMattermostBranches,
+				LabelsToBeNotified:         &testMattermostLabels,
+				LabelsToBeNotifiedBehavior: &testMattermostLabelsBehavior,
+				UseInheritedSettings:       ptr.To(false),
+				PushEvents:                 ptr.To(true),
+				IssuesEvents:               ptr.To(false),
+				ConfidentialIssuesEvents:   ptr.To(true),
+				MergeRequestsEvents:        ptr.To(false),
+				TagPushEvents:              ptr.To(true),
+				NoteEvents:                 ptr.To(false),
+				ConfidentialNoteEvents:     ptr.To(true),
+				PipelineEvents:             ptr.To(false),
+				WikiPageEvents:             ptr.To(true),
+				DeploymentEvents:           ptr.To(false),
+				VulnerabilityEvents:        ptr.To(false),
+				PushChannel:                ptr.To("push"),
+				IssueChannel:               ptr.To("issue"),
+				ConfidentialIssueChannel:   ptr.To("confidential-issue"),
+				MergeRequestChannel:        ptr.To("merge-request"),
+				NoteChannel:                ptr.To("note"),
+				ConfidentialNoteChannel:    ptr.To("confidential-note"),
+				TagPushChannel:             ptr.To("tag-push"),
+				PipelineChannel:            &testMattermostPipelineChannel,
+				WikiPageChannel:            ptr.To("wiki-page"),
+				DeploymentChannel:          ptr.To("deployment"),
+				VulnerabilityChannel:       ptr.To("vulnerability"),
+			},
+		},
+		"InheritanceDefaultsToFalse": {
+			args: args{
+				parameters: &groupsv1alpha1.IntegrationMattermostParameters{
+					Channel: &testMattermostChannel,
+				},
+				webhook: testMattermostWebHook,
+			},
+			want: &gitlab.GroupMattermostIntegrationOptions{
+				WebHook:              &testMattermostWebHook,
+				Channel:              &testMattermostChannel,
+				UseInheritedSettings: ptr.To(false),
+			},
+		},
+		"InheritanceSent": {
+			args: args{
+				parameters: &groupsv1alpha1.IntegrationMattermostParameters{
+					UseInheritedSettings: ptr.To(true),
+				},
+				webhook: testMattermostWebHook,
+			},
+			want: &gitlab.GroupMattermostIntegrationOptions{
+				WebHook:              &testMattermostWebHook,
+				UseInheritedSettings: ptr.To(true),
+			},
+		},
+		"NilInput": {
+			args: args{
+				parameters: nil,
+				webhook:    testMattermostWebHook,
+			},
+			want: &gitlab.GroupMattermostIntegrationOptions{
+				WebHook:              ptr.To(testMattermostWebHook),
+				UseInheritedSettings: ptr.To(false),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateGroupMattermostIntegrationOptions(tc.args.parameters, tc.args.webhook)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("GenerateGroupMattermostIntegrationOptions(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGenerateIntegrationMattermostObservation(t *testing.T) {
+	commonObservation := v1alpha1.CommonIntegrationObservation{
+		ID:                             ptr.To(testMattermostIntegrationID),
+		Title:                          ptr.To("Mattermost notifications"),
+		Slug:                           ptr.To("mattermost"),
+		Active:                         ptr.To(true),
+		AlertEvents:                    ptr.To(false),
+		CommitEvents:                   ptr.To(false),
+		ConfidentialIssuesEvents:       ptr.To(false),
+		ConfidentialNoteEvents:         ptr.To(false),
+		DeploymentEvents:               ptr.To(false),
+		GroupConfidentialMentionEvents: ptr.To(false),
+		GroupMentionEvents:             ptr.To(false),
+		IncidentEvents:                 ptr.To(false),
+		IssuesEvents:                   ptr.To(false),
+		JobEvents:                      ptr.To(false),
+		MergeRequestsEvents:            ptr.To(false),
+		NoteEvents:                     ptr.To(false),
+		PipelineEvents:                 ptr.To(true),
+		PushEvents:                     ptr.To(true),
+		TagPushEvents:                  ptr.To(false),
+		VulnerabilityEvents:            ptr.To(false),
+		WikiPageEvents:                 ptr.To(false),
+		CommentOnEventEnabled:          ptr.To(false),
+		Inherited:                      ptr.To(false),
+	}
+	integration := gitlab.Integration{
+		ID:             testMattermostIntegrationID,
+		Title:          "Mattermost notifications",
+		Slug:           "mattermost",
+		Active:         true,
+		PipelineEvents: true,
+		PushEvents:     true,
+	}
+
+	cases := map[string]struct {
+		integration *GroupMattermostIntegration
+		want        groupsv1alpha1.IntegrationMattermostObservation
+	}{
+		"ActiveIntegration": {
+			integration: &GroupMattermostIntegration{
+				Integration: integration,
+				Properties: &GroupMattermostIntegrationProperties{
+					GroupMattermostIntegrationProperties: gitlab.GroupMattermostIntegrationProperties{
+						WebHook:              testMattermostWebHook,
+						Username:             testMattermostUsername,
+						Channel:              testMattermostChannel,
+						PushChannel:          "push",
+						IssueChannel:         "issue",
+						PipelineChannel:      testMattermostPipelineChannel,
+						DeploymentChannel:    "deployment",
+						VulnerabilityChannel: "vulnerability",
+					},
+					NotifyOnlyBrokenPipelines:  true,
+					BranchesToBeNotified:       testMattermostBranches,
+					LabelsToBeNotified:         testMattermostLabels,
+					LabelsToBeNotifiedBehavior: testMattermostLabelsBehavior,
+				},
+			},
+			want: groupsv1alpha1.IntegrationMattermostObservation{
+				CommonIntegrationObservation: commonObservation,
+				NotifyOnlyBrokenPipelines:    true,
+				BranchesToBeNotified:         testMattermostBranches,
+				LabelsToBeNotified:           testMattermostLabels,
+				LabelsToBeNotifiedBehavior:   testMattermostLabelsBehavior,
+				Username:                     testMattermostUsername,
+				Channel:                      testMattermostChannel,
+				PushChannel:                  "push",
+				IssueChannel:                 "issue",
+				PipelineChannel:              testMattermostPipelineChannel,
+				DeploymentChannel:            "deployment",
+				VulnerabilityChannel:         "vulnerability",
+			},
+		},
+		"NilProperties": {
+			integration: &GroupMattermostIntegration{
+				Integration: integration,
+			},
+			want: groupsv1alpha1.IntegrationMattermostObservation{
+				CommonIntegrationObservation: commonObservation,
+			},
+		},
+		"NilIntegration": {
+			integration: nil,
+			want:        groupsv1alpha1.IntegrationMattermostObservation{},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateIntegrationMattermostObservation(tc.integration)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("GenerateIntegrationMattermostObservation(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestIsIntegrationMattermostUpToDate(t *testing.T) {
+	observation := func(mods ...func(*GroupMattermostIntegration)) *GroupMattermostIntegration {
+		o := &GroupMattermostIntegration{
+			Integration: gitlab.Integration{
+				Active:                   true,
+				PushEvents:               true,
+				IssuesEvents:             true,
+				ConfidentialIssuesEvents: true,
+				MergeRequestsEvents:      true,
+				TagPushEvents:            true,
+				NoteEvents:               true,
+				ConfidentialNoteEvents:   true,
+				PipelineEvents:           true,
+				WikiPageEvents:           true,
+				DeploymentEvents:         true,
+				VulnerabilityEvents:      true,
+			},
+			Properties: &GroupMattermostIntegrationProperties{
+				GroupMattermostIntegrationProperties: gitlab.GroupMattermostIntegrationProperties{
+					Username:                 testMattermostUsername,
+					Channel:                  testMattermostChannel,
+					PushChannel:              "push",
+					IssueChannel:             "issue",
+					ConfidentialIssueChannel: "confidential-issue",
+					MergeRequestChannel:      "merge-request",
+					NoteChannel:              "note",
+					ConfidentialNoteChannel:  "confidential-note",
+					TagPushChannel:           "tag-push",
+					PipelineChannel:          testMattermostPipelineChannel,
+					WikiPageChannel:          "wiki-page",
+					DeploymentChannel:        "deployment",
+					VulnerabilityChannel:     "vulnerability",
+				},
+				NotifyOnlyBrokenPipelines:  true,
+				BranchesToBeNotified:       testMattermostBranches,
+				LabelsToBeNotified:         testMattermostLabels,
+				LabelsToBeNotifiedBehavior: testMattermostLabelsBehavior,
+			},
+		}
+		for _, m := range mods {
+			m(o)
+		}
+		return o
+	}
+	spec := func(mods ...func(*groupsv1alpha1.IntegrationMattermostParameters)) *groupsv1alpha1.IntegrationMattermostParameters {
+		p := &groupsv1alpha1.IntegrationMattermostParameters{
+			Username:                   &testMattermostUsername,
+			Channel:                    &testMattermostChannel,
+			NotifyOnlyBrokenPipelines:  ptr.To(true),
+			BranchesToBeNotified:       &testMattermostBranches,
+			LabelsToBeNotified:         &testMattermostLabels,
+			LabelsToBeNotifiedBehavior: &testMattermostLabelsBehavior,
+			PushEvents:                 ptr.To(true),
+			IssuesEvents:               ptr.To(true),
+			ConfidentialIssuesEvents:   ptr.To(true),
+			MergeRequestsEvents:        ptr.To(true),
+			TagPushEvents:              ptr.To(true),
+			NoteEvents:                 ptr.To(true),
+			ConfidentialNoteEvents:     ptr.To(true),
+			PipelineEvents:             ptr.To(true),
+			WikiPageEvents:             ptr.To(true),
+			DeploymentEvents:           ptr.To(true),
+			VulnerabilityEvents:        ptr.To(true),
+			PushChannel:                ptr.To("push"),
+			IssueChannel:               ptr.To("issue"),
+			ConfidentialIssueChannel:   ptr.To("confidential-issue"),
+			MergeRequestChannel:        ptr.To("merge-request"),
+			NoteChannel:                ptr.To("note"),
+			ConfidentialNoteChannel:    ptr.To("confidential-note"),
+			TagPushChannel:             ptr.To("tag-push"),
+			PipelineChannel:            &testMattermostPipelineChannel,
+			WikiPageChannel:            ptr.To("wiki-page"),
+			DeploymentChannel:          ptr.To("deployment"),
+			VulnerabilityChannel:       ptr.To("vulnerability"),
+		}
+		for _, m := range mods {
+			m(p)
+		}
+		return p
+	}
+
+	cases := map[string]struct {
+		spec        *groupsv1alpha1.IntegrationMattermostParameters
+		observation *GroupMattermostIntegration
+		want        bool
+	}{
+		"UpToDate": {
+			spec:        spec(),
+			observation: observation(),
+			want:        true,
+		},
+		"EmptySpecUpToDate": {
+			spec:        &groupsv1alpha1.IntegrationMattermostParameters{},
+			observation: observation(),
+			want:        true,
+		},
+		"InheritanceRequested": {
+			spec: spec(func(p *groupsv1alpha1.IntegrationMattermostParameters) {
+				p.UseInheritedSettings = ptr.To(true)
+			}),
+			observation: observation(),
+			want:        false,
+		},
+		"InheritanceNotRequested": {
+			spec: spec(),
+			observation: observation(func(o *GroupMattermostIntegration) {
+				o.Inherited = true
+			}),
+			want: false,
+		},
+		"InheritanceDisabled": {
+			spec: spec(func(p *groupsv1alpha1.IntegrationMattermostParameters) {
+				p.UseInheritedSettings = ptr.To(false)
+			}),
+			observation: observation(func(o *GroupMattermostIntegration) {
+				o.Inherited = true
+			}),
+			want: false,
+		},
+		"InheritingSkipsOtherComparisons": {
+			spec: spec(func(p *groupsv1alpha1.IntegrationMattermostParameters) {
+				p.UseInheritedSettings = ptr.To(true)
+				p.Channel = ptr.To("other-channel")
+				p.PushEvents = ptr.To(false)
+			}),
+			observation: observation(func(o *GroupMattermostIntegration) {
+				o.Inherited = true
+				o.Active = false
+				o.Properties = nil
+			}),
+			want: true,
+		},
+		"InactiveIntegration": {
+			spec: spec(),
+			observation: observation(func(o *GroupMattermostIntegration) {
+				o.Active = false
+			}),
+			want: false,
+		},
+		"NilProperties": {
+			spec: &groupsv1alpha1.IntegrationMattermostParameters{},
+			observation: observation(func(o *GroupMattermostIntegration) {
+				o.Properties = nil
+			}),
+			want: true,
+		},
+		"NilPropertiesWithDesiredChannel": {
+			spec: &groupsv1alpha1.IntegrationMattermostParameters{Channel: ptr.To("alerts")},
+			observation: observation(func(o *GroupMattermostIntegration) {
+				o.Properties = nil
+			}),
+			want: false,
+		},
+		"NilObservation": {
+			spec:        &groupsv1alpha1.IntegrationMattermostParameters{},
+			observation: nil,
+			want:        false,
+		},
+		"NilSpec": {
+			spec:        nil,
+			observation: observation(),
+			want:        false,
+		},
+	}
+
+	// Each compared field must, on its own, make the integration out of date.
+	differs := map[string]func(*groupsv1alpha1.IntegrationMattermostParameters){
+		"Username": func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.Username = ptr.To("other") },
+		"Channel":  func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.Channel = ptr.To("other") },
+		"NotifyOnlyBrokenPipelines": func(p *groupsv1alpha1.IntegrationMattermostParameters) {
+			p.NotifyOnlyBrokenPipelines = ptr.To(false)
+		},
+		"BranchesToBeNotified": func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.BranchesToBeNotified = ptr.To("other") },
+		"LabelsToBeNotified":   func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.LabelsToBeNotified = ptr.To("other") },
+		"LabelsToBeNotifiedBehavior": func(p *groupsv1alpha1.IntegrationMattermostParameters) {
+			p.LabelsToBeNotifiedBehavior = ptr.To("other")
+		},
+		"PushEvents":               func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.PushEvents = ptr.To(false) },
+		"IssuesEvents":             func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.IssuesEvents = ptr.To(false) },
+		"ConfidentialIssuesEvents": func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.ConfidentialIssuesEvents = ptr.To(false) },
+		"MergeRequestsEvents":      func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.MergeRequestsEvents = ptr.To(false) },
+		"TagPushEvents":            func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.TagPushEvents = ptr.To(false) },
+		"NoteEvents":               func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.NoteEvents = ptr.To(false) },
+		"ConfidentialNoteEvents":   func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.ConfidentialNoteEvents = ptr.To(false) },
+		"PipelineEvents":           func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.PipelineEvents = ptr.To(false) },
+		"WikiPageEvents":           func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.WikiPageEvents = ptr.To(false) },
+		"DeploymentEvents":         func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.DeploymentEvents = ptr.To(false) },
+		"VulnerabilityEvents":      func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.VulnerabilityEvents = ptr.To(false) },
+		"PushChannel":              func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.PushChannel = ptr.To("other") },
+		"IssueChannel":             func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.IssueChannel = ptr.To("other") },
+		"ConfidentialIssueChannel": func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.ConfidentialIssueChannel = ptr.To("other") },
+		"MergeRequestChannel":      func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.MergeRequestChannel = ptr.To("other") },
+		"NoteChannel":              func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.NoteChannel = ptr.To("other") },
+		"ConfidentialNoteChannel":  func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.ConfidentialNoteChannel = ptr.To("other") },
+		"TagPushChannel":           func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.TagPushChannel = ptr.To("other") },
+		"PipelineChannel":          func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.PipelineChannel = ptr.To("other") },
+		"WikiPageChannel":          func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.WikiPageChannel = ptr.To("other") },
+		"DeploymentChannel":        func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.DeploymentChannel = ptr.To("other") },
+		"VulnerabilityChannel":     func(p *groupsv1alpha1.IntegrationMattermostParameters) { p.VulnerabilityChannel = ptr.To("other") },
+	}
+	for field, mod := range differs {
+		cases[field+"Differs"] = struct {
+			spec        *groupsv1alpha1.IntegrationMattermostParameters
+			observation *GroupMattermostIntegration
+			want        bool
+		}{spec: spec(mod), observation: observation(), want: false}
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsIntegrationMattermostUpToDate(tc.spec, tc.observation)
+			if got != tc.want {
+				t.Errorf("IsIntegrationMattermostUpToDate(): got %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

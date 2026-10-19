@@ -26,10 +26,13 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/hooks"
+	integrationemailsonpush "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationemailsonpush"
+	integrationgithub "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationgithub"
 	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationharbor"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationjenkins"
 	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationmattermost"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationmicrosoftteams"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationpipelinesemail"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/integrationtelegram"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/pipelineschedules"
@@ -37,6 +40,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/projectsharegroups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedbranches"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedenvironments"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/protectedtags"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/serviceaccountaccesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/projects/serviceaccounts"
@@ -57,12 +61,16 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		approvalrules.SetupRules,
 		runners.SetupRunner,
 		protectedbranches.SetupProtectedBranch,
+		protectedtags.SetupProtectedTag,
 		badges.SetupBadge,
 		integrationmattermost.SetupIntegrationMattermost,
+		integrationemailsonpush.SetupIntegrationEmailsOnPush,
 		integrationharbor.SetupIntegrationHarbor,
 		integrationjenkins.SetupIntegrationJenkins,
 		integrationmicrosoftteams.SetupIntegrationMicrosoftTeams,
 		integrationtelegram.SetupIntegrationTelegram,
+		integrationpipelinesemail.SetupIntegrationPipelinesEmail,
+		integrationgithub.SetupIntegrationGithub,
 		protectedenvironments.SetupProtectedEnvironment,
 		projectsharegroups.SetupProjectShareGroup,
 		serviceaccounts.SetupServiceAccount,
@@ -90,12 +98,16 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		approvalrules.SetupRulesGated,
 		runners.SetupRunnerGated,
 		protectedbranches.SetupProtectedBranchGated,
+		protectedtags.SetupProtectedTagGated,
 		badges.SetupBadgeGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
+		integrationemailsonpush.SetupIntegrationEmailsOnPushGated,
 		integrationharbor.SetupIntegrationHarborGated,
 		integrationjenkins.SetupIntegrationJenkinsGated,
 		integrationmicrosoftteams.SetupIntegrationMicrosoftTeamsGated,
 		integrationtelegram.SetupIntegrationTelegramGated,
+		integrationpipelinesemail.SetupIntegrationPipelinesEmailGated,
+		integrationgithub.SetupIntegrationGithubGated,
 		protectedenvironments.SetupProtectedEnvironmentGated,
 		projectsharegroups.SetupProjectShareGroupGated,
 		serviceaccounts.SetupServiceAccountGated,

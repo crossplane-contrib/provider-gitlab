@@ -18,12 +18,14 @@ package common
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -31,6 +33,8 @@ const (
 	ErrSecretNotFound    = "Cannot find referenced secret"
 	ErrSecretKeyNotFound = "Cannot find key in referenced secret"
 	ErrSecretSelectorNil = "Secret selector is nil"
+
+	ErrPathExternalNameNotObserveOnly = "a full path external-name requires the management policies [Observe] or [Observe, LateInitialize]"
 )
 
 func GetTokenValueFromSecret(ctx context.Context, client client.Client, m resource.Managed, selector *v2.SecretKeySelector) (*string, error) {
@@ -94,4 +98,17 @@ func ResolvePublicJobsSetting(publicBuilds, publicJobs *bool) (*bool, bool) {
 		return publicBuilds, true
 	}
 	return nil, false
+}
+
+// ValidateExternalName allows a full path external-name only with observe-only
+// management policies, since a write through a moved path hits the wrong resource.
+func ValidateExternalName(externalName string, policies v2.ManagementPolicies) error {
+	if _, err := strconv.ParseInt(externalName, 10, 64); err == nil {
+		return nil
+	}
+	p := sets.New(policies...)
+	if p.Has(v2.ManagementActionObserve) && sets.New(v2.ManagementActionObserve, v2.ManagementActionLateInitialize).IsSuperset(p) {
+		return nil
+	}
+	return errors.New(ErrPathExternalNameNotObserveOnly)
 }

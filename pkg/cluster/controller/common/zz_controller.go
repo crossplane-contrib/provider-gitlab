@@ -21,11 +21,18 @@ package common
 import (
 	"context"
 
+	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+)
+
+const (
+	errReadAvatarSecret  = "cannot read avatar from key %q of Secret %q in namespace %q"
+	errEmptyAvatarSecret = "key %q of Secret %q in namespace %q holds no avatar image"
 )
 
 // UpdateStringFromSecret fetches a sensitive setting value from a Kubernetes Secret
@@ -37,4 +44,26 @@ func UpdateStringFromSecret(mg resource.Managed, ctx context.Context, kube clien
 	}
 	*param = value
 	return nil
+}
+
+// ResolveAvatar returns the avatar image a service account should show: the
+// raw bytes in the selected Secret key when selector is set, otherwise inline.
+// An empty result means the avatar is not managed.
+func ResolveAvatar(ctx context.Context, kube client.Client, mg resource.Managed, inline []byte, selector *v2.SecretKeySelector) ([]byte, error) {
+	switch {
+	case selector == nil:
+		return inline, nil
+	case meta.WasDeleted(mg):
+		// Deleting needs no avatar, and the Secret may already be gone.
+		return nil, nil
+	}
+	secretNamespace := selector.Namespace
+	image, err := common.GetTokenValueFromSecret(ctx, kube, mg, selector)
+	if err != nil {
+		return nil, errors.Wrapf(err, errReadAvatarSecret, selector.Key, selector.Name, secretNamespace)
+	}
+	if len(*image) == 0 {
+		return nil, errors.Errorf(errEmptyAvatarSecret, selector.Key, selector.Name, secretNamespace)
+	}
+	return []byte(*image), nil
 }

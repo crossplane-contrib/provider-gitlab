@@ -28,9 +28,6 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
-    - jsonPath: .spec.forProvider.branchName
-      name: BRANCH
-      type: string
     - jsonPath: .spec.forProvider.projectId
       name: PROJECT
       type: string
@@ -100,11 +97,11 @@ spec:
                     description: Enable notifications for confidential issue events.
                     type: boolean
                   confidentialNoteChannel:
-                    description: Enable notifications for confidential note events.
-                    type: string
-                  confidentialNoteEvents:
                     description: The name of the channel to receive notifications
                       for confidential note events.
+                    type: string
+                  confidentialNoteEvents:
+                    description: Enable notifications for confidential note events.
                     type: boolean
                   issueChannel:
                     description: The name of the channel to receive notifications
