@@ -20,6 +20,7 @@ package projects
 
 import (
 	"strings"
+	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
@@ -57,6 +58,8 @@ func GenerateCreateProjectDeployTokenOptions(name string, p *v1alpha1.DeployToke
 
 	if p.ExpiresAt != nil {
 		deploytoken.ExpiresAt = &p.ExpiresAt.Time
+	} else if p.RenewalPeriodDays != nil {
+		deploytoken.ExpiresAt = (*time.Time)(common.GenerateRenewalExpiration(*p.RenewalPeriodDays))
 	}
 
 	if p.Username != nil {
