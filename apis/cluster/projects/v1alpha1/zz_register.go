@@ -208,6 +208,7 @@ func init() {
 
 	// Mattermost
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
+	SchemeBuilder.Register(&IntegrationEmailsOnPush{}, &IntegrationEmailsOnPushList{})
 	// Harbor
 	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
 	SchemeBuilder.Register(&IntegrationPipelinesEmail{}, &IntegrationPipelinesEmailList{})
