@@ -369,7 +369,11 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 		in.ContainerRegistryAccessLevel = clients.LateInitializeAccessControlValue(in.ContainerRegistryAccessLevel, project.ContainerRegistryAccessLevel)
 	}
 
-	in.DefaultBranch = clients.LateInitializeStringPtr(in.DefaultBranch, project.DefaultBranch)
+	// GitLab reports a default branch for empty repositories although the
+	// branch does not exist yet, and rejects it on edit.
+	if !project.EmptyRepo {
+		in.DefaultBranch = clients.LateInitializeStringPtr(in.DefaultBranch, project.DefaultBranch)
+	}
 	in.Description = clients.LateInitializeStringPtr(in.Description, project.Description)
 	in.EnvironmentsAccessLevel = clients.LateInitializeAccessControlValue(in.EnvironmentsAccessLevel, project.EnvironmentsAccessLevel)
 	in.FeatureFlagsAccessLevel = clients.LateInitializeAccessControlValue(in.FeatureFlagsAccessLevel, project.FeatureFlagsAccessLevel)

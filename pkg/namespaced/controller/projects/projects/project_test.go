@@ -2086,3 +2086,51 @@ func TestArchiveConverges(t *testing.T) {
 		})
 	}
 }
+
+// TestLateInitializeDefaultBranch guards against late-initializing the default
+// branch GitLab reports for an empty repository, which does not exist yet and
+// is rejected on edit. An explicitly set default branch is kept so GitLab's
+// error still surfaces.
+func TestLateInitializeDefaultBranch(t *testing.T) {
+	cases := map[string]struct {
+		spec    *string
+		project *gitlab.Project
+		want    *string
+	}{
+		"EmptyRepoUnset": {
+			project: &gitlab.Project{DefaultBranch: "main", EmptyRepo: true},
+			want:    nil,
+		},
+		"EmptyRepoExplicit": {
+			spec:    ptr.To("develop"),
+			project: &gitlab.Project{DefaultBranch: "main", EmptyRepo: true},
+			want:    ptr.To("develop"),
+		},
+		"NonEmptyRepoUnset": {
+			project: &gitlab.Project{DefaultBranch: "main"},
+			want:    ptr.To("main"),
+		},
+		"NonEmptyRepoExplicit": {
+			spec:    ptr.To("develop"),
+			project: &gitlab.Project{DefaultBranch: "main"},
+			want:    ptr.To("develop"),
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{client: &fake.MockClient{
+				MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, nil
+				},
+			}}
+			cr := &v1alpha1.Project{Spec: v1alpha1.ProjectSpec{ForProvider: v1alpha1.ProjectParameters{DefaultBranch: tc.spec}}}
+
+			if err := e.lateInitialize(context.Background(), cr, tc.project); err != nil {
+				t.Fatalf("lateInitialize returned error: %v", err)
+			}
+			if diff := cmp.Diff(tc.want, cr.Spec.ForProvider.DefaultBranch); diff != "" {
+				t.Errorf("DefaultBranch: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
