@@ -29,6 +29,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/serviceaccountaccesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/serviceaccounts"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/settings"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/users"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/variables"
 )
 
@@ -42,6 +43,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		license.SetupLicense,
 		variables.SetupVariable,
 		applications.SetupApplication,
+		users.SetupUser,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -62,6 +64,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		license.SetupLicenseGated,
 		variables.SetupVariableGated,
 		applications.SetupApplicationGated,
+		users.SetupUserGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
