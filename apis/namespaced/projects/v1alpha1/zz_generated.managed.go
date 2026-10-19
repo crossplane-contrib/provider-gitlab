@@ -380,6 +380,46 @@ func (mg *IntegrationHarbor) SetWriteConnectionSecretToReference(r *v2.LocalSecr
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this IntegrationJenkins.
+func (mg *IntegrationJenkins) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetManagementPolicies of this IntegrationJenkins.
+func (mg *IntegrationJenkins) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationJenkins.
+func (mg *IntegrationJenkins) GetProviderConfigReference() *v2.ProviderConfigReference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationJenkins.
+func (mg *IntegrationJenkins) GetWriteConnectionSecretToReference() *v2.LocalSecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationJenkins.
+func (mg *IntegrationJenkins) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetManagementPolicies of this IntegrationJenkins.
+func (mg *IntegrationJenkins) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationJenkins.
+func (mg *IntegrationJenkins) SetProviderConfigReference(r *v2.ProviderConfigReference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationJenkins.
+func (mg *IntegrationJenkins) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this IntegrationMattermost.
 func (mg *IntegrationMattermost) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)
@@ -420,6 +460,46 @@ func (mg *IntegrationMattermost) SetWriteConnectionSecretToReference(r *v2.Local
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this IntegrationMicrosoftTeams.
+func (mg *IntegrationMicrosoftTeams) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetManagementPolicies of this IntegrationMicrosoftTeams.
+func (mg *IntegrationMicrosoftTeams) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationMicrosoftTeams.
+func (mg *IntegrationMicrosoftTeams) GetProviderConfigReference() *v2.ProviderConfigReference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationMicrosoftTeams.
+func (mg *IntegrationMicrosoftTeams) GetWriteConnectionSecretToReference() *v2.LocalSecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationMicrosoftTeams.
+func (mg *IntegrationMicrosoftTeams) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetManagementPolicies of this IntegrationMicrosoftTeams.
+func (mg *IntegrationMicrosoftTeams) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationMicrosoftTeams.
+func (mg *IntegrationMicrosoftTeams) SetProviderConfigReference(r *v2.ProviderConfigReference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationMicrosoftTeams.
+func (mg *IntegrationMicrosoftTeams) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this IntegrationPipelinesEmail.
 func (mg *IntegrationPipelinesEmail) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)
@@ -457,6 +537,46 @@ func (mg *IntegrationPipelinesEmail) SetProviderConfigReference(r *v2.ProviderCo
 
 // SetWriteConnectionSecretToReference of this IntegrationPipelinesEmail.
 func (mg *IntegrationPipelinesEmail) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
+// GetCondition of this IntegrationTelegram.
+func (mg *IntegrationTelegram) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetManagementPolicies of this IntegrationTelegram.
+func (mg *IntegrationTelegram) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationTelegram.
+func (mg *IntegrationTelegram) GetProviderConfigReference() *v2.ProviderConfigReference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationTelegram.
+func (mg *IntegrationTelegram) GetWriteConnectionSecretToReference() *v2.LocalSecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationTelegram.
+func (mg *IntegrationTelegram) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetManagementPolicies of this IntegrationTelegram.
+func (mg *IntegrationTelegram) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationTelegram.
+func (mg *IntegrationTelegram) SetProviderConfigReference(r *v2.ProviderConfigReference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationTelegram.
+func (mg *IntegrationTelegram) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 

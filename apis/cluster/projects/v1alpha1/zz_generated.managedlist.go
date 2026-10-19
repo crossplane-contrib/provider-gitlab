@@ -101,6 +101,15 @@ func (l *IntegrationHarborList) GetItems() []resource.Managed {
 	return items
 }
 
+// GetItems of this IntegrationJenkinsList.
+func (l *IntegrationJenkinsList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
 // GetItems of this IntegrationMattermostList.
 func (l *IntegrationMattermostList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
@@ -110,8 +119,26 @@ func (l *IntegrationMattermostList) GetItems() []resource.Managed {
 	return items
 }
 
+// GetItems of this IntegrationMicrosoftTeamsList.
+func (l *IntegrationMicrosoftTeamsList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
 // GetItems of this IntegrationPipelinesEmailList.
 func (l *IntegrationPipelinesEmailList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
+// GetItems of this IntegrationTelegramList.
+func (l *IntegrationTelegramList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
 	for i := range l.Items {
 		items[i] = &l.Items[i]

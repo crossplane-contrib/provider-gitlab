@@ -209,6 +209,9 @@ func init() {
 	SchemeBuilder.Register(&IntegrationEmailsOnPush{}, &IntegrationEmailsOnPushList{})
 	// Harbor
 	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
+	SchemeBuilder.Register(&IntegrationJenkins{}, &IntegrationJenkinsList{})
+	SchemeBuilder.Register(&IntegrationMicrosoftTeams{}, &IntegrationMicrosoftTeamsList{})
+	SchemeBuilder.Register(&IntegrationTelegram{}, &IntegrationTelegramList{})
 	SchemeBuilder.Register(&IntegrationPipelinesEmail{}, &IntegrationPipelinesEmailList{})
 	SchemeBuilder.Register(&IntegrationGithub{}, &IntegrationGithubList{})
 	SchemeBuilder.Register(&ProjectShareGroup{}, &ProjectShareGroupList{})
