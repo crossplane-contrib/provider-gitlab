@@ -380,6 +380,46 @@ func (mg *IntegrationMattermost) SetWriteConnectionSecretToReference(r *v2.Local
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetManagementPolicies of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) GetProviderConfigReference() *v2.ProviderConfigReference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) GetWriteConnectionSecretToReference() *v2.LocalSecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetManagementPolicies of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) SetProviderConfigReference(r *v2.ProviderConfigReference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) SetWriteConnectionSecretToReference(r *v2.LocalSecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this Member.
 func (mg *Member) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)

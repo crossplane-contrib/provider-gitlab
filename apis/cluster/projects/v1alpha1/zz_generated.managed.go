@@ -470,6 +470,56 @@ func (mg *IntegrationMattermost) SetWriteConnectionSecretToReference(r *v2.Secre
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetDeletionPolicy of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) GetDeletionPolicy() v2.DeletionPolicy {
+	return mg.Spec.DeletionPolicy
+}
+
+// GetManagementPolicies of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) GetProviderConfigReference() *v2.Reference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) GetWriteConnectionSecretToReference() *v2.SecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetDeletionPolicy of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) SetDeletionPolicy(r v2.DeletionPolicy) {
+	mg.Spec.DeletionPolicy = r
+}
+
+// SetManagementPolicies of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) SetProviderConfigReference(r *v2.Reference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationPipelinesEmail.
+func (mg *IntegrationPipelinesEmail) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this Member.
 func (mg *Member) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)
