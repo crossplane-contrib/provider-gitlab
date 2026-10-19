@@ -320,6 +320,56 @@ func (mg *Hook) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this IntegrationGithub.
+func (mg *IntegrationGithub) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetDeletionPolicy of this IntegrationGithub.
+func (mg *IntegrationGithub) GetDeletionPolicy() v2.DeletionPolicy {
+	return mg.Spec.DeletionPolicy
+}
+
+// GetManagementPolicies of this IntegrationGithub.
+func (mg *IntegrationGithub) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationGithub.
+func (mg *IntegrationGithub) GetProviderConfigReference() *v2.Reference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationGithub.
+func (mg *IntegrationGithub) GetWriteConnectionSecretToReference() *v2.SecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationGithub.
+func (mg *IntegrationGithub) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetDeletionPolicy of this IntegrationGithub.
+func (mg *IntegrationGithub) SetDeletionPolicy(r v2.DeletionPolicy) {
+	mg.Spec.DeletionPolicy = r
+}
+
+// SetManagementPolicies of this IntegrationGithub.
+func (mg *IntegrationGithub) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationGithub.
+func (mg *IntegrationGithub) SetProviderConfigReference(r *v2.Reference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationGithub.
+func (mg *IntegrationGithub) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this IntegrationHarbor.
 func (mg *IntegrationHarbor) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)

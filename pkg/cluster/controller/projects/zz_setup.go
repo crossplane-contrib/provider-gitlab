@@ -28,6 +28,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/hooks"
+	integrationgithub "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationgithub"
 	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationharbor"
 	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationmattermost"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/members"
@@ -61,6 +62,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		badges.SetupBadge,
 		integrationmattermost.SetupIntegrationMattermost,
 		integrationharbor.SetupIntegrationHarbor,
+		integrationgithub.SetupIntegrationGithub,
 		protectedenvironments.SetupProtectedEnvironment,
 		projectsharegroups.SetupProjectShareGroup,
 		serviceaccounts.SetupServiceAccount,
@@ -92,6 +94,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		badges.SetupBadgeGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
 		integrationharbor.SetupIntegrationHarborGated,
+		integrationgithub.SetupIntegrationGithubGated,
 		protectedenvironments.SetupProtectedEnvironmentGated,
 		projectsharegroups.SetupProjectShareGroupGated,
 		serviceaccounts.SetupServiceAccountGated,
