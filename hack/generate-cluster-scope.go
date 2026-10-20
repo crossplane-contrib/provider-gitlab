@@ -270,6 +270,11 @@ func getReplacements() []replacement {
 		{"reference.NamespacedResolutionRequest", "reference.ResolutionRequest"},
 		{"reference.NamespacedResolutionResponse", "reference.ResolutionResponse"},
 		{"kubebuilder:resource:scope=Namespaced", "kubebuilder:resource:scope=Cluster"},
+		// The namespaced ProviderConfig storage version (v1beta2, imported as
+		// pcstorage) has no cluster-scoped counterpart; the legacy cluster API
+		// stores v1beta1. The pcstorage import itself is dropped with a
+		// +cluster-scope:delete annotation.
+		{"pcstorage.", "v1beta1."},
 		{"/namespaced/", "/cluster/"},
 		{"GetTokenValueFromLocalSecret", "GetTokenValueFromSecret"},
 		{"TestCreateLocalSecretKeySelector", "TestCreateSecretKeySelector"},

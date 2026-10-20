@@ -30,7 +30,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/v1beta1"
+	namespacedapis "github.com/crossplane-contrib/provider-gitlab/apis/namespaced"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
@@ -46,7 +46,7 @@ func (g *recordingGate) Set(schema.GroupVersionKind, bool) bool { return false }
 
 func TestSetupGatedRegistersBothControllers(t *testing.T) {
 	s := runtime.NewScheme()
-	if err := v1beta1.SchemeBuilder.AddToScheme(s); err != nil {
+	if err := namespacedapis.AddToScheme(s); err != nil {
 		t.Fatalf("AddToScheme(...) error = %v", err)
 	}
 	mgr, err := ctrl.NewManager(&rest.Config{Host: "https://127.0.0.1:1"}, ctrl.Options{
