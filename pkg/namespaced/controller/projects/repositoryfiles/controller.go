@@ -19,13 +19,10 @@ package repositoryfiles
 import (
 	"context"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
@@ -53,35 +50,23 @@ const (
 )
 
 // SetupRepositoryFile adds a controller that reconciles RepositoryFiles.
-func SetupRepositoryFile(mgr ctrl.Manager, o controller.Options) error {
+func SetupRepositoryFile(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName(v1alpha1.RepositoryFileGroupKind)
-	managementPolicies := o.Features.Enabled(feature.EnableBetaManagementPolicies)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.RepositoryFileGroupVersionKind),
 		managed.WithExternalConnector(&connector{
 			kube:                      mgr.GetClient(),
 			newGitlabClientFn:         projects.NewRepositoryFileClient,
-			managementPoliciesEnabled: managementPolicies,
+			managementPoliciesEnabled: o.Features.Enabled(feature.EnableBetaManagementPolicies),
 		}),
 		managed.WithInitializers(),
 		// The file is identified by projectId, branch and filePath, which are
 		// immutable, so an interrupted Create can safely be retried.
 		managed.WithDeterministicExternalName(true),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
+	)
 
-	if managementPolicies {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.RepositoryFileGroupVersionKind),
-		reconcilerOpts...)
-
-	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.RepositoryFileList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+	if err := common.AddMRStateRecorder(mgr, o, &v1alpha1.RepositoryFileList{}); err != nil {
 		return err
 	}
 
@@ -93,7 +78,7 @@ func SetupRepositoryFile(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupRepositoryFileGated adds a controller with CRD gate support.
-func SetupRepositoryFileGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupRepositoryFileGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupRepositoryFile(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.RepositoryFileGroupVersionKind.String())

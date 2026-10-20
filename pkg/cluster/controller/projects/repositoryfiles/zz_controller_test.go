@@ -54,7 +54,7 @@ const (
 var (
 	errBoom = errors.New("boom")
 
-	notFound    = &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+	notFound    = &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}
 	serverError = &gitlab.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}
 
 	// kubeWithContent serves the Secret referenced by withContentSecret, which
