@@ -709,6 +709,11 @@ func (in *ApplicationSettingsParameters) DeepCopyInto(out *ApplicationSettingsPa
 		*out = new(bool)
 		**out = **in
 	}
+	if in.AutoAcceptAwardedAchievements != nil {
+		in, out := &in.AutoAcceptAwardedAchievements, &out.AutoAcceptAwardedAchievements
+		*out = new(bool)
+		**out = **in
+	}
 	if in.AutoBanUserOnExcessiveProjectsDownload != nil {
 		in, out := &in.AutoBanUserOnExcessiveProjectsDownload, &out.AutoBanUserOnExcessiveProjectsDownload
 		*out = new(bool)
