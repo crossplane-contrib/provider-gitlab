@@ -320,6 +320,56 @@ func (mg *Hook) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this IntegrationCustomIssueTracker.
+func (mg *IntegrationCustomIssueTracker) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetDeletionPolicy of this IntegrationCustomIssueTracker.
+func (mg *IntegrationCustomIssueTracker) GetDeletionPolicy() v2.DeletionPolicy {
+	return mg.Spec.DeletionPolicy
+}
+
+// GetManagementPolicies of this IntegrationCustomIssueTracker.
+func (mg *IntegrationCustomIssueTracker) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationCustomIssueTracker.
+func (mg *IntegrationCustomIssueTracker) GetProviderConfigReference() *v2.Reference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationCustomIssueTracker.
+func (mg *IntegrationCustomIssueTracker) GetWriteConnectionSecretToReference() *v2.SecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationCustomIssueTracker.
+func (mg *IntegrationCustomIssueTracker) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetDeletionPolicy of this IntegrationCustomIssueTracker.
+func (mg *IntegrationCustomIssueTracker) SetDeletionPolicy(r v2.DeletionPolicy) {
+	mg.Spec.DeletionPolicy = r
+}
+
+// SetManagementPolicies of this IntegrationCustomIssueTracker.
+func (mg *IntegrationCustomIssueTracker) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationCustomIssueTracker.
+func (mg *IntegrationCustomIssueTracker) SetProviderConfigReference(r *v2.Reference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationCustomIssueTracker.
+func (mg *IntegrationCustomIssueTracker) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this IntegrationEmailsOnPush.
 func (mg *IntegrationEmailsOnPush) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)
@@ -367,6 +417,56 @@ func (mg *IntegrationEmailsOnPush) SetProviderConfigReference(r *v2.Reference) {
 
 // SetWriteConnectionSecretToReference of this IntegrationEmailsOnPush.
 func (mg *IntegrationEmailsOnPush) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
+// GetCondition of this IntegrationExternalWiki.
+func (mg *IntegrationExternalWiki) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetDeletionPolicy of this IntegrationExternalWiki.
+func (mg *IntegrationExternalWiki) GetDeletionPolicy() v2.DeletionPolicy {
+	return mg.Spec.DeletionPolicy
+}
+
+// GetManagementPolicies of this IntegrationExternalWiki.
+func (mg *IntegrationExternalWiki) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationExternalWiki.
+func (mg *IntegrationExternalWiki) GetProviderConfigReference() *v2.Reference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationExternalWiki.
+func (mg *IntegrationExternalWiki) GetWriteConnectionSecretToReference() *v2.SecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationExternalWiki.
+func (mg *IntegrationExternalWiki) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetDeletionPolicy of this IntegrationExternalWiki.
+func (mg *IntegrationExternalWiki) SetDeletionPolicy(r v2.DeletionPolicy) {
+	mg.Spec.DeletionPolicy = r
+}
+
+// SetManagementPolicies of this IntegrationExternalWiki.
+func (mg *IntegrationExternalWiki) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationExternalWiki.
+func (mg *IntegrationExternalWiki) SetProviderConfigReference(r *v2.Reference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationExternalWiki.
+func (mg *IntegrationExternalWiki) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
@@ -670,6 +770,56 @@ func (mg *IntegrationPipelinesEmail) SetWriteConnectionSecretToReference(r *v2.S
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this IntegrationRedmine.
+func (mg *IntegrationRedmine) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetDeletionPolicy of this IntegrationRedmine.
+func (mg *IntegrationRedmine) GetDeletionPolicy() v2.DeletionPolicy {
+	return mg.Spec.DeletionPolicy
+}
+
+// GetManagementPolicies of this IntegrationRedmine.
+func (mg *IntegrationRedmine) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationRedmine.
+func (mg *IntegrationRedmine) GetProviderConfigReference() *v2.Reference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationRedmine.
+func (mg *IntegrationRedmine) GetWriteConnectionSecretToReference() *v2.SecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationRedmine.
+func (mg *IntegrationRedmine) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetDeletionPolicy of this IntegrationRedmine.
+func (mg *IntegrationRedmine) SetDeletionPolicy(r v2.DeletionPolicy) {
+	mg.Spec.DeletionPolicy = r
+}
+
+// SetManagementPolicies of this IntegrationRedmine.
+func (mg *IntegrationRedmine) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationRedmine.
+func (mg *IntegrationRedmine) SetProviderConfigReference(r *v2.Reference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationRedmine.
+func (mg *IntegrationRedmine) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this IntegrationTelegram.
 func (mg *IntegrationTelegram) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)
@@ -717,6 +867,56 @@ func (mg *IntegrationTelegram) SetProviderConfigReference(r *v2.Reference) {
 
 // SetWriteConnectionSecretToReference of this IntegrationTelegram.
 func (mg *IntegrationTelegram) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
+// GetCondition of this IntegrationYouTrack.
+func (mg *IntegrationYouTrack) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetDeletionPolicy of this IntegrationYouTrack.
+func (mg *IntegrationYouTrack) GetDeletionPolicy() v2.DeletionPolicy {
+	return mg.Spec.DeletionPolicy
+}
+
+// GetManagementPolicies of this IntegrationYouTrack.
+func (mg *IntegrationYouTrack) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this IntegrationYouTrack.
+func (mg *IntegrationYouTrack) GetProviderConfigReference() *v2.Reference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this IntegrationYouTrack.
+func (mg *IntegrationYouTrack) GetWriteConnectionSecretToReference() *v2.SecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this IntegrationYouTrack.
+func (mg *IntegrationYouTrack) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetDeletionPolicy of this IntegrationYouTrack.
+func (mg *IntegrationYouTrack) SetDeletionPolicy(r v2.DeletionPolicy) {
+	mg.Spec.DeletionPolicy = r
+}
+
+// SetManagementPolicies of this IntegrationYouTrack.
+func (mg *IntegrationYouTrack) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this IntegrationYouTrack.
+func (mg *IntegrationYouTrack) SetProviderConfigReference(r *v2.Reference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this IntegrationYouTrack.
+func (mg *IntegrationYouTrack) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
