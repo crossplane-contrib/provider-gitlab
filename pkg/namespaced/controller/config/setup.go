@@ -17,14 +17,15 @@ limitations under the License.
 package config
 
 import (
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 // Setup creates all Gitlab API controllers with the supplied logger and adds
 // them to the supplied manager.
-func Setup(mgr ctrl.Manager, o controller.Options) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+func Setup(mgr ctrl.Manager, o common.ControllerOptions) error {
+	for _, setup := range []func(ctrl.Manager, common.ControllerOptions) error{
 		SetupNamespaced,
 		// +cluster-scope:delete=1
 		SetupCluster,
@@ -38,8 +39,8 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 
 // SetupGated creates all Gitlab API controllers with the supplied logger and adds
 // them to the supplied manager with CRD gate support for SafeStart.
-func SetupGated(mgr ctrl.Manager, o controller.Options) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+func SetupGated(mgr ctrl.Manager, o common.ControllerOptions) error {
+	for _, setup := range []func(ctrl.Manager, common.ControllerOptions) error{
 		SetupNamespacedGated,
 		// +cluster-scope:delete=1
 		SetupClusterGated,

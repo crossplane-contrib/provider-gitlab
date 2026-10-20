@@ -31,6 +31,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/v1beta1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 type recordingGate struct {
@@ -56,7 +57,7 @@ func TestSetupGatedRegistersBothControllers(t *testing.T) {
 		t.Fatalf("NewManager(...) error = %v", err)
 	}
 	g := &recordingGate{}
-	o := controller.Options{Logger: logging.NewNopLogger(), Gate: g}
+	o := common.ControllerOptions{Options: controller.Options{Logger: logging.NewNopLogger(), Gate: g}}
 
 	if err := SetupGated(mgr, o); err != nil {
 		t.Fatalf("SetupGated(...) error = %v", err)
@@ -70,7 +71,7 @@ func TestSetupGatedRegistersBothControllers(t *testing.T) {
 	// controller-runtime rejects a second controller with a name in use, so
 	// each setup fails only if its gate already registered the controller.
 	cases := map[string]struct {
-		setup func(ctrl.Manager, controller.Options) error
+		setup func(ctrl.Manager, common.ControllerOptions) error
 		want  string
 	}{
 		"ProviderConfig": {

@@ -47,6 +47,7 @@ import (
 	apisCluster "github.com/crossplane-contrib/provider-gitlab/apis/cluster"
 	apisNamespaced "github.com/crossplane-contrib/provider-gitlab/apis/namespaced"
 	controllerCluster "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	controllerNamespaced "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller"
 )
 
@@ -56,6 +57,7 @@ func main() {
 		debug            = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
 		syncInterval     = app.Flag("sync", "Sync interval controls how often all resources will be double checked for drift.").Short('s').Default("1h").Duration()
 		pollInterval     = app.Flag("poll", "Poll interval controls how often an individual resource should be checked for drift.").Default("1m").Duration()
+		minPollInterval  = app.Flag("min-poll-interval", "Minimum poll interval a resource may request with the crossplane.io/poll-interval annotation. Shorter values are raised to this minimum.").Default("10s").Envar("MIN_POLL_INTERVAL").Duration()
 		leaderElection   = app.Flag("leader-election", "Use leader election for the conroller manager.").Short('l').Default("false").OverrideDefaultFromEnvar("LEADER_ELECTION").Bool()
 		maxReconcileRate = app.Flag("max-reconcile-rate", "The global maximum rate per second at which resources may checked for drift from the desired state.").Default("10").Int()
 
@@ -76,7 +78,7 @@ func main() {
 		ctrl.SetLogger(zap.New(zap.WriteTo(io.Discard)))
 	}
 
-	log.Debug("Starting", "sync-period", syncInterval.String())
+	log.Debug("Starting", "sync-period", syncInterval.String(), "poll-interval", pollInterval.String(), "min-poll-interval", minPollInterval.String())
 
 	cfg, err := ctrl.GetConfig()
 	kingpin.FatalIfError(err, "Cannot get API server rest config")
@@ -118,13 +120,16 @@ func main() {
 	kingpin.FatalIfError(apisCluster.AddToScheme(mgr.GetScheme()), "Cannot add Gitlab legacy APIs to scheme")
 	kingpin.FatalIfError(apisNamespaced.AddToScheme(mgr.GetScheme()), "Cannot add Gitlab legacy APIs to scheme")
 
-	o := xpcontroller.Options{
-		Logger:                  log,
-		MaxConcurrentReconciles: *maxReconcileRate,
-		PollInterval:            *pollInterval,
-		GlobalRateLimiter:       ratelimiter.NewGlobal(*maxReconcileRate),
-		Features:                &feature.Flags{},
-		MetricOptions:           &mo,
+	o := common.ControllerOptions{
+		Options: xpcontroller.Options{
+			Logger:                  log,
+			MaxConcurrentReconciles: *maxReconcileRate,
+			PollInterval:            *pollInterval,
+			GlobalRateLimiter:       ratelimiter.NewGlobal(*maxReconcileRate),
+			Features:                &feature.Flags{},
+			MetricOptions:           &mo,
+		},
+		MinPollInterval: *minPollInterval,
 	}
 
 	if *enableManagementPolicies {
@@ -139,7 +144,7 @@ func main() {
 	if canSafeStart {
 		crdGate := new(gate.Gate[schema.GroupVersionKind])
 		o.Gate = crdGate
-		kingpin.FatalIfError(customresourcesgate.Setup(mgr, o), "Cannot setup CRD gate")
+		kingpin.FatalIfError(customresourcesgate.Setup(mgr, o.Options), "Cannot setup CRD gate")
 		kingpin.FatalIfError(controllerCluster.SetupGated(mgr, o), "Cannot setup Gitlab legacy controllers")
 		kingpin.FatalIfError(controllerNamespaced.SetupGated(mgr, o), "Cannot setup Gitlab modern controllers")
 	} else {

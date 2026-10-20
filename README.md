@@ -44,6 +44,27 @@ spec:
 kubectl apply -f examples/providerconfig/provider.yaml
 ```
 
+### Poll intervals
+
+The provider checks every managed resource for drift on a timer. These provider
+flags set the timer:
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--poll` | `1m` | How often the provider checks each resource. |
+| `--min-poll-interval` | `10s` | The shortest interval a resource can request with the `crossplane.io/poll-interval` annotation. The provider also reads it from `MIN_POLL_INTERVAL`. Set it to `0s` to remove the minimum. |
+| `--sync` | `1h` | How often the provider reconciles all resources, whatever their poll interval. |
+
+To poll one resource at a different interval, set the
+`crossplane.io/poll-interval` annotation to a Go duration such as `5m` or `24h`.
+If the value is shorter than `--min-poll-interval`, the provider polls at
+`--min-poll-interval`. Each poll makes at least one GitLab API call. Many
+resources with a short interval can use up the rate limit of the ProviderConfig
+token, and GitLab then throttles every resource that uses that ProviderConfig.
+
+To change a flag, add it to the `args` of the `package-runtime` container in a
+`DeploymentRuntimeConfig`.
+
 ### Observing groups and projects by full path
 
 Set the `crossplane.io/external-name` annotation of an observe-only `Group` or

@@ -17,9 +17,9 @@ limitations under the License.
 package instance
 
 import (
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/appearance"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/applications"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/license"
@@ -31,8 +31,8 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/instance/variables"
 )
 
-func Setup(mgr ctrl.Manager, o controller.Options) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+func Setup(mgr ctrl.Manager, o common.ControllerOptions) error {
+	for _, setup := range []func(ctrl.Manager, common.ControllerOptions) error{
 		settings.SetupApplicationSettings,
 		runners.SetupRunner,
 		appearance.SetupAppearance,
@@ -52,8 +52,8 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 
 // SetupGated creates all Gitlab API controllers with the supplied logger and adds
 // them to the supplied manager with CRD gate support for SafeStart.
-func SetupGated(mgr ctrl.Manager, o controller.Options) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+func SetupGated(mgr ctrl.Manager, o common.ControllerOptions) error {
+	for _, setup := range []func(ctrl.Manager, common.ControllerOptions) error{
 		settings.SetupApplicationSettingsGated,
 		runners.SetupRunnerGated,
 		appearance.SetupAppearanceGated,

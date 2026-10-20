@@ -19,13 +19,9 @@ package integrationcustomissuetracker
 import (
 	"context"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -47,34 +43,16 @@ const (
 )
 
 // SetupIntegrationCustomIssueTracker adds a controller that reconciles GitLab Project Custom Issue Tracker integrations.
-func SetupIntegrationCustomIssueTracker(mgr ctrl.Manager, o controller.Options) error {
+func SetupIntegrationCustomIssueTracker(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName(v1alpha1.IntegrationCustomIssueTrackerGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.IntegrationCustomIssueTrackerGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewCustomIssueTrackerClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(
-		mgr,
-		resource.ManagedKind(v1alpha1.IntegrationCustomIssueTrackerGroupVersionKind),
-		reconcilerOpts...,
 	)
 
-	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(),
-		o.Logger,
-		o.MetricOptions.MRStateMetrics,
-		&v1alpha1.IntegrationCustomIssueTrackerList{},
-		o.MetricOptions.PollStateMetricInterval,
-	)); err != nil {
+	if err := common.AddMRStateRecorder(mgr, o, &v1alpha1.IntegrationCustomIssueTrackerList{}); err != nil {
 		return err
 	}
 
@@ -86,7 +64,7 @@ func SetupIntegrationCustomIssueTracker(mgr ctrl.Manager, o controller.Options) 
 }
 
 // SetupIntegrationCustomIssueTrackerGated adds a controller with CRD gate support for SafeStart.
-func SetupIntegrationCustomIssueTrackerGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupIntegrationCustomIssueTrackerGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupIntegrationCustomIssueTracker(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.IntegrationCustomIssueTrackerGroupVersionKind.String())
