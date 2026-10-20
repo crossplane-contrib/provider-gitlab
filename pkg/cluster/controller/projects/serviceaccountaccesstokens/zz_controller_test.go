@@ -317,7 +317,7 @@ func TestCreate(t *testing.T) {
 		"OwnerRotate404FreshCreate": {
 			client: &mockClient{
 				MockRotate: func(_ any, _, _ int64, _ *gitlab.RotateProjectServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
-					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 				},
 				MockCreate: func(_ any, _ int64, _ *gitlab.CreateProjectServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 					return &tokenObj, &gitlab.Response{}, nil

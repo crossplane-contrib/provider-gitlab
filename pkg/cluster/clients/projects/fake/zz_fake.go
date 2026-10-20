@@ -35,6 +35,9 @@ type MockClient struct {
 	MockEditProject   func(pid any, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	MockDeleteProject func(pid any, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
+	MockArchiveProject   func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
+	MockUnarchiveProject func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
+
 	MockGetHook    func(pid any, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
 	MockAddHook    func(pid any, opt *gitlab.AddProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
 	MockEditHook   func(pid any, hook int64, opt *gitlab.EditProjectHookOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error)
@@ -90,6 +93,10 @@ type MockClient struct {
 	MockGetProtectedBranch          func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error)
 	MockProtectRepositoryBranches   func(pid any, opt *gitlab.ProtectRepositoryBranchesOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedBranch, *gitlab.Response, error)
 	MockUnprotectRepositoryBranches func(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockGetProtectedTag         func(pid any, tag string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedTag, *gitlab.Response, error)
+	MockProtectRepositoryTags   func(pid any, opt *gitlab.ProtectRepositoryTagsOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedTag, *gitlab.Response, error)
+	MockUnprotectRepositoryTags func(pid any, tag string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 
 	MockGetMattermostService    func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
 	MockSetMattermostService    func(pid any, opt *gitlab.SetMattermostServiceOptions, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error)
@@ -156,6 +163,16 @@ func (c *MockClient) EditProject(pid any, opt *gitlab.EditProjectOptions, option
 // DeleteProject calls the underlying MockDeleteProject method
 func (c *MockClient) DeleteProject(pid any, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteProject(pid, opt)
+}
+
+// ArchiveProject calls the underlying MockArchiveProject method.
+func (c *MockClient) ArchiveProject(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+	return c.MockArchiveProject(pid, options...)
+}
+
+// UnarchiveProject calls the underlying MockUnarchiveProject method.
+func (c *MockClient) UnarchiveProject(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+	return c.MockUnarchiveProject(pid, options...)
 }
 
 // GetProjectHook calls the underlying MockGetProjectHook method.
@@ -347,6 +364,21 @@ func (c *MockClient) ProtectRepositoryBranches(pid any, opt *gitlab.ProtectRepos
 // UnprotectRepositoryBranches calls the underlying MockUnprotectRepositoryBranches method.
 func (c *MockClient) UnprotectRepositoryBranches(pid any, branch string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockUnprotectRepositoryBranches(pid, branch, options...)
+}
+
+// GetProtectedTag calls the underlying MockGetProtectedTag method.
+func (c *MockClient) GetProtectedTag(pid any, tag string, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedTag, *gitlab.Response, error) {
+	return c.MockGetProtectedTag(pid, tag, options...)
+}
+
+// ProtectRepositoryTags calls the underlying MockProtectRepositoryTags method.
+func (c *MockClient) ProtectRepositoryTags(pid any, opt *gitlab.ProtectRepositoryTagsOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProtectedTag, *gitlab.Response, error) {
+	return c.MockProtectRepositoryTags(pid, opt, options...)
+}
+
+// UnprotectRepositoryTags calls the underlying MockUnprotectRepositoryTags method.
+func (c *MockClient) UnprotectRepositoryTags(pid any, tag string, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockUnprotectRepositoryTags(pid, tag, options...)
 }
 
 // GetMattermostService calls the underlying MockGetMattermostService method.

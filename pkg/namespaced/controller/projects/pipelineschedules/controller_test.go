@@ -195,7 +195,7 @@ func TestObserve(t *testing.T) {
 				client: &fake.MockClient{
 					MockGetPipelineSchedule: func(pid interface{}, schedule int64, options ...gitlab.RequestOptionFunc) (*gitlab.PipelineSchedule, *gitlab.Response, error) {
 						return &gitlab.PipelineSchedule{}, &gitlab.Response{
-							Response: &http.Response{StatusCode: 404},
+							Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}},
 						}, errors.New(errNotPipelineSchedule)
 					},
 				},

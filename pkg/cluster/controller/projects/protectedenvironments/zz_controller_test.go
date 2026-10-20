@@ -317,7 +317,7 @@ func TestObserve(t *testing.T) {
 
 					getFn: func(pid interface{}, name string, _ ...gitlab.RequestOptionFunc) (*gitlab.ProtectedEnvironment, *gitlab.Response, error) {
 
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 
 					},
 				},
@@ -375,7 +375,7 @@ func TestObserve(t *testing.T) {
 
 				result: managed.ExternalObservation{ResourceExists: false},
 
-				err: errors.Wrap(resource.Ignore(projects.IsErrorProtectedEnvironmentNotFound, errBoom), errGetFailed),
+				err: errors.Wrap(errBoom, errGetFailed),
 			},
 		},
 
@@ -1055,7 +1055,7 @@ func TestIsResponseNotFound_Helper(t *testing.T) {
 
 	// ensure we keep the same not-found behavior as the rest of controllers
 
-	r := &gitlab.Response{Response: &http.Response{StatusCode: 404}}
+	r := &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}
 
 	if !clients.IsResponseNotFound(r) {
 

@@ -20,13 +20,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
@@ -35,6 +31,7 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups"
 )
 
@@ -49,26 +46,16 @@ const (
 )
 
 // SetupLdapGroupLink adds a controller that reconciles ldapgrouplinks.
-func SetupLdapGroupLink(mgr ctrl.Manager, o controller.Options) error {
+func SetupLdapGroupLink(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName(v1alpha1.LdapGroupLinkGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.LdapGroupLinkGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewLdapGroupLinkClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
+	)
 
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.LdapGroupLinkGroupVersionKind),
-		reconcilerOpts...)
-
-	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.LdapGroupLinkList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+	if err := common.AddMRStateRecorder(mgr, o, &v1alpha1.LdapGroupLinkList{}); err != nil {
 		return err
 	}
 
@@ -80,7 +67,7 @@ func SetupLdapGroupLink(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupLdapGroupLinkGated adds a controller with CRD gate support.
-func SetupLdapGroupLinkGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupLdapGroupLinkGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupLdapGroupLink(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.LdapGroupLinkGroupVersionKind.String())
@@ -133,9 +120,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, err
 	}
 
-	groupLinks, _, err := e.client.ListGroupLDAPLinks(*cr.Spec.ForProvider.GroupID)
+	groupLinks, res, err := e.client.ListGroupLDAPLinks(*cr.Spec.ForProvider.GroupID)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(groups.IsErrorLdapGroupLinkNotFound, err), errGetFailed)
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	groupLink := findMatchingLdapGroupLink(groupLinks, &cr.Spec.ForProvider)

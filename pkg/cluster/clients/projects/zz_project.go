@@ -19,7 +19,6 @@ limitations under the License.
 package projects
 
 import (
-	"strings"
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
@@ -40,6 +39,8 @@ type Client interface {
 	CreateProject(opt *gitlab.CreateProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	EditProject(pid interface{}, opt *gitlab.EditProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 	DeleteProject(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	ArchiveProject(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
+	UnarchiveProject(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error)
 
 	GetProjectPushRules(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
 	AddProjectPushRule(pid interface{}, opt *gitlab.AddProjectPushRuleOptions, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error)
@@ -53,14 +54,6 @@ type Client interface {
 func NewProjectClient(cfg common.Config) Client {
 	git := common.NewClient(cfg)
 	return git.Projects
-}
-
-// IsErrorProjectNotFound helper function to test for errProjectNotFound error.
-func IsErrorProjectNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errProjectNotFound)
 }
 
 // GenerateObservation is used to produce v1alpha1.ProjectObservation from
@@ -322,42 +315,40 @@ func GenerateCreateProjectOptions(name string, p *v1alpha1.ProjectParameters) *g
 		name = *p.Name
 	}
 	project := &gitlab.CreateProjectOptions{
-		Name:                                &name,
-		Path:                                p.Path,
-		DefaultBranch:                       p.DefaultBranch,
-		Description:                         p.Description,
-		IssuesAccessLevel:                   clients.AccessControlValueV1alpha1ToGitlab(p.IssuesAccessLevel),
-		RepositoryAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.RepositoryAccessLevel),
-		MergeRequestsAccessLevel:            clients.AccessControlValueV1alpha1ToGitlab(p.MergeRequestsAccessLevel),
-		MergeTrainsEnabled:                  p.MergeTrainsEnabled,
-		MergeTrainsSkipTrainAllowed:         p.MergeTrainsSkipTrainAllowed,
-		MergePipelinesEnabled:               p.MergePipelinesEnabled,
-		ForkingAccessLevel:                  clients.AccessControlValueV1alpha1ToGitlab(p.ForkingAccessLevel),
-		BuildsAccessLevel:                   clients.AccessControlValueV1alpha1ToGitlab(p.BuildsAccessLevel),
-		WikiAccessLevel:                     clients.AccessControlValueV1alpha1ToGitlab(p.WikiAccessLevel),
-		SnippetsAccessLevel:                 clients.AccessControlValueV1alpha1ToGitlab(p.SnippetsAccessLevel),
-		PagesAccessLevel:                    clients.AccessControlValueV1alpha1ToGitlab(p.PagesAccessLevel),
-		AnalyticsAccessLevel:                clients.AccessControlValueV1alpha1ToGitlab(p.AnalyticsAccessLevel),
-		ReleasesAccessLevel:                 clients.AccessControlValueV1alpha1ToGitlab(p.ReleasesAccessLevel),
-		EnvironmentsAccessLevel:             clients.AccessControlValueV1alpha1ToGitlab(p.EnvironmentsAccessLevel),
-		FeatureFlagsAccessLevel:             clients.AccessControlValueV1alpha1ToGitlab(p.FeatureFlagsAccessLevel),
-		InfrastructureAccessLevel:           clients.AccessControlValueV1alpha1ToGitlab(p.InfrastructureAccessLevel),
-		MonitorAccessLevel:                  clients.AccessControlValueV1alpha1ToGitlab(p.MonitorAccessLevel),
-		PackageRegistryAccessLevel:          clients.AccessControlValueV1alpha1ToGitlab(p.PackageRegistryAccessLevel),
-		SecurityAndComplianceAccessLevel:    clients.AccessControlValueV1alpha1ToGitlab(p.SecurityAndComplianceAccessLevel),
-		ModelExperimentsAccessLevel:         clients.AccessControlValueV1alpha1ToGitlab(p.ModelExperimentsAccessLevel),
-		ModelRegistryAccessLevel:            clients.AccessControlValueV1alpha1ToGitlab(p.ModelRegistryAccessLevel),
-		EmailsDisabled:                      p.EmailsDisabled, //nolint:staticcheck
-		ResolveOutdatedDiffDiscussions:      p.ResolveOutdatedDiffDiscussions,
-		ContainerExpirationPolicyAttributes: clients.ContainerExpirationPolicyAttributesV1alpha1ToGitlab(p.ContainerExpirationPolicyAttributes),
-		ContainerRegistryEnabled:            p.ContainerRegistryEnabled, //nolint:staticcheck
-		ContainerRegistryAccessLevel:        clients.AccessControlValueV1alpha1ToGitlab(p.ContainerRegistryAccessLevel),
-		SharedRunnersEnabled:                p.SharedRunnersEnabled,
-		Visibility:                          clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
-		ImportURL:                           p.ImportURL,
-		// Note: CreateProjectOptions still uses PublicBuilds (deprecated) in GitLab API client v1.5.0
-		// We map our PublicJobs field to PublicBuilds here until the library adds PublicJobs support
-		PublicBuilds:                              resolvePublicJobsValue(p), //nolint:staticcheck
+		Name:                                      &name,
+		Path:                                      p.Path,
+		DefaultBranch:                             p.DefaultBranch,
+		Description:                               p.Description,
+		IssuesAccessLevel:                         clients.AccessControlValueV1alpha1ToGitlab(p.IssuesAccessLevel),
+		RepositoryAccessLevel:                     clients.AccessControlValueV1alpha1ToGitlab(p.RepositoryAccessLevel),
+		MergeRequestsAccessLevel:                  clients.AccessControlValueV1alpha1ToGitlab(p.MergeRequestsAccessLevel),
+		MergeTrainsEnabled:                        p.MergeTrainsEnabled,
+		MergeTrainsSkipTrainAllowed:               p.MergeTrainsSkipTrainAllowed,
+		MergePipelinesEnabled:                     p.MergePipelinesEnabled,
+		ForkingAccessLevel:                        clients.AccessControlValueV1alpha1ToGitlab(p.ForkingAccessLevel),
+		BuildsAccessLevel:                         clients.AccessControlValueV1alpha1ToGitlab(p.BuildsAccessLevel),
+		WikiAccessLevel:                           clients.AccessControlValueV1alpha1ToGitlab(p.WikiAccessLevel),
+		SnippetsAccessLevel:                       clients.AccessControlValueV1alpha1ToGitlab(p.SnippetsAccessLevel),
+		PagesAccessLevel:                          clients.AccessControlValueV1alpha1ToGitlab(p.PagesAccessLevel),
+		AnalyticsAccessLevel:                      clients.AccessControlValueV1alpha1ToGitlab(p.AnalyticsAccessLevel),
+		ReleasesAccessLevel:                       clients.AccessControlValueV1alpha1ToGitlab(p.ReleasesAccessLevel),
+		EnvironmentsAccessLevel:                   clients.AccessControlValueV1alpha1ToGitlab(p.EnvironmentsAccessLevel),
+		FeatureFlagsAccessLevel:                   clients.AccessControlValueV1alpha1ToGitlab(p.FeatureFlagsAccessLevel),
+		InfrastructureAccessLevel:                 clients.AccessControlValueV1alpha1ToGitlab(p.InfrastructureAccessLevel),
+		MonitorAccessLevel:                        clients.AccessControlValueV1alpha1ToGitlab(p.MonitorAccessLevel),
+		PackageRegistryAccessLevel:                clients.AccessControlValueV1alpha1ToGitlab(p.PackageRegistryAccessLevel),
+		SecurityAndComplianceAccessLevel:          clients.AccessControlValueV1alpha1ToGitlab(p.SecurityAndComplianceAccessLevel),
+		ModelExperimentsAccessLevel:               clients.AccessControlValueV1alpha1ToGitlab(p.ModelExperimentsAccessLevel),
+		ModelRegistryAccessLevel:                  clients.AccessControlValueV1alpha1ToGitlab(p.ModelRegistryAccessLevel),
+		EmailsDisabled:                            p.EmailsDisabled, //nolint:staticcheck
+		ResolveOutdatedDiffDiscussions:            p.ResolveOutdatedDiffDiscussions,
+		ContainerExpirationPolicyAttributes:       clients.ContainerExpirationPolicyAttributesV1alpha1ToGitlab(p.ContainerExpirationPolicyAttributes),
+		ContainerRegistryEnabled:                  p.ContainerRegistryEnabled, //nolint:staticcheck
+		ContainerRegistryAccessLevel:              clients.AccessControlValueV1alpha1ToGitlab(p.ContainerRegistryAccessLevel),
+		SharedRunnersEnabled:                      p.SharedRunnersEnabled,
+		Visibility:                                clients.VisibilityValueV1alpha1ToGitlab(p.Visibility),
+		ImportURL:                                 p.ImportURL,
+		PublicJobs:                                resolvePublicJobsValue(p),
 		AllowMergeOnSkippedPipeline:               p.AllowMergeOnSkippedPipeline,
 		OnlyAllowMergeIfPipelineSucceeds:          p.OnlyAllowMergeIfPipelineSucceeds,
 		OnlyAllowMergeIfAllDiscussionsAreResolved: p.OnlyAllowMergeIfAllDiscussionsAreResolved,

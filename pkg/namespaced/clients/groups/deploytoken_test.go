@@ -78,3 +78,18 @@ func TestGenerateCreateGroupDeployTokenOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateCreateGroupDeployTokenOptionsRenewal(t *testing.T) {
+	renewalPeriodDays := 30
+	got := GenerateCreateGroupDeployTokenOptions("Name", &v1alpha1.DeployTokenParameters{
+		RenewalPeriodDays: &renewalPeriodDays,
+		Scopes:            []string{"read_repository"},
+	})
+	if got.ExpiresAt == nil {
+		t.Fatal("ExpiresAt = nil, want 30 days from now")
+	}
+	want := time.Now().UTC().AddDate(0, 0, 30)
+	if d := got.ExpiresAt.Sub(want).Abs(); d > time.Minute {
+		t.Errorf("ExpiresAt = %v, want %v", got.ExpiresAt, want)
+	}
+}
