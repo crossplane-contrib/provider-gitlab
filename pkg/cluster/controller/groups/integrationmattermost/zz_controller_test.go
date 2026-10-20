@@ -335,7 +335,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				mattermostClient: &fake.MockClient{
 					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: integrationMattermost(
@@ -364,7 +364,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				mattermostClient: &fake.MockClient{
 					MockGetGroupMattermostIntegration: func(gid any, options ...gitlab.RequestOptionFunc) (*groupclients.GroupMattermostIntegration, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: integrationMattermost(

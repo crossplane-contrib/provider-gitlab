@@ -201,7 +201,7 @@ func TestObserve(t *testing.T) {
 				if pid != testProjectID {
 					return nil, nil, errors.Errorf("unexpected project id %v", pid)
 				}
-				return svc, &gitlab.Response{Response: &http.Response{StatusCode: status}}, err
+				return svc, &gitlab.Response{Response: &http.Response{StatusCode: status, Header: http.Header{"Content-Type": {"application/json"}}}}, err
 			},
 		}
 	}

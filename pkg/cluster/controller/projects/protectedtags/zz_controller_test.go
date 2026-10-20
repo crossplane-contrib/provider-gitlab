@@ -85,7 +85,7 @@ func protectedTag(m ...protectedTagModifier) *v1alpha1.ProtectedTag {
 }
 
 func notFound() *gitlab.Response {
-	return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+	return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}
 }
 
 func TestConnect(t *testing.T) {

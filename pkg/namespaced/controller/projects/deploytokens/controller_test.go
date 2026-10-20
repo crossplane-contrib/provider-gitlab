@@ -473,7 +473,7 @@ func TestCreate(t *testing.T) {
 			args: args{
 				deployToken: &fake.MockClient{
 					MockDeleteDeployToken: func(pid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 					MockCreateDeployToken: func(pid interface{}, opt *gitlab.CreateProjectDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
 						return &deployTokenObj, &gitlab.Response{}, nil

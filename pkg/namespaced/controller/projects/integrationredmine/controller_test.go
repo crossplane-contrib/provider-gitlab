@@ -200,7 +200,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				client: &fake.MockRedmineClient{
 					MockGetRedmineService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.RedmineService, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: integrationRedmine(withProjectID(testProjectID)),
