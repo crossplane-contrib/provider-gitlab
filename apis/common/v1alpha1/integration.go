@@ -85,7 +85,7 @@ type CommonIntegrationParameters struct {
 	// +optional
 	NoteEvents *bool `json:"noteEvents,omitempty"`
 
-	// Enable notifications for confidential note events.
+	// The name of the channel to receive notifications for confidential note events.
 	// +optional
 	ConfidentialNoteChannel *string `json:"confidentialNoteChannel,omitempty"`
 

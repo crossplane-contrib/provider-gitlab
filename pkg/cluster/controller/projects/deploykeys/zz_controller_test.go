@@ -185,7 +185,7 @@ func TestObserve(t *testing.T) {
 				cr: buildDeployKey(withExternalName(testExternalName)),
 				deployKeyService: &fake.MockClient{
 					MockGetDeployKey: func(pid interface{}, deployKey int64, options ...*gitlab.RequestOptionFunc) (*gitlab.ProjectDeployKey, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("")
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("")
 					},
 				},
 			},

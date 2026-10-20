@@ -178,7 +178,7 @@ func TestObserve(t *testing.T) {
 		"NotFound": {
 			args: args{
 				client: &mockClient{MockGetLicense: func(options ...gitlab.RequestOptionFunc) (*gitlab.License, *gitlab.Response, error) {
-					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("not found")
 				}},
 				cr: license(withNamespace("default"), withExternalName("1")),
 			},
@@ -317,7 +317,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				client: &mockClient{
 					MockDeleteLicense: func(licenseID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-						return &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
+						return &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("not found")
 					},
 				},
 				cr: license(
@@ -609,7 +609,7 @@ func TestDelete(t *testing.T) {
 		"ErrDelete404": {
 			args: args{
 				client: &mockClient{MockDeleteLicense: func(licenseID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-					return &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
+					return &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("not found")
 				}},
 				cr: license(withNamespace("default"), withExternalName("1")),
 			},
@@ -665,7 +665,7 @@ func TestIsResponseNotFound(t *testing.T) {
 	if clients.IsResponseNotFound(nil) {
 		t.Fatalf("expected false")
 	}
-	if !clients.IsResponseNotFound(&gitlab.Response{Response: &http.Response{StatusCode: 404}}) {
+	if !clients.IsResponseNotFound(&gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}) {
 		t.Fatalf("expected true")
 	}
 	if clients.IsResponseNotFound(&gitlab.Response{Response: &http.Response{StatusCode: 500}}) {

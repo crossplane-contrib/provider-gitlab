@@ -21,13 +21,9 @@ package samlgrouplinks
 import (
 	"context"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
@@ -36,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
@@ -51,26 +48,16 @@ const (
 )
 
 // SetupSamlGroupLink adds a controller that reconciles samlgrouplinks.
-func SetupSamlGroupLink(mgr ctrl.Manager, o controller.Options) error {
+func SetupSamlGroupLink(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName("cluster." + v1alpha1.SamlGroupLinkGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.SamlGroupLinkGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewSamlGroupLinkClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
+	)
 
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.SamlGroupLinkGroupVersionKind),
-		reconcilerOpts...)
-
-	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.SamlGroupLinkList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+	if err := common.AddMRStateRecorder(mgr, o, &v1alpha1.SamlGroupLinkList{}); err != nil {
 		return err
 	}
 
@@ -82,7 +69,7 @@ func SetupSamlGroupLink(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupSamlGroupLinkGated adds a controller with CRD gate support.
-func SetupSamlGroupLinkGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupSamlGroupLinkGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupSamlGroupLink(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.SamlGroupLinkGroupVersionKind.String())
@@ -130,9 +117,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errMissingGroupID)
 	}
 
-	groupLink, _, err := e.client.GetGroupSAMLLink(*cr.Spec.ForProvider.GroupID, samlGroupName)
+	groupLink, res, err := e.client.GetGroupSAMLLink(*cr.Spec.ForProvider.GroupID, samlGroupName)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(groups.IsErrorSamlGroupLinkNotFound, err), errGetFailed)
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	cr.Status.AtProvider = groups.GenerateAddSamlGroupLinkObservation(groupLink)

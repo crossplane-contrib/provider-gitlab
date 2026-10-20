@@ -7,7 +7,7 @@ PROJECT_REPO := github.com/crossplane-contrib/$(PROJECT_NAME)
 PLATFORMS ?= linux_amd64 linux_arm64
 
 # kind-related versions
-KIND_VERSION = v0.24.0
+KIND_VERSION = v0.33.0
 
 # golangci-lint must be built with a Go version >= the toolchain directive in go.mod
 GOLANGCILINT_VERSION = 2.14.0
@@ -71,7 +71,7 @@ xpkg.build.provider-gitlab: do.build.images
 
 # ====================================================================================
 # End to End Testing
-CROSSPLANE_VERSION = 1.18.1
+CROSSPLANE_VERSION = 2.4.2
 CROSSPLANE_NAMESPACE = crossplane-system
 -include build/makelib/local.xpkg.mk
 -include build/makelib/controlplane.mk

@@ -17,7 +17,6 @@ limitations under the License.
 package groups
 
 import (
-	"strings"
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
@@ -27,16 +26,14 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
-const (
-	errGroupNotFound = "404 Group Not Found"
-)
-
 // Client defines Gitlab Group service operations
 type Client interface {
 	GetGroup(gid interface{}, opt *gitlab.GetGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	CreateGroup(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	UpdateGroup(gid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	DeleteGroup(gid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	ArchiveGroup(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	UnarchiveGroup(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	ShareGroupWithGroup(gid interface{}, opt *gitlab.ShareGroupWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	UnshareGroupFromGroup(gid interface{}, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	ListGroups(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error)
@@ -46,14 +43,6 @@ type Client interface {
 func NewGroupClient(cfg common.Config) Client {
 	git := common.NewClient(cfg)
 	return git.Groups
-}
-
-// IsErrorGroupNotFound helper function to test for errGroupNotFound error.
-func IsErrorGroupNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errGroupNotFound)
 }
 
 // VisibilityValueV1alpha1ToGitlab converts *v1alpha1.VisibilityValue to *gitlab.VisibilityValue
@@ -84,6 +73,7 @@ func GenerateObservation(grp *gitlab.Group) v1alpha1.GroupObservation { //nolint
 		FullName:  &grp.FullName,
 		FullPath:  &grp.FullPath,
 		LDAPCN:    &grp.LDAPCN,
+		Archived:  &grp.Archived,
 	}
 
 	if grp.CreatedAt != nil {

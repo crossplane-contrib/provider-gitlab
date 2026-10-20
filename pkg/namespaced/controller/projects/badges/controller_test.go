@@ -195,7 +195,7 @@ func TestObserve(t *testing.T) {
 		"NotFound": {
 			args: args{
 				badge: &mockBadgeClient{GetFn: func(gid any, badge int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectBadge, *gitlab.Response, error) {
-					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 				}},
 				cr: func() resource.Managed { cr := badge(withProjectID()); meta.SetExternalName(cr, "999"); return cr }(),
 			},

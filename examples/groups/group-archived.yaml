@@ -1,0 +1,19 @@
+# Retire a group without deleting it: archive it, and leave Delete out of
+# managementPolicies so deleting this resource keeps the archived group.
+# Requires the provider flag --enable-management-policies and GitLab 18.9 or later.
+# On the cluster-scoped kind (groups.gitlab.crossplane.io), set
+# deletionPolicy: Orphan instead.
+apiVersion: groups.gitlab.m.crossplane.io/v1alpha1
+kind: Group
+metadata:
+  name: example-archived-group
+  namespace: default
+spec:
+  managementPolicies: ["Observe", "Create", "Update", "LateInitialize"]
+  forProvider:
+    path: "example-archived-group-path"
+    description: "retired group"
+    archived: true
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig

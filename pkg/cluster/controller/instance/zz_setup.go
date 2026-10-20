@@ -19,7 +19,6 @@ limitations under the License.
 package instance
 
 import (
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/appearance"
@@ -29,11 +28,13 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/serviceaccountaccesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/serviceaccounts"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/settings"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/users"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/instance/variables"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
-func Setup(mgr ctrl.Manager, o controller.Options) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+func Setup(mgr ctrl.Manager, o common.ControllerOptions) error {
+	for _, setup := range []func(ctrl.Manager, common.ControllerOptions) error{
 		settings.SetupApplicationSettings,
 		runners.SetupRunner,
 		appearance.SetupAppearance,
@@ -42,6 +43,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		license.SetupLicense,
 		variables.SetupVariable,
 		applications.SetupApplication,
+		users.SetupUser,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -52,8 +54,8 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 
 // SetupGated creates all Gitlab API controllers with the supplied logger and adds
 // them to the supplied manager with CRD gate support for SafeStart.
-func SetupGated(mgr ctrl.Manager, o controller.Options) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+func SetupGated(mgr ctrl.Manager, o common.ControllerOptions) error {
+	for _, setup := range []func(ctrl.Manager, common.ControllerOptions) error{
 		settings.SetupApplicationSettingsGated,
 		runners.SetupRunnerGated,
 		appearance.SetupAppearanceGated,
@@ -62,6 +64,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		license.SetupLicenseGated,
 		variables.SetupVariableGated,
 		applications.SetupApplicationGated,
+		users.SetupUserGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

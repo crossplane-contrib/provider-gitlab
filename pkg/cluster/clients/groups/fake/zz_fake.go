@@ -34,6 +34,8 @@ type MockClient struct {
 	MockCreateGroup           func(opt *gitlab.CreateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	MockUpdateGroup           func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	MockDeleteGroup           func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockArchiveGroup          func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	MockUnarchiveGroup        func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockShareGroupWithGroup   func(gid interface{}, opt *gitlab.ShareGroupWithGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error)
 	MockUnshareGroupFromGroup func(gid interface{}, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 	MockListGroups            func(opt *gitlab.ListGroupsOptions, options ...gitlab.RequestOptionFunc) ([]*gitlab.Group, *gitlab.Response, error)
@@ -87,6 +89,25 @@ type MockClient struct {
 	MockGetGroupHarborSettings func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error)
 	MockSetUpGroupHarbor       func(gid any, opt *gitlab.SetUpHarborOptions, options ...gitlab.RequestOptionFunc) (*gitlab.HarborIntegration, *gitlab.Response, error)
 	MockDisableGroupHarbor     func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+
+	MockGetGroupMattermostIntegration    func(gid any, options ...gitlab.RequestOptionFunc) (*groups.GroupMattermostIntegration, *gitlab.Response, error)
+	MockSetGroupMattermostIntegration    func(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error)
+	MockDeleteGroupMattermostIntegration func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+}
+
+// GetGroupMattermostIntegration calls the underlying MockGetGroupMattermostIntegration method.
+func (c *MockClient) GetGroupMattermostIntegration(gid any, options ...gitlab.RequestOptionFunc) (*groups.GroupMattermostIntegration, *gitlab.Response, error) {
+	return c.MockGetGroupMattermostIntegration(gid, options...)
+}
+
+// SetGroupMattermostIntegration calls the underlying MockSetGroupMattermostIntegration method.
+func (c *MockClient) SetGroupMattermostIntegration(gid any, opt *gitlab.GroupMattermostIntegrationOptions, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMattermostIntegration, *gitlab.Response, error) {
+	return c.MockSetGroupMattermostIntegration(gid, opt, options...)
+}
+
+// DeleteGroupMattermostIntegration calls the underlying MockDeleteGroupMattermostIntegration method.
+func (c *MockClient) DeleteGroupMattermostIntegration(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockDeleteGroupMattermostIntegration(gid, options...)
 }
 
 // GetGroupHarborSettings calls the underlying MockGetGroupHarborSettings method.
@@ -122,6 +143,16 @@ func (c *MockClient) UpdateGroup(pid interface{}, opt *gitlab.UpdateGroupOptions
 // DeleteGroup calls the underlying MockDeleteGroup method
 func (c *MockClient) DeleteGroup(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 	return c.MockDeleteGroup(pid, opt)
+}
+
+// ArchiveGroup calls the underlying MockArchiveGroup method.
+func (c *MockClient) ArchiveGroup(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockArchiveGroup(gid, options...)
+}
+
+// UnarchiveGroup calls the underlying MockUnarchiveGroup method.
+func (c *MockClient) UnarchiveGroup(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	return c.MockUnarchiveGroup(gid, options...)
 }
 
 // ShareGroupWithGroup calls the underlying MockShareGroupWithGroup method

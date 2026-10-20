@@ -17,16 +17,10 @@ limitations under the License.
 package projects
 
 import (
-	"strings"
-
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-)
-
-const (
-	errProtectedBranchNotFound = "404 Not found"
 )
 
 // ProtectedBranchClient defines GitLab Protected Branch service operations
@@ -40,14 +34,6 @@ type ProtectedBranchClient interface {
 func NewProtectedBranchClient(cfg common.Config) ProtectedBranchClient {
 	git := common.NewClient(cfg)
 	return git.ProtectedBranches
-}
-
-// IsErrorProtectedBranchNotFound helper function to test for errProtectedBranchNotFound error.
-func IsErrorProtectedBranchNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errProtectedBranchNotFound)
 }
 
 // LateInitializeProtectedBranch fills the empty fields in the protected branch spec with the

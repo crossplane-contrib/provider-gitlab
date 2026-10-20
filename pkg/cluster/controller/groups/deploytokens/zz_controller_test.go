@@ -72,6 +72,13 @@ var (
 	}
 
 	extNameAnnotation = map[string]string{meta.AnnotationKeyExternalName: fmt.Sprint(deployTokenID)}
+
+	previousDeployTokenID  = int64(1233)
+	sPreviousDeployTokenID = strconv.FormatInt(previousDeployTokenID, 10)
+	renewalPeriodDays      = 30
+	// With a 30-day period the default threshold renews 10 days before expiry.
+	dueExpiresAt    = time.Now().UTC().Truncate(time.Second).AddDate(0, 0, 5)
+	notDueExpiresAt = time.Now().UTC().Truncate(time.Second).AddDate(0, 0, 25)
 )
 
 type args struct {
@@ -96,6 +103,14 @@ func withExternalName(deployTokenID string) deployTokenModifier {
 
 func withAnnotations(a map[string]string) deployTokenModifier {
 	return func(p *v1alpha1.DeployToken) { meta.AddAnnotations(p, a) }
+}
+
+func withRenewAt(t time.Time) deployTokenModifier {
+	return func(r *v1alpha1.DeployToken) { r.Status.RenewAt = &metav1.Time{Time: t} }
+}
+
+func withDeletionTimestamp() deployTokenModifier {
+	return func(r *v1alpha1.DeployToken) { r.SetDeletionTimestamp(&metav1.Time{Time: time.Unix(0, 0)}) }
 }
 
 func deployToken(m ...deployTokenModifier) *v1alpha1.DeployToken {
@@ -176,7 +191,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				deployToken: &fake.MockClient{
 					MockGetGroupDeployToken: func(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: deployToken(
@@ -269,6 +284,105 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
+		"RenewalNotDue": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockGetGroupDeployToken: func(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &gitlab.DeployToken{ID: deployTokenID, Username: username, ExpiresAt: &notDueExpiresAt}, &gitlab.Response{}, nil
+					},
+				},
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID:           &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withExternalName(sDeployTokenID),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID:           &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withConditions(v2.Available()),
+					withRenewAt(notDueExpiresAt.AddDate(0, 0, -10)),
+					withExternalName(sDeployTokenID),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:   true,
+					ResourceUpToDate: true,
+				},
+			},
+		},
+		"RenewalDue": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockGetGroupDeployToken: func(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &gitlab.DeployToken{ID: deployTokenID, Username: username, ExpiresAt: &dueExpiresAt}, &gitlab.Response{}, nil
+					},
+				},
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID:           &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withExternalName(sDeployTokenID),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID:           &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withRenewAt(dueExpiresAt.AddDate(0, 0, -10)),
+					withExternalName(sDeployTokenID),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists: false,
+				},
+			},
+		},
+		"RenewalDueWhileDeleting": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockGetGroupDeployToken: func(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &gitlab.DeployToken{ID: deployTokenID, Username: username, ExpiresAt: &dueExpiresAt}, &gitlab.Response{}, nil
+					},
+				},
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID:           &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withExternalName(sDeployTokenID),
+					withDeletionTimestamp(),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID:           &deployTokenID,
+						Username:          &username,
+						RenewalPeriodDays: &renewalPeriodDays,
+					}),
+					withConditions(v2.Available()),
+					withRenewAt(dueExpiresAt.AddDate(0, 0, -10)),
+					withExternalName(sDeployTokenID),
+					withDeletionTimestamp(),
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:   true,
+					ResourceUpToDate: true,
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -320,7 +434,6 @@ func TestCreate(t *testing.T) {
 					},
 				},
 				cr: deployToken(
-					withAnnotations(extNameAnnotation),
 					withSpec(v1alpha1.DeployTokenParameters{
 						GroupID: &deployTokenID,
 					}),
@@ -336,6 +449,113 @@ func TestCreate(t *testing.T) {
 				result: managed.ExternalCreation{
 					ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)},
 				},
+			},
+		},
+		"ReplaceDeletesPreviousToken": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockDeleteGroupDeployToken: func(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						if deployToken != previousDeployTokenID {
+							return nil, errors.Errorf("deleted token %d, want %d", deployToken, previousDeployTokenID)
+						}
+						return &gitlab.Response{}, nil
+					},
+					MockCreateGroupDeployToken: func(pid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &deployTokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: deployToken(
+					withExternalName(sPreviousDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID: &deployTokenID,
+					}),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withExternalName(sDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID: &deployTokenID,
+					}),
+				),
+				result: managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)},
+				},
+			},
+		},
+		"ReplacePreviousTokenAlreadyGone": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockDeleteGroupDeployToken: func(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
+					},
+					MockCreateGroupDeployToken: func(pid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return &deployTokenObj, &gitlab.Response{}, nil
+					},
+				},
+				cr: deployToken(
+					withExternalName(sPreviousDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID: &deployTokenID,
+					}),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withExternalName(sDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID: &deployTokenID,
+					}),
+				),
+				result: managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{"token": []byte(token)},
+				},
+			},
+		},
+		"ReplaceDeleteFailedKeepsPreviousToken": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockDeleteGroupDeployToken: func(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusForbidden}}, errBoom
+					},
+				},
+				cr: deployToken(
+					withExternalName(sPreviousDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID: &deployTokenID,
+					}),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withExternalName(sPreviousDeployTokenID),
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID: &deployTokenID,
+					}),
+				),
+				err: errors.Wrap(errBoom, errReplaceFailed),
+			},
+		},
+		"FailedCreationNilToken": {
+			args: args{
+				deployToken: &fake.MockClient{
+					MockCreateGroupDeployToken: func(pid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
+						return nil, nil, errBoom
+					},
+				},
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID: &deployTokenID,
+					}),
+				),
+			},
+			want: want{
+				cr: deployToken(
+					withSpec(v1alpha1.DeployTokenParameters{
+						GroupID: &deployTokenID,
+					}),
+				),
+				err: errors.Wrap(errBoom, errCreateFailed),
 			},
 		},
 		"FailedCreation": {

@@ -1,0 +1,13 @@
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: IntegrationExternalWiki
+metadata:
+  name: external-wiki-p7
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    projectId: 7
+    externalWikiUrl: "https://wiki.example.com"

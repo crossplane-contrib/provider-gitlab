@@ -23,13 +23,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
@@ -47,40 +43,30 @@ import (
 
 const (
 	errNotGroup          = "managed resource is not a Gitlab Group custom resource"
-	errIDNotInt          = "specified ID is not an integer"
 	errGetFailed         = "cannot get Gitlab Group"
 	errCreateFailed      = "cannot create Gitlab Group"
 	errUpdateFailed      = "cannot update Gitlab Group"
 	errShareFailed       = "cannot share Gitlab Group with: %v"
 	errUnshareFailed     = "cannot unshare Gitlab Group from: %v"
 	errDeleteFailed      = "cannot delete Gitlab Group"
+	errArchiveFailed     = "cannot archive Gitlab Group"
+	errUnarchiveFailed   = "cannot unarchive Gitlab Group"
 	errMissingGroupID    = "missing group ID for group to share with"
 	errSWGMissingGroupID = "FOllowing SharedWithGroup is missing GroupID: %v"
 	errLateInitialize    = "Error during LateInitialization: "
 )
 
 // SetupGroup adds a controller that reconciles Groups.
-func SetupGroup(mgr ctrl.Manager, o controller.Options) error {
+func SetupGroup(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName("cluster." + v1alpha1.GroupKubernetesGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.GroupKubernetesGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewGroupClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
+	)
 
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.GroupKubernetesGroupVersionKind),
-		reconcilerOpts...)
-
-	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.GroupList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+	if err := common.AddMRStateRecorder(mgr, o, &v1alpha1.GroupList{}); err != nil {
 		return err
 	}
 
@@ -92,7 +78,7 @@ func SetupGroup(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupGroupGated adds a controller with CRD gate support.
-func SetupGroupGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupGroupGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupGroup(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.GroupKubernetesGroupVersionKind.String())
@@ -121,6 +107,10 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type external struct {
 	kube   client.Client
 	client groups.Client
+
+	cache struct {
+		isArchived bool
+	}
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) { //nolint:gocyclo
@@ -134,15 +124,14 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	groupID, err := strconv.Atoi(externalName)
-	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errIDNotInt)
+	if err := common.ValidateExternalName(externalName, cr.GetManagementPolicies()); err != nil {
+		return managed.ExternalObservation{}, err
 	}
 
 	//nolint:staticcheck // Keeping this for backward compatibility during deprecation
 	cr.Spec.ForProvider.EmailsEnabled = lateInitializeEmailsEnabled(cr.Spec.ForProvider.EmailsEnabled, cr.Spec.ForProvider.EmailsDisabled)
 
-	grp, res, err := e.client.GetGroup(groupID, nil)
+	grp, res, err := e.client.GetGroup(externalName, nil)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -176,6 +165,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 	isResourceLateInitialized := !cmp.Equal(current, &cr.Spec.ForProvider)
 
+	e.cache.isArchived = grp.Archived
 	cr.Status.AtProvider = groups.GenerateObservation(grp)
 	isUpToDate, err := isGroupUpToDate(&cr.Spec.ForProvider, grp)
 	if err != nil {
@@ -214,8 +204,17 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotGroup)
 	}
+	gid := meta.GetExternalName(cr)
+	archived := cr.Spec.ForProvider.Archived
+
+	if archived != nil && !*archived && e.cache.isArchived {
+		if _, err := e.client.UnarchiveGroup(gid, gitlab.WithContext(ctx)); err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errUnarchiveFailed)
+		}
+	}
+
 	grp, _, err := e.client.UpdateGroup(
-		meta.GetExternalName(cr),
+		gid,
 		groups.GenerateEditGroupOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
@@ -256,6 +255,12 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 					return managed.ExternalUpdate{}, errors.Wrapf(err, errUnshareFailed, sh.GroupID)
 				}
 			}
+		}
+	}
+
+	if archived != nil && *archived && !e.cache.isArchived {
+		if _, err := e.client.ArchiveGroup(gid, gitlab.WithContext(ctx)); err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errArchiveFailed)
 		}
 	}
 
@@ -345,6 +350,9 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) (bool, error)
 		return false, nil
 	}
 	if !clients.IsBoolEqualToBoolPtr(p.MembershipLock, g.MembershipLock) {
+		return false, nil
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.Archived, g.Archived) {
 		return false, nil
 	}
 	if (p.Visibility != nil) && (!cmp.Equal(string(*p.Visibility), string(g.Visibility))) {

@@ -185,11 +185,12 @@ func TestObserve(t *testing.T) {
 			args: args{
 				projectApprovalRule: &fake.MockClient{
 					MockGetProjectApprovalRule: func(pid any, ruleID int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectApprovalRule, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: projectApprovalRule(
 					withProjectID(),
+					withExternalName("1"),
 					withSpec(v1alpha1.ApprovalRuleParameters{
 						ApprovalsRequired: &approvalsRequired,
 						ProjectID:         &projectID,
@@ -199,6 +200,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: projectApprovalRule(
 					withProjectID(),
+					withExternalName("1"),
 					withSpec(v1alpha1.ApprovalRuleParameters{
 						ApprovalsRequired: &approvalsRequired,
 						Name:              &name,

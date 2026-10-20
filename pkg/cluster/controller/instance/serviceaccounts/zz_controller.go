@@ -23,14 +23,10 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"k8s.io/utils/ptr"
@@ -41,17 +37,19 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/instance"
+	commonController "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
 
 const (
-	errNotServiceAccount = "managed resource is not a Gitlab service account custom resource"
-	errGetFailed         = "cannot get Gitlab service account"
-	errCreateFailed      = "cannot create Gitlab service account"
-	errUpdateFailed      = "cannot update Gitlab service account"
-	errDeleteFailed      = "cannot delete Gitlab service account"
-	errIDNotInt          = "specified ID is not an integer"
-	errInvalidFilter     = "invalid baseline permissions filter %q"
+	errNotServiceAccount  = "managed resource is not a Gitlab service account custom resource"
+	errGetFailed          = "cannot get Gitlab service account"
+	errCreateFailed       = "cannot create Gitlab service account"
+	errUpdateFailed       = "cannot update Gitlab service account"
+	errUpdateAvatarFailed = "cannot update Gitlab service account avatar"
+	errDeleteFailed       = "cannot delete Gitlab service account"
+	errIDNotInt           = "specified ID is not an integer"
+	errInvalidFilter      = "invalid baseline permissions filter %q"
 
 	accessLevelNoAccess             = "no-access"
 	accessLevelNoAccessValue        = 0
@@ -74,27 +72,16 @@ const (
 )
 
 // SetupServiceAccount adds a controller that reconciles GitLab Service Accounts.
-func SetupServiceAccount(mgr ctrl.Manager, o controller.Options) error {
+func SetupServiceAccount(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName("cluster." + v1alpha1.ServiceAccountGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.ServiceAccountGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: instance.NewServiceAccountClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
+	)
 
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.ServiceAccountGroupVersionKind),
-		reconcilerOpts...)
-
-	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.ServiceAccountList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+	if err := common.AddMRStateRecorder(mgr, o, &v1alpha1.ServiceAccountList{}); err != nil {
 		return err
 	}
 
@@ -106,7 +93,7 @@ func SetupServiceAccount(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupServiceAccountGated adds a controller with CRD gate support.
-func SetupServiceAccountGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupServiceAccountGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupServiceAccount(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.ServiceAccountGroupVersionKind.String())
@@ -177,14 +164,21 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.Status.AtProvider = instance.GenerateServiceAccountObservation(serviceAccount)
 	cr.Status.SetConditions(v2.Available())
 
+	avatar, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return managed.ExternalObservation{}, err
+	}
+
 	groupsUpToDate, err := e.observeBaselinePermissions(ctx, cr, serviceAccount.ID)
 	if err != nil {
 		return managed.ExternalObservation{}, err
 	}
 
 	return managed.ExternalObservation{
-		ResourceExists:          true,
-		ResourceUpToDate:        instance.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) && groupsUpToDate,
+		ResourceExists: true,
+		ResourceUpToDate: instance.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) &&
+			common.IsAvatarUpToDate(avatar, serviceAccount.AvatarURL) &&
+			groupsUpToDate,
 		ResourceLateInitialized: false,
 	}, nil
 }
@@ -233,6 +227,18 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
+
+	avatar, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+
+	modifyUserOptions := instance.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider)
+	modifyUserOptions.Avatar, err = common.AvatarUpload(avatar, cr.Status.AtProvider.AvatarURL)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAvatarFailed)
+	}
+
 	updateWaitGroup := sync.WaitGroup{}
 	errorsChannel := make(chan error, 3) // buffer size of 3 to avoid blocking if all operations fail
 
@@ -240,7 +246,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	updateWaitGroup.Go(func() {
 		_, _, err := e.client.ModifyUser(
 			serviceAccountID,
-			instance.GenerateUpdateServiceAccountOptions(&cr.Spec.ForProvider),
+			modifyUserOptions,
 			gitlab.WithContext(ctx))
 		if err != nil {
 			errorsChannel <- errors.Wrap(err, errUpdateFailed)

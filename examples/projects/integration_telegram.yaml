@@ -1,0 +1,18 @@
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: IntegrationTelegram
+metadata:
+  name: telegram-p7
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    projectId: 7
+    room: "@my-channel"
+    tokenSecretRef:
+      name: telegram-credentials
+      key: token
+    branchesToBeNotified: "protected"
+    pipelineEvents: true
