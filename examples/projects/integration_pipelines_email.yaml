@@ -1,0 +1,17 @@
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: IntegrationPipelinesEmail
+metadata:
+  name: pipelines-email-p7
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    projectId: 7
+    recipients:
+      - dev@example.com
+      - ops@example.com
+    notifyOnlyBrokenPipelines: true
+    branchesToBeNotified: default_and_protected

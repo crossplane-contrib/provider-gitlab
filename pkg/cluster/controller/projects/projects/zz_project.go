@@ -54,6 +54,8 @@ const (
 	errUpdateFailed            = "cannot update Gitlab project"
 	errUpdatePushRulesFailed   = "cannot update Gitlab project push rules"
 	errDeleteFailed            = "cannot delete Gitlab project"
+	errArchiveFailed           = "cannot archive Gitlab project"
+	errUnarchiveFailed         = "cannot unarchive Gitlab project"
 	errGetFailed               = "cannot retrieve Gitlab project with"
 	errGetPushRulesFailed      = "cannot retrieve Gitlab project push rules"
 	errLateInitialize          = "cannot late-initialize Gitlab project"
@@ -127,6 +129,7 @@ type external struct {
 	cache struct {
 		externalPushRules   *v1alpha1.PushRules
 		isPushRulesUpToDate bool
+		isArchived          bool
 	}
 }
 
@@ -141,12 +144,11 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	projectID, err := strconv.Atoi(externalName)
-	if err != nil {
-		return managed.ExternalObservation{}, errors.New(errNotProject)
+	if err := common.ValidateExternalName(externalName, cr.GetManagementPolicies()); err != nil {
+		return managed.ExternalObservation{}, err
 	}
 
-	prj, res, err := e.client.GetProject(projectID, nil)
+	prj, res, err := e.client.GetProject(externalName, nil)
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
@@ -195,6 +197,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errCheckPushRulesUpToDate)
 	}
 
+	e.cache.isArchived = prj.Archived
 	cr.Status.AtProvider = projects.GenerateObservation(prj)
 	return managed.ExternalObservation{
 		ResourceExists:   true,
@@ -233,7 +236,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalCreation{}, errors.Wrap(err, errKubeUpdateFailed)
 }
 
-func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
+func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) { //nolint:gocyclo
 	cr, ok := mg.(*v1alpha1.Project)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotProject)
@@ -249,8 +252,17 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		}
 	}
 
+	pid := meta.GetExternalName(cr)
+	archived := cr.Spec.ForProvider.Archived
+
+	if archived != nil && !*archived && e.cache.isArchived {
+		if _, _, err := e.client.UnarchiveProject(pid, gitlab.WithContext(ctx)); err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errUnarchiveFailed)
+		}
+	}
+
 	_, _, err := e.client.EditProject(
-		meta.GetExternalName(cr),
+		pid,
 		projects.GenerateEditProjectOptions(cr.Name, current),
 		gitlab.WithContext(ctx),
 	)
@@ -261,6 +273,12 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !e.cache.isPushRulesUpToDate {
 		if err := e.updatePushRules(ctx, cr); err != nil {
 			return managed.ExternalUpdate{}, err
+		}
+	}
+
+	if archived != nil && *archived && !e.cache.isArchived {
+		if _, _, err := e.client.ArchiveProject(pid, gitlab.WithContext(ctx)); err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errArchiveFailed)
 		}
 	}
 	return managed.ExternalUpdate{}, nil
@@ -353,7 +371,11 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 		in.ContainerRegistryAccessLevel = clients.LateInitializeAccessControlValue(in.ContainerRegistryAccessLevel, project.ContainerRegistryAccessLevel)
 	}
 
-	in.DefaultBranch = clients.LateInitializeStringPtr(in.DefaultBranch, project.DefaultBranch)
+	// GitLab reports a default branch for empty repositories although the
+	// branch does not exist yet, and rejects it on edit.
+	if !project.EmptyRepo {
+		in.DefaultBranch = clients.LateInitializeStringPtr(in.DefaultBranch, project.DefaultBranch)
+	}
 	in.Description = clients.LateInitializeStringPtr(in.Description, project.Description)
 	in.EnvironmentsAccessLevel = clients.LateInitializeAccessControlValue(in.EnvironmentsAccessLevel, project.EnvironmentsAccessLevel)
 	in.FeatureFlagsAccessLevel = clients.LateInitializeAccessControlValue(in.FeatureFlagsAccessLevel, project.FeatureFlagsAccessLevel)
@@ -404,12 +426,11 @@ func (e *external) lateInitialize(ctx context.Context, cr *v1alpha1.Project, pro
 	in.PagesAccessLevel = clients.LateInitializeAccessControlValue(in.PagesAccessLevel, project.PagesAccessLevel)
 	in.Path = clients.LateInitializeStringPtr(in.Path, project.Path)
 
-	// Late-initialize publicJobs and publicBuilds for backward compatibility
-	// Only initialize if both fields are unset
+	// publicJobs is not late-initialized while the deprecated publicBuilds is
+	// set, because publicJobs takes precedence and would override it.
 	//nolint:staticcheck // We intentionally use the deprecated field for backward compatibility
 	if in.PublicBuilds == nil && in.PublicJobs == nil {
 		in.PublicJobs = &project.PublicJobs
-		in.PublicBuilds = &project.PublicJobs
 	}
 
 	in.ReleasesAccessLevel = clients.LateInitializeAccessControlValue(in.ReleasesAccessLevel, project.ReleasesAccessLevel)
@@ -547,6 +568,9 @@ func isProjectUpToDate(p *v1alpha1.ProjectParameters, g *gitlab.Project) bool { 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.ApprovalsBeforeMerge, g.ApprovalsBeforeMerge) { //nolint:staticcheck
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.Archived, g.Archived) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.AutocloseReferencedIssues, g.AutocloseReferencedIssues) {

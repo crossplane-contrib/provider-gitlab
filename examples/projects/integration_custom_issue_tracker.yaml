@@ -1,0 +1,15 @@
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: IntegrationCustomIssueTracker
+metadata:
+  name: custom-issue-tracker-p7
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    projectId: 7
+    projectUrl: "https://tracker.example.com/project"
+    issuesUrl: "https://tracker.example.com/issues/:id"
+    newIssueUrl: "https://tracker.example.com/issues/new"

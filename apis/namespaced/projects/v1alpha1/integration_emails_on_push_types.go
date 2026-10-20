@@ -1,0 +1,133 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1alpha1
+
+import (
+	"reflect"
+
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
+)
+
+// IntegrationEmailsOnPushParameters defines the desired state of a GitLab Project Emails on Push Integration.
+type IntegrationEmailsOnPushParameters struct {
+	// ProjectID is the ID of the project.
+	// +optional
+	// +immutable
+	ProjectID *int64 `json:"projectId,omitempty"`
+
+	// ProjectIDRef is a reference to a project to retrieve its projectId.
+	// +optional
+	// +immutable
+	ProjectIDRef *v2.NamespacedReference `json:"projectIdRef,omitempty"`
+
+	// ProjectIDSelector selects reference to a project to retrieve its projectId.
+	// +optional
+	ProjectIDSelector *v2.NamespacedSelector `json:"projectIdSelector,omitempty"`
+
+	// Recipients is a whitespace-separated list of email addresses that receive the push notifications.
+	// +kubebuilder:validation:Pattern=`\S`
+	// +required
+	Recipients string `json:"recipients"`
+
+	// DisableDiffs disables code diffs in the notification emails.
+	// +optional
+	DisableDiffs *bool `json:"disableDiffs,omitempty"`
+
+	// SendFromCommitterEmail sends the notifications from the committer's email address
+	// if its domain matches the domain of the GitLab instance.
+	// +optional
+	SendFromCommitterEmail *bool `json:"sendFromCommitterEmail,omitempty"`
+
+	// PushEvents enables notifications for push events.
+	// +optional
+	PushEvents *bool `json:"pushEvents,omitempty"`
+
+	// TagPushEvents enables notifications for tag push events.
+	// +optional
+	TagPushEvents *bool `json:"tagPushEvents,omitempty"`
+
+	// BranchesToBeNotified selects the branches to send notifications for.
+	// Notifications are always sent for tag pushes. GitLab defaults to all.
+	// +kubebuilder:validation:Enum:=all;default;protected;default_and_protected
+	// +optional
+	BranchesToBeNotified *string `json:"branchesToBeNotified,omitempty"`
+}
+
+// IntegrationEmailsOnPushObservation represents the observed state of a GitLab Project Emails on Push Integration.
+type IntegrationEmailsOnPushObservation struct {
+	v1alpha1.CommonIntegrationObservation `json:",inline"`
+
+	// Recipients is the whitespace-separated list of email addresses that receive the push notifications.
+	Recipients string `json:"recipients,omitempty"`
+	// DisableDiffs indicates whether code diffs are disabled in the notification emails.
+	DisableDiffs bool `json:"disableDiffs"`
+	// SendFromCommitterEmail indicates whether the notifications are sent from the committer's email address.
+	SendFromCommitterEmail bool `json:"sendFromCommitterEmail"`
+	// BranchesToBeNotified is the set of branches notifications are sent for.
+	BranchesToBeNotified string `json:"branchesToBeNotified,omitempty"`
+}
+
+// A IntegrationEmailsOnPushSpec defines the desired state of a GitLab Project Emails on Push Integration.
+type IntegrationEmailsOnPushSpec struct {
+	v2.ManagedResourceSpec `json:",inline"`
+	// ForProvider represents the desired state of the emails on push integration.
+	ForProvider IntegrationEmailsOnPushParameters `json:"forProvider"`
+}
+
+// A IntegrationEmailsOnPushStatus represents the observed state of a GitLab Project Emails on Push Integration.
+type IntegrationEmailsOnPushStatus struct {
+	v2.ManagedResourceStatus `json:",inline"`
+	// AtProvider represents the observed state of the emails on push integration.
+	AtProvider IntegrationEmailsOnPushObservation `json:"atProvider,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// A IntegrationEmailsOnPush is a managed resource that represents a GitLab Project Emails on Push Integration.
+// +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+// +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="PROJECT",type="string",JSONPath=".spec.forProvider.projectId"
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitlab}
+type IntegrationEmailsOnPush struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Spec              IntegrationEmailsOnPushSpec   `json:"spec"`
+	Status            IntegrationEmailsOnPushStatus `json:"status,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// IntegrationEmailsOnPushList contains a list of IntegrationEmailsOnPush items.
+type IntegrationEmailsOnPushList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []IntegrationEmailsOnPush `json:"items"`
+}
+
+// IntegrationEmailsOnPush type metadata
+var (
+	IntegrationEmailsOnPushKind             = reflect.TypeOf(IntegrationEmailsOnPush{}).Name()
+	IntegrationEmailsOnPushGroupKind        = schema.GroupKind{Group: Group, Kind: IntegrationEmailsOnPushKind}.String()
+	IntegrationEmailsOnPushKindAPIVersion   = IntegrationEmailsOnPushKind + "." + SchemeGroupVersion.String()
+	IntegrationEmailsOnPushGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationEmailsOnPushKind)
+)

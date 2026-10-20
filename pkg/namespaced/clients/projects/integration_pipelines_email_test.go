@@ -1,0 +1,285 @@
+package projects
+
+import (
+	"encoding/json"
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	"k8s.io/utils/ptr"
+
+	"github.com/crossplane-contrib/provider-gitlab/apis/common/v1alpha1"
+	projectsv1alpha1 "github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+)
+
+func TestGenerateSetPipelinesEmailServiceOptions(t *testing.T) {
+	cases := map[string]struct {
+		parameters *projectsv1alpha1.IntegrationPipelinesEmailParameters
+		want       *gitlab.SetPipelinesEmailServiceOptions
+	}{
+		"AllFieldsSet": {
+			parameters: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				ProjectID:                 ptr.To[int64](123),
+				Recipients:                []string{"a@example.com", "b@example.com"},
+				NotifyOnlyBrokenPipelines: ptr.To(false),
+				BranchesToBeNotified:      ptr.To("protected"),
+				PipelineEvents:            ptr.To(true),
+			},
+			want: &gitlab.SetPipelinesEmailServiceOptions{
+				Recipients:                ptr.To("a@example.com,b@example.com"),
+				NotifyOnlyBrokenPipelines: ptr.To(false),
+				BranchesToBeNotified:      ptr.To("protected"),
+				PipelineEvents:            ptr.To(true),
+			},
+		},
+		"OnlyRecipients": {
+			parameters: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients: []string{"a@example.com"},
+			},
+			want: &gitlab.SetPipelinesEmailServiceOptions{
+				Recipients: ptr.To("a@example.com"),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateSetPipelinesEmailServiceOptions(tc.parameters)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("GenerateSetPipelinesEmailServiceOptions(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGenerateIntegrationPipelinesEmailObservation(t *testing.T) {
+	cases := map[string]struct {
+		service *gitlab.PipelinesEmailService
+		want    projectsv1alpha1.IntegrationPipelinesEmailObservation
+	}{
+		"FullObservation": {
+			service: &gitlab.PipelinesEmailService{
+				Service: gitlab.Service{
+					ID:             999,
+					Title:          "Pipeline status emails",
+					Slug:           "pipelines-email",
+					Active:         true,
+					PipelineEvents: true,
+				},
+				Properties: &gitlab.PipelinesEmailProperties{
+					Recipients:                "a@example.com, b@example.com\nc@example.com",
+					NotifyOnlyBrokenPipelines: true,
+					BranchesToBeNotified:      "default",
+				},
+			},
+			want: projectsv1alpha1.IntegrationPipelinesEmailObservation{
+				CommonIntegrationObservation: v1alpha1.CommonIntegrationObservation{
+					ID:                             ptr.To[int64](999),
+					Title:                          ptr.To("Pipeline status emails"),
+					Slug:                           ptr.To("pipelines-email"),
+					Active:                         ptr.To(true),
+					AlertEvents:                    ptr.To(false),
+					CommitEvents:                   ptr.To(false),
+					ConfidentialIssuesEvents:       ptr.To(false),
+					ConfidentialNoteEvents:         ptr.To(false),
+					DeploymentEvents:               ptr.To(false),
+					GroupConfidentialMentionEvents: ptr.To(false),
+					GroupMentionEvents:             ptr.To(false),
+					IncidentEvents:                 ptr.To(false),
+					IssuesEvents:                   ptr.To(false),
+					JobEvents:                      ptr.To(false),
+					MergeRequestsEvents:            ptr.To(false),
+					NoteEvents:                     ptr.To(false),
+					PipelineEvents:                 ptr.To(true),
+					PushEvents:                     ptr.To(false),
+					TagPushEvents:                  ptr.To(false),
+					VulnerabilityEvents:            ptr.To(false),
+					WikiPageEvents:                 ptr.To(false),
+					CommentOnEventEnabled:          ptr.To(false),
+					Inherited:                      ptr.To(false),
+				},
+				Recipients:                []string{"a@example.com", "b@example.com", "c@example.com"},
+				NotifyOnlyBrokenPipelines: true,
+				BranchesToBeNotified:      "default",
+			},
+		},
+		"NilService": {
+			service: nil,
+			want:    projectsv1alpha1.IntegrationPipelinesEmailObservation{},
+		},
+		"NilProperties": {
+			service: &gitlab.PipelinesEmailService{Service: gitlab.Service{ID: 999}},
+			want:    projectsv1alpha1.IntegrationPipelinesEmailObservation{},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GenerateIntegrationPipelinesEmailObservation(tc.service)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("GenerateIntegrationPipelinesEmailObservation(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestIntegrationPipelinesEmailObservationShowsFalse(t *testing.T) {
+	observation := GenerateIntegrationPipelinesEmailObservation(&gitlab.PipelinesEmailService{
+		Properties: &gitlab.PipelinesEmailProperties{Recipients: "a@example.com"},
+	})
+
+	raw, err := json.Marshal(observation)
+	if err != nil {
+		t.Fatalf("marshal observation: %v", err)
+	}
+	fields := map[string]json.RawMessage{}
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		t.Fatalf("unmarshal observation %s: %v", raw, err)
+	}
+	if got := string(fields["notifyOnlyBrokenPipelines"]); got != "false" {
+		t.Errorf("notifyOnlyBrokenPipelines in %s: got %q, want %q", raw, got, "false")
+	}
+}
+
+func TestIsIntegrationPipelinesEmailUpToDate(t *testing.T) {
+	observed := &gitlab.PipelinesEmailService{
+		Service: gitlab.Service{PipelineEvents: true},
+		Properties: &gitlab.PipelinesEmailProperties{
+			Recipients:                "a@example.com,b@example.com",
+			NotifyOnlyBrokenPipelines: true,
+			BranchesToBeNotified:      "default",
+		},
+	}
+
+	cases := map[string]struct {
+		spec        *projectsv1alpha1.IntegrationPipelinesEmailParameters
+		observation *gitlab.PipelinesEmailService
+		want        bool
+	}{
+		"UpToDate": {
+			spec: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients:                []string{"a@example.com", "b@example.com"},
+				NotifyOnlyBrokenPipelines: ptr.To(true),
+				BranchesToBeNotified:      ptr.To("default"),
+				PipelineEvents:            ptr.To(true),
+			},
+			observation: observed,
+			want:        true,
+		},
+		"RecipientsInDifferentOrder": {
+			spec: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients: []string{"b@example.com", "a@example.com"},
+			},
+			observation: observed,
+			want:        true,
+		},
+		"RecipientRemovedRemotely": {
+			spec: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients: []string{"a@example.com", "b@example.com", "c@example.com"},
+			},
+			observation: observed,
+			want:        false,
+		},
+		"OutOfDateNotifyOnlyBrokenPipelines": {
+			spec: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients:                []string{"a@example.com", "b@example.com"},
+				NotifyOnlyBrokenPipelines: ptr.To(false),
+			},
+			observation: observed,
+			want:        false,
+		},
+		"OutOfDateBranchesToBeNotified": {
+			spec: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients:           []string{"a@example.com", "b@example.com"},
+				BranchesToBeNotified: ptr.To("all"),
+			},
+			observation: observed,
+			want:        false,
+		},
+		"OutOfDatePipelineEvents": {
+			spec: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients:     []string{"a@example.com", "b@example.com"},
+				PipelineEvents: ptr.To(false),
+			},
+			observation: observed,
+			want:        false,
+		},
+		"NilObservation": {
+			spec:        &projectsv1alpha1.IntegrationPipelinesEmailParameters{},
+			observation: nil,
+			want:        false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := IsIntegrationPipelinesEmailUpToDate(tc.spec, tc.observation)
+			if got != tc.want {
+				t.Errorf("IsIntegrationPipelinesEmailUpToDate(): got %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestLateInitializeIntegrationPipelinesEmail(t *testing.T) {
+	remote := &gitlab.PipelinesEmailService{
+		Service: gitlab.Service{PipelineEvents: true},
+		Properties: &gitlab.PipelinesEmailProperties{
+			Recipients:                "remote@example.com",
+			NotifyOnlyBrokenPipelines: true,
+			BranchesToBeNotified:      "default",
+		},
+	}
+
+	cases := map[string]struct {
+		spec *projectsv1alpha1.IntegrationPipelinesEmailParameters
+		svc  *gitlab.PipelinesEmailService
+		want *projectsv1alpha1.IntegrationPipelinesEmailParameters
+	}{
+		"FillsUnsetFields": {
+			spec: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients: []string{"a@example.com"},
+			},
+			svc: remote,
+			want: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients:                []string{"a@example.com"},
+				NotifyOnlyBrokenPipelines: ptr.To(true),
+				BranchesToBeNotified:      ptr.To("default"),
+				PipelineEvents:            ptr.To(true),
+			},
+		},
+		"KeepsSetFields": {
+			spec: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients:                []string{"a@example.com"},
+				NotifyOnlyBrokenPipelines: ptr.To(false),
+				BranchesToBeNotified:      ptr.To("all"),
+				PipelineEvents:            ptr.To(false),
+			},
+			svc: remote,
+			want: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients:                []string{"a@example.com"},
+				NotifyOnlyBrokenPipelines: ptr.To(false),
+				BranchesToBeNotified:      ptr.To("all"),
+				PipelineEvents:            ptr.To(false),
+			},
+		},
+		"NilPropertiesIsNoop": {
+			spec: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients: []string{"a@example.com"},
+			},
+			svc: &gitlab.PipelinesEmailService{},
+			want: &projectsv1alpha1.IntegrationPipelinesEmailParameters{
+				Recipients: []string{"a@example.com"},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			LateInitializeIntegrationPipelinesEmail(tc.spec, tc.svc)
+			if diff := cmp.Diff(tc.want, tc.spec); diff != "" {
+				t.Errorf("LateInitializeIntegrationPipelinesEmail(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}

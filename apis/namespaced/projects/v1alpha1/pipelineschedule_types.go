@@ -31,6 +31,7 @@ type PipelineScheduleParameters struct {
 	// +optional
 	// +immutable
 	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1.Project
+	// +crossplane:generate:reference:extractor=github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1.ProjectID()
 	// +crossplane:generate:reference:refFieldName=ProjectIDRef
 	// +crossplane:generate:reference:selectorFieldName=ProjectIDSelector
 	ProjectID *string `json:"projectId,omitempty"`

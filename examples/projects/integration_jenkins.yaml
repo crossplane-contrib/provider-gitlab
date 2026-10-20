@@ -1,0 +1,20 @@
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: IntegrationJenkins
+metadata:
+  name: jenkins-p7
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    projectId: 7
+    url: "https://jenkins.example.com"
+    projectName: "my-job"
+    username: "gitlab-bot"
+    passwordSecretRef:
+      name: jenkins-credentials
+      key: password
+    pushEvents: true
+    mergeRequestsEvents: true

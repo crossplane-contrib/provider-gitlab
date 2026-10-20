@@ -1,0 +1,19 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: ProtectedTag
+metadata:
+  name: example-protected-tag
+  namespace: default
+spec:
+  forProvider:
+    tagName: "v*"
+    projectIdRef:
+      name: example-project
+    # 0 = no one, 30 = developers and maintainers, 40 = maintainers (default)
+    createAccessLevel: 30
+    # Grant one user, group, or deploy key per entry.
+    # User and group entries need GitLab Premium or Ultimate.
+    allowedToCreate:
+      - deployKeyId: 1
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig

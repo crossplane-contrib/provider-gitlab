@@ -17,7 +17,6 @@ limitations under the License.
 package projects
 
 import (
-	"strings"
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
@@ -36,14 +35,6 @@ type AccessTokenClient interface {
 	RotateSelf(opt *gitlab.RotatePersonalAccessTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 	GetSelf(options ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error)
 	RevokeSelf(options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
-}
-
-// IsErrorProjectAccessTokenNotFound helper function to test for errProjectAccessTokenNotFound error.
-func IsErrorProjectAccessTokenNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errProjectNotFound)
 }
 
 // NewAccessTokenClient returns a new Gitlab ProjectAccessToken service

@@ -29,10 +29,15 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	"github.com/google/go-cmp/cmp"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/projects"
 )
 
@@ -61,6 +66,82 @@ func (m *mockClient) DeleteProjectServiceAccount(pid any, sa int64, opt *gitlab.
 	return m.MockDelete(pid, sa, opt, options...)
 }
 
+// mockUserClient mocks the users API calls the controller makes for the avatar.
+type mockUserClient struct {
+	MockGetUser    func(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+	MockModifyUser func(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error)
+}
+
+var _ instance.ServiceAccountClient = &mockUserClient{}
+
+func (m *mockUserClient) GetUser(user int64, opt *gitlab.GetUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+	return m.MockGetUser(user, opt, options...)
+}
+
+func (m *mockUserClient) CreateServiceAccountUser(_ *gitlab.CreateServiceAccountUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+	panic("unexpected call")
+}
+
+func (m *mockUserClient) ModifyUser(user int64, opt *gitlab.ModifyUserOptions, options ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+	return m.MockModifyUser(user, opt, options...)
+}
+
+func (m *mockUserClient) DeleteUser(_ int64, _ ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+	panic("unexpected call")
+}
+
+func userReturning(avatarURL string) func(int64, *gitlab.GetUserOptions, ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+	return func(_ int64, _ *gitlab.GetUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+		return &gitlab.User{ID: saID, AvatarURL: avatarURL}, &gitlab.Response{}, nil
+	}
+}
+
+// testAvatar is the PNG signature, enough for content sniffing. GitLab serves it
+// from testAvatarURL after an upload under its content addressed name.
+var testAvatar = []byte("\x89PNG\r\n\x1a\n")
+
+const (
+	testAvatarName  = "4c4b6a3be1314ab86138bef4314dde022e600960d8689a2c8f8631802d20dab6.png"
+	testAvatarURL   = "https://gitlab.example.com/uploads/-/system/user/avatar/57/" + testAvatarName + "?v=1"
+	testGravatarURL = "https://secure.gravatar.com/avatar/abc?s=80&d=identicon"
+)
+
+// testSecretAvatar is the GIF signature an avatar Secret holds in the
+// avatarSecretRef cases, distinct from testAvatar so a change is visible.
+var testSecretAvatar = []byte("GIF89a")
+
+const (
+	testSecretAvatarName = "610f5ae4d76e332636a17bd357fd6ce99029316a99d320280d4d77a746bf29e8.gif"
+	testAvatarSecret     = "sa-avatar"
+	testAvatarSecretKey  = "avatar"
+	errAvatarKeyMissing  = `cannot read avatar from key "avatar" of Secret "sa-avatar" in namespace "default": Cannot find key in referenced secret`
+	errAvatarSecretGone  = `cannot read avatar from key "avatar" of Secret "sa-avatar" in namespace "default": Cannot find referenced secret: secrets "sa-avatar" not found`
+)
+
+// avatarKube returns a kube client that holds the avatar Secret with data, or
+// no Secret at all when data is nil.
+func avatarKube(data map[string][]byte) client.Client {
+	b := fake.NewClientBuilder()
+	if data != nil {
+		b = b.WithObjects(&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: testAvatarSecret}, Data: data})
+	}
+	return b.Build()
+}
+
+func withAvatarSecretRef() saModifier {
+	return func(r *v1alpha1.ServiceAccount) {
+		r.Namespace = "default"
+		r.Spec.ForProvider.AvatarSecretRef = common.TestCreateLocalSecretKeySelector(testAvatarSecret, testAvatarSecretKey)
+	}
+}
+
+func errString(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
+}
+
 var (
 	errBoom      = errors.New("boom")
 	projectID    = int64(42)
@@ -79,6 +160,12 @@ func withParams(name, username string) saModifier {
 		r.Spec.ForProvider.Name = ptr.To(name)
 		r.Spec.ForProvider.Username = ptr.To(username)
 	}
+}
+func withAvatar(image []byte) saModifier {
+	return func(r *v1alpha1.ServiceAccount) { r.Spec.ForProvider.Avatar = image }
+}
+func withAvatarURL(u string) saModifier {
+	return func(r *v1alpha1.ServiceAccount) { r.Status.AtProvider.AvatarURL = u }
 }
 func withExternalName(n string) saModifier {
 	return func(r *v1alpha1.ServiceAccount) { meta.SetExternalName(r, n) }
@@ -103,9 +190,10 @@ func TestObserve(t *testing.T) {
 		err    error
 	}
 	cases := map[string]struct {
-		client projects.ServiceAccountClient
-		cr     resource.Managed
-		want   want
+		client     projects.ServiceAccountClient
+		userClient instance.ServiceAccountClient
+		cr         resource.Managed
+		want       want
 	}{
 		"InvalidInput": {cr: invalidInput, want: want{err: errors.New(errNotServiceAccount)}},
 		"NoExternalName": {
@@ -149,10 +237,30 @@ func TestObserve(t *testing.T) {
 			cr:     sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u")),
 			want:   want{result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}},
 		},
+		"AvatarUpToDate": {
+			client:     &mockClient{MockList: listReturning(&gitlab.ProjectServiceAccount{ID: saID, Name: "n", Username: "u"})},
+			userClient: &mockUserClient{MockGetUser: userReturning(testAvatarURL)},
+			cr:         sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u"), withAvatar(testAvatar)),
+			want:       want{result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}},
+		},
+		"AvatarNotUpToDate": {
+			client:     &mockClient{MockList: listReturning(&gitlab.ProjectServiceAccount{ID: saID, Name: "n", Username: "u"})},
+			userClient: &mockUserClient{MockGetUser: userReturning(testGravatarURL)},
+			cr:         sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u"), withAvatar(testAvatar)),
+			want:       want{result: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}},
+		},
+		"ErrGetAvatar": {
+			client: &mockClient{MockList: listReturning(&gitlab.ProjectServiceAccount{ID: saID, Name: "n", Username: "u"})},
+			userClient: &mockUserClient{MockGetUser: func(_ int64, _ *gitlab.GetUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				return nil, nil, errBoom
+			}},
+			cr:   sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u"), withAvatar(testAvatar)),
+			want: want{err: errors.Wrap(errBoom, errGetFailed)},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			e := &external{client: tc.client}
+			e := &external{client: tc.client, userClient: tc.userClient}
 			o, err := e.Observe(context.Background(), tc.cr)
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("err: -want, +got:\n%s", diff)
@@ -206,6 +314,46 @@ func TestCreate(t *testing.T) {
 	}
 }
 
+func TestUpdateAvatar(t *testing.T) {
+	updated := &mockClient{MockUpdate: func(_ any, _ int64, _ *gitlab.UpdateProjectServiceAccountOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.ProjectServiceAccount, *gitlab.Response, error) {
+		return &gitlab.ProjectServiceAccount{ID: saID, Name: "n", Username: "u"}, &gitlab.Response{}, nil
+	}}
+
+	cases := map[string]struct {
+		avatarURL    string
+		modifyErr    error
+		wantFilename string
+		wantErr      error
+	}{
+		"UploadsChangedAvatar": {avatarURL: testGravatarURL, wantFilename: testAvatarName},
+		"SkipsCurrentAvatar":   {avatarURL: testAvatarURL},
+		"ErrUploadAvatar":      {avatarURL: testGravatarURL, modifyErr: errBoom, wantFilename: testAvatarName, wantErr: errors.Wrap(errBoom, errUpdateAvatarFailed)},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var gotFilename string
+			userClient := &mockUserClient{MockModifyUser: func(user int64, opt *gitlab.ModifyUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+				if user != saID {
+					t.Errorf("ModifyUser() user = %d, want %d", user, saID)
+				}
+				gotFilename = opt.Avatar.Filename
+				return &gitlab.User{}, &gitlab.Response{}, tc.modifyErr
+			}}
+			e := &external{client: updated, userClient: userClient}
+			cr := sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u"), withAvatar(testAvatar), withAvatarURL(tc.avatarURL))
+
+			_, err := e.Update(context.Background(), cr)
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+			if gotFilename != tc.wantFilename {
+				t.Errorf("Update() uploaded avatar %q, want %q", gotFilename, tc.wantFilename)
+			}
+		})
+	}
+}
+
 func TestDelete(t *testing.T) {
 	cases := map[string]struct {
 		client  projects.ServiceAccountClient
@@ -236,6 +384,74 @@ func TestDelete(t *testing.T) {
 			_, err := e.Delete(context.Background(), tc.cr)
 			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
 				t.Errorf("err: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestObserveAvatarSecretRef(t *testing.T) {
+	cases := map[string]struct {
+		secret  map[string][]byte
+		want    managed.ExternalObservation
+		wantErr string
+	}{
+		"SecretMatchesAvatar": {secret: map[string][]byte{testAvatarSecretKey: testAvatar}, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}},
+		"SecretChanged":       {secret: map[string][]byte{testAvatarSecretKey: testSecretAvatar}, want: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}},
+		"KeyMissing":          {secret: map[string][]byte{"logo": testAvatar}, wantErr: errAvatarKeyMissing},
+		"SecretMissing":       {wantErr: errAvatarSecretGone},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &external{
+				kube:       avatarKube(tc.secret),
+				client:     &mockClient{MockList: listReturning(&gitlab.ProjectServiceAccount{ID: saID, Name: "n", Username: "u"})},
+				userClient: &mockUserClient{MockGetUser: userReturning(testAvatarURL)},
+			}
+			cr := sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u"), withAvatarSecretRef())
+
+			got, err := e.Observe(context.Background(), cr)
+			if gotErr := errString(err); gotErr != tc.wantErr {
+				t.Errorf("Observe() error = %q, want %q", gotErr, tc.wantErr)
+			}
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("Observe(): -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUpdateAvatarSecretRef(t *testing.T) {
+	cases := map[string]struct {
+		secret       map[string][]byte
+		wantFilename string
+		wantErr      string
+	}{
+		"UploadsSecretAvatar": {secret: map[string][]byte{testAvatarSecretKey: testSecretAvatar}, wantFilename: testSecretAvatarName},
+		"SecretMissing":       {wantErr: errAvatarSecretGone},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			gotFilename := ""
+			e := &external{
+				kube: avatarKube(tc.secret),
+				client: &mockClient{MockUpdate: func(_ any, _ int64, _ *gitlab.UpdateProjectServiceAccountOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.ProjectServiceAccount, *gitlab.Response, error) {
+					return &gitlab.ProjectServiceAccount{ID: saID, Name: "n", Username: "u"}, &gitlab.Response{}, nil
+				}},
+				userClient: &mockUserClient{MockModifyUser: func(_ int64, opt *gitlab.ModifyUserOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.User, *gitlab.Response, error) {
+					gotFilename = opt.Avatar.Filename
+					return &gitlab.User{}, &gitlab.Response{}, nil
+				}},
+			}
+			cr := sa(withExternalName(sSAID), withProjectID(projectID), withParams("n", "u"), withAvatarURL(testAvatarURL), withAvatarSecretRef())
+
+			_, err := e.Update(context.Background(), cr)
+			if gotErr := errString(err); gotErr != tc.wantErr {
+				t.Errorf("Update() error = %q, want %q", gotErr, tc.wantErr)
+			}
+			if gotFilename != tc.wantFilename {
+				t.Errorf("Update() uploaded avatar %q, want %q", gotFilename, tc.wantFilename)
 			}
 		})
 	}
