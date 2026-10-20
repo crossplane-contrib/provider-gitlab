@@ -150,6 +150,14 @@ var (
 	IntegrationMattermostGroupVersionKind = SchemeGroupVersion.WithKind(IntegrationMattermostKind)
 )
 
+// GroupShare type metadata
+var (
+	GroupShareKind             = reflect.TypeOf(GroupShare{}).Name()
+	GroupShareGroupKind        = schema.GroupKind{Group: KubernetesGroup, Kind: GroupShareKind}.String()
+	GroupShareKindAPIVersion   = GroupShareKind + "." + SchemeGroupVersion.String()
+	GroupShareGroupVersionKind = SchemeGroupVersion.WithKind(GroupShareKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Group{}, &GroupList{})
 	SchemeBuilder.Register(&Member{}, &MemberList{})
@@ -165,4 +173,5 @@ func init() {
 	SchemeBuilder.Register(&Hook{}, &HookList{})
 	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
+	SchemeBuilder.Register(&GroupShare{}, &GroupShareList{})
 }

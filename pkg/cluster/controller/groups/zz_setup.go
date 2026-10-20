@@ -25,6 +25,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/badges"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/groups"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/groupshares"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/hooks"
 	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/integrationharbor"
 	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/groups/integrationmattermost"
@@ -55,6 +56,7 @@ func Setup(mgr ctrl.Manager, o common.ControllerOptions) error {
 		hooks.SetupHook,
 		integrationharbor.SetupIntegrationHarbor,
 		integrationmattermost.SetupIntegrationMattermost,
+		groupshares.SetupGroupShare,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -81,6 +83,7 @@ func SetupGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 		hooks.SetupHookGated,
 		integrationharbor.SetupIntegrationHarborGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
+		groupshares.SetupGroupShareGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

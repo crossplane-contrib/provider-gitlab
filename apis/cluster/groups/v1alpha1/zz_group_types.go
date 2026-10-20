@@ -157,9 +157,23 @@ type GroupParameters struct {
 	// +optional
 	ExtraSharedRunnersMinutesLimit *int64 `json:"extraSharedRunnersMinutesLimit,omitempty"`
 
-	// SharedWithGroups create links for sharing a group with another group.
+	// SharedWithGroups shares this group with other groups. It is the complete
+	// set of groups this group is shared with: shares with groups that are not
+	// listed are removed, so an empty or unset list removes all of them. Access
+	// level and expiry of an existing share are not updated. References in this
+	// list do not work with Compositions, because server-side apply replaces the
+	// whole list and drops the resolved IDs; use GroupShare resources instead,
+	// with manageSharedWithGroups set to false.
 	// +optional
 	SharedWithGroups []SharedWithGroups `json:"sharedWithGroups,omitempty"`
+
+	// ManageSharedWithGroups controls whether this Group manages the groups it
+	// is shared with through sharedWithGroups. Defaults to true. Set it to false
+	// when GroupShare resources or something outside the provider manage the
+	// shares; sharedWithGroups is then not used to reconcile shares, and they
+	// are left alone.
+	// +optional
+	ManageSharedWithGroups *bool `json:"manageSharedWithGroups,omitempty"`
 
 	// Archived sets whether the group is archived. If unset, the provider
 	// does not change the archive state. Unarchiving runs before other

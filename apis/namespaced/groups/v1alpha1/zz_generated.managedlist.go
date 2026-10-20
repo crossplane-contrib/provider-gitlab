@@ -56,6 +56,15 @@ func (l *GroupList) GetItems() []resource.Managed {
 	return items
 }
 
+// GetItems of this GroupShareList.
+func (l *GroupShareList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
 // GetItems of this HookList.
 func (l *HookList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))

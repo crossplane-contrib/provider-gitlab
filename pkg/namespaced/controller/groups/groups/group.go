@@ -220,7 +220,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}
 
-	if len(cr.Spec.ForProvider.SharedWithGroups) > 0 {
+	// With manageSharedWithGroups set to false the group's shares are left
+	// alone, so that GroupShare resources or GitLab itself can manage them.
+	manageShares := ptr.Deref(cr.Spec.ForProvider.ManageSharedWithGroups, true)
+
+	if manageShares && len(cr.Spec.ForProvider.SharedWithGroups) > 0 {
 		for _, sh := range cr.Spec.ForProvider.SharedWithGroups {
 			if sh.GroupID == nil {
 				return managed.ExternalUpdate{}, errors.New(errMissingGroupID)
@@ -241,7 +245,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		}
 	}
 
-	if len(grp.SharedWithGroups) > 0 {
+	if manageShares && len(grp.SharedWithGroups) > 0 {
 		for _, sh := range grp.SharedWithGroups {
 			isNotUnshared, err := notUnshared(sh.GroupID, cr.Spec.ForProvider.SharedWithGroups)
 			if err != nil {
@@ -401,7 +405,13 @@ func isGroupUpToDate(p *v1alpha1.GroupParameters, g *gitlab.Group) (bool, error)
 	return true, nil
 }
 
+// isSharedWithGroupsUpToDate reports whether the group is shared with exactly
+// the groups in sharedWithGroups. With manageSharedWithGroups set to false the
+// shares are not managed and always up to date.
 func isSharedWithGroupsUpToDate(cr *v1alpha1.GroupParameters, in *gitlab.Group) (bool, error) {
+	if !ptr.Deref(cr.ManageSharedWithGroups, true) {
+		return true, nil
+	}
 	if len(cr.SharedWithGroups) != len(in.SharedWithGroups) {
 		return false, nil
 	}

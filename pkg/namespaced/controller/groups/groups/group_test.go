@@ -169,6 +169,10 @@ func withSharedWithGroups(s []v1alpha1.SharedWithGroups) groupModifier {
 	return func(g *v1alpha1.Group) { g.Spec.ForProvider.SharedWithGroups = s }
 }
 
+func withManageSharedWithGroups(b bool) groupModifier {
+	return func(g *v1alpha1.Group) { g.Spec.ForProvider.ManageSharedWithGroups = &b }
+}
+
 func withSharedWithGroupsObservation(s []v1alpha1.SharedWithGroupsObservation) groupModifier {
 	return func(g *v1alpha1.Group) { g.Status.AtProvider.SharedWithGroups = s }
 }
@@ -770,10 +774,13 @@ func TestCreate(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	type want struct {
-		cr     resource.Managed
-		result managed.ExternalUpdate
-		err    error
+		cr       resource.Managed
+		result   managed.ExternalUpdate
+		err      error
+		unshared []int64
 	}
+	// unshared records the groups the controller unshared, in order.
+	var unshared []int64
 
 	cases := map[string]struct {
 		args
@@ -941,6 +948,55 @@ func TestUpdate(t *testing.T) {
 				err:    errors.Wrapf(errBoom, errUnshareFailed, groupID),
 			},
 		},
+		"UnshareAllWhenSharedWithGroupsUnset": {
+			args: args{
+				group: &fake.MockClient{
+					MockUpdateGroup: func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return &gitlab.Group{
+							ID: groupID,
+							SharedWithGroups: []gitlab.SharedWithGroup{
+								{GroupID: groupID},
+								{GroupID: groupIDtwo},
+							},
+						}, nil, nil
+					},
+					MockUnshareGroupFromGroup: func(gid interface{}, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						unshared = append(unshared, groupID)
+						return nil, nil
+					},
+				},
+				cr: group(),
+			},
+			want: want{
+				cr:       group(),
+				result:   managed.ExternalUpdate{},
+				unshared: []int64{groupID, groupIDtwo},
+			},
+		},
+		"NotManagingSharedWithGroupsLeavesSharesAlone": {
+			args: args{
+				group: &fake.MockClient{
+					MockUpdateGroup: func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return &gitlab.Group{
+							ID: groupID,
+							SharedWithGroups: []gitlab.SharedWithGroup{
+								{GroupID: groupID},
+								{GroupID: groupIDtwo},
+							},
+						}, nil, nil
+					},
+					MockUnshareGroupFromGroup: func(gid interface{}, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						unshared = append(unshared, groupID)
+						return nil, nil
+					},
+				},
+				cr: group(withManageSharedWithGroups(false), withSharedWithGroups([]v1alpha1.SharedWithGroups{{GroupID: &groupIDtwo}})),
+			},
+			want: want{
+				cr:     group(withManageSharedWithGroups(false), withSharedWithGroups([]v1alpha1.SharedWithGroups{{GroupID: &groupIDtwo}})),
+				result: managed.ExternalUpdate{},
+			},
+		},
 		"FailedUpdate": {
 			args: args{
 				group: &fake.MockClient{
@@ -958,8 +1014,12 @@ func TestUpdate(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
+			unshared = nil
 			e := &external{kube: tc.kube, client: tc.group}
 			o, err := e.Update(context.Background(), tc.args.cr)
+			if diff := cmp.Diff(tc.want.unshared, unshared); diff != "" {
+				t.Errorf("unshared groups: -want, +got:\n%s", diff)
+			}
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
@@ -1362,6 +1422,46 @@ func TestDelete(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want.getCalls, recordedGetCalls, test.EquateConditions()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestIsSharedWithGroupsUpToDate(t *testing.T) {
+	observed := &gitlab.Group{SharedWithGroups: []gitlab.SharedWithGroup{{GroupID: groupID}, {GroupID: groupIDtwo}}}
+	cases := map[string]struct {
+		reason string
+		params v1alpha1.GroupParameters
+		want   bool
+	}{
+		"Unset": {
+			reason: "An unset list is the complete list too: the existing shares must be removed.",
+			want:   false,
+		},
+		"Same": {
+			reason: "The same groups are up to date.",
+			params: v1alpha1.GroupParameters{SharedWithGroups: []v1alpha1.SharedWithGroups{{GroupID: &groupIDtwo}, {GroupID: &groupID}}},
+			want:   true,
+		},
+		"Missing": {
+			reason: "A share in GitLab that is not in the list must be removed.",
+			params: v1alpha1.GroupParameters{SharedWithGroups: []v1alpha1.SharedWithGroups{{GroupID: &groupID}}},
+			want:   false,
+		},
+		"NotManaged": {
+			reason: "With manageSharedWithGroups false the shares are left to GroupShare resources and the list is ignored.",
+			params: v1alpha1.GroupParameters{ManageSharedWithGroups: new(false), SharedWithGroups: []v1alpha1.SharedWithGroups{{GroupID: &groupID}}},
+			want:   true,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got, err := isSharedWithGroupsUpToDate(&tc.params, observed)
+			if err != nil {
+				t.Fatalf("isSharedWithGroupsUpToDate(...): %v", err)
+			}
+			if got != tc.want {
+				t.Errorf("%s\nisSharedWithGroupsUpToDate(...) = %t, want %t", tc.reason, got, tc.want)
 			}
 		})
 	}
