@@ -17,15 +17,16 @@ limitations under the License.
 package groups
 
 import (
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/accesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/badges"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/hooks"
 	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/integrationharbor"
+	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/integrationmattermost"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/ldapgrouplinks"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/groups/runners"
@@ -36,8 +37,8 @@ import (
 )
 
 // Setup all group controllers
-func Setup(mgr ctrl.Manager, o controller.Options) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+func Setup(mgr ctrl.Manager, o common.ControllerOptions) error {
+	for _, setup := range []func(ctrl.Manager, common.ControllerOptions) error{
 		groups.SetupGroup,
 		members.SetupMember,
 		accesstokens.SetupAccessToken,
@@ -51,6 +52,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		serviceaccountaccesstokens.SetupServiceAccountAccessToken,
 		hooks.SetupHook,
 		integrationharbor.SetupIntegrationHarbor,
+		integrationmattermost.SetupIntegrationMattermost,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -61,8 +63,8 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 
 // SetupGated creates all Gitlab API controllers with the supplied logger and adds
 // them to the supplied manager with CRD gate support for SafeStart.
-func SetupGated(mgr ctrl.Manager, o controller.Options) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+func SetupGated(mgr ctrl.Manager, o common.ControllerOptions) error {
+	for _, setup := range []func(ctrl.Manager, common.ControllerOptions) error{
 		groups.SetupGroupGated,
 		members.SetupMemberGated,
 		accesstokens.SetupAccessTokenGated,
@@ -76,6 +78,7 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		serviceaccountaccesstokens.SetupServiceAccountAccessTokenGated,
 		hooks.SetupHookGated,
 		integrationharbor.SetupIntegrationHarborGated,
+		integrationmattermost.SetupIntegrationMattermostGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

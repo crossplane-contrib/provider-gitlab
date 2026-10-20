@@ -17,16 +17,10 @@ limitations under the License.
 package groups
 
 import (
-	"strings"
-
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-)
-
-const (
-	errorLdapGroupLinkNotFound = "404 Not Found"
 )
 
 // LdapGroupLinkClient defines Gitlab LDAP Group Link Service Operations
@@ -34,14 +28,6 @@ type LdapGroupLinkClient interface {
 	ListGroupLDAPLinks(gid interface{}, options ...gitlab.RequestOptionFunc) ([]*gitlab.LDAPGroupLink, *gitlab.Response, error)
 	AddGroupLDAPLink(gid interface{}, opt *gitlab.AddGroupLDAPLinkOptions, options ...gitlab.RequestOptionFunc) (*gitlab.LDAPGroupLink, *gitlab.Response, error)
 	DeleteGroupLDAPLinkWithCNOrFilter(gid interface{}, opts *gitlab.DeleteGroupLDAPLinkWithCNOrFilterOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
-}
-
-// IsErrorLdapGroupLinkNotFound helper function to test for errLdapGroupLinkNotFound error.
-func IsErrorLdapGroupLinkNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errorLdapGroupLinkNotFound)
 }
 
 // NewLdapGroupLinkClient returns a new GitLab Group Service

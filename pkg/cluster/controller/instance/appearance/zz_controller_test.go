@@ -133,7 +133,7 @@ func TestObserve(t *testing.T) {
 		},
 		"ErrGet404": {
 			args: args{client: &MockClient{MockGetAppearance: func(options ...gitlab.RequestOptionFunc) (*gitlab.Appearance, *gitlab.Response, error) {
-				return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("not found")
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("not found")
 			}}, cr: appearance()},
 			want: want{cr: appearance(), result: managed.ExternalObservation{}},
 		},

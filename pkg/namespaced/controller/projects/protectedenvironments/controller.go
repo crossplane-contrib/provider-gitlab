@@ -13,12 +13,8 @@ package protectedenvironments
 import (
 	"context"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
@@ -43,32 +39,16 @@ const (
 )
 
 // SetupProtectedEnvironment adds a controller that reconciles ProtectedEnvironments.
-func SetupProtectedEnvironment(mgr ctrl.Manager, o controller.Options) error {
+func SetupProtectedEnvironment(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName(v1alpha1.ProtectedEnvironmentGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.ProtectedEnvironmentGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: projects.NewProtectedEnvironmentClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
+	)
 
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.ProtectedEnvironmentGroupVersionKind),
-		reconcilerOpts...)
-
-	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(),
-		o.Logger,
-		o.MetricOptions.MRStateMetrics,
-		&v1alpha1.ProtectedEnvironmentList{},
-		o.MetricOptions.PollStateMetricInterval,
-	)); err != nil {
+	if err := common.AddMRStateRecorder(mgr, o, &v1alpha1.ProtectedEnvironmentList{}); err != nil {
 		return err
 	}
 
@@ -80,7 +60,7 @@ func SetupProtectedEnvironment(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupProtectedEnvironmentGated adds a controller with CRD gate support.
-func SetupProtectedEnvironmentGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupProtectedEnvironmentGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupProtectedEnvironment(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.ProtectedEnvironmentGroupVersionKind.String())
@@ -132,7 +112,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		if clients.IsResponseNotFound(res) {
 			return managed.ExternalObservation{}, nil
 		}
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsErrorProtectedEnvironmentNotFound, err), errGetFailed)
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
