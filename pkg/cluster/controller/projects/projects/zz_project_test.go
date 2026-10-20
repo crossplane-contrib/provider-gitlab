@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strconv"
 	"testing"
@@ -1485,7 +1486,24 @@ func TestDelete(t *testing.T) {
 		err   error
 	}
 
+	// The response GitLab gives when deleting a project that is already
+	// scheduled for deletion.
+	errProjectAlreadyMarked := &gitlab.ErrorResponse{
+		StatusCode: http.StatusBadRequest,
+		Response: &http.Response{
+			StatusCode: http.StatusBadRequest,
+			Request:    &http.Request{Method: http.MethodDelete, URL: &url.URL{Path: "/api/v4/projects/0"}},
+		},
+		Message: "{message: Project has already been marked for deletion}",
+	}
+	// A project as GitLab returns it after marking it for deletion.
+	markedProject := &gitlab.Project{
+		PathWithNamespace:   "path/to/project-deletion_scheduled-0",
+		MarkedForDeletionOn: new(gitlab.ISOTime(time.Date(2026, 10, 13, 0, 0, 0, 0, time.UTC))),
+	}
+
 	cases := map[string]struct {
+		reason string
 		args
 		want
 	}{
@@ -1527,11 +1545,15 @@ func TestDelete(t *testing.T) {
 			},
 		},
 		"SuccessfulPermanentlyDeletion": {
+			reason: "GitLab renames a project when marking it for deletion, so permanent removal must use the path read afterwards, not the one in status.",
 			args: args{
 				project: &fake.MockClient{
 					MockDeleteProject: func(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						recordedCalls = append(recordedCalls, deleteProjectCalls{Pid: pid, Opt: opt})
 						return &gitlab.Response{}, nil
+					},
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return markedProject, &gitlab.Response{}, nil
 					},
 				},
 				cr: project(
@@ -1550,9 +1572,109 @@ func TestDelete(t *testing.T) {
 				),
 				calls: []deleteProjectCalls{
 					{Pid: "0", Opt: &gitlab.DeleteProjectOptions{}},
-					{Pid: "0", Opt: &gitlab.DeleteProjectOptions{PermanentlyRemove: new(true), FullPath: new("path/to/project")}},
+					{Pid: "0", Opt: &gitlab.DeleteProjectOptions{PermanentlyRemove: new(true), FullPath: new(markedProject.PathWithNamespace)}},
 				},
 				err: nil,
+			},
+		},
+		"AlreadyMarkedForDeletion": {
+			reason: "Deleting a project that GitLab already scheduled for deletion is not an error.",
+			args: args{
+				project: &fake.MockClient{
+					MockDeleteProject: func(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteProjectCalls{Pid: pid, Opt: opt})
+						return nil, errProjectAlreadyMarked
+					},
+				},
+				cr: project(withExternalName("0")),
+			},
+			want: want{
+				cr:    project(withExternalName("0")),
+				calls: []deleteProjectCalls{{Pid: "0", Opt: &gitlab.DeleteProjectOptions{}}},
+				err:   nil,
+			},
+		},
+		"AlreadyGone": {
+			reason: "GitLab removes a project asynchronously after permanent removal; a 404 while deleting means it is gone.",
+			args: args{
+				project: &fake.MockClient{
+					MockDeleteProject: func(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteProjectCalls{Pid: pid, Opt: opt})
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
+					},
+				},
+				cr: project(withExternalName("0"), withPermanentlyRemove(new(true))),
+			},
+			want: want{
+				cr:    project(withExternalName("0"), withPermanentlyRemove(new(true))),
+				calls: []deleteProjectCalls{{Pid: "0", Opt: &gitlab.DeleteProjectOptions{}}},
+				err:   nil,
+			},
+		},
+		"PermanentlyRemoveWhenAlreadyMarked": {
+			reason: "A project that is already scheduled for deletion must still be removed permanently when asked to.",
+			args: args{
+				project: &fake.MockClient{
+					MockDeleteProject: func(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteProjectCalls{Pid: pid, Opt: opt})
+						if opt.PermanentlyRemove == nil {
+							return nil, errProjectAlreadyMarked
+						}
+						return &gitlab.Response{}, nil
+					},
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return markedProject, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(withExternalName("0"), withPermanentlyRemove(new(true))),
+			},
+			want: want{
+				cr: project(withExternalName("0"), withPermanentlyRemove(new(true))),
+				calls: []deleteProjectCalls{
+					{Pid: "0", Opt: &gitlab.DeleteProjectOptions{}},
+					{Pid: "0", Opt: &gitlab.DeleteProjectOptions{PermanentlyRemove: new(true), FullPath: new(markedProject.PathWithNamespace)}},
+				},
+				err: nil,
+			},
+		},
+		"PermanentlyRemoveWhenAncestorScheduled": {
+			reason: "GitLab only removes projects permanently that are scheduled for deletion themselves; one whose ancestor is scheduled goes with the ancestor.",
+			args: args{
+				project: &fake.MockClient{
+					MockDeleteProject: func(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteProjectCalls{Pid: pid, Opt: opt})
+						return &gitlab.Response{}, nil
+					},
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return &gitlab.Project{PathWithNamespace: "path/to/project"}, &gitlab.Response{}, nil
+					},
+				},
+				cr: project(withExternalName("0"), withPermanentlyRemove(new(true))),
+			},
+			want: want{
+				cr:    project(withExternalName("0"), withPermanentlyRemove(new(true))),
+				calls: []deleteProjectCalls{{Pid: "0", Opt: &gitlab.DeleteProjectOptions{}}},
+				err:   nil,
+			},
+		},
+		"PermanentlyRemoveWhenProjectGone": {
+			reason: "A project that no longer exists needs no permanent removal.",
+			args: args{
+				project: &fake.MockClient{
+					MockDeleteProject: func(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						recordedCalls = append(recordedCalls, deleteProjectCalls{Pid: pid, Opt: opt})
+						return &gitlab.Response{}, nil
+					},
+					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
+					},
+				},
+				cr: project(withExternalName("0"), withPermanentlyRemove(new(true))),
+			},
+			want: want{
+				cr:    project(withExternalName("0"), withPermanentlyRemove(new(true))),
+				calls: []deleteProjectCalls{{Pid: "0", Opt: &gitlab.DeleteProjectOptions{}}},
+				err:   nil,
 			},
 		},
 	}
@@ -1563,13 +1685,13 @@ func TestDelete(t *testing.T) {
 			_, err := e.Delete(context.Background(), tc.args.cr)
 
 			if diff := cmp.Diff(tc.want.err, err, test.EquateErrors()); diff != "" {
-				t.Errorf("r: -want, +got:\n%s", diff)
+				t.Errorf("%s\nr: -want, +got:\n%s", tc.reason, diff)
 			}
 			if diff := cmp.Diff(tc.want.cr, tc.args.cr, test.EquateConditions()); diff != "" {
-				t.Errorf("r: -want, +got:\n%s", diff)
+				t.Errorf("%s\nr: -want, +got:\n%s", tc.reason, diff)
 			}
 			if diff := cmp.Diff(tc.want.calls, recordedCalls, test.EquateConditions()); diff != "" {
-				t.Errorf("r: -want, +got:\n%s", diff)
+				t.Errorf("%s\nr: -want, +got:\n%s", tc.reason, diff)
 			}
 		})
 	}

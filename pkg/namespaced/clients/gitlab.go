@@ -19,8 +19,10 @@ package clients
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"mime"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -261,6 +263,33 @@ func IsTimePtrEqualToTimePtr(tp1, tp2 *time.Time) bool {
 		}
 	}
 	return tp1 != nil || tp2 != nil
+}
+
+// alreadyMarkedForDeletion are parts of the messages GitLab returns when a
+// project or group that is already scheduled for deletion is deleted again:
+// "Project has already been marked for deletion" and "Group has already been
+// marked for deletion" in current releases, "Group has been already marked
+// for deletion" and "Deletion pending." in older ones.
+var alreadyMarkedForDeletion = []string{
+	"already been marked for deletion",
+	"been already marked for deletion",
+	"Deletion pending.",
+}
+
+// IsAlreadyMarkedForDeletion reports whether err is GitLab's 400 response to
+// deleting a project or group that is already scheduled for deletion, either
+// itself or through an ancestor.
+func IsAlreadyMarkedForDeletion(err error) bool {
+	var res *gitlab.ErrorResponse
+	if !errors.As(err, &res) || res.StatusCode != http.StatusBadRequest {
+		return false
+	}
+	for _, m := range alreadyMarkedForDeletion {
+		if strings.Contains(res.Message, m) {
+			return true
+		}
+	}
+	return false
 }
 
 // IsResponseNotFound reports whether res is a 404 from the GitLab API itself.

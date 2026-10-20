@@ -20,7 +20,6 @@ import (
 	"context"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
@@ -42,19 +41,20 @@ import (
 )
 
 const (
-	errNotProject              = "managed resource is not a Gitlab project custom resource"
-	errKubeUpdateFailed        = "cannot update Gitlab project custom resource"
-	errCreateFailed            = "cannot create Gitlab project"
-	errUpdateFailed            = "cannot update Gitlab project"
-	errUpdatePushRulesFailed   = "cannot update Gitlab project push rules"
-	errDeleteFailed            = "cannot delete Gitlab project"
-	errArchiveFailed           = "cannot archive Gitlab project"
-	errUnarchiveFailed         = "cannot unarchive Gitlab project"
-	errGetFailed               = "cannot retrieve Gitlab project with"
-	errGetPushRulesFailed      = "cannot retrieve Gitlab project push rules"
-	errLateInitialize          = "cannot late-initialize Gitlab project"
-	errLateInitializePushRules = "cannot late-initialize Gitlab project push rules"
-	errCheckPushRulesUpToDate  = "cannot compare project push rules"
+	errNotProject               = "managed resource is not a Gitlab project custom resource"
+	errKubeUpdateFailed         = "cannot update Gitlab project custom resource"
+	errCreateFailed             = "cannot create Gitlab project"
+	errUpdateFailed             = "cannot update Gitlab project"
+	errUpdatePushRulesFailed    = "cannot update Gitlab project push rules"
+	errDeleteFailed             = "cannot delete Gitlab project"
+	errArchiveFailed            = "cannot archive Gitlab project"
+	errUnarchiveFailed          = "cannot unarchive Gitlab project"
+	errGetFailed                = "cannot retrieve Gitlab project with"
+	errGetBeforePermanentDelete = "cannot retrieve GitLab project before permanent deletion"
+	errGetPushRulesFailed       = "cannot retrieve Gitlab project push rules"
+	errLateInitialize           = "cannot late-initialize Gitlab project"
+	errLateInitializePushRules  = "cannot late-initialize Gitlab project push rules"
+	errCheckPushRulesUpToDate   = "cannot compare project push rules"
 )
 
 // SetupProject adds a controller that reconciles Projects.
@@ -306,17 +306,44 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotProject)
 	}
 
-	_, err := e.client.DeleteProject(meta.GetExternalName(cr), &gitlab.DeleteProjectOptions{}, gitlab.WithContext(ctx))
-	// if the project is for some reason already marked for deletion, we ignore the error and continue to delete the project permanently
-	if err != nil && !strings.Contains(err.Error(), "Deletion pending.") {
+	// GitLab schedules the project for deletion. Every deletion reconcile repeats
+	// this request until GitLab removes the project, so a project that is already
+	// scheduled is not an error, and permanent removal below still has to run.
+	res, err := e.client.DeleteProject(meta.GetExternalName(cr), &gitlab.DeleteProjectOptions{}, gitlab.WithContext(ctx))
+	if err != nil && clients.IsResponseNotFound(res) {
+		return managed.ExternalDelete{}, nil
+	}
+	if err != nil && !clients.IsAlreadyMarkedForDeletion(err) {
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 	}
 
-	if cr.Spec.ForProvider.PermanentlyRemove != nil && *cr.Spec.ForProvider.PermanentlyRemove {
-		_, err = e.client.DeleteProject(meta.GetExternalName(cr), &gitlab.DeleteProjectOptions{
-			PermanentlyRemove: cr.Spec.ForProvider.PermanentlyRemove,
-			FullPath:          &cr.Status.AtProvider.PathWithNamespace,
-		}, gitlab.WithContext(ctx))
+	if !ptr.Deref(cr.Spec.ForProvider.PermanentlyRemove, false) {
+		return managed.ExternalDelete{}, nil
+	}
+	return e.deletePermanently(ctx, cr)
+}
+
+// deletePermanently removes a project that is scheduled for deletion right
+// away. GitLab renames the project when it schedules it and only accepts the
+// current full path, so the project is read again first. A project that is not
+// scheduled itself, because one of its ancestors is, goes with that ancestor.
+func (e *external) deletePermanently(ctx context.Context, cr *v1alpha1.Project) (managed.ExternalDelete, error) {
+	prj, res, err := e.client.GetProject(meta.GetExternalName(cr), nil, gitlab.WithContext(ctx))
+	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalDelete{}, nil
+		}
+		return managed.ExternalDelete{}, errors.Wrap(err, errGetBeforePermanentDelete)
+	}
+	if prj.MarkedForDeletionOn == nil {
+		return managed.ExternalDelete{}, nil
+	}
+	res, err = e.client.DeleteProject(meta.GetExternalName(cr), &gitlab.DeleteProjectOptions{
+		PermanentlyRemove: new(true),
+		FullPath:          &prj.PathWithNamespace,
+	}, gitlab.WithContext(ctx))
+	if err != nil && clients.IsResponseNotFound(res) {
+		return managed.ExternalDelete{}, nil
 	}
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteFailed)
 }
