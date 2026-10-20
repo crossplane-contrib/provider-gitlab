@@ -216,7 +216,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				mattermostClient: &fake.MockClient{
 					MockGetMattermostService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: integrationMattermost(

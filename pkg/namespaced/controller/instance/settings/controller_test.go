@@ -126,7 +126,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				client: &MockClient{
 					MockGetSettings: func(options ...gitlab.RequestOptionFunc) (*gitlab.Settings, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("Not Found")
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("Not Found")
 					},
 				},
 				cr: applicationSettings(),

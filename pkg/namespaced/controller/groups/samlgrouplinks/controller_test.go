@@ -210,7 +210,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				samlGroupLink: &fake.MockClient{
 					MockGetGroupSAMLLink: func(gid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("Linked SAML group link not found")
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("Linked SAML group link not found")
 					},
 				},
 				cr: samlGroupLink(

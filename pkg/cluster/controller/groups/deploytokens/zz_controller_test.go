@@ -191,7 +191,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				deployToken: &fake.MockClient{
 					MockGetGroupDeployToken: func(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: deployToken(
@@ -487,7 +487,7 @@ func TestCreate(t *testing.T) {
 			args: args{
 				deployToken: &fake.MockClient{
 					MockDeleteGroupDeployToken: func(gid interface{}, deployToken int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 					MockCreateGroupDeployToken: func(pid interface{}, opt *gitlab.CreateGroupDeployTokenOptions, options ...gitlab.RequestOptionFunc) (*gitlab.DeployToken, *gitlab.Response, error) {
 						return &deployTokenObj, &gitlab.Response{}, nil

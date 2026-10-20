@@ -18,7 +18,79 @@ limitations under the License.
 
 package clients
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
+)
+
+func TestIsResponseNotFound(t *testing.T) {
+	cases := map[string]struct {
+		status      int
+		contentType string
+		body        string
+		want        bool
+	}{
+		"GitLabNotFound": {
+			status: http.StatusNotFound, contentType: "application/json", body: `{"message":"404 User Not Found"}`, want: true,
+		},
+		"GitLabNotFoundWithCharset": {
+			status: http.StatusNotFound, contentType: "application/json; charset=utf-8", body: `{"message":"404 Not found"}`, want: true,
+		},
+		"ProxyPlainTextNotFound": {
+			status: http.StatusNotFound, contentType: "text/plain; charset=utf-8", body: "404 page not found\n", want: false,
+		},
+		"ProxyHTMLNotFound": {
+			status: http.StatusNotFound, contentType: "text/html", body: "<html><body>Not Found</body></html>", want: false,
+		},
+		"NotFoundWithoutContentType": {
+			status: http.StatusNotFound, contentType: "", body: "", want: false,
+		},
+		"GitLabServerError": {
+			status: http.StatusInternalServerError, contentType: "application/json", body: `{"message":"500 Internal Server Error"}`, want: false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				if tc.contentType == "" {
+					// A nil value stops net/http from sniffing a Content-Type.
+					w.Header()["Content-Type"] = nil
+				} else {
+					w.Header().Set("Content-Type", tc.contentType)
+				}
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			git, err := gitlab.NewClient("token", gitlab.WithBaseURL(srv.URL), gitlab.WithoutRetries())
+			if err != nil {
+				t.Fatalf("NewClient: %v", err)
+			}
+			_, res, err := git.Users.GetUser(1, &gitlab.GetUserOptions{})
+			if err == nil {
+				t.Fatalf("GetUser: want an error for HTTP %d, got nil", tc.status)
+			}
+
+			if got := IsResponseNotFound(res); got != tc.want {
+				t.Errorf("IsResponseNotFound(HTTP %d %q) = %v, want %v", tc.status, tc.contentType, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestIsResponseNotFoundWithoutHTTPResponse(t *testing.T) {
+	if IsResponseNotFound(nil) {
+		t.Error("IsResponseNotFound(nil) = true, want false")
+	}
+	if IsResponseNotFound(&gitlab.Response{}) {
+		t.Error("IsResponseNotFound(&gitlab.Response{}) = true, want false")
+	}
+}
 
 func TestAreStringSlicesEqual(t *testing.T) {
 	cases := map[string]struct {

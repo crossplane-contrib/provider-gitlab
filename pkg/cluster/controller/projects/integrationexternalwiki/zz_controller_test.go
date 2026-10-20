@@ -194,7 +194,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				client: &fake.MockExternalWikiClient{
 					MockGetExternalWikiService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.ExternalWikiService, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: integrationExternalWiki(withProjectID(testProjectID)),

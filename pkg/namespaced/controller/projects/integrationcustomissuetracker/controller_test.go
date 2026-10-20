@@ -200,7 +200,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				client: &fake.MockCustomIssueTrackerClient{
 					MockGetCustomIssueTrackerService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.CustomIssueTrackerService, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: integrationCustomIssueTracker(withProjectID(testProjectID)),

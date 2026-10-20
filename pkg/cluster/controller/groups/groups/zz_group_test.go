@@ -277,7 +277,7 @@ func TestObserve(t *testing.T) {
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
 						if pid != fullPath {
-							return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+							return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 						}
 						return &gitlab.Group{ID: groupID, Name: name}, &gitlab.Response{}, nil
 					},
@@ -310,7 +310,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: group(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionObserve)),
@@ -348,7 +348,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{}, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return &gitlab.Group{}, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: group(withExternalName(extName)),
@@ -1086,6 +1086,7 @@ func TestDelete(t *testing.T) {
 						recordedGetCalls = append(recordedGetCalls, getGroupCalls{Pid: pid})
 						return nil, &gitlab.Response{Response: &http.Response{
 							StatusCode: http.StatusNotFound,
+							Header:     http.Header{"Content-Type": {"application/json"}},
 						}}, fmt.Errorf("group not found: 404")
 					},
 				},
