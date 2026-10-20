@@ -60,6 +60,7 @@ func GenerateUpdateApplicationSettingsOptions(p *v1alpha1.ApplicationSettingsPar
 	o.AssetProxyURL = p.AssetProxyURL
 	o.AuditEventsAPILimit = p.AuditEventsAPILimit
 	o.AuthorizedKeysEnabled = p.AuthorizedKeysEnabled
+	o.AutoAcceptAwardedAchievements = p.AutoAcceptAwardedAchievements
 	o.AutoBanUserOnExcessiveProjectsDownload = p.AutoBanUserOnExcessiveProjectsDownload
 	o.AutocompleteUsersLimit = p.AutocompleteUsersLimit
 	o.AutoDevOpsDomain = p.AutoDevOpsDomain
@@ -548,6 +549,7 @@ func GenerateApplicationSettingsObservation(g *gitlab.Settings) v1alpha1.Applica
 	o.AssetProxyEnabled = g.AssetProxyEnabled
 	o.AssetProxyURL = g.AssetProxyURL
 	o.AuthorizedKeysEnabled = g.AuthorizedKeysEnabled
+	o.AutoAcceptAwardedAchievements = g.AutoAcceptAwardedAchievements
 	o.AutoBanUserOnExcessiveProjectsDownload = g.AutoBanUserOnExcessiveProjectsDownload
 	o.AutoDevOpsDomain = g.AutoDevOpsDomain
 	o.AutoDevOpsEnabled = g.AutoDevOpsEnabled
@@ -1048,6 +1050,9 @@ func IsApplicationSettingsUpToDate(p *v1alpha1.ApplicationSettingsParameters, g 
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.AuthorizedKeysEnabled, g.AuthorizedKeysEnabled) {
+		return false
+	}
+	if !clients.IsComparableEqualToComparablePtr(p.AutoAcceptAwardedAchievements, g.AutoAcceptAwardedAchievements) {
 		return false
 	}
 	if !clients.IsComparableEqualToComparablePtr(p.AutoBanUserOnExcessiveProjectsDownload, g.AutoBanUserOnExcessiveProjectsDownload) {

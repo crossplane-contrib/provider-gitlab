@@ -83,6 +83,8 @@ type ApplicationSettingsParameters struct {
 	// +optional
 	AuthorizedKeysEnabled *bool `json:"authorizedKeysEnabled,omitempty"`
 	// +optional
+	AutoAcceptAwardedAchievements *bool `json:"autoAcceptAwardedAchievements,omitempty"`
+	// +optional
 	AutoBanUserOnExcessiveProjectsDownload *bool `json:"autoBanUserOnExcessiveProjectsDownload,omitempty"`
 	// +optional
 	AutocompleteUsersLimit *int64 `json:"autocompleteUsersLimit,omitempty"`
@@ -1061,6 +1063,8 @@ type ApplicationSettingsObservation struct {
 	AssetProxyURL string `json:"assetProxyUrl"`
 	// +optional
 	AuthorizedKeysEnabled bool `json:"authorizedKeysEnabled"`
+	// +optional
+	AutoAcceptAwardedAchievements bool `json:"autoAcceptAwardedAchievements"`
 	// +optional
 	AutoBanUserOnExcessiveProjectsDownload bool `json:"autoBanUserOnExcessiveProjectsDownload"`
 	// +optional
