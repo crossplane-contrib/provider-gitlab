@@ -22,12 +22,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/pkg/errors"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
@@ -51,28 +47,17 @@ const (
 )
 
 // SetupGroupShare adds a controller that reconciles GroupShares.
-func SetupGroupShare(mgr ctrl.Manager, o controller.Options) error {
+func SetupGroupShare(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName(v1alpha1.GroupShareGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.GroupShareGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewGroupClient}),
 		// The share is identified by its two groups; there is no external name.
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
+	)
 
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.GroupShareGroupVersionKind),
-		reconcilerOpts...)
-
-	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.GroupShareList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+	if err := common.AddMRStateRecorder(mgr, o, &v1alpha1.GroupShareList{}); err != nil {
 		return err
 	}
 
@@ -84,7 +69,7 @@ func SetupGroupShare(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupGroupShareGated adds a controller with CRD gate support.
-func SetupGroupShareGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupGroupShareGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupGroupShare(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.GroupShareGroupVersionKind.String())

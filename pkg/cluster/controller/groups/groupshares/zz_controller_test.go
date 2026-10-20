@@ -43,7 +43,7 @@ var (
 	invitedGroupID = int64(2)
 	expiresAt      = "2027-01-31"
 	expiresAtTime  = gitlab.ISOTime(time.Date(2027, 1, 31, 0, 0, 0, 0, time.UTC))
-	notFound       = &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+	notFound       = &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}
 	serverError    = &gitlab.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}
 )
 
