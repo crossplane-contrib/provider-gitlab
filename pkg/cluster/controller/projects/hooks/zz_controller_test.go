@@ -275,7 +275,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				projecthook: &fake.MockClient{
 					MockGetHook: func(pid interface{}, hook int64, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectHook, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: projecthook(

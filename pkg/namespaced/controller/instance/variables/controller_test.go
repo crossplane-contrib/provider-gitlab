@@ -290,7 +290,7 @@ func TestObserve(t *testing.T) {
 		"ErrGet404": {
 			args: args{
 				client: &MockClient{MockGetVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
-					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 				}},
 				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})),
 			},

@@ -27,14 +27,25 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/deploytokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/hooks"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationcustomissuetracker"
+	integrationemailsonpush "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationemailsonpush"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationexternalwiki"
+	integrationgithub "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationgithub"
 	integrationharbor "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationharbor"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationjenkins"
 	integrationmattermost "github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationmattermost"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationmicrosoftteams"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationpipelinesemail"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationredmine"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationtelegram"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/integrationyoutrack"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/pipelineschedules"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/projects"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/projectsharegroups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/protectedbranches"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/protectedenvironments"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/protectedtags"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/runners"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/serviceaccountaccesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/controller/projects/serviceaccounts"
@@ -56,13 +67,24 @@ func Setup(mgr ctrl.Manager, o common.ControllerOptions) error {
 		approvalrules.SetupRules,
 		runners.SetupRunner,
 		protectedbranches.SetupProtectedBranch,
+		protectedtags.SetupProtectedTag,
 		badges.SetupBadge,
 		integrationmattermost.SetupIntegrationMattermost,
+		integrationemailsonpush.SetupIntegrationEmailsOnPush,
 		integrationharbor.SetupIntegrationHarbor,
+		integrationjenkins.SetupIntegrationJenkins,
+		integrationmicrosoftteams.SetupIntegrationMicrosoftTeams,
+		integrationtelegram.SetupIntegrationTelegram,
+		integrationpipelinesemail.SetupIntegrationPipelinesEmail,
+		integrationgithub.SetupIntegrationGithub,
 		protectedenvironments.SetupProtectedEnvironment,
 		projectsharegroups.SetupProjectShareGroup,
 		serviceaccounts.SetupServiceAccount,
 		serviceaccountaccesstokens.SetupServiceAccountAccessToken,
+		integrationcustomissuetracker.SetupIntegrationCustomIssueTracker,
+		integrationexternalwiki.SetupIntegrationExternalWiki,
+		integrationredmine.SetupIntegrationRedmine,
+		integrationyoutrack.SetupIntegrationYouTrack,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -86,13 +108,24 @@ func SetupGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 		approvalrules.SetupRulesGated,
 		runners.SetupRunnerGated,
 		protectedbranches.SetupProtectedBranchGated,
+		protectedtags.SetupProtectedTagGated,
 		badges.SetupBadgeGated,
 		integrationmattermost.SetupIntegrationMattermostGated,
+		integrationemailsonpush.SetupIntegrationEmailsOnPushGated,
 		integrationharbor.SetupIntegrationHarborGated,
+		integrationjenkins.SetupIntegrationJenkinsGated,
+		integrationmicrosoftteams.SetupIntegrationMicrosoftTeamsGated,
+		integrationtelegram.SetupIntegrationTelegramGated,
+		integrationpipelinesemail.SetupIntegrationPipelinesEmailGated,
+		integrationgithub.SetupIntegrationGithubGated,
 		protectedenvironments.SetupProtectedEnvironmentGated,
 		projectsharegroups.SetupProjectShareGroupGated,
 		serviceaccounts.SetupServiceAccountGated,
 		serviceaccountaccesstokens.SetupServiceAccountAccessTokenGated,
+		integrationcustomissuetracker.SetupIntegrationCustomIssueTrackerGated,
+		integrationexternalwiki.SetupIntegrationExternalWikiGated,
+		integrationredmine.SetupIntegrationRedmineGated,
+		integrationyoutrack.SetupIntegrationYouTrackGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

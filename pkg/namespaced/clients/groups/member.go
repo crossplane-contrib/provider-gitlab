@@ -17,16 +17,10 @@ limitations under the License.
 package groups
 
 import (
-	"strings"
-
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
-)
-
-const (
-	errMemberNotFound = "404 Group Member Not Found"
 )
 
 // MemberClient defines Gitlab Member service operations
@@ -41,14 +35,6 @@ type MemberClient interface {
 func NewMemberClient(cfg common.Config) MemberClient {
 	git := common.NewClient(cfg)
 	return git.GroupMembers
-}
-
-// IsErrorMemberNotFound helper function to test for errMemberNotFound error.
-func IsErrorMemberNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), errMemberNotFound)
 }
 
 // GenerateMemberObservation is used to produce v1alpha1.MemberObservation from

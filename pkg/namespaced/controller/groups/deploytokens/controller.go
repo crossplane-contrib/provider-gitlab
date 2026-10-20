@@ -19,6 +19,7 @@ package deploytokens
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
@@ -42,6 +43,7 @@ const (
 	errGetFailed      = "cannot get Gitlab deploytoken"
 	errCreateFailed   = "cannot create Gitlab deploytoken"
 	errDeleteFailed   = "cannot delete Gitlab deploytoken"
+	errReplaceFailed  = "cannot delete the Gitlab deploytoken being replaced"
 	errIDNotInt       = "ID is not integer value"
 	errGroupIDMissing = "GroupID is missing"
 )
@@ -131,6 +133,14 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	lateInitializeGroupDeployToken(&cr.Spec.ForProvider, dt)
 
 	cr.Status.AtProvider = v1alpha1.DeployTokenObservation{}
+	cr.Status.RenewAt = common.DeployTokenRenewAt(cr.Spec.ForProvider.RenewalPeriodDays, cr.Spec.ForProvider.RenewBeforeDays, dt.ExpiresAt)
+
+	// Reporting a due token as missing makes Create replace it. Skip that while
+	// deleting, or the reconciler would drop the finalizer and leak the token.
+	if !meta.WasDeleted(cr) && common.ShouldRenewDeployToken(cr.Spec.ForProvider.RenewalPeriodDays, cr.Spec.ForProvider.RenewBeforeDays, dt, time.Now()) {
+		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
+
 	cr.Status.SetConditions(v2.Available())
 
 	return managed.ExternalObservation{
@@ -150,18 +160,27 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(errors.New("GroupId must be set directly or via reference"), errCreateFailed)
 	}
 
+	// GitLab cannot rotate deploy tokens. Delete the previous generation before
+	// creating the next, so a failed create converges on the next reconcile
+	// instead of leaving an untracked token behind.
+	if id, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64); err == nil && id > 0 {
+		res, err := e.client.DeleteGroupDeployToken(*cr.Spec.ForProvider.GroupID, id, gitlab.WithContext(ctx))
+		if err != nil && !clients.IsResponseNotFound(res) {
+			return managed.ExternalCreation{}, errors.Wrap(err, errReplaceFailed)
+		}
+	}
+
 	dt, _, err := e.client.CreateGroupDeployToken(
 		*cr.Spec.ForProvider.GroupID,
 		groups.GenerateCreateGroupDeployTokenOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
-
-	connectionDetails := managed.ConnectionDetails{}
-	connectionDetails["token"] = []byte(dt.Token)
-
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
+
+	connectionDetails := managed.ConnectionDetails{}
+	connectionDetails["token"] = []byte(dt.Token)
 
 	meta.SetExternalName(cr, strconv.FormatInt(dt.ID, 10))
 	return managed.ExternalCreation{ConnectionDetails: connectionDetails}, nil
@@ -212,7 +231,7 @@ func lateInitializeGroupDeployToken(in *v1alpha1.DeployTokenParameters, deployTo
 		in.Username = &deployToken.Username
 	}
 
-	if in.ExpiresAt == nil && deployToken.ExpiresAt != nil {
+	if in.ExpiresAt == nil && in.RenewalPeriodDays == nil && deployToken.ExpiresAt != nil {
 		in.ExpiresAt = &metav1.Time{Time: *deployToken.ExpiresAt}
 	}
 }

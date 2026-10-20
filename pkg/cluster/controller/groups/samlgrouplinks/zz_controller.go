@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/cluster/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/cluster/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 )
@@ -116,9 +117,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errMissingGroupID)
 	}
 
-	groupLink, _, err := e.client.GetGroupSAMLLink(*cr.Spec.ForProvider.GroupID, samlGroupName)
+	groupLink, res, err := e.client.GetGroupSAMLLink(*cr.Spec.ForProvider.GroupID, samlGroupName)
 	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(groups.IsErrorSamlGroupLinkNotFound, err), errGetFailed)
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
 
 	cr.Status.AtProvider = groups.GenerateAddSamlGroupLinkObservation(groupLink)

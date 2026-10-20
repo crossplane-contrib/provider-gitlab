@@ -1,0 +1,73 @@
+/*
+Copyright 2026 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1alpha1
+
+import (
+	"context"
+	"testing"
+
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
+	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/google/go-cmp/cmp"
+	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+func TestIntegrationHarborResolveReferences(t *testing.T) {
+	reader := &test.MockClient{
+		MockGet: test.NewMockGetFn(nil, func(obj client.Object) error {
+			meta.SetExternalName(obj, "1234")
+			return nil
+		}),
+	}
+
+	cases := map[string]struct {
+		params IntegrationHarborParameters
+		want   IntegrationHarborParameters
+	}{
+		"ProjectIDRef": {
+			params: IntegrationHarborParameters{
+				ProjectIDRef: &v2.NamespacedReference{Name: "example-project"},
+			},
+			want: IntegrationHarborParameters{
+				ProjectID:    ptr.To(int64(1234)),
+				ProjectIDRef: &v2.NamespacedReference{Name: "example-project"},
+			},
+		},
+		"ProjectIDSet": {
+			params: IntegrationHarborParameters{
+				ProjectID: ptr.To(int64(42)),
+			},
+			want: IntegrationHarborParameters{
+				ProjectID: ptr.To(int64(42)),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			mg := &IntegrationHarbor{Spec: IntegrationHarborSpec{ForProvider: tc.params}}
+			if err := mg.ResolveReferences(context.Background(), reader); err != nil {
+				t.Fatalf("ResolveReferences(): %v", err)
+			}
+			if diff := cmp.Diff(tc.want, mg.Spec.ForProvider); diff != "" {
+				t.Errorf("ResolveReferences() diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}

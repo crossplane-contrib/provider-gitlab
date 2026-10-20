@@ -126,6 +126,14 @@ var (
 	ProtectedBranchGroupVersionKind = SchemeGroupVersion.WithKind(ProtectedBranchKind)
 )
 
+// Protected Tag type metadata
+var (
+	ProtectedTagKind             = reflect.TypeOf(ProtectedTag{}).Name()
+	ProtectedTagGroupKind        = schema.GroupKind{Group: Group, Kind: ProtectedTagKind}.String()
+	ProtectedTagKindAPIVersion   = ProtectedTagKind + "." + SchemeGroupVersion.String()
+	ProtectedTagGroupVersionKind = SchemeGroupVersion.WithKind(ProtectedTagKind)
+)
+
 // Protected Environment type metadata
 var (
 	ProtectedEnvironmentKind             = reflect.TypeOf(ProtectedEnvironment{}).Name()
@@ -194,14 +202,25 @@ func init() {
 	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
 	SchemeBuilder.Register(&ProtectedBranch{}, &ProtectedBranchList{})
+	SchemeBuilder.Register(&ProtectedTag{}, &ProtectedTagList{})
 	SchemeBuilder.Register(&ProtectedEnvironment{}, &ProtectedEnvironmentList{})
 	SchemeBuilder.Register(&Badge{}, &BadgeList{})
 
 	// Mattermost
 	SchemeBuilder.Register(&IntegrationMattermost{}, &IntegrationMattermostList{})
+	SchemeBuilder.Register(&IntegrationEmailsOnPush{}, &IntegrationEmailsOnPushList{})
 	// Harbor
 	SchemeBuilder.Register(&IntegrationHarbor{}, &IntegrationHarborList{})
+	SchemeBuilder.Register(&IntegrationJenkins{}, &IntegrationJenkinsList{})
+	SchemeBuilder.Register(&IntegrationMicrosoftTeams{}, &IntegrationMicrosoftTeamsList{})
+	SchemeBuilder.Register(&IntegrationTelegram{}, &IntegrationTelegramList{})
+	SchemeBuilder.Register(&IntegrationPipelinesEmail{}, &IntegrationPipelinesEmailList{})
+	SchemeBuilder.Register(&IntegrationGithub{}, &IntegrationGithubList{})
 	SchemeBuilder.Register(&ProjectShareGroup{}, &ProjectShareGroupList{})
 	SchemeBuilder.Register(&ServiceAccount{}, &ServiceAccountList{})
 	SchemeBuilder.Register(&ServiceAccountAccessToken{}, &ServiceAccountAccessTokenList{})
+	SchemeBuilder.Register(&IntegrationCustomIssueTracker{}, &IntegrationCustomIssueTrackerList{})
+	SchemeBuilder.Register(&IntegrationExternalWiki{}, &IntegrationExternalWikiList{})
+	SchemeBuilder.Register(&IntegrationRedmine{}, &IntegrationRedmineList{})
+	SchemeBuilder.Register(&IntegrationYouTrack{}, &IntegrationYouTrackList{})
 }

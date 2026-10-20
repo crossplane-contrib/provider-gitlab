@@ -175,7 +175,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				client: &fake.MockClient{
 					MockListServiceAccountPersonalAccessTokens: func(_ any, _ int64, _ *gitlab.ListServiceAccountPersonalAccessTokensOptions, _ ...gitlab.RequestOptionFunc) ([]*gitlab.PersonalAccessToken, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: saToken(withExternalName(sAccessTokenID), withSpec(v1alpha1.ServiceAccountAccessTokenParameters{GroupID: &groupID, ServiceAccountID: &saID})),
@@ -461,7 +461,7 @@ func TestCreate(t *testing.T) {
 			args: args{
 				client: &fake.MockClient{
 					MockRotateServiceAccountPersonalAccessToken: func(_ any, _, _ int64, _ *gitlab.RotateServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 					MockCreateServiceAccountPersonalAccessToken: func(_ any, _ int64, _ *gitlab.CreateServiceAccountPersonalAccessTokenOptions, _ ...gitlab.RequestOptionFunc) (*gitlab.PersonalAccessToken, *gitlab.Response, error) {
 						return &tokenObj, &gitlab.Response{}, nil

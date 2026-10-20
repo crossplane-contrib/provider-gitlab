@@ -1,0 +1,15 @@
+---
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: IntegrationRedmine
+metadata:
+  name: redmine-p8
+  namespace: default
+spec:
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig
+  forProvider:
+    projectId: 8
+    projectUrl: "https://redmine.example.com/projects/example"
+    issuesUrl: "https://redmine.example.com/issues/:id"
+    newIssueUrl: "https://redmine.example.com/projects/example/issues/new"

@@ -121,7 +121,7 @@ func TestGetGroupPermissionStatus(t *testing.T) {
 	}{
 		"NotFound": {
 			memberClient: &groupsfake.MockClient{MockGetMember: func(gid interface{}, user int64, options ...gitlab.RequestOptionFunc) (*gitlab.GroupMember, *gitlab.Response, error) {
-				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errors.New("not found")
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("not found")
 			}},
 			wantMissing: true,
 		},
@@ -200,7 +200,7 @@ func TestFetchTopLevelGroupsMissingPermissions(t *testing.T) {
 			case 2:
 				return &gitlab.GroupMember{AccessLevel: gitlab.AccessLevelValue(accessLevelReporterValue)}, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusOK}}, nil
 			case 1:
-				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errors.New("not found")
+				return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("not found")
 			default:
 				t.Fatalf("unexpected group id %v", gid)
 				return nil, nil, nil
@@ -305,7 +305,7 @@ func TestFetchTopLevelGroupsMissingPermissionsFiltersGroups(t *testing.T) {
 			checkedMu.Lock()
 			checked = append(checked, gid.(int64))
 			checkedMu.Unlock()
-			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errors.New("not found")
+			return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("not found")
 		},
 	}
 
