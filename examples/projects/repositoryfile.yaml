@@ -1,0 +1,26 @@
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: RepositoryFile
+metadata:
+  name: example-repositoryfile
+  namespace: default
+  annotations:
+    # Optional: check this file for drift every hour instead of at the
+    # provider's --poll interval. Resources are still reconciled at least
+    # once per --sync interval (default 1h).
+    crossplane.io/poll-interval: 1h
+spec:
+  forProvider:
+    projectIdRef:
+      name: example-project
+    filePath: docs/managed-by-crossplane.md
+    branch: main
+    content: |
+      # Managed by Crossplane
+
+      Changes made outside of Crossplane are reverted.
+    createCommitMessage: "docs: create managed-by-crossplane.md"
+    updateCommitMessage: "docs: update managed-by-crossplane.md"
+    deleteCommitMessage: "docs: delete managed-by-crossplane.md"
+  providerConfigRef:
+    name: gitlab-provider
+    kind: ProviderConfig

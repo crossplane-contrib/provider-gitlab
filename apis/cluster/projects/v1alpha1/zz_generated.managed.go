@@ -1270,6 +1270,56 @@ func (mg *ProtectedTag) SetWriteConnectionSecretToReference(r *v2.SecretReferenc
 	mg.Spec.WriteConnectionSecretToReference = r
 }
 
+// GetCondition of this RepositoryFile.
+func (mg *RepositoryFile) GetCondition(ct v2.ConditionType) v2.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetDeletionPolicy of this RepositoryFile.
+func (mg *RepositoryFile) GetDeletionPolicy() v2.DeletionPolicy {
+	return mg.Spec.DeletionPolicy
+}
+
+// GetManagementPolicies of this RepositoryFile.
+func (mg *RepositoryFile) GetManagementPolicies() v2.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this RepositoryFile.
+func (mg *RepositoryFile) GetProviderConfigReference() *v2.Reference {
+	return mg.Spec.ProviderConfigReference
+}
+
+// GetWriteConnectionSecretToReference of this RepositoryFile.
+func (mg *RepositoryFile) GetWriteConnectionSecretToReference() *v2.SecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this RepositoryFile.
+func (mg *RepositoryFile) SetConditions(c ...v2.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetDeletionPolicy of this RepositoryFile.
+func (mg *RepositoryFile) SetDeletionPolicy(r v2.DeletionPolicy) {
+	mg.Spec.DeletionPolicy = r
+}
+
+// SetManagementPolicies of this RepositoryFile.
+func (mg *RepositoryFile) SetManagementPolicies(r v2.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this RepositoryFile.
+func (mg *RepositoryFile) SetProviderConfigReference(r *v2.Reference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+// SetWriteConnectionSecretToReference of this RepositoryFile.
+func (mg *RepositoryFile) SetWriteConnectionSecretToReference(r *v2.SecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}
+
 // GetCondition of this Runner.
 func (mg *Runner) GetCondition(ct v2.ConditionType) v2.Condition {
 	return mg.Status.GetCondition(ct)

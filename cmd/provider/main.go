@@ -63,7 +63,7 @@ func main() {
 
 		pollStateMetricInterval = app.Flag("poll-state-metric", "State metric recording interval").Default("5s").Duration()
 
-		enableManagementPolicies = app.Flag("enable-management-policies", "Enable support for Management Policies.").Default("false").Envar("ENABLE_MANAGEMENT_POLICIES").Bool()
+		enableManagementPolicies = app.Flag("enable-management-policies", "Enable support for Management Policies. Disable with --no-enable-management-policies.").Default("true").Envar("ENABLE_MANAGEMENT_POLICIES").Bool()
 	)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
