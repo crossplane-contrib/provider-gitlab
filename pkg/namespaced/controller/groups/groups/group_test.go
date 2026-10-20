@@ -1209,7 +1209,7 @@ func TestDelete(t *testing.T) {
 				group: &fake.MockClient{
 					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						recordedCalls = append(recordedCalls, deleteGroupCalls{Pid: pid, Opt: opt})
-						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: group(withExternalName("0"), withPermanentlyRemove(new(true)), withPath("group"),
@@ -1228,7 +1228,7 @@ func TestDelete(t *testing.T) {
 					MockDeleteGroup: func(pid interface{}, opt *gitlab.DeleteGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						recordedCalls = append(recordedCalls, deleteGroupCalls{Pid: pid, Opt: opt})
 						if opt.PermanentlyRemove != nil {
-							return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+							return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 						}
 						return &gitlab.Response{}, nil
 					},

@@ -1599,7 +1599,7 @@ func TestDelete(t *testing.T) {
 				project: &fake.MockClient{
 					MockDeleteProject: func(pid interface{}, opt *gitlab.DeleteProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
 						recordedCalls = append(recordedCalls, deleteProjectCalls{Pid: pid, Opt: opt})
-						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+						return &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: project(withExternalName("0"), withPermanentlyRemove(new(true))),
@@ -1665,7 +1665,7 @@ func TestDelete(t *testing.T) {
 						return &gitlab.Response{}, nil
 					},
 					MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}, errBoom
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: project(withExternalName("0"), withPermanentlyRemove(new(true))),
