@@ -374,13 +374,27 @@ func TestDelete(t *testing.T) {
 			args: args{
 				project: &fake.MockClient{
 					MockDeleteSharedProjectFromGroup: func(pid any, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
-						return &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: projectShareGroup(withProjectID(&projectIDStr), withGroupID(&groupIDStr)),
 			},
 			want: want{
 				cr: projectShareGroup(withProjectID(&projectIDStr), withGroupID(&groupIDStr)),
+			},
+		},
+		"ProxyNotFound404": {
+			args: args{
+				project: &fake.MockClient{
+					MockDeleteSharedProjectFromGroup: func(pid any, groupID int64, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+						return &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"text/html"}}}}, errBoom
+					},
+				},
+				cr: projectShareGroup(withProjectID(&projectIDStr), withGroupID(&groupIDStr)),
+			},
+			want: want{
+				cr:  projectShareGroup(withProjectID(&projectIDStr), withGroupID(&groupIDStr)),
+				err: errors.Wrap(errBoom, errUnshareProject),
 			},
 		},
 	}

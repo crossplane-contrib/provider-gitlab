@@ -20,14 +20,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -38,40 +34,31 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/instance"
+	commonController "github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/controller/common"
 )
 
 const (
-	errNotServiceAccount = "managed resource is not a Gitlab service account custom resource"
-	errGetFailed         = "cannot get Gitlab service account"
-	errCreateFailed      = "cannot create Gitlab service account"
-	errUpdateFailed      = "cannot update Gitlab service account"
-	errDeleteFailed      = "cannot delete Gitlab service account"
-	errIDNotInt          = "specified ID is not an integer"
-	errMissingGroupID    = "missing Spec.ForProvider.GroupID"
+	errNotServiceAccount  = "managed resource is not a Gitlab service account custom resource"
+	errGetFailed          = "cannot get Gitlab service account"
+	errCreateFailed       = "cannot create Gitlab service account"
+	errUpdateFailed       = "cannot update Gitlab service account"
+	errUpdateAvatarFailed = "cannot update Gitlab service account avatar"
+	errDeleteFailed       = "cannot delete Gitlab service account"
+	errIDNotInt           = "specified ID is not an integer"
+	errMissingGroupID     = "missing Spec.ForProvider.GroupID"
 )
 
 // SetupServiceAccount adds a controller that reconciles GitLab Service Accounts.
-func SetupServiceAccount(mgr ctrl.Manager, o controller.Options) error {
+func SetupServiceAccount(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName(v1alpha1.ServiceAccountGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.ServiceAccountGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewServiceAccountClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
+	)
 
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.ServiceAccountGroupVersionKind),
-		reconcilerOpts...)
-
-	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.ServiceAccountList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+	if err := common.AddMRStateRecorder(mgr, o, &v1alpha1.ServiceAccountList{}); err != nil {
 		return err
 	}
 
@@ -83,7 +70,7 @@ func SetupServiceAccount(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupServiceAccountGated adds a controller with CRD gate support.
-func SetupServiceAccountGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupServiceAccountGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupServiceAccount(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.ServiceAccountGroupVersionKind.String())
@@ -154,9 +141,15 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.Status.AtProvider = groups.GenerateServiceAccountObservationFromUser(serviceAccount)
 	cr.Status.SetConditions(v2.Available())
 
+	avatar, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return managed.ExternalObservation{}, err
+	}
+
 	return managed.ExternalObservation{
-		ResourceExists:          true,
-		ResourceUpToDate:        groups.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount),
+		ResourceExists: true,
+		ResourceUpToDate: groups.IsServiceAccountUpToDate(&cr.Spec.ForProvider, serviceAccount) &&
+			common.IsAvatarUpToDate(avatar, serviceAccount.AvatarURL),
 		ResourceLateInitialized: false,
 	}, nil
 }
@@ -211,6 +204,15 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errIDNotInt)
 	}
 
+	image, err := commonController.ResolveAvatar(ctx, e.kube, cr, cr.Spec.ForProvider.Avatar, cr.Spec.ForProvider.AvatarSecretRef)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+	avatar, err := common.AvatarUpload(image, cr.Status.AtProvider.AvatarURL)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAvatarFailed)
+	}
+
 	// Call GitLab Service Accounts API
 	serviceAccount, _, err := e.client.UpdateServiceAccount(
 		*cr.Spec.ForProvider.GroupID,
@@ -222,6 +224,14 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	cr.Status.AtProvider = groups.GenerateServiceAccountObservation(serviceAccount)
+
+	// The group service account API has no avatar parameter, so the avatar
+	// goes through the users API, which needs an administrator token.
+	if avatar != nil {
+		if _, _, err := e.userClient.ModifyUser(serviceAccountID, &gitlab.ModifyUserOptions{Avatar: avatar}, gitlab.WithContext(ctx)); err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAvatarFailed)
+		}
+	}
 
 	return managed.ExternalUpdate{}, nil
 }

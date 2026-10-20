@@ -19,14 +19,11 @@ package deploytokens
 import (
 	"context"
 	"strconv"
+	"time"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/statemetrics"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
@@ -46,32 +43,22 @@ const (
 	errGetFailed      = "cannot get Gitlab deploytoken"
 	errCreateFailed   = "cannot create Gitlab deploytoken"
 	errDeleteFailed   = "cannot delete Gitlab deploytoken"
+	errReplaceFailed  = "cannot delete the Gitlab deploytoken being replaced"
 	errIDNotInt       = "ID is not integer value"
 	errGroupIDMissing = "GroupID is missing"
 )
 
 // SetupDeployToken adds a controller that reconciles GroupDeployTokens.
-func SetupDeployToken(mgr ctrl.Manager, o controller.Options) error {
+func SetupDeployToken(mgr ctrl.Manager, o common.ControllerOptions) error {
 	name := managed.ControllerName(v1alpha1.DeployTokenGroupKind)
 
-	reconcilerOpts := []managed.ReconcilerOption{
+	r := common.NewReconciler(mgr, o, name,
+		resource.ManagedKind(v1alpha1.DeployTokenGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient(), newGitlabClientFn: groups.NewDeployTokenClient}),
 		managed.WithInitializers(),
-		managed.WithPollInterval(o.PollInterval),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-	}
+	)
 
-	if o.Features.Enabled(feature.EnableBetaManagementPolicies) {
-		reconcilerOpts = append(reconcilerOpts, managed.WithManagementPolicies())
-	}
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.DeployTokenGroupVersionKind),
-		reconcilerOpts...)
-
-	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.DeployTokenList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+	if err := common.AddMRStateRecorder(mgr, o, &v1alpha1.DeployTokenList{}); err != nil {
 		return err
 	}
 
@@ -83,7 +70,7 @@ func SetupDeployToken(mgr ctrl.Manager, o controller.Options) error {
 }
 
 // SetupDeployTokenGated adds a controller with CRD gate support.
-func SetupDeployTokenGated(mgr ctrl.Manager, o controller.Options) error {
+func SetupDeployTokenGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 	o.Gate.Register(func() {
 		if err := SetupDeployToken(mgr, o); err != nil {
 			mgr.GetLogger().Error(err, "unable to setup reconciler", "gvk", v1alpha1.DeployTokenGroupVersionKind.String())
@@ -146,6 +133,14 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	lateInitializeGroupDeployToken(&cr.Spec.ForProvider, dt)
 
 	cr.Status.AtProvider = v1alpha1.DeployTokenObservation{}
+	cr.Status.RenewAt = common.DeployTokenRenewAt(cr.Spec.ForProvider.RenewalPeriodDays, cr.Spec.ForProvider.RenewBeforeDays, dt.ExpiresAt)
+
+	// Reporting a due token as missing makes Create replace it. Skip that while
+	// deleting, or the reconciler would drop the finalizer and leak the token.
+	if !meta.WasDeleted(cr) && common.ShouldRenewDeployToken(cr.Spec.ForProvider.RenewalPeriodDays, cr.Spec.ForProvider.RenewBeforeDays, dt, time.Now()) {
+		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
+
 	cr.Status.SetConditions(v2.Available())
 
 	return managed.ExternalObservation{
@@ -165,18 +160,27 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(errors.New("GroupId must be set directly or via reference"), errCreateFailed)
 	}
 
+	// GitLab cannot rotate deploy tokens. Delete the previous generation before
+	// creating the next, so a failed create converges on the next reconcile
+	// instead of leaving an untracked token behind.
+	if id, err := strconv.ParseInt(meta.GetExternalName(cr), 10, 64); err == nil && id > 0 {
+		res, err := e.client.DeleteGroupDeployToken(*cr.Spec.ForProvider.GroupID, id, gitlab.WithContext(ctx))
+		if err != nil && !clients.IsResponseNotFound(res) {
+			return managed.ExternalCreation{}, errors.Wrap(err, errReplaceFailed)
+		}
+	}
+
 	dt, _, err := e.client.CreateGroupDeployToken(
 		*cr.Spec.ForProvider.GroupID,
 		groups.GenerateCreateGroupDeployTokenOptions(cr.Name, &cr.Spec.ForProvider),
 		gitlab.WithContext(ctx),
 	)
-
-	connectionDetails := managed.ConnectionDetails{}
-	connectionDetails["token"] = []byte(dt.Token)
-
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
+
+	connectionDetails := managed.ConnectionDetails{}
+	connectionDetails["token"] = []byte(dt.Token)
 
 	meta.SetExternalName(cr, strconv.FormatInt(dt.ID, 10))
 	return managed.ExternalCreation{ConnectionDetails: connectionDetails}, nil
@@ -227,7 +231,7 @@ func lateInitializeGroupDeployToken(in *v1alpha1.DeployTokenParameters, deployTo
 		in.Username = &deployToken.Username
 	}
 
-	if in.ExpiresAt == nil && deployToken.ExpiresAt != nil {
+	if in.ExpiresAt == nil && in.RenewalPeriodDays == nil && deployToken.ExpiresAt != nil {
 		in.ExpiresAt = &metav1.Time{Time: *deployToken.ExpiresAt}
 	}
 }

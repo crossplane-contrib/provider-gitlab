@@ -57,7 +57,7 @@ func (mg *Variable) ResolveReferences(ctx context.Context, c client.Reader) erro
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
 		Selector:     mg.Spec.ForProvider.GroupIDSelector,
 		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 	})
 
 	if err != nil {
@@ -85,7 +85,7 @@ func (mg *Hook) ResolveReferences(ctx context.Context, c client.Reader) error {
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
 		Selector:     mg.Spec.ForProvider.GroupIDSelector,
 		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 	})
 
 	if err != nil {
@@ -113,7 +113,7 @@ func (mg *Member) ResolveReferences(ctx context.Context, c client.Reader) error 
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
 		Selector:     mg.Spec.ForProvider.GroupIDSelector,
 		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 	})
 
 	if err != nil {
@@ -141,7 +141,7 @@ func (mg *DeployToken) ResolveReferences(ctx context.Context, c client.Reader) e
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
 		Selector:     mg.Spec.ForProvider.GroupIDSelector,
 		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 	})
 
 	if err != nil {
@@ -169,7 +169,7 @@ func (mg *AccessToken) ResolveReferences(ctx context.Context, c client.Reader) e
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
 		Selector:     mg.Spec.ForProvider.GroupIDSelector,
 		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 	})
 
 	if err != nil {
@@ -202,7 +202,7 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 
 	rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 		CurrentValue: ptr.Deref(idstrp, ""),
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 		Reference:    mg.Spec.ForProvider.ParentIDRef,
 		Selector:     mg.Spec.ForProvider.ParentIDSelector,
 		To: reference.To{
@@ -225,7 +225,7 @@ func (mg *Group) ResolveReferences(ctx context.Context, c client.Reader) error {
 	for i3 := 0; i3 < len(mg.Spec.ForProvider.SharedWithGroups); i3++ {
 		rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 			CurrentValue: fromPtrValue(mg.Spec.ForProvider.SharedWithGroups[i3].GroupID),
-			Extract:      reference.ExternalName(),
+			Extract:      GroupID(),
 			Reference:    mg.Spec.ForProvider.SharedWithGroups[i3].GroupIDRef,
 			Selector:     mg.Spec.ForProvider.SharedWithGroups[i3].GroupIDSelector,
 			To: reference.To{
@@ -259,7 +259,7 @@ func (mg *SamlGroupLink) ResolveReferences(ctx context.Context, c client.Reader)
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
 		Selector:     mg.Spec.ForProvider.GroupIDSelector,
 		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 	})
 
 	if err != nil {
@@ -287,7 +287,7 @@ func (mg *LdapGroupLink) ResolveReferences(ctx context.Context, c client.Reader)
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
 		Selector:     mg.Spec.ForProvider.GroupIDSelector,
 		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 	})
 
 	if err != nil {
@@ -315,7 +315,7 @@ func (mg *Runner) ResolveReferences(ctx context.Context, c client.Reader) error 
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
 		Selector:     mg.Spec.ForProvider.GroupIDSelector,
 		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 	})
 
 	if err != nil {
@@ -343,7 +343,7 @@ func (mg *Badge) ResolveReferences(ctx context.Context, c client.Reader) error {
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
 		Selector:     mg.Spec.ForProvider.GroupIDSelector,
 		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 	})
 
 	if err != nil {
@@ -371,7 +371,7 @@ func (mg *ServiceAccount) ResolveReferences(ctx context.Context, c client.Reader
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
 		Selector:     mg.Spec.ForProvider.GroupIDSelector,
 		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 	})
 
 	if err != nil {
@@ -399,7 +399,7 @@ func (mg *ServiceAccountAccessToken) ResolveReferences(ctx context.Context, c cl
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
 		Selector:     mg.Spec.ForProvider.GroupIDSelector,
 		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
-		Extract:      reference.ExternalName(),
+		Extract:      GroupID(),
 	})
 
 	if err != nil {
@@ -440,6 +440,34 @@ func (mg *ServiceAccountAccessToken) ResolveReferences(ctx context.Context, c cl
 
 // ResolveReferences of this IntegrationHarbor
 func (mg *IntegrationHarbor) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPINamespacedResolver(c, mg)
+
+	// resolve spec.forProvider.groupIdRef
+	rsp, err := r.Resolve(ctx, reference.NamespacedResolutionRequest{
+		CurrentValue: fromPtrValue(mg.Spec.ForProvider.GroupID),
+		Reference:    mg.Spec.ForProvider.GroupIDRef,
+		Selector:     mg.Spec.ForProvider.GroupIDSelector,
+		To:           reference.To{Managed: &Group{}, List: &GroupList{}},
+		Extract:      GroupID(),
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.groupId")
+	}
+
+	resolvedID, err := toPtrValue(rsp.ResolvedValue)
+	if err != nil {
+		return errors.Wrap(err, "spec.forProvider.groupId")
+	}
+
+	mg.Spec.ForProvider.GroupID = resolvedID
+	mg.Spec.ForProvider.GroupIDRef = rsp.ResolvedReference
+
+	return nil
+}
+
+// ResolveReferences of this IntegrationMattermost
+func (mg *IntegrationMattermost) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPINamespacedResolver(c, mg)
 
 	// resolve spec.forProvider.groupIdRef

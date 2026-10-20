@@ -212,7 +212,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				samlGroupLink: &fake.MockClient{
 					MockGetGroupSAMLLink: func(gid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error) {
-						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errors.New("Linked SAML group link not found")
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errors.New("Linked SAML group link not found")
 					},
 				},
 				cr: samlGroupLink(
@@ -228,6 +228,32 @@ func TestObserve(t *testing.T) {
 					withGroupID(),
 					withExternalName(name),
 					withAccessLevel(10),
+					withSpec(v1alpha1.SamlGroupLinkParameters{GroupID: &groupID, Name: &name}),
+				),
+				result: managed.ExternalObservation{ResourceExists: false},
+				err:    nil,
+			},
+		},
+		"ErrGet404ClientGoNotFound": {
+			args: args{
+				samlGroupLink: &fake.MockClient{
+					MockGetGroupSAMLLink: func(gid interface{}, samlGroupName string, options ...gitlab.RequestOptionFunc) (*gitlab.SAMLGroupLink, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{
+							StatusCode: http.StatusNotFound,
+							Header:     http.Header{"Content-Type": []string{"application/json"}},
+						}}, gitlab.ErrNotFound
+					},
+				},
+				cr: samlGroupLink(
+					withGroupID(),
+					withExternalName(name),
+					withSpec(v1alpha1.SamlGroupLinkParameters{GroupID: &groupID, Name: &name}),
+				),
+			},
+			want: want{
+				cr: samlGroupLink(
+					withGroupID(),
+					withExternalName(name),
 					withSpec(v1alpha1.SamlGroupLinkParameters{GroupID: &groupID, Name: &name}),
 				),
 				result: managed.ExternalObservation{ResourceExists: false},

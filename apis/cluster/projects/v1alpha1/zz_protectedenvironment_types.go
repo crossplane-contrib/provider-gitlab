@@ -90,6 +90,7 @@ type ProtectedEnvironmentParameters struct {
 
 	// ProjectID is the ID or path of the GitLab project.
 	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1.Project
+	// +crossplane:generate:reference:extractor=github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1.ProjectID()
 	// +optional
 	ProjectID *string `json:"projectId,omitempty"`
 

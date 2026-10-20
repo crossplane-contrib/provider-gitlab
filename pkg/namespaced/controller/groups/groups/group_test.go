@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/namespaced/groups/v1alpha1"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/common"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/namespaced/clients/groups/fake"
 )
@@ -54,6 +55,7 @@ var (
 	expiresAt          = time.Now()
 	expiresAtIso       = (gitlab.ISOTime)(expiresAt)
 	extNameAnnotation  = map[string]string{meta.AnnotationKeyExternalName: extName}
+	fullPath           = "path/to/example-group"
 	visibility         = "private"
 	v1alpha1Visibility = v1alpha1.VisibilityValue(visibility)
 
@@ -114,6 +116,10 @@ func withExternalName(n string) groupModifier {
 	return func(r *v1alpha1.Group) { meta.SetExternalName(r, n) }
 }
 
+func withManagementPolicies(p ...v2.ManagementAction) groupModifier {
+	return func(r *v1alpha1.Group) { r.SetManagementPolicies(p) }
+}
+
 // Use for testing. When ResourceLateInitialized should it be false
 func withClientDefaultValues() groupModifier {
 	return func(p *v1alpha1.Group) {
@@ -141,8 +147,13 @@ func withClientDefaultValues() groupModifier {
 			FullName:  &s,
 			FullPath:  &s,
 			LDAPCN:    &s,
+			Archived:  &f,
 		}
 	}
+}
+
+func withArchived(b *bool) groupModifier {
+	return func(r *v1alpha1.Group) { r.Spec.ForProvider.Archived = b }
 }
 
 func withStatus(s v1alpha1.GroupObservation) groupModifier {
@@ -259,18 +270,62 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
-		"NotIDExternalName": {
+		"PathExternalNameObserveOnly": {
 			args: args{
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{}, &gitlab.Response{}, nil
+						if pid != fullPath {
+							return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
+						}
+						return &gitlab.Group{ID: groupID, Name: name}, &gitlab.Response{}, nil
 					},
 				},
-				cr: group(withExternalName("fr")),
+				cr: group(
+					withPath(""),
+					withClientDefaultValues(),
+					withExternalName(fullPath),
+					withManagementPolicies(v2.ManagementActionObserve),
+				),
 			},
 			want: want{
-				cr:  group(withExternalName("fr")),
-				err: errors.New(errIDNotInt),
+				cr: group(
+					withPath(""),
+					withClientDefaultValues(),
+					withConditions(v2.Available()),
+					withExternalName(fullPath),
+					withManagementPolicies(v2.ManagementActionObserve),
+					func(g *v1alpha1.Group) { g.Status.AtProvider.ID = &groupID },
+				),
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        true,
+					ResourceLateInitialized: false,
+					ConnectionDetails:       managed.ConnectionDetails{"runnersToken": []byte("")},
+				},
+			},
+		},
+		"PathExternalNameNotFound": {
+			args: args{
+				group: &fake.MockClient{
+					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
+					},
+				},
+				cr: group(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionObserve)),
+			},
+			want: want{
+				cr:     group(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionObserve)),
+				result: managed.ExternalObservation{},
+			},
+		},
+		"PathExternalNameWithWritePolicies": {
+			args: args{
+				group: &fake.MockClient{},
+				cr:    group(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionAll)),
+			},
+			want: want{
+				cr:  group(withExternalName(fullPath), withManagementPolicies(v2.ManagementActionAll)),
+				err: errors.New(common.ErrPathExternalNameNotObserveOnly),
 			},
 		},
 		"FailedGetRequest": {
@@ -291,7 +346,7 @@ func TestObserve(t *testing.T) {
 			args: args{
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
-						return &gitlab.Group{}, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+						return &gitlab.Group{}, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 					},
 				},
 				cr: group(withExternalName(extName)),
@@ -422,6 +477,9 @@ func TestObserve(t *testing.T) {
 			args: args{
 				group: &fake.MockClient{
 					MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+						if pid != extName {
+							return nil, &gitlab.Response{}, errBoom
+						}
 						return &gitlab.Group{Name: name}, &gitlab.Response{}, nil
 					},
 				},
@@ -506,6 +564,7 @@ func TestObserve(t *testing.T) {
 		"ParentID":                       int64(1),
 		"SharedRunnersMinutesLimit":      int64(1),
 		"ExtraSharedRunnersMinutesLimit": int64(1),
+		"Archived":                       true,
 	}
 
 	for name, value := range isGroupUpToDateCases {
@@ -538,6 +597,13 @@ func TestObserve(t *testing.T) {
 		if name == "Description" {
 			argsGroupModifier = append(argsGroupModifier, withDescription(&description))
 			wantGroupModifier = append(wantGroupModifier, withDescription(&description))
+		}
+
+		if name == "Archived" {
+			argsGroupModifier = append(argsGroupModifier, withArchived(new(false)))
+			wantGroupModifier = append(wantGroupModifier, withArchived(new(false)), func(g *v1alpha1.Group) {
+				g.Status.AtProvider.Archived = new(true)
+			})
 		}
 
 		gitlabGroup := &gitlab.Group{
@@ -1018,6 +1084,7 @@ func TestDelete(t *testing.T) {
 						recordedGetCalls = append(recordedGetCalls, getGroupCalls{Pid: pid})
 						return nil, &gitlab.Response{Response: &http.Response{
 							StatusCode: http.StatusNotFound,
+							Header:     http.Header{"Content-Type": {"application/json"}},
 						}}, fmt.Errorf("group not found: 404")
 					},
 				},
@@ -1155,6 +1222,137 @@ func TestDelete(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want.getCalls, recordedGetCalls, test.EquateConditions()); diff != "" {
 				t.Errorf("r: -want, +got:\n%s", diff)
+			}
+		})
+	}
+}
+
+// archiveGitLab is a fake GitLab group that records update, archive, and
+// unarchive calls in order. With AncestorArchived set, it rejects archive and
+// unarchive calls the way GitLab does for a subgroup of an archived group.
+// With RejectArchive set, it rejects archive calls.
+type archiveGitLab struct {
+	Archived         bool
+	AncestorArchived bool
+	RejectArchive    bool
+	Description      string
+	Calls            []string
+}
+
+var errAncestorArchived = errors.New("Cannot unarchive group since one of the ancestor groups is archived!")
+
+func (g *archiveGitLab) client() *fake.MockClient {
+	setArchived := func(call string, archived bool) (*gitlab.Response, error) {
+		g.Calls = append(g.Calls, call)
+		if g.AncestorArchived {
+			return &gitlab.Response{}, errAncestorArchived
+		}
+		if archived && g.RejectArchive {
+			return &gitlab.Response{}, errBoom
+		}
+		g.Archived = archived
+		return &gitlab.Response{}, nil
+	}
+	return &fake.MockClient{
+		MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+			return &gitlab.Group{Path: path, Archived: g.Archived, Description: g.Description}, &gitlab.Response{}, nil
+		},
+		MockUpdateGroup: func(pid interface{}, opt *gitlab.UpdateGroupOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+			g.Calls = append(g.Calls, "update")
+			if opt.Description != nil {
+				g.Description = *opt.Description
+			}
+			return &gitlab.Group{}, &gitlab.Response{}, nil
+		},
+		MockArchiveGroup: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+			return setArchived("archive", true)
+		},
+		MockUnarchiveGroup: func(gid any, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error) {
+			return setArchived("unarchive", false)
+		},
+	}
+}
+
+// TestArchiveConverges runs Observe and Update against a fake GitLab until the
+// group is up to date or Update fails, and checks the archive state, the
+// applied update, and the order of the GitLab calls.
+func TestArchiveConverges(t *testing.T) {
+	cases := map[string]struct {
+		reason  string
+		spec    v1alpha1.GroupParameters
+		start   archiveGitLab
+		want    archiveGitLab
+		wantErr error
+	}{
+		"ArchiveAfterUpdate": {
+			reason: "Archiving must run after the update.",
+			spec:   v1alpha1.GroupParameters{Path: path, Archived: new(true), Description: new("new")},
+			start:  archiveGitLab{Description: "old"},
+			want:   archiveGitLab{Archived: true, Description: "new", Calls: []string{"update", "archive"}},
+		},
+		"ArchiveRejected": {
+			reason:  "If GitLab rejects the archive, Update must fail after it updates.",
+			spec:    v1alpha1.GroupParameters{Path: path, Archived: new(true), Description: new("new")},
+			start:   archiveGitLab{RejectArchive: true, Description: "old"},
+			want:    archiveGitLab{RejectArchive: true, Description: "new", Calls: []string{"update", "archive"}},
+			wantErr: errors.Wrap(errBoom, errArchiveFailed),
+		},
+		"UnarchiveBeforeUpdate": {
+			reason: "Unarchiving must run before the update.",
+			spec:   v1alpha1.GroupParameters{Path: path, Archived: new(false), Description: new("new")},
+			start:  archiveGitLab{Archived: true, Description: "old"},
+			want:   archiveGitLab{Description: "new", Calls: []string{"unarchive", "update"}},
+		},
+		"UpdateStaysArchived": {
+			reason: "A group that stays archived must not be unarchived to apply an update.",
+			spec:   v1alpha1.GroupParameters{Path: path, Archived: new(true), Description: new("new")},
+			start:  archiveGitLab{Archived: true, Description: "old"},
+			want:   archiveGitLab{Archived: true, Description: "new", Calls: []string{"update"}},
+		},
+		"UnsetLeavesArchiveState": {
+			reason: "Without archived in the spec, the archive state must not change.",
+			spec:   v1alpha1.GroupParameters{Path: path, Description: new("new")},
+			start:  archiveGitLab{Archived: true, Description: "old"},
+			want:   archiveGitLab{Archived: true, Description: "new", Calls: []string{"update"}},
+		},
+		"AncestorArchived": {
+			reason:  "If GitLab rejects the unarchive, Update must fail before it updates.",
+			spec:    v1alpha1.GroupParameters{Path: path, Archived: new(false), Description: new("new")},
+			start:   archiveGitLab{Archived: true, AncestorArchived: true, Description: "old"},
+			want:    archiveGitLab{Archived: true, AncestorArchived: true, Description: "old", Calls: []string{"unarchive"}},
+			wantErr: errors.Wrap(errAncestorArchived, errUnarchiveFailed),
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			gl := tc.start
+			e := &external{client: gl.client()}
+			cr := group(withExternalName(extName))
+			cr.Spec.ForProvider = tc.spec
+
+			var err error
+			upToDate := false
+			for range 4 {
+				obs, oerr := e.Observe(context.Background(), cr)
+				if oerr != nil {
+					t.Fatalf("Observe(...): %v", oerr)
+				}
+				if upToDate = obs.ResourceUpToDate; upToDate {
+					break
+				}
+				if _, err = e.Update(context.Background(), cr); err != nil {
+					break
+				}
+			}
+
+			if diff := cmp.Diff(tc.wantErr, err, test.EquateErrors()); diff != "" {
+				t.Errorf("%s\nUpdate(...): -want error, +got error:\n%s", tc.reason, diff)
+			}
+			if tc.wantErr == nil && !upToDate {
+				t.Errorf("%s\ngroup never became up to date: %+v", tc.reason, gl)
+			}
+			if diff := cmp.Diff(tc.want, gl); diff != "" {
+				t.Errorf("%s\nfinal GitLab state: -want, +got:\n%s", tc.reason, diff)
 			}
 		})
 	}

@@ -204,7 +204,7 @@ func (m *fakeManager) GetConverterRegistry() conversion.Registry { return nil }
 
 func TestSetupVariableGated(t *testing.T) {
 	g := &recordingGate{}
-	o := controller.Options{Gate: g}
+	o := common.ControllerOptions{Options: controller.Options{Gate: g}}
 
 	// mgr is not used until the callback is invoked.
 	if err := SetupVariableGated(nil, o); err != nil {
@@ -230,14 +230,14 @@ func TestSetupVariableReturnsAddError(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).Build()
 
 	mgr := &fakeManager{cl: cl, scheme: s, addErr: errBoom}
-	o := controller.Options{
+	o := common.ControllerOptions{Options: controller.Options{
 		Logger:       logging.NewNopLogger(),
 		PollInterval: time.Second,
 		Features:     &feature.Flags{},
 		MetricOptions: &controller.MetricOptions{
 			MRStateMetrics: &statemetrics.MRStateMetrics{},
 		},
-	}
+	}}
 
 	err := SetupVariable(mgr, o)
 	if !stderrors.Is(err, errBoom) {
@@ -292,7 +292,7 @@ func TestObserve(t *testing.T) {
 		"ErrGet404": {
 			args: args{
 				client: &MockClient{MockGetVariable: func(key string, options ...gitlab.RequestOptionFunc) (*gitlab.InstanceVariable, *gitlab.Response, error) {
-					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404}}, errBoom
+					return nil, &gitlab.Response{Response: &http.Response{StatusCode: 404, Header: http.Header{"Content-Type": {"application/json"}}}}, errBoom
 				}},
 				cr: variable(withSpec(v1alpha1.VariableParameters{CommonVariableParameters: commonv1alpha1.CommonVariableParameters{Key: variableKey}})),
 			},

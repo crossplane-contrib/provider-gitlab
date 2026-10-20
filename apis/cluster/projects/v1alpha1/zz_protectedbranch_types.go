@@ -54,6 +54,7 @@ type ProtectedBranchParameters struct {
 
 	// ProjectID is the ID of the project.
 	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1.Project
+	// +crossplane:generate:reference:extractor=github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1.ProjectID()
 	// +optional
 	ProjectID *string `json:"projectId,omitempty"`
 

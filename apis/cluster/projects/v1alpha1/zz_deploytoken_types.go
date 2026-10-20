@@ -25,6 +25,9 @@ import (
 
 // DeployTokenParameters define the desired state of a Gitlab deploy token
 // https://docs.gitlab.com/ee/api/deploy_tokens.html
+// +kubebuilder:validation:XValidation:rule="!has(self.expiresAt) || !has(self.renewalPeriodDays)",message="expiresAt and renewalPeriodDays are mutually exclusive"
+// +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || has(self.renewalPeriodDays)",message="renewBeforeDays requires renewalPeriodDays"
+// +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || !has(self.renewalPeriodDays) || self.renewalPeriodDays > self.renewBeforeDays",message="renewalPeriodDays must be greater than renewBeforeDays"
 type DeployTokenParameters struct {
 	// ProjectID is the ID of the project to create the deploy token in.
 	// +optional
@@ -45,6 +48,26 @@ type DeployTokenParameters struct {
 	// +optional
 	// +immutable
 	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
+
+	// RenewalPeriodDays is the number of days each token generation should live.
+	// GitLab cannot rotate deploy tokens, so when renewal is due the provider
+	// deletes the token, creates a new one from these parameters, and writes it
+	// to the connection secret. A revoked, expired, or non-expiring token is
+	// replaced at once. Because the old token is deleted before the new one is
+	// created, consumers see a short gap until the connection secret is updated
+	// and picked up.
+	// Mutually exclusive with ExpiresAt.
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	RenewalPeriodDays *int `json:"renewalPeriodDays,omitempty"`
+
+	// RenewBeforeDays overrides the default 2/3-lifetime renewal threshold.
+	// When set, the provider renews the token when fewer than RenewBeforeDays
+	// remain before expiry. Only valid with RenewalPeriodDays.
+	// Must be less than RenewalPeriodDays.
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	RenewBeforeDays *int `json:"renewBeforeDays,omitempty"`
 
 	// Username for deploy token. Default is gitlab+deploy-token-{n}
 	// +optional
@@ -74,6 +97,11 @@ type DeployTokenSpec struct {
 type DeployTokenStatus struct {
 	v2.ManagedResourceStatus `json:",inline"`
 	AtProvider               DeployTokenObservation `json:"atProvider,omitempty"`
+
+	// RenewAt is the computed time at which the provider will replace
+	// the token. Only populated for renewal-managed tokens.
+	// +optional
+	RenewAt *metav1.Time `json:"renewAt,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -81,6 +109,7 @@ type DeployTokenStatus struct {
 // A DeployToken is a managed resource that represents a Gitlab deploy token
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
+// +kubebuilder:printcolumn:name="RENEW-AT",type="string",JSONPath=".status.renewAt"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitlab}
