@@ -87,6 +87,22 @@ func TestGenerateProtectRepositoryBranchesOptions(t *testing.T) {
 				Name: ptr.To("main"),
 			},
 		},
+		"ZeroIdentityIsDropped": {
+			// Regression test for #465: a spec late-initialized by an earlier
+			// version carries userId: 0 and groupId: 0 on a role-based rule.
+			// GitLab answers such an allowed_to_* entry with 403.
+			params: &v1alpha1.ProtectedBranchParameters{
+				UnprotectAccessLevels: []*v1alpha1.BranchAccessDescription{
+					{AccessLevel: &accessLevel40, UserID: ptr.To(int64(0)), GroupID: ptr.To(int64(0))},
+				},
+			},
+			want: &gitlab.ProtectRepositoryBranchesOptions{
+				Name: ptr.To("main"),
+				AllowedToUnprotect: &[]*gitlab.BranchPermissionOptions{
+					{AccessLevel: (*gitlab.AccessLevelValue)(&accessLevel40)},
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -221,5 +237,50 @@ func TestIsProtectedBranchUpToDate(t *testing.T) {
 				t.Errorf("IsProtectedBranchUpToDate() mismatch (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestLateInitializeProtectedBranchLeavesZeroIdentityUnset(t *testing.T) {
+	// Regression test for #465. GitLab reports userId and groupId as 0 on a
+	// role-based rule. Copying those zeros into the spec produced a request
+	// GitLab rejects with 403, and the zeros stayed in the spec afterwards.
+	observed := &gitlab.ProtectedBranch{
+		Name: "main",
+		UnprotectAccessLevels: []*gitlab.BranchAccessDescription{
+			{AccessLevel: gitlab.AccessLevelValue(40)},
+		},
+		PushAccessLevels: []*gitlab.BranchAccessDescription{
+			{AccessLevel: gitlab.AccessLevelValue(40), UserID: 30584717},
+		},
+	}
+
+	spec := &v1alpha1.ProtectedBranchParameters{}
+	LateInitializeProtectedBranch(spec, observed)
+
+	unprotect := spec.UnprotectAccessLevels[0]
+	if unprotect.UserID != nil || unprotect.GroupID != nil {
+		t.Errorf("role-based rule: userId=%v groupId=%v, want both unset",
+			unprotect.UserID, unprotect.GroupID)
+	}
+
+	push := spec.PushAccessLevels[0]
+	if push.UserID == nil || *push.UserID != 30584717 {
+		t.Errorf("user-scoped rule: userId=%v, want 30584717", push.UserID)
+	}
+	if push.GroupID != nil {
+		t.Errorf("user-scoped rule: groupId=%v, want unset", push.GroupID)
+	}
+
+	// The late-initialized spec has to be accepted by GitLab and has to be
+	// reported as up to date against the state it was derived from.
+	options := GenerateProtectRepositoryBranchesOptions("main", spec)
+	for _, entry := range *options.AllowedToUnprotect {
+		if entry.UserID != nil || entry.GroupID != nil {
+			t.Errorf("allowed_to_unprotect entry carries an identity: user_id=%v group_id=%v",
+				entry.UserID, entry.GroupID)
+		}
+	}
+	if !IsProtectedBranchUpToDate(spec, observed) {
+		t.Error("late-initialized spec is not up to date against the state it came from")
 	}
 }

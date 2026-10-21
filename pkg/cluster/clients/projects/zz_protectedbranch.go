@@ -40,7 +40,7 @@ func NewProtectedBranchClient(cfg common.Config) ProtectedBranchClient {
 
 // LateInitializeProtectedBranch fills the empty fields in the protected branch spec with the
 // values seen in gitlab.ProtectedBranch.
-func LateInitializeProtectedBranch(in *v1alpha1.ProtectedBranchParameters, pb *gitlab.ProtectedBranch) { //nolint:gocyclo
+func LateInitializeProtectedBranch(in *v1alpha1.ProtectedBranchParameters, pb *gitlab.ProtectedBranch) {
 	if pb == nil {
 		return
 	}
@@ -54,40 +54,41 @@ func LateInitializeProtectedBranch(in *v1alpha1.ProtectedBranchParameters, pb *g
 
 	// Late initialize access levels
 	if len(in.PushAccessLevels) == 0 && len(pb.PushAccessLevels) > 0 {
-		in.PushAccessLevels = make([]*v1alpha1.BranchAccessDescription, len(pb.PushAccessLevels))
-		for i, pal := range pb.PushAccessLevels {
-			in.PushAccessLevels[i] = &v1alpha1.BranchAccessDescription{
-				AccessLevel:            (*v1alpha1.AccessLevelValue)(&pal.AccessLevel),
-				AccessLevelDescription: &pal.AccessLevelDescription,
-				UserID:                 &pal.UserID,
-				GroupID:                &pal.GroupID,
-			}
-		}
+		in.PushAccessLevels = branchAccessDescriptions(pb.PushAccessLevels)
 	}
 
 	if len(in.MergeAccessLevels) == 0 && len(pb.MergeAccessLevels) > 0 {
-		in.MergeAccessLevels = make([]*v1alpha1.BranchAccessDescription, len(pb.MergeAccessLevels))
-		for i, mal := range pb.MergeAccessLevels {
-			in.MergeAccessLevels[i] = &v1alpha1.BranchAccessDescription{
-				AccessLevel:            (*v1alpha1.AccessLevelValue)(&mal.AccessLevel),
-				AccessLevelDescription: &mal.AccessLevelDescription,
-				UserID:                 &mal.UserID,
-				GroupID:                &mal.GroupID,
-			}
-		}
+		in.MergeAccessLevels = branchAccessDescriptions(pb.MergeAccessLevels)
 	}
 
 	if len(in.UnprotectAccessLevels) == 0 && len(pb.UnprotectAccessLevels) > 0 {
-		in.UnprotectAccessLevels = make([]*v1alpha1.BranchAccessDescription, len(pb.UnprotectAccessLevels))
-		for i, ual := range pb.UnprotectAccessLevels {
-			in.UnprotectAccessLevels[i] = &v1alpha1.BranchAccessDescription{
-				AccessLevel:            (*v1alpha1.AccessLevelValue)(&ual.AccessLevel),
-				AccessLevelDescription: &ual.AccessLevelDescription,
-				UserID:                 &ual.UserID,
-				GroupID:                &ual.GroupID,
-			}
-		}
+		in.UnprotectAccessLevels = branchAccessDescriptions(pb.UnprotectAccessLevels)
 	}
+}
+
+// branchAccessDescriptions converts observed access levels into spec entries.
+// GitLab reports a role-based rule with userId and groupId zeroed; those zeros
+// are left unset, because GitLab rejects an allowed_to_* entry that carries
+// them (#465) and a nil pointer is how the spec expresses "no identity".
+func branchAccessDescriptions(levels []*gitlab.BranchAccessDescription) []*v1alpha1.BranchAccessDescription {
+	out := make([]*v1alpha1.BranchAccessDescription, len(levels))
+	for i, l := range levels {
+		if l == nil {
+			continue
+		}
+		d := &v1alpha1.BranchAccessDescription{
+			AccessLevel:            (*v1alpha1.AccessLevelValue)(&l.AccessLevel),
+			AccessLevelDescription: &l.AccessLevelDescription,
+		}
+		if l.UserID != 0 {
+			d.UserID = &l.UserID
+		}
+		if l.GroupID != 0 {
+			d.GroupID = &l.GroupID
+		}
+		out[i] = d
+	}
+	return out
 }
 
 // GenerateProtectedBranchObservation produces a ProtectedBranchObservation from a gitlab.ProtectedBranch
@@ -102,43 +103,16 @@ func GenerateProtectedBranchObservation(pb *gitlab.ProtectedBranch) v1alpha1.Pro
 		CodeOwnerApprovalRequired: pb.CodeOwnerApprovalRequired,
 	}
 
-	// Convert push access levels
 	if len(pb.PushAccessLevels) > 0 {
-		o.PushAccessLevels = make([]*v1alpha1.BranchAccessDescription, len(pb.PushAccessLevels))
-		for i, pal := range pb.PushAccessLevels {
-			o.PushAccessLevels[i] = &v1alpha1.BranchAccessDescription{
-				AccessLevel:            (*v1alpha1.AccessLevelValue)(&pal.AccessLevel),
-				AccessLevelDescription: &pal.AccessLevelDescription,
-				UserID:                 &pal.UserID,
-				GroupID:                &pal.GroupID,
-			}
-		}
+		o.PushAccessLevels = branchAccessDescriptions(pb.PushAccessLevels)
 	}
 
-	// Convert merge access levels
 	if len(pb.MergeAccessLevels) > 0 {
-		o.MergeAccessLevels = make([]*v1alpha1.BranchAccessDescription, len(pb.MergeAccessLevels))
-		for i, mal := range pb.MergeAccessLevels {
-			o.MergeAccessLevels[i] = &v1alpha1.BranchAccessDescription{
-				AccessLevel:            (*v1alpha1.AccessLevelValue)(&mal.AccessLevel),
-				AccessLevelDescription: &mal.AccessLevelDescription,
-				UserID:                 &mal.UserID,
-				GroupID:                &mal.GroupID,
-			}
-		}
+		o.MergeAccessLevels = branchAccessDescriptions(pb.MergeAccessLevels)
 	}
 
-	// Convert unprotect access levels
 	if len(pb.UnprotectAccessLevels) > 0 {
-		o.UnprotectAccessLevels = make([]*v1alpha1.BranchAccessDescription, len(pb.UnprotectAccessLevels))
-		for i, ual := range pb.UnprotectAccessLevels {
-			o.UnprotectAccessLevels[i] = &v1alpha1.BranchAccessDescription{
-				AccessLevel:            (*v1alpha1.AccessLevelValue)(&ual.AccessLevel),
-				AccessLevelDescription: &ual.AccessLevelDescription,
-				UserID:                 &ual.UserID,
-				GroupID:                &ual.GroupID,
-			}
-		}
+		o.UnprotectAccessLevels = branchAccessDescriptions(pb.UnprotectAccessLevels)
 	}
 
 	return o
@@ -172,6 +146,9 @@ func GenerateProtectRepositoryBranchesOptions(name string, p *v1alpha1.Protected
 }
 
 // branchPermissionOptions preserves AccessLevel, UserID, and GroupID for every entry, instead of collapsing to the first entry's AccessLevel.
+// A userId or groupId of zero is dropped: GitLab answers an allowed_to_* entry
+// that carries one with 403, and specs late-initialized by an earlier version
+// still hold those zeros (#465).
 func branchPermissionOptions(descs []*v1alpha1.BranchAccessDescription) []*gitlab.BranchPermissionOptions {
 	if len(descs) == 0 {
 		return nil
@@ -182,9 +159,12 @@ func branchPermissionOptions(descs []*v1alpha1.BranchAccessDescription) []*gitla
 		if d == nil {
 			continue
 		}
-		bp := &gitlab.BranchPermissionOptions{
-			UserID:  d.UserID,
-			GroupID: d.GroupID,
+		bp := &gitlab.BranchPermissionOptions{}
+		if d.UserID != nil && *d.UserID != 0 {
+			bp.UserID = d.UserID
+		}
+		if d.GroupID != nil && *d.GroupID != 0 {
+			bp.GroupID = d.GroupID
 		}
 		if d.AccessLevel != nil {
 			al := gitlab.AccessLevelValue(*d.AccessLevel)

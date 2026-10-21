@@ -303,16 +303,12 @@ func TestObserve(t *testing.T) {
 							{
 								AccessLevel:            &accessLevel40,
 								AccessLevelDescription: ptr.To("Maintainers"),
-								UserID:                 ptr.To(int64(0)),
-								GroupID:                ptr.To(int64(0)),
 							},
 						},
 						MergeAccessLevels: []*v1alpha1.BranchAccessDescription{
 							{
 								AccessLevel:            &accessLevel30,
 								AccessLevelDescription: ptr.To("Developers + Maintainers"),
-								UserID:                 ptr.To(int64(0)),
-								GroupID:                ptr.To(int64(0)),
 							},
 						},
 					}),
@@ -360,8 +356,6 @@ func TestObserve(t *testing.T) {
 						{
 							AccessLevel:            &accessLevel40,
 							AccessLevelDescription: ptr.To("Maintainers"),
-							UserID:                 ptr.To(int64(0)),
-							GroupID:                ptr.To(int64(0)),
 						},
 					}),
 					withConditions(v2.Available()),
@@ -373,8 +367,6 @@ func TestObserve(t *testing.T) {
 							{
 								AccessLevel:            &accessLevel40,
 								AccessLevelDescription: ptr.To("Maintainers"),
-								UserID:                 ptr.To(int64(0)),
-								GroupID:                ptr.To(int64(0)),
 							},
 						},
 					}),
