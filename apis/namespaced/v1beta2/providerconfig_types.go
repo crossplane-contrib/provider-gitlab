@@ -39,8 +39,18 @@ type ProviderConfigSpec struct {
 // ProviderCredentials required to authenticate. As the ProviderConfig is
 // namespaced, credentials come from a Secret in the same namespace. Filesystem
 // and environment sources reference provider-global state and cannot be scoped
-// to a single namespace, so they are not offered here; use a
+// to a single namespace, so they are not honoured here; use a
 // ClusterProviderConfig if such sources are required.
+//
+// Fs, Env and SecretRef.Namespace are ignored, but they must stay declared:
+// v1beta2 is the storage version and conversion from the deprecated v1beta1 is
+// strategy None, so a field v1beta1 accepts and this version does not know
+// makes the round trip through storage lossy. The API server performs exactly
+// that round trip when it merges managed fields, which breaks server-side
+// apply on v1beta1 as soon as a second field manager (the provider itself,
+// writing its finalizer on the storage version) owns part of the object. That
+// is the normal state for a ProviderConfig rendered by a Composition, since
+// Crossplane applies composed resources server-side.
 type ProviderCredentials struct {
 	// Source of the provider credentials.
 	// +kubebuilder:validation:Enum=None;Secret
@@ -50,11 +60,57 @@ type ProviderCredentials struct {
 	// +optional
 	Method auth.AuthType `json:"method"`
 
-	// A SecretRef is a reference to a secret key, in the same namespace as this
-	// ProviderConfig, that contains the credentials that must be used to connect
-	// to the provider.
+	// A SecretRef is a reference to a secret key that contains the credentials
+	// that must be used to connect to the provider. The secret is always read
+	// from this ProviderConfig's own namespace; secretRef.namespace is ignored.
 	// +optional
-	SecretRef *v2.LocalSecretKeySelector `json:"secretRef,omitempty"`
+	SecretRef *IgnoredNamespaceSecretKeySelector `json:"secretRef,omitempty"`
+
+	// Fs is ignored. The credentials source enum does not accept Filesystem, so
+	// nothing reads this; it is declared only to keep conversion from v1beta1
+	// lossless.
+	// +optional
+	Fs *v2.FsSelector `json:"fs,omitempty"`
+
+	// Env is ignored. The credentials source enum does not accept Environment,
+	// so nothing reads this; it is declared only to keep conversion from
+	// v1beta1 lossless.
+	// +optional
+	Env *v2.EnvSelector `json:"env,omitempty"`
+}
+
+// An IgnoredNamespaceSecretKeySelector references a credentials secret key. It
+// is shaped like the cluster scoped v2.SecretKeySelector, but Namespace is
+// never honoured: a namespaced ProviderConfig always reads its secret from its
+// own namespace. The field is declared only to keep conversion from v1beta1
+// lossless.
+//
+// Use Local to obtain the selector the provider resolves. Do not read
+// Namespace.
+type IgnoredNamespaceSecretKeySelector struct {
+	// Name of the secret.
+	Name string `json:"name"`
+
+	// Namespace is ignored. The secret is read from the ProviderConfig's own
+	// namespace.
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// The key to select.
+	Key string `json:"key"`
+}
+
+// Local drops the ignored namespace and returns the selector the provider
+// resolves, so no caller can accidentally read Namespace. It returns nil for a
+// nil receiver, matching the optional field.
+func (s *IgnoredNamespaceSecretKeySelector) Local() *v2.LocalSecretKeySelector {
+	if s == nil {
+		return nil
+	}
+	return &v2.LocalSecretKeySelector{
+		LocalSecretReference: v2.LocalSecretReference{Name: s.Name},
+		Key:                  s.Key,
+	}
 }
 
 // A ProviderConfigStatus represents the status of a ProviderConfig.

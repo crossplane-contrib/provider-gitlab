@@ -228,17 +228,23 @@ func TestUseLegacyProviderConfigSetsCredentialsSecretRef(t *testing.T) {
 }
 
 // TestUseProviderConfigResolvesLocalSecretRef verifies that a namespaced
-// ProviderConfig resolves its LocalSecretKeySelector against the
-// ProviderConfig's own namespace, and populates Config.CredentialsSecretRef with
-// that namespace. This is the contract the token self-rotation detection
-// (isSelfManaged) relies on: it compares CredentialsSecretRef.Namespace with the
-// managed resource's namespace.
+// ProviderConfig resolves its secretRef against the ProviderConfig's own
+// namespace, and populates Config.CredentialsSecretRef with that namespace.
+// This is the contract the token self-rotation detection (isSelfManaged) relies
+// on: it compares CredentialsSecretRef.Namespace with the managed resource's
+// namespace.
+//
+// secretRef.namespace is set to a foreign namespace here. v1beta2 declares the
+// field so conversion from v1beta1 stays lossless, but it must never be
+// honoured, or a namespaced ProviderConfig could read credentials across
+// namespaces.
 func TestUseProviderConfigResolvesLocalSecretRef(t *testing.T) {
 	const (
-		testToken   = "test-token-value"
-		pcNamespace = "team-a"
-		secretName  = "gitlab-creds"
-		secretKey   = "token"
+		testToken      = "test-token-value"
+		pcNamespace    = "team-a"
+		otherNamespace = "team-b"
+		secretName     = "gitlab-creds"
+		secretKey      = "token"
 	)
 
 	mg := &namespacedgroupsv1alpha1.AccessToken{
@@ -259,9 +265,10 @@ func TestUseProviderConfigResolvesLocalSecretRef(t *testing.T) {
 						Credentials: namespacedv1beta2.ProviderCredentials{
 							Source: v2.CredentialsSourceSecret,
 							Method: auth.PersonalAccessToken,
-							SecretRef: &v2.LocalSecretKeySelector{
-								Key:                  secretKey,
-								LocalSecretReference: v2.LocalSecretReference{Name: secretName},
+							SecretRef: &namespacedv1beta2.IgnoredNamespaceSecretKeySelector{
+								Key:       secretKey,
+								Name:      secretName,
+								Namespace: otherNamespace,
 							},
 						},
 					},
