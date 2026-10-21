@@ -229,20 +229,50 @@ spec:
               credentials:
                 description: Credentials required to authenticate to this provider.
                 properties:
+                  env:
+                    description: |-
+                      Env is ignored. The credentials source enum does not accept Environment,
+                      so nothing reads this; it is declared only to keep conversion from
+                      v1beta1 lossless.
+                    properties:
+                      name:
+                        description: Name is the name of an environment variable.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  fs:
+                    description: |-
+                      Fs is ignored. The credentials source enum does not accept Filesystem, so
+                      nothing reads this; it is declared only to keep conversion from v1beta1
+                      lossless.
+                    properties:
+                      path:
+                        description: Path is a filesystem path.
+                        type: string
+                    required:
+                    - path
+                    type: object
                   method:
                     description: Method of authentification can be BasicAuth, JobToken,
                       OAuthToken or PersonalAccessToken (default)
                     type: string
                   secretRef:
                     description: |-
-                      A SecretRef is a reference to a secret key, in the same namespace as this
-                      ProviderConfig, that contains the credentials that must be used to connect
-                      to the provider.
+                      A SecretRef is a reference to a secret key that contains the credentials
+                      that must be used to connect to the provider. The secret is always read
+                      from this ProviderConfig's own namespace; secretRef.namespace is ignored.
                     properties:
                       key:
+                        description: The key to select.
                         type: string
                       name:
                         description: Name of the secret.
+                        type: string
+                      namespace:
+                        description: |-
+                          Namespace is ignored. The secret is read from the ProviderConfig's own
+                          namespace.
                         type: string
                     required:
                     - key

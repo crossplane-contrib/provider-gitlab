@@ -44,6 +44,17 @@ spec:
 kubectl apply -f examples/providerconfig/provider.yaml
 ```
 
+### Namespaced ProviderConfig credentials
+
+A namespaced `ProviderConfig` (`gitlab.m.crossplane.io`) reads its credentials
+`Secret` from its own namespace. `credentials.secretRef.namespace`,
+`credentials.fs` and `credentials.env` are accepted but ignored; the `v1beta1`
+schema still declares them, and dropping them would break server-side apply on
+that version, see
+[#468](https://github.com/crossplane-contrib/provider-gitlab/issues/468). Use a
+`ClusterProviderConfig` (`gitlab.crossplane.io`) for a `Secret` in another
+namespace or for the `Filesystem` and `Environment` sources.
+
 ### Poll intervals
 
 The provider checks every managed resource for drift on a timer. These provider

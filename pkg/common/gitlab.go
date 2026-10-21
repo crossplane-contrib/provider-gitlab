@@ -207,18 +207,18 @@ func UseProvicerConfig(ctx context.Context, c client.Client, mg resource.ModernM
 }
 
 // buildProviderConfig builds a Config from a namespaced ProviderConfig
-// (gitlab.m.crossplane.io/v1beta2). Its credentials secret is referenced with a
-// LocalSecretKeySelector and always read from the ProviderConfig's own
-// namespace.
+// (gitlab.m.crossplane.io/v1beta2). Its credentials secret is always read from
+// the ProviderConfig's own namespace.
 func buildProviderConfig(ctx context.Context, c client.Client, mg resource.ModernManaged, pc *namespacedV1Beta2.ProviderConfig) (*Config, error) {
 	spec := pc.Spec
-	// The single selector is used both to read the token and to record the
-	// resolved reference in Config.CredentialsSecretRef, so the read namespace
-	// and the recorded namespace are the same by construction. It is scoped to
-	// the ProviderConfig's own namespace (equal to mg.GetNamespace(), since the
-	// PC was fetched there), which self-managed token detection (isSelfManaged)
+	// Local() discards the ignored secretRef.namespace, so the selector below
+	// is used both to read the token and to record the resolved reference in
+	// Config.CredentialsSecretRef, and the read namespace and the recorded
+	// namespace are the same by construction. It is scoped to the
+	// ProviderConfig's own namespace (equal to mg.GetNamespace(), since the PC
+	// was fetched there), which self-managed token detection (isSelfManaged)
 	// compares against.
-	sel := localToSecretKeySelector(spec.Credentials.SecretRef, pc.GetNamespace())
+	sel := localToSecretKeySelector(spec.Credentials.SecretRef.Local(), pc.GetNamespace())
 	return buildConfig(ctx, c, mg, spec.BaseURL, spec.Credentials.Source, spec.Credentials.Method, spec.InsecureSkipVerify, sel)
 }
 
