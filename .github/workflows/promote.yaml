@@ -25,6 +25,12 @@ jobs:
   promote-artifacts:
     runs-on: ubuntu-26.04
 
+    permissions:
+      contents: read
+      # XPKG_REG_ORGS includes ghcr.io, so GITHUB_TOKEN has to be allowed to
+      # write the channel tag there.
+      packages: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -45,6 +51,13 @@ jobs:
         with:
           username: ${{ secrets.CONTRIB_DOCKER_USR }}
           password: ${{ secrets.CONTRIB_DOCKER_PSW }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Promote Artifacts in S3 and Docker Hub
         if: env.AWS_USR != '' && env.CONTRIB_DOCKER_USR != ''
