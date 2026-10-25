@@ -55,6 +55,98 @@ that version, see
 `ClusterProviderConfig` (`gitlab.crossplane.io`) for a `Secret` in another
 namespace or for the `Filesystem` and `Environment` sources.
 
+### Secret access
+
+Kubernetes Secret caching is enabled by default. Set `--no-enable-secret-cache`
+(or `ENABLE_SECRET_CACHE=false`) for direct API-server Secret reads. This uses
+controller-runtime's native `Client.Cache.DisableFor` setting for Secrets only;
+caches for managed resources and other Kubernetes objects are unchanged. It
+applies to ProviderConfig credentials, Secret references and the native
+crossplane-runtime connection Secret publisher, including rotation and repeat
+publication. It does not change GitLab API caching or authorization.
+
+```yaml
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: gitlab-scoped-secrets
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          containers:
+            - name: package-runtime
+              args:
+                - --no-enable-secret-cache
+```
+
+Reference it from the Provider's `spec.runtimeConfigRef.name`. The flag grants
+no permissions. For read-only Secret inputs, grant the runtime ServiceAccount
+`get` on the required Secret names in each authorized namespace. These paths
+then need no Secret `list` or `watch`. A namespaced ProviderConfig still resolves
+its credential in its own namespace; disabling caching does not change that rule.
+
+If a resource publishes a connection Secret, the native publisher also needs
+`create` and `patch` in the destination namespace, in addition to `get` on that
+Secret. Kubernetes `resourceNames` can restrict reads and patches, but cannot
+restrict `create` by name. Use a dedicated namespace or admission policy when
+that creation boundary must be narrower. These are runtime permissions, separate
+from the permissions used to install the provider and its CRDs. Review any
+additional Secret operations required by the resource types you enable.
+
+### Hidden project variables
+
+Project `Variable` resources accept `spec.forProvider.hidden: true` to create
+masked and hidden variables on GitLab 17.4 and later. Prefer `valueSecretRef`
+for credentials. For example, a namespaced variable reads the referenced Secret
+from the variable's namespace:
+
+```yaml
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Variable
+metadata:
+  name: analysis-token
+  namespace: project-quality
+spec:
+  providerConfigRef:
+    name: gitlab
+    kind: ProviderConfig
+  forProvider:
+    projectId: 42
+    key: ANALYSIS_TOKEN
+    hidden: true
+    masked: true
+    protected: true
+    raw: true
+    valueSecretRef:
+      name: analysis-token
+      key: token
+```
+
+The legacy cluster-scoped project Variable API has the same option. Group and
+instance variables are not changed. Omitting `hidden` preserves existing creation
+behavior. GitLab cannot change visibility after creation; an explicit mismatch
+is reported rather than deleting and recreating the variable automatically.
+
+GitLab redacts hidden values in API responses. The provider reuses its webhook
+token rotation mechanism: it records only the SHA-256 digest of the last
+successful write in `status.atProvider.valueHash`. Polling compares that digest
+to the current desired value, so a Secret rotation triggers an update without
+writing on every poll. After creation, one confirming update initializes the
+persisted digest. Failed writes retain the previous digest and retry.
+Adopting a hidden variable with a desired value but no digest requires one
+successful write.
+Values resolved from project Variable Secret references are kept on a copy;
+they are not late-initialized into the managed resource's spec.
+
+The digest is not encryption or a second credential store; restrict access to
+managed resources and use high-entropy credentials. The API cannot reveal an
+out-of-band change to a hidden value. Other returned attributes still reconcile,
+but hidden-value drift can only be detected on the desired side. Losing the
+status digest safely causes another write of the desired value.
+
 ### Poll intervals
 
 The provider checks every managed resource for drift on a timer. These provider
