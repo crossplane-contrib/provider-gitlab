@@ -34,12 +34,6 @@ type VariableParameters struct {
 	// +nullable
 	ValueSecretRef *v2.LocalSecretKeySelector `json:"valueSecretRef,omitempty"`
 
-	// Hidden creates a masked and hidden variable (GitLab 17.4+).
-	// Visibility cannot be changed after creation. Recreate the variable explicitly to change it.
-	// +optional
-	// +immutable
-	Hidden *bool `json:"hidden,omitempty"`
-
 	// ProjectID is the ID of the project to create the variable on.
 	// +optional
 	// +immutable
@@ -65,10 +59,6 @@ type VariableObservation struct {
 	v1alpha1.CommonVariableObservation `json:",inline"`
 	EnvironmentScope                   string `json:"environmentScope"`
 	Hidden                             bool   `json:"hidden"`
-	// ValueHash is the SHA-256 digest of the hidden value last written successfully.
-	// GitLab does not return hidden values; this detects desired-side rotation.
-	// +optional
-	ValueHash string `json:"valueHash,omitempty"`
 }
 
 // A VariableSpec defines the desired state of a Gitlab Project CI
@@ -90,6 +80,7 @@ type VariableStatus struct {
 // +kubebuilder:object:root=true
 
 // A Variable is a managed resource that represents a Gitlab CI variable.
+// WARNING: this does not support hidden variables as Gitlab API does not return their values.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
