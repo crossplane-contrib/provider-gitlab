@@ -375,6 +375,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				cr: variable(
 					withDefaultValues(),
+					func(v *v1alpha1.Variable) { v.Spec.ForProvider.Value = nil },
 					withValueSecretRef(common.TestCreateLocalSecretKeySelector("", "blah")),
 					withMasked(true),
 					withRaw(true),
@@ -565,9 +566,6 @@ func TestCreate(t *testing.T) {
 					withKey(variableKey),
 					withConditions(v2.Creating()),
 					withValueSecretRef(common.TestCreateLocalSecretKeySelector("", "blah")),
-					withValue(variableValue),
-					withMasked(true),
-					withRaw(true),
 				),
 			},
 		},
@@ -704,9 +702,6 @@ func TestUpdate(t *testing.T) {
 					withProjectID(projectID),
 					withKey(variableKey),
 					withValueSecretRef(common.TestCreateLocalSecretKeySelector("", "blah")),
-					withValue(variableValue),
-					withMasked(true),
-					withRaw(true),
 				),
 			},
 		},

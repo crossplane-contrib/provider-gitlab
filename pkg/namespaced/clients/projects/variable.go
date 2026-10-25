@@ -63,6 +63,10 @@ func LateInitializeVariable(in *v1alpha1.VariableParameters, variable *gitlab.Pr
 		return
 	}
 
+	if in.Hidden == nil && variable.Hidden {
+		in.Hidden = &variable.Hidden
+	}
+
 	if in.VariableType == nil {
 		in.VariableType = (*commonv1alpha1.VariableType)(&variable.VariableType)
 	}
@@ -92,6 +96,7 @@ func LateInitializeVariable(in *v1alpha1.VariableParameters, variable *gitlab.Pr
 func GenerateCreateVariableOptions(p *v1alpha1.VariableParameters) *gitlab.CreateProjectVariableOptions {
 	variable := &gitlab.CreateProjectVariableOptions{
 		Key:              &p.Key,
+		MaskedAndHidden:  p.Hidden,
 		Value:            p.Value,
 		Description:      p.Description,
 		VariableType:     (*gitlab.VariableTypeValue)(p.VariableType),
@@ -166,7 +171,8 @@ func IsVariableUpToDate(p *v1alpha1.VariableParameters, g *gitlab.ProjectVariabl
 		return false
 	}
 
-	if !clients.IsComparableEqualToComparablePtr(p.Value, g.Value) {
+	// Hidden values are redacted by GitLab; the controller compares the last successful write.
+	if !g.Hidden && !clients.IsComparableEqualToComparablePtr(p.Value, g.Value) {
 		return false
 	}
 

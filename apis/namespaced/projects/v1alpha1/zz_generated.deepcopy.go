@@ -6183,6 +6183,11 @@ func (in *VariableParameters) DeepCopyInto(out *VariableParameters) {
 		*out = new(v2.LocalSecretKeySelector)
 		**out = **in
 	}
+	if in.Hidden != nil {
+		in, out := &in.Hidden, &out.Hidden
+		*out = new(bool)
+		**out = **in
+	}
 	if in.ProjectID != nil {
 		in, out := &in.ProjectID, &out.ProjectID
 		*out = new(int64)

@@ -125,21 +125,26 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: true}, nil
 	}
 
-	if cr.Spec.ForProvider.ValueSecretRef != nil {
-		if err = variables.UpdateVariableFromSecret(e.kube, mg, ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider.CommonVariableParameters); err != nil {
-			return managed.ExternalObservation{}, errors.Wrap(err, errUpdateFailed)
-		}
+	if cr.Spec.ForProvider.Hidden != nil && *cr.Spec.ForProvider.Hidden != variable.Hidden {
+		return managed.ExternalObservation{}, errors.New("variable visibility cannot be changed in GitLab; recreate the variable explicitly")
 	}
-
 	current := cr.Spec.ForProvider.DeepCopy()
+	params, err := e.parameters(ctx, cr)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errUpdateFailed)
+	}
+	cr.Spec.ForProvider.Masked = params.Masked
+	cr.Spec.ForProvider.Raw = params.Raw
 	projects.LateInitializeVariable(&cr.Spec.ForProvider, variable)
+	valueHash := cr.Status.AtProvider.ValueHash
 
 	cr.Status.SetConditions(v2.Available())
 	cr.Status.AtProvider = projects.GenerateVariableObservation(variable)
+	cr.Status.AtProvider.ValueHash = valueHash
 
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        projects.IsVariableUpToDate(&cr.Spec.ForProvider, variable),
+		ResourceUpToDate:        projects.IsVariableUpToDate(params, variable) && hiddenValueUpToDate(params, variable, valueHash),
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 	}, nil
 }
@@ -150,23 +155,24 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotVariable)
 	}
 
-	if cr.Spec.ForProvider.ValueSecretRef != nil {
-		if err := variables.UpdateVariableFromSecret(e.kube, mg, ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider.CommonVariableParameters); err != nil {
-			return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
-		}
+	params, err := e.parameters(ctx, cr)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
+
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalCreation{}, errors.New(errProjectIDMissing)
 	}
 
 	cr.Status.SetConditions(v2.Creating())
-	_, _, err := e.client.CreateVariable(
+	_, _, err = e.client.CreateVariable(
 		*cr.Spec.ForProvider.ProjectID,
-		projects.GenerateCreateVariableOptions(&cr.Spec.ForProvider),
+		projects.GenerateCreateVariableOptions(params),
 		gitlab.WithContext(ctx))
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateFailed)
 	}
+
 	return managed.ExternalCreation{}, nil
 }
 
@@ -176,22 +182,28 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotVariable)
 	}
 
-	if cr.Spec.ForProvider.ValueSecretRef != nil {
-		if err := variables.UpdateVariableFromSecret(e.kube, mg, ctx, cr.Spec.ForProvider.ValueSecretRef, &cr.Spec.ForProvider.CommonVariableParameters); err != nil {
-			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
-		}
+	params, err := e.parameters(ctx, cr)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 	}
+
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalUpdate{}, errors.New(errProjectIDMissing)
 	}
 
-	_, _, err := e.client.UpdateVariable(
+	_, _, err = e.client.UpdateVariable(
 		*cr.Spec.ForProvider.ProjectID,
 		cr.Spec.ForProvider.Key,
-		projects.GenerateUpdateVariableOptions(&cr.Spec.ForProvider),
+		projects.GenerateUpdateVariableOptions(params),
 		gitlab.WithContext(ctx),
 	)
-	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
+	}
+	if params.Hidden != nil && *params.Hidden {
+		cr.Status.AtProvider.ValueHash = clients.TokenHash(params.Value)
+	}
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
@@ -217,4 +229,26 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 func (e *external) Disconnect(ctx context.Context) error {
 	// Disconnect is not implemented as it is a new method required by the SDK
 	return nil
+}
+
+// parameters resolves Secret values on a copy so late initialization cannot persist them in spec.
+func (e *external) parameters(ctx context.Context, cr *v1alpha1.Variable) (*v1alpha1.VariableParameters, error) {
+	params := cr.Spec.ForProvider.DeepCopy()
+	if params.ValueSecretRef != nil {
+		if err := variables.UpdateVariableFromSecret(e.kube, cr, ctx, params.ValueSecretRef, &params.CommonVariableParameters); err != nil {
+			return nil, err
+		}
+	}
+	if params.Hidden != nil && *params.Hidden {
+		if params.Masked != nil && !*params.Masked {
+			return nil, errors.New("a hidden variable must be masked")
+		}
+		params.Masked = new(true)
+	}
+	return params, nil
+}
+
+// hiddenValueUpToDate compares desired-side rotation because GitLab redacts the remote value.
+func hiddenValueUpToDate(params *v1alpha1.VariableParameters, variable *gitlab.ProjectVariable, valueHash string) bool {
+	return !variable.Hidden || params.Value == nil || valueHash == clients.TokenHash(params.Value)
 }
