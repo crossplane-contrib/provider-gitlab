@@ -553,3 +553,19 @@ func TestGenerateRemoveVariableOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestHiddenVariableOptions(t *testing.T) {
+	for name, hidden := range map[string]*bool{"Unset": nil, "Visible": new(false), "Hidden": new(true)} {
+		t.Run(name, func(t *testing.T) {
+			p := &v1alpha1.VariableParameters{Hidden: hidden}
+			if diff := cmp.Diff(hidden, GenerateCreateVariableOptions(p).MaskedAndHidden); diff != "" {
+				t.Errorf("hidden creation option (-want,+got): %s", diff)
+			}
+			observed := &gitlab.ProjectVariable{Hidden: true}
+			LateInitializeVariable(p, observed)
+			if hidden == nil && (p.Hidden == nil || !*p.Hidden) {
+				t.Fatal("hidden adoption was not initialized")
+			}
+		})
+	}
+}
