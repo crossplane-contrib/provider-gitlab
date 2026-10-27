@@ -96,6 +96,58 @@ that creation boundary must be narrower. These are runtime permissions, separate
 from the permissions used to install the provider and its CRDs. Review any
 additional Secret operations required by the resource types you enable.
 
+### Hidden project variables
+
+Project `Variable` resources already support values supplied through Kubernetes
+Secret references. Set `spec.forProvider.hidden: true` to create
+masked and hidden variables on GitLab 17.4 and later. Prefer `valueSecretRef`
+for credentials. For example, a namespaced variable reads the referenced Secret
+from the variable's namespace:
+
+```yaml
+apiVersion: projects.gitlab.m.crossplane.io/v1alpha1
+kind: Variable
+metadata:
+  name: analysis-token
+  namespace: project-quality
+spec:
+  providerConfigRef:
+    name: gitlab
+    kind: ProviderConfig
+  forProvider:
+    projectId: 42
+    key: ANALYSIS_TOKEN
+    hidden: true
+    masked: true
+    protected: true
+    raw: true
+    valueSecretRef:
+      name: analysis-token
+      key: token
+```
+
+The legacy cluster-scoped project Variable API has the same option. Group and
+instance variables are not changed. Omitting `hidden` preserves existing creation
+behavior. GitLab cannot change visibility after creation; an explicit mismatch
+is reported rather than deleting and recreating the variable automatically.
+
+GitLab redacts hidden values in API responses. The provider reuses its webhook
+token rotation mechanism: it records only the SHA-256 digest of the last
+successful write in `status.atProvider.valueHash`. Polling compares that digest
+to the current desired value, so a Secret rotation triggers an update without
+writing on every poll. After creation, one confirming update initializes the
+persisted digest. Failed writes retain the previous digest and retry.
+Adopting a hidden variable with a desired value but no digest requires one
+successful write.
+Values resolved from project Variable Secret references are kept on a copy;
+they are not late-initialized into the managed resource's spec.
+
+The digest is not encryption or a second credential store; restrict access to
+managed resources and use high-entropy credentials. The API cannot reveal an
+out-of-band change to a hidden value. Other returned attributes still reconcile,
+but hidden-value drift can only be detected on the desired side. Losing the
+status digest safely causes another write of the desired value.
+
 ### Poll intervals
 
 The provider checks every managed resource for drift on a timer. These provider
