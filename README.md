@@ -55,6 +55,47 @@ that version, see
 `ClusterProviderConfig` (`gitlab.crossplane.io`) for a `Secret` in another
 namespace or for the `Filesystem` and `Environment` sources.
 
+### Secret access
+
+Kubernetes Secret caching is enabled by default. Set `--no-enable-secret-cache`
+(or `ENABLE_SECRET_CACHE=false`) for direct API-server Secret reads. This uses
+controller-runtime's native `Client.Cache.DisableFor` setting for Secrets only;
+caches for managed resources and other Kubernetes objects are unchanged. It
+applies to ProviderConfig credentials, Secret references and the native
+crossplane-runtime connection Secret publisher, including rotation and repeat
+publication. It does not change GitLab API caching or authorization.
+
+```yaml
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: gitlab-scoped-secrets
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          containers:
+            - name: package-runtime
+              args:
+                - --no-enable-secret-cache
+```
+
+Reference it from the Provider's `spec.runtimeConfigRef.name`. The flag grants
+no permissions. For read-only Secret inputs, grant the runtime ServiceAccount
+`get` on the required Secret names in each authorized namespace. These paths
+then need no Secret `list` or `watch`. A namespaced ProviderConfig still resolves
+its credential in its own namespace; disabling caching does not change that rule.
+
+If a resource publishes a connection Secret, the native publisher also needs
+`create` and `patch` in the destination namespace, in addition to `get` on that
+Secret. Kubernetes `resourceNames` can restrict reads and patches, but cannot
+restrict `create` by name. Use a dedicated namespace or admission policy when
+that creation boundary must be narrower. These are runtime permissions, separate
+from the permissions used to install the provider and its CRDs. Review any
+additional Secret operations required by the resource types you enable.
+
 ### Hidden project variables
 
 Project `Variable` resources already support values supplied through Kubernetes
