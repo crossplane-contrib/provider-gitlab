@@ -271,18 +271,12 @@ spec:
                             2016-09-26'
                           format: date-time
                           type: string
-                          x-kubernetes-validations:
-                          - message: expiresAt is immutable
-                            rule: self == oldSelf
                         groupAccessLevel:
                           description: |-
                             The role (access_level) to grant the group
                             https://docs.gitlab.com/ee/api/members.html#roles
                           format: int64
                           type: integer
-                          x-kubernetes-validations:
-                          - message: groupAccessLevel is immutable
-                            rule: self == oldSelf
                         groupId:
                           description: The ID of the group to share with.
                           format: int64
