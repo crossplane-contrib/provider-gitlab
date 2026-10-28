@@ -30,13 +30,12 @@ import (
 type ServiceAccountAccessTokenParameters struct {
 	// GroupID is the ID of the group that owns the service account.
 	// +optional
-	// +immutable
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupId is immutable"
 	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupIdRef is immutable"
 	GroupIDRef *v2.NamespacedReference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
@@ -46,13 +45,12 @@ type ServiceAccountAccessTokenParameters struct {
 	// ServiceAccountID is the ID of the service account user the personal
 	// access token belongs to.
 	// +optional
-	// +immutable
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="serviceAccountId is immutable"
 	ServiceAccountID *int64 `json:"serviceAccountId,omitempty"`
 
 	// ServiceAccountIDRef is a reference to a ServiceAccount to retrieve its serviceAccountId.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="serviceAccountIdRef is immutable"
 	ServiceAccountIDRef *v2.NamespacedReference `json:"serviceAccountIdRef,omitempty"`
 
 	// ServiceAccountIDSelector selects a reference to a ServiceAccount to retrieve its serviceAccountId.
@@ -86,7 +84,6 @@ type ServiceAccountAccessTokenParameters struct {
 	// Must be at least one of api, read_api, read_repository, write_repository,
 	// read_registry, write_registry, read_package_registry, write_package_registry,
 	// or self_rotate.
-	// +immutable
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="scopes is immutable"
 	Scopes []string `json:"scopes"`
 

@@ -28,12 +28,12 @@ type MemberParameters struct {
 
 	// The ID of the project owned by the authenticated user.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdRef is immutable"
 	ProjectIDRef *v2.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
@@ -49,7 +49,7 @@ type MemberParameters struct {
 	UserName *string `json:"userName,omitempty"`
 
 	// A valid access level.
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="accessLevel is immutable"
 	AccessLevel AccessLevelValue `json:"accessLevel"`
 
 	// A date string in the format YEAR-MONTH-DAY.

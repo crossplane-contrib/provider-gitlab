@@ -26,12 +26,12 @@ import (
 type BadgeParameters struct {
 	// ProjectID is the ID of the project to create the deploy token in.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdRef is immutable"
 	ProjectIDRef *v2.NamespacedReference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
@@ -42,7 +42,7 @@ type BadgeParameters struct {
 	// If set, the controller will adopt the existing badge instead of creating a new one.
 	// If the badge with this ID does not exist, resource creation will fail.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="id is immutable"
 	ID *int64 `json:"id,omitempty"`
 	// LinkURL is the onclick redirect URL of the badge.
 	// Supports gitlab format templating using variables like %{project_name}

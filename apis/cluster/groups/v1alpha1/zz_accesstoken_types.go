@@ -31,12 +31,12 @@ import (
 type AccessTokenParameters struct {
 	// GroupID is the ID of the group to create the deploy token in.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupId is immutable"
 	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupIdRef is immutable"
 	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
@@ -69,13 +69,13 @@ type AccessTokenParameters struct {
 	// Access level for the group. Default is 40.
 	// Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="accessLevel is immutable"
 	AccessLevel *AccessLevelValue `json:"accessLevel,omitempty"`
 
 	// Scopes indicates the access token scopes.
 	// Must be at least one of read_repository, read_registry, write_registry,
 	// read_package_registry, or write_package_registry.
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="scopes is immutable"
 	Scopes []string `json:"scopes"`
 
 	// Name of the group access token

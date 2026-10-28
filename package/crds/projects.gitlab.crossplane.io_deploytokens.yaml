@@ -82,11 +82,17 @@ spec:
                       Expected in ISO 8601 format (2019-03-15T08:00:00Z)
                     format: date-time
                     type: string
+                    x-kubernetes-validations:
+                    - message: expiresAt is immutable
+                      rule: self == oldSelf
                   projectId:
                     description: ProjectID is the ID of the project to create the
                       deploy token in.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: projectId is immutable
+                      rule: self == oldSelf
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
                       its projectId
@@ -122,6 +128,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: projectIdRef is immutable
+                      rule: self == oldSelf
                   projectIdSelector:
                     description: ProjectIDSelector selects reference to a project
                       to retrieve its projectId.
@@ -191,9 +200,15 @@ spec:
                     items:
                       type: string
                     type: array
+                    x-kubernetes-validations:
+                    - message: scopes is immutable
+                      rule: self == oldSelf
                   username:
                     description: Username for deploy token. Default is gitlab+deploy-token-{n}
                     type: string
+                    x-kubernetes-validations:
+                    - message: username is immutable
+                      rule: self == oldSelf
                 required:
                 - scopes
                 type: object

@@ -87,6 +87,9 @@ spec:
                       Access level for the project. Default is 40.
                       Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
                     type: integer
+                    x-kubernetes-validations:
+                    - message: accessLevel is immutable
+                      rule: self == oldSelf
                   description:
                     description: |-
                       Description of the project access token
@@ -107,6 +110,9 @@ spec:
                     description: ProjectID is the ID of the project to create the
                       access token in.
                     type: string
+                    x-kubernetes-validations:
+                    - message: projectId is immutable
+                      rule: self == oldSelf
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
                       its projectId
@@ -142,6 +148,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: projectIdRef is immutable
+                      rule: self == oldSelf
                   projectIdSelector:
                     description: ProjectIDSelector selects reference to a project
                       to retrieve its projectId.
@@ -207,6 +216,9 @@ spec:
                     items:
                       type: string
                     type: array
+                    x-kubernetes-validations:
+                    - message: scopes is immutable
+                      rule: self == oldSelf
                 required:
                 - name
                 - scopes

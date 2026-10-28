@@ -32,12 +32,12 @@ import (
 type GroupShareParameters struct {
 	// SharedGroupID is the ID of the group that is shared.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="sharedGroupId is immutable"
 	SharedGroupID *int64 `json:"sharedGroupId,omitempty"`
 
 	// SharedGroupIDRef references the Group that is shared.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="sharedGroupIdRef is immutable"
 	SharedGroupIDRef *v2.Reference `json:"sharedGroupIdRef,omitempty"`
 
 	// SharedGroupIDSelector selects the Group that is shared.
@@ -47,12 +47,12 @@ type GroupShareParameters struct {
 	// InvitedGroupID is the ID of the group whose members get access to the
 	// shared group.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="invitedGroupId is immutable"
 	InvitedGroupID *int64 `json:"invitedGroupId,omitempty"`
 
 	// InvitedGroupIDRef references the Group whose members get access.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="invitedGroupIdRef is immutable"
 	InvitedGroupIDRef *v2.Reference `json:"invitedGroupIdRef,omitempty"`
 
 	// InvitedGroupIDSelector selects the Group whose members get access.

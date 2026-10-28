@@ -29,14 +29,14 @@ import (
 type AccessTokenParameters struct {
 	// ProjectID is the ID of the project to create the access token in.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1.Project
 	// +crossplane:generate:reference:extractor=github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1.ProjectID()
 	ProjectID *string `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdRef is immutable"
 	ProjectIDRef *v2.NamespacedReference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
@@ -69,13 +69,13 @@ type AccessTokenParameters struct {
 	// Access level for the project. Default is 40.
 	// Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="accessLevel is immutable"
 	AccessLevel *AccessLevelValue `json:"accessLevel,omitempty"`
 
 	// Scopes indicates the access token scopes.
 	// Must be at least one of read_repository, read_registry, write_registry,
 	// read_package_registry, or write_package_registry.
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="scopes is immutable"
 	Scopes []string `json:"scopes"`
 
 	// Name of the project access token

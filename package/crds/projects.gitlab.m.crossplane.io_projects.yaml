@@ -202,6 +202,9 @@ spec:
                       Leave empty for instance-level templates. Requires useCustomTemplate to be true.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: groupWithProjectTemplatesId is immutable
+                      rule: self == oldSelf
                   importUrl:
                     description: URL to import repository from.
                     type: string
@@ -229,6 +232,9 @@ spec:
                   initializeWithReadme:
                     description: false by default.
                     type: boolean
+                    x-kubernetes-validations:
+                    - message: initializeWithReadme is immutable
+                      rule: self == oldSelf
                   issuesAccessLevel:
                     description: One of disabled, private, or enabled.
                     type: string
@@ -348,6 +354,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: namespaceIdRef is immutable
+                      rule: self == oldSelf
                   namespaceIdSelector:
                     description: NamespaceIDSelector selects reference to a project
                       to retrieve its namespaceId.
@@ -438,6 +447,9 @@ spec:
                     description: Show link to create/view merge request when pushing
                       from the command line.
                     type: boolean
+                    x-kubernetes-validations:
+                    - message: printingMergeRequestLinkEnabled is immutable
+                      rule: self == oldSelf
                   publicBuilds:
                     description: |-
                       Deprecated: Use PublicJobs instead. This field will be removed in a future version.
@@ -566,12 +578,18 @@ spec:
                       When used without useCustomTemplate, name of a built-in project template.
                       When used with useCustomTemplate, name of a custom project template.
                     type: string
+                    x-kubernetes-validations:
+                    - message: templateName is immutable
+                      rule: self == oldSelf
                   templateProjectId:
                     description: |-
                       When used with useCustomTemplate, project ID of a custom project template.
                       This is preferable to using templateName since templateName may be ambiguous.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: templateProjectId is immutable
+                      rule: self == oldSelf
                   topics:
                     description: The list of topics for the project;
                     items:
@@ -581,6 +599,9 @@ spec:
                     description: Use either custom instance or group (with groupWithProjectTemplatesId)
                       project template.
                     type: boolean
+                    x-kubernetes-validations:
+                    - message: useCustomTemplate is immutable
+                      rule: self == oldSelf
                   visibility:
                     description: See project visibility level.
                     type: string

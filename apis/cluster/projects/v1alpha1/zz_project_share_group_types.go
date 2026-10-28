@@ -30,7 +30,7 @@ type ProjectShareGroupParameters struct {
 
 	// ExpiresAt is optional. Format: "2024-09-26"
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="expiresAt is immutable"
 	ExpiresAt *string `json:"expiresAt,omitempty"`
 
 	// --- REFS CONFIGURATION ---
@@ -42,12 +42,12 @@ type ProjectShareGroupParameters struct {
 	// +crossplane:generate:reference:refFieldName=GroupRef
 	// +crossplane:generate:reference:selectorFieldName=GroupSelector
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupId is immutable"
 	GroupID *string `json:"groupId,omitempty"`
 
 	// GroupRef allows referencing a Group resource by name.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupRef is immutable"
 	GroupRef *v2.Reference `json:"groupRef,omitempty"`
 
 	// GroupSelector allows selecting a Group by labels.
@@ -60,12 +60,12 @@ type ProjectShareGroupParameters struct {
 	// +crossplane:generate:reference:refFieldName=ProjectRef
 	// +crossplane:generate:reference:selectorFieldName=ProjectSelector
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	ProjectID *string `json:"projectId,omitempty"`
 
 	// ProjectRef allows referencing a Project resource by name.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectRef is immutable"
 	ProjectRef *v2.Reference `json:"projectRef,omitempty"`
 
 	// ProjectSelector allows selecting a Project by labels.

@@ -28,12 +28,12 @@ import (
 type SamlGroupLinkParameters struct {
 	// GroupID is the ID of the group to create the deploy token in.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupId is immutable"
 	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupIdRef is immutable"
 	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
@@ -41,16 +41,16 @@ type SamlGroupLinkParameters struct {
 	GroupIDSelector *v2.Selector `json:"groupIdSelector,omitempty"`
 
 	// name is the name of the saml group to attach to the gitlab group
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
 	Name *string `json:"name"`
 
 	// accessLevel is the defined role for members of the SAML group
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="accessLevel is immutable"
 	AccessLevel AccessLevelValue `json:"accessLevel"`
 
 	// memberRoleID is the defined member role assigned to members of the group
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="memberRoleId is immutable"
 	MemberRoleID *int64 `json:"memberRoleId,omitempty"`
 }
 

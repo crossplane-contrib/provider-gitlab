@@ -31,7 +31,7 @@ import (
 type PipelineScheduleParameters struct {
 	// The ID or URL-encoded path of the project owned by the authenticated user.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1.Project
 	// +crossplane:generate:reference:extractor=github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1.ProjectID()
 	// +crossplane:generate:reference:refFieldName=ProjectIDRef
@@ -40,12 +40,12 @@ type PipelineScheduleParameters struct {
 
 	// ProjectIDRef is a reference to a project to retrieve its ProjectID.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdRef is immutable"
 	ProjectIDRef *v2.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its ProjectID.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdSelector is immutable"
 	ProjectIDSelector *v2.Selector `json:"projectIdSelector,omitempty"`
 
 	// Description is a description of the pipeline schedule.

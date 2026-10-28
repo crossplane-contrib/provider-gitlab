@@ -39,12 +39,12 @@ type MemberParameters struct {
 
 	// The ID of the group owned by the authenticated user.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupId is immutable"
 	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupIdRef is immutable"
 	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
@@ -60,7 +60,7 @@ type MemberParameters struct {
 	UserName *string `json:"userName,omitempty"`
 
 	// A valid access level.
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="accessLevel is immutable"
 	AccessLevel AccessLevelValue `json:"accessLevel"`
 
 	// A date string in the format YEAR-MONTH-DAY.

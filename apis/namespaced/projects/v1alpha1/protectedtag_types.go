@@ -46,14 +46,12 @@ type TagCreateAccess struct {
 type ProtectedTagParameters struct {
 	// TagName is the name of the tag to protect, or a wildcard such as v*.
 	// +kubebuilder:validation:MinLength=1
-	// +immutable
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="tagName is immutable"
 	TagName string `json:"tagName"`
 
 	// ProjectID is the ID of the project.
 	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1.Project
 	// +optional
-	// +immutable
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	ProjectID *string `json:"projectId,omitempty"`
 

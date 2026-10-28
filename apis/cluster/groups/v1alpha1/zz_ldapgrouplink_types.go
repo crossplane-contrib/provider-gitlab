@@ -28,12 +28,12 @@ import (
 type LdapGroupLinkParameters struct {
 	// GroupID is the ID of the group to create the LDAP group link in.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupId is immutable"
 	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupIdRef is immutable"
 	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
@@ -41,21 +41,21 @@ type LdapGroupLinkParameters struct {
 	GroupIDSelector *v2.Selector `json:"groupIdSelector,omitempty"`
 
 	// GroupAccess is the defined role for members of the LDAP group
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupAccess is immutable"
 	GroupAccess AccessLevelValue `json:"groupAccess"`
 
 	// LdapProvider provider ID for the LDAP group link
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="ldapProvider is immutable"
 	LdapProvider string `json:"ldapProvider"`
 
 	// CN is the CN of an LDAP group. Provide either cn or filter, but not both.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="cn is immutable"
 	CN *string `json:"cn,omitempty"`
 
 	// Filter is the LDAP filter for the group. Provide either cn or filter, but not both.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="filter is immutable"
 	Filter *string `json:"filter,omitempty"`
 }
 
