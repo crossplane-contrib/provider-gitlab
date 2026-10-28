@@ -339,16 +339,13 @@ spec:
                 required:
                 - activeUsers
                 - addOns
-                - createdAt
                 - expired
-                - expiresAt
                 - historicalMax
                 - id
                 - licensee
                 - maximumUserCount
                 - overage
                 - plan
-                - startsAt
                 - userLimit
                 type: object
               conditions:
