@@ -134,6 +134,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: groupIdRef is immutable
+                      rule: self == oldSelf
                   groupIdSelector:
                     description: GroupIDSelector selects reference to a group to retrieve
                       its groupId.

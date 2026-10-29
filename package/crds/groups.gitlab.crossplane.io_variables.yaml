@@ -91,6 +91,9 @@ spec:
                       on.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: groupId is immutable
+                      rule: self == oldSelf
                   groupIdRef:
                     description: GroupIDRef is a reference to a group to retrieve
                       its groupId.
@@ -126,6 +129,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: groupIdRef is immutable
+                      rule: self == oldSelf
                   groupIdSelector:
                     description: GroupIDSelector selects reference to a group to retrieve
                       its groupId.
@@ -174,6 +180,9 @@ spec:
                     maxLength: 255
                     pattern: ^[a-zA-Z0-9\_]+$
                     type: string
+                    x-kubernetes-validations:
+                    - message: key is immutable
+                      rule: self == oldSelf
                   masked:
                     description: Masked enables or disables variable masking.
                     type: boolean

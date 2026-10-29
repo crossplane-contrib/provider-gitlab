@@ -28,12 +28,12 @@ import (
 type IntegrationMattermostParameters struct {
 	// GroupID is the ID of the group.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupId is immutable"
 	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupIdRef is immutable"
 	GroupIDRef *v2.NamespacedReference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.

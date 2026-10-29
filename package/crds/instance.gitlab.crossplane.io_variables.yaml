@@ -88,6 +88,9 @@ spec:
                     maxLength: 255
                     pattern: ^[a-zA-Z0-9\_]+$
                     type: string
+                    x-kubernetes-validations:
+                    - message: key is immutable
+                      rule: self == oldSelf
                   masked:
                     description: Masked enables or disables variable masking.
                     type: boolean

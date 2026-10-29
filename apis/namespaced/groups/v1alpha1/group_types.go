@@ -65,7 +65,6 @@ const (
 // GroupParameters define the desired state of a Gitlab Project
 type GroupParameters struct {
 	// The path of the group.
-	// +immutable
 	Path string `json:"path"`
 
 	// The group’s description.
@@ -139,7 +138,7 @@ type GroupParameters struct {
 
 	// ParentIDRef is a reference to a group to retrieve its parentId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="parentIdRef is immutable"
 	ParentIDRef *v2.NamespacedReference `json:"parentIdRef,omitempty"`
 
 	// ParentIDSelector selects reference to a group to retrieve its parentId.
@@ -265,12 +264,10 @@ type SharedWithGroups struct {
 	// The role (access_level) to grant the group
 	// https://docs.gitlab.com/ee/api/members.html#roles
 	// +required
-	// +immutable
 	GroupAccessLevel int64 `json:"groupAccessLevel"`
 
 	// Share expiration date in ISO 8601 format: 2016-09-26
 	// +optional
-	// +immutable
 	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
 }
 

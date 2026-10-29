@@ -280,7 +280,7 @@ type ProjectParameters struct {
 	// For group-level custom templates, specifies ID of group from which all the custom project templates are sourced.
 	// Leave empty for instance-level templates. Requires useCustomTemplate to be true.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupWithProjectTemplatesId is immutable"
 	GroupWithProjectTemplatesID *int64 `json:"groupWithProjectTemplatesId,omitempty"`
 
 	// URL to import repository from.
@@ -299,7 +299,7 @@ type ProjectParameters struct {
 
 	// false by default.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="initializeWithReadme is immutable"
 	InitializeWithReadme *bool `json:"initializeWithReadme,omitempty"`
 
 	// One of disabled, private, or enabled.
@@ -379,7 +379,7 @@ type ProjectParameters struct {
 
 	// NamespaceIDRef is a reference to a project to retrieve its namespaceId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespaceIdRef is immutable"
 	NamespaceIDRef *v2.NamespacedReference `json:"namespaceIdRef,omitempty"`
 
 	// NamespaceIDSelector selects reference to a project to retrieve its namespaceId.
@@ -423,7 +423,7 @@ type ProjectParameters struct {
 
 	// Show link to create/view merge request when pushing from the command line.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="printingMergeRequestLinkEnabled is immutable"
 	PrintingMergeRequestLinkEnabled *bool `json:"printingMergeRequestLinkEnabled,omitempty"`
 
 	// Deprecated: Use PublicJobs instead. This field will be removed in a future version.
@@ -501,18 +501,18 @@ type ProjectParameters struct {
 	// When used without useCustomTemplate, name of a built-in project template.
 	// When used with useCustomTemplate, name of a custom project template.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="templateName is immutable"
 	TemplateName *string `json:"templateName,omitempty"`
 
 	// When used with useCustomTemplate, project ID of a custom project template.
 	// This is preferable to using templateName since templateName may be ambiguous.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="templateProjectId is immutable"
 	TemplateProjectID *int64 `json:"templateProjectId,omitempty"`
 
 	// Use either custom instance or group (with groupWithProjectTemplatesId) project template.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="useCustomTemplate is immutable"
 	UseCustomTemplate *bool `json:"useCustomTemplate,omitempty"`
 
 	// See project visibility level.

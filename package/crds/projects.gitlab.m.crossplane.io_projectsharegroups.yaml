@@ -60,9 +60,15 @@ spec:
                   expiresAt:
                     description: 'ExpiresAt is optional. Format: "2024-09-26"'
                     type: string
+                    x-kubernetes-validations:
+                    - message: expiresAt is immutable
+                      rule: self == oldSelf
                   groupId:
                     description: GroupID is the ID of the group to share with.
                     type: string
+                    x-kubernetes-validations:
+                    - message: groupId is immutable
+                      rule: self == oldSelf
                   groupRef:
                     description: GroupRef allows referencing a Group resource by name.
                     properties:
@@ -100,6 +106,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: groupRef is immutable
+                      rule: self == oldSelf
                   groupSelector:
                     description: GroupSelector allows selecting a Group by labels.
                     properties:
@@ -146,6 +155,9 @@ spec:
                   projectId:
                     description: ProjectID is the ID of the project being shared.
                     type: string
+                    x-kubernetes-validations:
+                    - message: projectId is immutable
+                      rule: self == oldSelf
                   projectRef:
                     description: ProjectRef allows referencing a Project resource
                       by name.
@@ -184,6 +196,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: projectRef is immutable
+                      rule: self == oldSelf
                   projectSelector:
                     description: ProjectSelector allows selecting a Project by labels.
                     properties:

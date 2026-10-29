@@ -28,17 +28,18 @@ import (
 // +kubebuilder:validation:XValidation:rule="(has(self.expiresAt) ? 1 : 0) + (has(self.renewalPeriodDays) ? 1 : 0) == 1",message="exactly one of expiresAt or renewalPeriodDays must be set"
 // +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || has(self.renewalPeriodDays)",message="renewBeforeDays requires renewalPeriodDays"
 // +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || !has(self.renewalPeriodDays) || self.renewalPeriodDays > self.renewBeforeDays",message="renewalPeriodDays must be greater than renewBeforeDays"
+// +kubebuilder:validation:XValidation:rule="has(self.accessLevel) == has(oldSelf.accessLevel)",message="accessLevel cannot be added or removed"
 type AccessTokenParameters struct {
 	// ProjectID is the ID of the project to create the access token in.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1.Project
 	// +crossplane:generate:reference:extractor=github.com/crossplane-contrib/provider-gitlab/apis/cluster/projects/v1alpha1.ProjectID()
 	ProjectID *string `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdRef is immutable"
 	ProjectIDRef *v2.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
@@ -69,15 +70,16 @@ type AccessTokenParameters struct {
 	RenewBeforeDays *int `json:"renewBeforeDays,omitempty"`
 
 	// Access level for the project. Default is 40.
+	// Set only on creation, including whether the default is used.
 	// Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="accessLevel is immutable"
 	AccessLevel *AccessLevelValue `json:"accessLevel,omitempty"`
 
 	// Scopes indicates the access token scopes.
 	// Must be at least one of read_repository, read_registry, write_registry,
 	// read_package_registry, or write_package_registry.
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="scopes is immutable"
 	Scopes []string `json:"scopes"`
 
 	// Name of the project access token

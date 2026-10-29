@@ -30,12 +30,12 @@ import (
 type ServiceAccountParameters struct {
 	// ProjectID is the ID of the project to create the service account in.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdRef is immutable"
 	ProjectIDRef *v2.NamespacedReference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.

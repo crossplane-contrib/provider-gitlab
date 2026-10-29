@@ -52,7 +52,6 @@ const (
 type RepositoryFileParameters struct {
 	// ProjectID is the ID or URL-encoded path of the project.
 	// +optional
-	// +immutable
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/namespaced/projects/v1alpha1.Project
 	// +crossplane:generate:reference:refFieldName=ProjectIDRef
@@ -61,23 +60,21 @@ type RepositoryFileParameters struct {
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdRef is immutable"
 	ProjectIDRef *v2.NamespacedReference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdSelector is immutable"
 	ProjectIDSelector *v2.NamespacedSelector `json:"projectIdSelector,omitempty"`
 
 	// Branch is the branch the file lives on. It must already exist unless
 	// the repository is empty; the provider does not create branches.
-	// +immutable
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="branch is immutable"
 	Branch string `json:"branch"`
 
 	// FilePath is the path of the file in the repository, e.g. "docs/README.md".
-	// +immutable
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="filePath is immutable"
 	FilePath string `json:"filePath"`

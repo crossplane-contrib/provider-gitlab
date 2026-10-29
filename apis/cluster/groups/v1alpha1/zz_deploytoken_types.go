@@ -28,15 +28,17 @@ import (
 // +kubebuilder:validation:XValidation:rule="!has(self.expiresAt) || !has(self.renewalPeriodDays)",message="expiresAt and renewalPeriodDays are mutually exclusive"
 // +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || has(self.renewalPeriodDays)",message="renewBeforeDays requires renewalPeriodDays"
 // +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || !has(self.renewalPeriodDays) || self.renewalPeriodDays > self.renewBeforeDays",message="renewalPeriodDays must be greater than renewBeforeDays"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.username) || has(self.username)",message="username cannot be removed"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.expiresAt) || has(self.expiresAt) || has(self.renewalPeriodDays)",message="expiresAt can only be removed when switching to renewalPeriodDays"
 type DeployTokenParameters struct {
 	// GroupID is the ID of the group to create the deploy token in.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupId is immutable"
 	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupIdRef is immutable"
 	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
@@ -45,8 +47,10 @@ type DeployTokenParameters struct {
 
 	// Expiration date for the deploy token. Does not expire if no value is provided.
 	// Expected in ISO 8601 format (2019-03-15T08:00:00Z)
+	// Once set, it can only be removed when switching to RenewalPeriodDays.
+	// An omitted value may be filled once by late initialization.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="expiresAt is immutable"
 	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
 
 	// RenewalPeriodDays is the number of days each token generation should live.
@@ -70,14 +74,15 @@ type DeployTokenParameters struct {
 	RenewBeforeDays *int `json:"renewBeforeDays,omitempty"`
 
 	// Username for deploy token. Default is gitlab+deploy-token-{n}
+	// Once set, it cannot be changed or removed. An omitted value may be filled once by late initialization.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="username is immutable"
 	Username *string `json:"username,omitempty"`
 
 	// Scopes indicates the deploy token scopes.
 	// Must be at least one of read_repository, read_registry, write_registry,
 	// read_package_registry, or write_package_registry.
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="scopes is immutable"
 	Scopes []string `json:"scopes"`
 }
 

@@ -28,12 +28,12 @@ import (
 type BadgeParameters struct {
 	// GroupID is the ID of the group to create the deploy token in.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupId is immutable"
 	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupIdRef is immutable"
 	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
@@ -44,7 +44,7 @@ type BadgeParameters struct {
 	// If set, the controller will adopt the existing badge instead of creating a new one.
 	// If the badge with this ID does not exist, resource creation will fail.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="id is immutable"
 	ID *int64 `json:"id,omitempty"`
 	// LinkURL is the onclick redirect URL of the badge.
 	// Supports gitlab format templating using variables like %{project_name}
