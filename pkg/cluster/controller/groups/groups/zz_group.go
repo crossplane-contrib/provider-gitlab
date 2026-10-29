@@ -153,9 +153,20 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		} else {
 			cr.SetConditions(v2.Unavailable().WithMessage("Group is in pending deletion state but this managed resource is not"))
 		}
-	} else {
-		cr.Status.SetConditions(v2.Available())
+
+		// GitLab renames a group scheduled for deletion to
+		// "<name>-deletion_scheduled-<id>". Report it as up to date so the
+		// reconciler does not rename it back or otherwise edit it while the
+		// deletion is pending.
+		e.cache.isArchived = grp.Archived
+		cr.Status.AtProvider = groups.GenerateObservation(grp)
+		return managed.ExternalObservation{
+			ResourceExists:    true,
+			ResourceUpToDate:  true,
+			ConnectionDetails: managed.ConnectionDetails{"runnersToken": []byte(grp.RunnersToken)},
+		}, nil
 	}
+	cr.Status.SetConditions(v2.Available())
 
 	current := cr.Spec.ForProvider.DeepCopy()
 

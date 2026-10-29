@@ -1597,3 +1597,73 @@ func TestArchiveConverges(t *testing.T) {
 		})
 	}
 }
+
+func TestObservePendingDeletionIsNotUpdated(t *testing.T) {
+	cases := map[string]struct {
+		deleting        bool
+		removeFinalizer *bool
+	}{
+		"ManagedResourceNotDeleting": {},
+		"DeletingFlagUnset":          {deleting: true},
+		"DeletingFlagFalse":          {deleting: true, removeFinalizer: ptr.To(false)},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			cr := group(
+				withExternalName(extName),
+				func(g *v1alpha1.Group) {
+					g.Spec.ForProvider.Name = ptr.To("ft-rename")
+					g.Spec.ForProvider.Path = "ft-rename"
+					g.Spec.ForProvider.RemoveFinalizerOnPendingDeletion = tc.removeFinalizer
+				},
+			)
+			if tc.deleting {
+				deletedAt := metav1.NewTime(time.Unix(1, 0))
+				cr.DeletionTimestamp = &deletedAt
+			}
+			before := cr.Spec.ForProvider.DeepCopy()
+			observed := &gitlab.Group{
+				ID:                  groupID,
+				Name:                "ft-rename-deletion_scheduled-1234",
+				Path:                "ft-rename-deletion_scheduled-1234",
+				Archived:            true,
+				RunnersToken:        "runner-token",
+				MarkedForDeletionOn: &gitlab.ISOTime{},
+			}
+			e := &external{client: &fake.MockClient{
+				MockGetGroup: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.Group, *gitlab.Response, error) {
+					return observed, &gitlab.Response{}, nil
+				},
+			}}
+
+			o, err := e.Observe(context.Background(), cr)
+			if err != nil {
+				t.Fatalf("Observe: unexpected error: %v", err)
+			}
+			want := managed.ExternalObservation{
+				ResourceExists:    true,
+				ResourceUpToDate:  true,
+				ConnectionDetails: managed.ConnectionDetails{"runnersToken": []byte(observed.RunnersToken)},
+			}
+			if diff := cmp.Diff(want, o); diff != "" {
+				t.Errorf("Observe: -want, +got:\n%s", diff)
+			}
+			wantCond := v2.Unavailable().WithMessage("Group is in pending deletion state but this managed resource is not")
+			if tc.deleting {
+				wantCond = v2.Deleting().WithMessage("Group is in pending deletion state")
+			}
+			if got := cr.GetCondition(wantCond.Type); !got.Equal(wantCond) {
+				t.Errorf("Observe: want condition %v, got %v", wantCond, got)
+			}
+			if diff := cmp.Diff(before, &cr.Spec.ForProvider); diff != "" {
+				t.Errorf("Observe: spec changed: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(groups.GenerateObservation(observed), cr.Status.AtProvider); diff != "" {
+				t.Errorf("Observe: status: -want, +got:\n%s", diff)
+			}
+			if !e.cache.isArchived {
+				t.Error("Observe: archived state was not cached")
+			}
+		})
+	}
+}
