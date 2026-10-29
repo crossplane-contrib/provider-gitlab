@@ -208,6 +208,26 @@ Keep in mind:
 * A top-level group whose path is only digits, such as `1234`, is looked up as
   a numeric ID.
 
+### License observation
+
+An instance `License` with `managementPolicies: [Observe]` needs no license key or
+connection secret. Without `crossplane.io/external-name`, it follows the current
+GitLab license, including a replacement license. It does not save an external name.
+
+With `[Observe, LateInitialize]`, the provider saves the first observed license ID
+in `crossplane.io/external-name`. Later reconciles check that ID rather than adopt
+a replacement. A missing or replaced pinned license reports `Ready=False`.
+You can also set the annotation explicitly with `[Observe]`.
+
+`[Observe, Delete]` requires an explicit external name. The provider reports a
+reconciliation error if it is missing, rather than claim it can delete a license
+whose ID it has not saved. Deleting a resource without a saved ID leaves the
+GitLab license in place.
+
+These policies require `--enable-management-policies`, which is enabled by
+default. With that feature disabled, the provider uses the normal managed-license
+flow and requires a license source.
+
 ### Self-rotating service account tokens
 
 The namespaced `groups.gitlab.m.crossplane.io/v1alpha1` `ServiceAccountAccessToken`
