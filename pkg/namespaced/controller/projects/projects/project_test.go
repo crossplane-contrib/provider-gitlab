@@ -2473,41 +2473,74 @@ func TestLateInitializeDefaultBranch(t *testing.T) {
 }
 
 func TestObservePendingDeletionIsNotUpdated(t *testing.T) {
-	cr := project(
-		withExternalName(extName),
-		withSpec(v1alpha1.ProjectParameters{
-			Name: ptr.To("ft-rename"),
-			Path: ptr.To("ft-rename"),
-		}),
-	)
-	e := &external{client: &fake.MockClient{
-		MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
-			return &gitlab.Project{
+	cases := map[string]struct {
+		deleting        bool
+		removeFinalizer *bool
+	}{
+		"ManagedResourceNotDeleting": {},
+		"DeletingFlagUnset":          {deleting: true},
+		"DeletingFlagFalse":          {deleting: true, removeFinalizer: ptr.To(false)},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			cr := project(
+				withExternalName(extName),
+				withSpec(v1alpha1.ProjectParameters{
+					Name:                             ptr.To("ft-rename"),
+					Path:                             ptr.To("ft-rename"),
+					RemoveFinalizerOnPendingDeletion: tc.removeFinalizer,
+				}),
+			)
+			if tc.deleting {
+				deletedAt := v1.NewTime(time.Unix(1, 0))
+				cr.DeletionTimestamp = &deletedAt
+			}
+			before := cr.Spec.ForProvider.DeepCopy()
+			observed := &gitlab.Project{
 				ID:                  projectID,
 				Name:                "ft-rename-deletion_scheduled-1234",
 				Path:                "ft-rename-deletion_scheduled-1234",
+				Archived:            true,
+				RunnersToken:        "runner-token",
 				MarkedForDeletionOn: &gitlab.ISOTime{},
-			}, &gitlab.Response{}, nil
-		},
-	}}
+			}
+			e := &external{client: &fake.MockClient{
+				MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+					return observed, &gitlab.Response{}, nil
+				},
+				MockGetProjectPushRules: func(pid interface{}, options ...gitlab.RequestOptionFunc) (*gitlab.ProjectPushRules, *gitlab.Response, error) {
+					return &gitlab.ProjectPushRules{}, &gitlab.Response{}, nil
+				},
+			}}
 
-	o, err := e.Observe(context.Background(), cr)
-	if err != nil {
-		t.Fatalf("Observe: unexpected error: %v", err)
-	}
-	want := managed.ExternalObservation{
-		ResourceExists:    true,
-		ResourceUpToDate:  true,
-		ConnectionDetails: managed.ConnectionDetails{"runnersToken": []byte("")},
-	}
-	if diff := cmp.Diff(want, o); diff != "" {
-		t.Errorf("Observe: -want, +got:\n%s", diff)
-	}
-	wantCond := v2.Unavailable().WithMessage("Project is in pending deletion state but this managed resource is not")
-	if got := cr.GetCondition(wantCond.Type); !got.Equal(wantCond) {
-		t.Errorf("Observe: want condition %v, got %v", wantCond, got)
-	}
-	if diff := cmp.Diff(ptr.To("ft-rename"), cr.Spec.ForProvider.Name); diff != "" {
-		t.Errorf("Observe: spec name changed: -want, +got:\n%s", diff)
+			o, err := e.Observe(context.Background(), cr)
+			if err != nil {
+				t.Fatalf("Observe: unexpected error: %v", err)
+			}
+			want := managed.ExternalObservation{
+				ResourceExists:    true,
+				ResourceUpToDate:  true,
+				ConnectionDetails: managed.ConnectionDetails{"runnersToken": []byte(observed.RunnersToken)},
+			}
+			if diff := cmp.Diff(want, o); diff != "" {
+				t.Errorf("Observe: -want, +got:\n%s", diff)
+			}
+			wantCond := v2.Unavailable().WithMessage("Project is in pending deletion state but this managed resource is not")
+			if tc.deleting {
+				wantCond = v2.Deleting().WithMessage("Project is in pending deletion state")
+			}
+			if got := cr.GetCondition(wantCond.Type); !got.Equal(wantCond) {
+				t.Errorf("Observe: want condition %v, got %v", wantCond, got)
+			}
+			if diff := cmp.Diff(before, &cr.Spec.ForProvider); diff != "" {
+				t.Errorf("Observe: spec changed: -want, +got:\n%s", diff)
+			}
+			if diff := cmp.Diff(projects.GenerateObservation(observed), cr.Status.AtProvider); diff != "" {
+				t.Errorf("Observe: status: -want, +got:\n%s", diff)
+			}
+			if !e.cache.isArchived {
+				t.Error("Observe: archived state was not cached")
+			}
+		})
 	}
 }
