@@ -2473,3 +2473,43 @@ func TestLateInitializeDefaultBranch(t *testing.T) {
 		})
 	}
 }
+
+func TestObservePendingDeletionIsNotUpdated(t *testing.T) {
+	cr := project(
+		withExternalName(extName),
+		withSpec(v1alpha1.ProjectParameters{
+			Name: ptr.To("ft-rename"),
+			Path: ptr.To("ft-rename"),
+		}),
+	)
+	e := &external{client: &fake.MockClient{
+		MockGetProject: func(pid interface{}, opt *gitlab.GetProjectOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Project, *gitlab.Response, error) {
+			return &gitlab.Project{
+				ID:                  projectID,
+				Name:                "ft-rename-deletion_scheduled-1234",
+				Path:                "ft-rename-deletion_scheduled-1234",
+				MarkedForDeletionOn: &gitlab.ISOTime{},
+			}, &gitlab.Response{}, nil
+		},
+	}}
+
+	o, err := e.Observe(context.Background(), cr)
+	if err != nil {
+		t.Fatalf("Observe: unexpected error: %v", err)
+	}
+	want := managed.ExternalObservation{
+		ResourceExists:    true,
+		ResourceUpToDate:  true,
+		ConnectionDetails: managed.ConnectionDetails{"runnersToken": []byte("")},
+	}
+	if diff := cmp.Diff(want, o); diff != "" {
+		t.Errorf("Observe: -want, +got:\n%s", diff)
+	}
+	wantCond := v2.Unavailable().WithMessage("Project is in pending deletion state but this managed resource is not")
+	if got := cr.GetCondition(wantCond.Type); !got.Equal(wantCond) {
+		t.Errorf("Observe: want condition %v, got %v", wantCond, got)
+	}
+	if diff := cmp.Diff(ptr.To("ft-rename"), cr.Spec.ForProvider.Name); diff != "" {
+		t.Errorf("Observe: spec name changed: -want, +got:\n%s", diff)
+	}
+}
