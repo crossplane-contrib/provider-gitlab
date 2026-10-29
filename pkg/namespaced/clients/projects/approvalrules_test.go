@@ -66,7 +66,7 @@ func TestIsUsersUpToDate(t *testing.T) {
 			}},
 			want: false,
 		},
-		"MissingUsername": {
+		"ExtraUsername": {
 			cr: &v1alpha1.ApprovalRuleParameters{Usernames: &[]string{"user1"}},
 			in: &gitlab.ProjectApprovalRule{Users: []*gitlab.BasicUser{
 				{ID: 1, Username: "user1"},
