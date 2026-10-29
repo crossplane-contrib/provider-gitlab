@@ -126,11 +126,7 @@ func IsApprovalRuleUpToDate(p *v1alpha1.ApprovalRuleParameters, g *gitlab.Projec
 		return false
 	}
 
-	if !isUserIDsUpToDate(p, g) {
-		return false
-	}
-
-	if !isUsernamesUpToDate(p, g) {
+	if !isUsersUpToDate(p, g) {
 		return false
 	}
 
@@ -209,74 +205,51 @@ func isProtectedBranchesIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *git
 	return true
 }
 
-func isUserIDsUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
-	if cr.UserIDs == nil {
+// isUsersUpToDate compares the rule's users with the union of userIds and
+// usernames. Both fields map to the same GitLab users list, so neither can be
+// compared against it on its own.
+func isUsersUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
+	if cr.UserIDs == nil && cr.Usernames == nil {
 		return len(in.Users) == 0
 	}
 
-	if len(*cr.UserIDs) != len(in.Users) {
-		return false
-	}
+	wantIDs := toSet(cr.UserIDs)
+	wantUsernames := toSet(cr.Usernames)
 
-	inIDs := make(map[int64]any)
-	for _, v := range in.Users {
-		inIDs[v.ID] = nil
-	}
-
-	crIDs := make(map[int64]any)
-	for _, v := range *cr.UserIDs {
-		crIDs[v] = nil
-	}
-
-	for ID := range inIDs {
-		_, ok := crIDs[ID]
-		if !ok {
+	gotIDs := make(map[int64]struct{}, len(in.Users))
+	gotUsernames := make(map[string]struct{}, len(in.Users))
+	for _, u := range in.Users {
+		if u == nil {
+			continue
+		}
+		_, byID := wantIDs[u.ID]
+		_, byName := wantUsernames[u.Username]
+		if !byID && !byName {
 			return false
 		}
+		gotIDs[u.ID] = struct{}{}
+		gotUsernames[u.Username] = struct{}{}
 	}
 
-	for ID := range crIDs {
-		_, ok := inIDs[ID]
-		if !ok {
-			return false
-		}
-	}
-
-	return true
+	return isSubset(wantIDs, gotIDs) && isSubset(wantUsernames, gotUsernames)
 }
 
-func isUsernamesUpToDate(cr *v1alpha1.ApprovalRuleParameters, in *gitlab.ProjectApprovalRule) bool {
-	if cr.Usernames == nil {
-		return len(in.Users) == 0
+func toSet[T comparable](values *[]T) map[T]struct{} {
+	set := make(map[T]struct{})
+	if values == nil {
+		return set
 	}
-
-	if len(*cr.Usernames) != len(in.Users) {
-		return false
+	for _, v := range *values {
+		set[v] = struct{}{}
 	}
+	return set
+}
 
-	inIDs := make(map[string]any)
-	for _, v := range in.Users {
-		inIDs[v.Username] = nil
-	}
-
-	crIDs := make(map[string]any)
-	for _, v := range *cr.Usernames {
-		crIDs[v] = nil
-	}
-
-	for ID := range inIDs {
-		_, ok := crIDs[ID]
-		if !ok {
+func isSubset[T comparable](subset, set map[T]struct{}) bool {
+	for v := range subset {
+		if _, ok := set[v]; !ok {
 			return false
 		}
 	}
-
-	for ID := range crIDs {
-		_, ok := inIDs[ID]
-		if !ok {
-			return false
-		}
-	}
-
 	return true
 }
