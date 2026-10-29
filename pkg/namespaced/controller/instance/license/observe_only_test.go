@@ -41,9 +41,9 @@ func TestObserveOnlyAdoptsLicense(t *testing.T) {
 		wantLateInit bool
 		wantName     string
 	}{
-		"NoExternalNameAdoptsCurrent": {wantExists: true, wantLateInit: true, wantName: "7"},
-		"MatchingExternalName":        {externalName: "7", wantExists: true, wantName: "7"},
-		"OtherExternalName":           {externalName: "8", wantExists: false, wantName: "8"},
+		"NoExternalNameObservesCurrent": {wantExists: true},
+		"MatchingExternalName":          {externalName: "7", wantExists: true, wantName: "7"},
+		"OtherExternalName":             {externalName: "8", wantExists: false, wantName: "8"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -52,7 +52,7 @@ func TestObserveOnlyAdoptsLicense(t *testing.T) {
 			if tc.externalName != "" {
 				meta.SetExternalName(cr, tc.externalName)
 			}
-			e := &external{client: &mockClient{MockGetLicense: getLicense}}
+			e := &external{client: &mockClient{MockGetLicense: getLicense}, managementPoliciesEnabled: true}
 
 			got, err := e.Observe(context.Background(), cr)
 			if err != nil {
@@ -65,5 +65,17 @@ func TestObserveOnlyAdoptsLicense(t *testing.T) {
 				t.Errorf("external name: -want +got\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestObserveAndDeleteRequiresExternalName(t *testing.T) {
+	cr := license()
+	cr.SetManagementPolicies(v2.ManagementPolicies{v2.ManagementActionObserve, v2.ManagementActionDelete})
+	e := &external{managementPoliciesEnabled: true, client: &mockClient{MockGetLicense: func(...gitlab.RequestOptionFunc) (*gitlab.License, *gitlab.Response, error) {
+		return &gitlab.License{ID: 7}, nil, nil
+	}}}
+	_, err := e.Observe(context.Background(), cr)
+	if err == nil || err.Error() != errObserveDeleteNeedsID {
+		t.Fatalf("expected explicit-ID error, got %v", err)
 	}
 }

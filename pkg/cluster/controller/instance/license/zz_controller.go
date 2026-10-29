@@ -22,6 +22,7 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -47,6 +48,7 @@ const (
 	errMissingExternalName     = "external name annotation not found"
 	errMissingConnectionSecret = "writeConnectionSecretToRef must be specified to receive the license key"
 	errMissingLicenseKey       = "license key must be provided via spec, secret reference or endpoint configuration"
+	errObserveDeleteNeedsID    = "external name is required when observing a license with Delete policy"
 
 	// ConnectionDetails keys
 	keyLicense = "license"
@@ -59,8 +61,9 @@ func SetupLicense(mgr ctrl.Manager, o common.ControllerOptions) error {
 	r := common.NewReconciler(mgr, o, name,
 		resource.ManagedKind(v1alpha1.LicenseGroupVersionKind),
 		managed.WithExternalConnector(&connector{
-			kube:              mgr.GetClient(),
-			newGitlabClientFn: instance.NewLicenseClient,
+			kube:                      mgr.GetClient(),
+			newGitlabClientFn:         instance.NewLicenseClient,
+			managementPoliciesEnabled: o.Features.Enabled(feature.EnableBetaManagementPolicies),
 		}),
 		managed.WithInitializers(),
 	)
@@ -88,8 +91,9 @@ func SetupLicenseGated(mgr ctrl.Manager, o common.ControllerOptions) error {
 
 // connector is responsible for producing an ExternalClient for Licenses
 type connector struct {
-	kube              client.Client
-	newGitlabClientFn func(cfg common.Config) instance.LicenseClient
+	kube                      client.Client
+	newGitlabClientFn         func(cfg common.Config) instance.LicenseClient
+	managementPoliciesEnabled bool
 }
 
 // Connect establishes a connection to the external resource
@@ -103,13 +107,14 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if err != nil {
 		return nil, err
 	}
-	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg)}, nil
+	return &external{kube: c.kube, client: c.newGitlabClientFn(*cfg), managementPoliciesEnabled: c.managementPoliciesEnabled}, nil
 }
 
 // external is the external client used to manage Gitlab Licenses.
 type external struct {
-	kube   client.Client
-	client instance.LicenseClient
+	kube                      client.Client
+	client                    instance.LicenseClient
+	managementPoliciesEnabled bool
 }
 
 // observeDeletion checks if the license still exists when the resource is being deleted.
@@ -142,24 +147,8 @@ func (e *external) observeDeletionByName(ctx context.Context, externalName strin
 	return e.observeDeletion(ctx, licenseID)
 }
 
-// licenseKeyMatches reports whether the license key is unchanged. The key is
-// only needed to detect drift of a license we manage, so it is skipped when
-// observing only.
-func (e *external) licenseKeyMatches(ctx context.Context, mg resource.Managed, cr *v1alpha1.License, observeOnly bool) (bool, error) {
-	if observeOnly {
-		return true, nil
-	}
-	return e.checkLicenseKeyMatch(ctx, mg, cr)
-}
-
-// isUnadoptable reports whether there is nothing to observe yet: a managed
-// license without an external name has not been created.
-func isUnadoptable(externalName string, observeOnly bool) bool {
-	return externalName == "" && !observeOnly
-}
-
-// getCurrentLicense returns the active license, or nil if there is none.
-func (e *external) getCurrentLicense(ctx context.Context) (*gitlab.License, error) {
+// getCurrentLicense returns the active license if it matches the optional external name.
+func (e *external) getCurrentLicense(ctx context.Context, externalName string) (*gitlab.License, error) {
 	license, res, err := e.client.GetLicense(gitlab.WithContext(ctx))
 	if err != nil {
 		if clients.IsResponseNotFound(res) {
@@ -167,23 +156,19 @@ func (e *external) getCurrentLicense(ctx context.Context) (*gitlab.License, erro
 		}
 		return nil, errors.Wrap(err, errGetFailed)
 	}
+	if license == nil {
+		return nil, nil
+	}
+	if externalName != "" {
+		id, err := strconv.ParseInt(externalName, 10, 64)
+		if err != nil {
+			return nil, errors.New(errIDNotInt)
+		}
+		if license.ID != id {
+			return nil, nil
+		}
+	}
 	return license, nil
-}
-
-// adoptLicense matches the current active license against the external name.
-// GetLicense returns the current license, not a specific one by ID, so a
-// different ID means ours does not exist. Without an external name
-// (observe-only), the current license is adopted and the name set.
-func adoptLicense(cr *v1alpha1.License, license *gitlab.License, externalName string) (lateInitialized, exists bool, err error) {
-	if externalName == "" {
-		meta.SetExternalName(cr, strconv.FormatInt(license.ID, 10))
-		return true, true, nil
-	}
-	id, err := strconv.ParseInt(externalName, 10, 64)
-	if err != nil {
-		return false, false, errors.New(errIDNotInt)
-	}
-	return false, license.ID == id, nil
 }
 
 // Observe observes the external resource
@@ -194,31 +179,41 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	externalName := meta.GetExternalName(cr)
-	observeOnly := !canWriteLicense(cr)
-	if isUnadoptable(externalName, observeOnly) {
+	policy := managed.NewManagementPoliciesResolver(e.managementPoliciesEnabled, cr.GetManagementPolicies())
+	if externalName == "" && (policy.ShouldCreate() || policy.ShouldUpdate()) {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
-
-	// Handle deletion case separately
-	if !cr.ObjectMeta.DeletionTimestamp.IsZero() {
+	if meta.WasDeleted(cr) {
 		return e.observeDeletionByName(ctx, externalName)
 	}
+	if externalName == "" && policy.ShouldDelete() && !policy.ShouldLateInitialize() {
+		return managed.ExternalObservation{}, errors.New(errObserveDeleteNeedsID)
+	}
+	return e.observeCurrentLicense(ctx, cr, policy)
+}
 
-	// Retrieve license from GitLab API
-	license, err := e.getCurrentLicense(ctx)
-	if err != nil || license == nil {
+func (e *external) observeCurrentLicense(ctx context.Context, cr *v1alpha1.License, policy managed.ManagementPoliciesChecker) (managed.ExternalObservation, error) {
+	license, err := e.getCurrentLicense(ctx, meta.GetExternalName(cr))
+	if err != nil {
 		return managed.ExternalObservation{}, err
 	}
-
-	lateInitialized, exists, err := adoptLicense(cr, license, externalName)
-	if err != nil || !exists {
-		return managed.ExternalObservation{}, err
+	if license == nil {
+		cr.SetConditions(v2.Unavailable())
+		return managed.ExternalObservation{}, nil
 	}
 
-	// The license key is only needed to detect drift of a license we manage.
-	match, err := e.licenseKeyMatches(ctx, mg, cr, observeOnly)
-	if err != nil || !match {
-		return managed.ExternalObservation{ResourceExists: err == nil}, err
+	if policy.ShouldCreate() || policy.ShouldUpdate() {
+		match, err := e.checkLicenseKeyMatch(ctx, cr)
+		if err != nil {
+			return managed.ExternalObservation{}, err
+		}
+		if !match {
+			return managed.ExternalObservation{ResourceExists: true}, nil
+		}
+	}
+	lateInitialized := meta.GetExternalName(cr) == "" && policy.ShouldLateInitialize()
+	if lateInitialized {
+		meta.SetExternalName(cr, strconv.FormatInt(license.ID, 10))
 	}
 
 	cr.Status.AtProvider = instance.GenerateLicenseObservation(license)
@@ -229,21 +224,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		ResourceUpToDate:        instance.IsLicenseUpToDate(&cr.Spec.ForProvider, license),
 		ResourceLateInitialized: lateInitialized,
 	}, nil
-}
-
-// canWriteLicense reports whether the management policies allow creating or
-// updating the license, i.e. whether a license source is required.
-func canWriteLicense(cr *v1alpha1.License) bool {
-	policies := cr.GetManagementPolicies()
-	if len(policies) == 0 {
-		return true
-	}
-	for _, p := range policies {
-		if p == v2.ManagementActionAll || p == v2.ManagementActionCreate || p == v2.ManagementActionUpdate {
-			return true
-		}
-	}
-	return false
 }
 
 // Create creates the external resource with the desired state
@@ -380,10 +360,10 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalDelete{}, nil
 }
 
-func (e *external) checkLicenseKeyMatch(ctx context.Context, mg resource.Managed, cr *v1alpha1.License) (bool, error) {
+func (e *external) checkLicenseKeyMatch(ctx context.Context, cr *v1alpha1.License) (bool, error) {
 	// Retrieve connection details and confirm the retrieved license key matches the one
 	// saved in the connection details during creation
-	connectionDetails, err := e.getLicenseFromSecrets(mg, ctx, &cr.Spec.ForProvider)
+	connectionDetails, err := e.getLicenseFromSecrets(cr, ctx, &cr.Spec.ForProvider)
 	if err != nil {
 		if !isErrorFetchingLicenseFromEndpoint(err) {
 			return false, errors.Wrap(err, errMissingLicenseKey)
@@ -393,7 +373,7 @@ func (e *external) checkLicenseKeyMatch(ctx context.Context, mg resource.Managed
 		return true, nil
 	}
 
-	return e.verifyLicenseKey(ctx, mg, connectionDetails)
+	return e.verifyLicenseKey(ctx, cr, connectionDetails)
 }
 
 // verifyLicenseKey checks if the license key in the connection details matches the one in the secret

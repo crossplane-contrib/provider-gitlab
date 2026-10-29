@@ -180,7 +180,7 @@ func TestObserve(t *testing.T) {
 				}},
 				cr: license(withNamespace("default"), withExternalName("1")),
 			},
-			want: want{cr: license(withNamespace("default"), withExternalName("1")), obs: managed.ExternalObservation{}},
+			want: want{cr: license(withNamespace("default"), withExternalName("1"), withConditions(v2.Unavailable())), obs: managed.ExternalObservation{}},
 		},
 		"NotIDExternalName": {
 			args: args{
@@ -189,7 +189,7 @@ func TestObserve(t *testing.T) {
 				}},
 				cr: license(withNamespace("default"), withExternalName("1")),
 			},
-			want: want{cr: license(withNamespace("default"), withExternalName("1")), obs: managed.ExternalObservation{}},
+			want: want{cr: license(withNamespace("default"), withExternalName("1"), withConditions(v2.Unavailable())), obs: managed.ExternalObservation{}},
 		},
 		"SuccessfulAvailable": {
 			args: args{
