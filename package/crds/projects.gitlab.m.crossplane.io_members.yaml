@@ -71,9 +71,6 @@ spec:
                   accessLevel:
                     description: A valid access level.
                     type: integer
-                    x-kubernetes-validations:
-                    - message: accessLevel is immutable
-                      rule: self == oldSelf
                   expiresAt:
                     description: A date string in the format YEAR-MONTH-DAY.
                     type: string

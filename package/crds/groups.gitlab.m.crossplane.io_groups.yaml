@@ -216,9 +216,6 @@ spec:
                   path:
                     description: The path of the group.
                     type: string
-                    x-kubernetes-validations:
-                    - message: path is immutable
-                      rule: self == oldSelf
                   permanentlyRemove:
                     description: |-
                       Force the immediate deletion of the group when removed. In GitLab Premium and Ultimate a group is by default

@@ -47,7 +47,6 @@ type MemberParameters struct {
 	UserName *string `json:"userName,omitempty"`
 
 	// A valid access level.
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="accessLevel is immutable"
 	AccessLevel AccessLevelValue `json:"accessLevel"`
 
 	// A date string in the format YEAR-MONTH-DAY.

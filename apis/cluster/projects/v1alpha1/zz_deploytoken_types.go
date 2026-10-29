@@ -28,6 +28,8 @@ import (
 // +kubebuilder:validation:XValidation:rule="!has(self.expiresAt) || !has(self.renewalPeriodDays)",message="expiresAt and renewalPeriodDays are mutually exclusive"
 // +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || has(self.renewalPeriodDays)",message="renewBeforeDays requires renewalPeriodDays"
 // +kubebuilder:validation:XValidation:rule="!has(self.renewBeforeDays) || !has(self.renewalPeriodDays) || self.renewalPeriodDays > self.renewBeforeDays",message="renewalPeriodDays must be greater than renewBeforeDays"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.username) || has(self.username)",message="username cannot be removed"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.expiresAt) || has(self.expiresAt) || has(self.renewalPeriodDays)",message="expiresAt can only be removed when switching to renewalPeriodDays"
 type DeployTokenParameters struct {
 	// ProjectID is the ID of the project to create the deploy token in.
 	// +optional
@@ -45,6 +47,8 @@ type DeployTokenParameters struct {
 
 	// Expiration date for the deploy token. Does not expire if no value is provided.
 	// Expected in ISO 8601 format (2019-03-15T08:00:00Z)
+	// Once set, it can only be removed when switching to RenewalPeriodDays.
+	// An omitted value may be filled once by late initialization.
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="expiresAt is immutable"
 	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
@@ -70,6 +74,7 @@ type DeployTokenParameters struct {
 	RenewBeforeDays *int `json:"renewBeforeDays,omitempty"`
 
 	// Username for deploy token. Default is gitlab+deploy-token-{n}
+	// Once set, it cannot be changed or removed. An omitted value may be filled once by late initialization.
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="username is immutable"
 	Username *string `json:"username,omitempty"`

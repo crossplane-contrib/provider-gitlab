@@ -65,7 +65,6 @@ const (
 // GroupParameters define the desired state of a Gitlab Project
 type GroupParameters struct {
 	// The path of the group.
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="path is immutable"
 	Path string `json:"path"`
 
 	// The group’s description.

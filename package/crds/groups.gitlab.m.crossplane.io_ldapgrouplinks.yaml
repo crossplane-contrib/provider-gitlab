@@ -81,9 +81,6 @@ spec:
                     description: GroupAccess is the defined role for members of the
                       LDAP group
                     type: integer
-                    x-kubernetes-validations:
-                    - message: groupAccess is immutable
-                      rule: self == oldSelf
                   groupId:
                     description: GroupID is the ID of the group to create the LDAP
                       group link in.

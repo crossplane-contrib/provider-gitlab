@@ -80,6 +80,8 @@ spec:
                     description: |-
                       Expiration date for the deploy token. Does not expire if no value is provided.
                       Expected in ISO 8601 format (2019-03-15T08:00:00Z)
+                      Once set, it can only be removed when switching to RenewalPeriodDays.
+                      An omitted value may be filled once by late initialization.
                     format: date-time
                     type: string
                     x-kubernetes-validations:
@@ -204,7 +206,9 @@ spec:
                     - message: scopes is immutable
                       rule: self == oldSelf
                   username:
-                    description: Username for deploy token. Default is gitlab+deploy-token-{n}
+                    description: |-
+                      Username for deploy token. Default is gitlab+deploy-token-{n}
+                      Once set, it cannot be changed or removed. An omitted value may be filled once by late initialization.
                     type: string
                     x-kubernetes-validations:
                     - message: username is immutable
@@ -220,6 +224,10 @@ spec:
                 - message: renewalPeriodDays must be greater than renewBeforeDays
                   rule: '!has(self.renewBeforeDays) || !has(self.renewalPeriodDays)
                     || self.renewalPeriodDays > self.renewBeforeDays'
+                - message: username cannot be removed
+                  rule: '!has(oldSelf.username) || has(self.username)'
+                - message: expiresAt can only be removed when switching to renewalPeriodDays
+                  rule: '!has(oldSelf.expiresAt) || has(self.expiresAt) || has(self.renewalPeriodDays)'
               managementPolicies:
                 default:
                 - '*'

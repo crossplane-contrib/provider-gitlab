@@ -39,7 +39,6 @@ type LdapGroupLinkParameters struct {
 	GroupIDSelector *v2.NamespacedSelector `json:"groupIdSelector,omitempty"`
 
 	// GroupAccess is the defined role for members of the LDAP group
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupAccess is immutable"
 	GroupAccess AccessLevelValue `json:"groupAccess"`
 
 	// LdapProvider provider ID for the LDAP group link

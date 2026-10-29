@@ -85,6 +85,7 @@ spec:
                   accessLevel:
                     description: |-
                       Access level for the project. Default is 40.
+                      Set only on creation, including whether the default is used.
                       Valid values are 10 (Guest), 20 (Reporter), 30 (Developer), 40 (Maintainer), and 50 (Owner).
                     type: integer
                     x-kubernetes-validations:
@@ -232,6 +233,8 @@ spec:
                 - message: renewalPeriodDays must be greater than renewBeforeDays
                   rule: '!has(self.renewBeforeDays) || !has(self.renewalPeriodDays)
                     || self.renewalPeriodDays > self.renewBeforeDays'
+                - message: accessLevel cannot be added or removed
+                  rule: has(self.accessLevel) == has(oldSelf.accessLevel)
               managementPolicies:
                 default:
                 - '*'
