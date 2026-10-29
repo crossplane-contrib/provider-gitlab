@@ -66,13 +66,21 @@ spec:
                     description: |-
                       Expiration date for the deploy token. Does not expire if no value is provided.
                       Expected in ISO 8601 format (2019-03-15T08:00:00Z)
+                      Once set, it can only be removed when switching to RenewalPeriodDays.
+                      An omitted value may be filled once by late initialization.
                     format: date-time
                     type: string
+                    x-kubernetes-validations:
+                    - message: expiresAt is immutable
+                      rule: self == oldSelf
                   projectId:
                     description: ProjectID is the ID of the project to create the
                       deploy token in.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: projectId is immutable
+                      rule: self == oldSelf
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
                       its projectId
@@ -111,6 +119,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: projectIdRef is immutable
+                      rule: self == oldSelf
                   projectIdSelector:
                     description: ProjectIDSelector selects reference to a project
                       to retrieve its projectId.
@@ -183,9 +194,17 @@ spec:
                     items:
                       type: string
                     type: array
+                    x-kubernetes-validations:
+                    - message: scopes is immutable
+                      rule: self == oldSelf
                   username:
-                    description: Username for deploy token. Default is gitlab+deploy-token-{n}
+                    description: |-
+                      Username for deploy token. Default is gitlab+deploy-token-{n}
+                      Once set, it cannot be changed or removed. An omitted value may be filled once by late initialization.
                     type: string
+                    x-kubernetes-validations:
+                    - message: username is immutable
+                      rule: self == oldSelf
                 required:
                 - scopes
                 type: object
@@ -197,6 +216,10 @@ spec:
                 - message: renewalPeriodDays must be greater than renewBeforeDays
                   rule: '!has(self.renewBeforeDays) || !has(self.renewalPeriodDays)
                     || self.renewalPeriodDays > self.renewBeforeDays'
+                - message: username cannot be removed
+                  rule: '!has(oldSelf.username) || has(self.username)'
+                - message: expiresAt can only be removed when switching to renewalPeriodDays
+                  rule: '!has(oldSelf.expiresAt) || has(self.expiresAt) || has(self.renewalPeriodDays)'
               managementPolicies:
                 default:
                 - '*'

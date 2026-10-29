@@ -140,6 +140,9 @@ spec:
                       The runner will be available to execute jobs exclusively for this project.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: projectId is immutable
+                      rule: self == oldSelf
                   projectIdRef:
                     description: |-
                       ProjectIDRef is a reference to a Project resource to retrieve its ID.
@@ -176,6 +179,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: projectIdRef is immutable
+                      rule: self == oldSelf
                   projectIdSelector:
                     description: |-
                       ProjectIDSelector selects a reference to a Project resource to retrieve its ID.
@@ -218,6 +224,9 @@ spec:
                             type: string
                         type: object
                     type: object
+                    x-kubernetes-validations:
+                    - message: projectIdSelector is immutable
+                      rule: self == oldSelf
                   runUntagged:
                     description: |-
                       RunUntagged indicates whether the runner should run jobs without tags.

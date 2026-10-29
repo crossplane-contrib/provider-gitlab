@@ -36,12 +36,12 @@ type ApprovalRuleParameters struct {
 
 	// The ID of the project owned by the authenticated user.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdRef is immutable"
 	ProjectIDRef *v2.Reference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects reference to a project to retrieve its projectId.
@@ -68,7 +68,7 @@ type ApprovalRuleParameters struct {
 
 	// The rule type. Supported values include any_approver, regular, and report_approver
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="ruleType is immutable"
 	RuleType *RuleType `json:"ruleType,omitempty"`
 
 	// The IDs of users as approvers. If used with usernames, adds both lists of users.

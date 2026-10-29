@@ -110,6 +110,9 @@ spec:
                       shared group.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: invitedGroupId is immutable
+                      rule: self == oldSelf
                   invitedGroupIdRef:
                     description: InvitedGroupIDRef references the Group whose members
                       get access.
@@ -148,6 +151,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: invitedGroupIdRef is immutable
+                      rule: self == oldSelf
                   invitedGroupIdSelector:
                     description: InvitedGroupIDSelector selects the Group whose members
                       get access.
@@ -196,6 +202,9 @@ spec:
                     description: SharedGroupID is the ID of the group that is shared.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: sharedGroupId is immutable
+                      rule: self == oldSelf
                   sharedGroupIdRef:
                     description: SharedGroupIDRef references the Group that is shared.
                     properties:
@@ -233,6 +242,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: sharedGroupIdRef is immutable
+                      rule: self == oldSelf
                   sharedGroupIdSelector:
                     description: SharedGroupIDSelector selects the Group that is shared.
                     properties:

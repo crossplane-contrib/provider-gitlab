@@ -98,6 +98,9 @@ spec:
                     description: The ID or URL-encoded path of the project owned by
                       the authenticated user.
                     type: string
+                    x-kubernetes-validations:
+                    - message: projectId is immutable
+                      rule: self == oldSelf
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
                       its ProjectID.
@@ -133,6 +136,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: projectIdRef is immutable
+                      rule: self == oldSelf
                   projectIdSelector:
                     description: ProjectIDSelector selects reference to a project
                       to retrieve its ProjectID.
@@ -174,6 +180,9 @@ spec:
                             type: string
                         type: object
                     type: object
+                    x-kubernetes-validations:
+                    - message: projectIdSelector is immutable
+                      rule: self == oldSelf
                   ref:
                     description: Ref is the branch or tag name that is triggered.
                     type: string

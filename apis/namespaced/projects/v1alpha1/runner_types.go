@@ -33,19 +33,19 @@ type RunnerParameters struct {
 	// ProjectID is the ID of the project to register the runner to.
 	// The runner will be available to execute jobs exclusively for this project.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectId is immutable"
 	ProjectID *int64 `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a Project resource to retrieve its ID.
 	// This provides a way to reference a project managed by Crossplane.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdRef is immutable"
 	ProjectIDRef *v2.NamespacedReference `json:"projectIdRef,omitempty"`
 
 	// ProjectIDSelector selects a reference to a Project resource to retrieve its ID.
 	// This provides a way to dynamically select a project based on labels.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectIdSelector is immutable"
 	ProjectIDSelector *v2.NamespacedSelector `json:"projectIdSelector,omitempty"`
 
 	// CommonRunnerParameters contains the common runner configuration

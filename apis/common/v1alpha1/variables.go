@@ -31,7 +31,7 @@ type CommonVariableParameters struct {
 	// If the key already exists, the existing variable will be updated instead of creating a new one.
 	// +kubebuilder:validation:Pattern:=^[a-zA-Z0-9\_]+$
 	// +kubebuilder:validation:MaxLength:=255
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="key is immutable"
 	Key string `json:"key"`
 
 	// Value of a variable. Mutually exclusive with ValueSecretRef.

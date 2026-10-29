@@ -119,6 +119,9 @@ spec:
                       The runner will be available to execute jobs for projects within this group.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: groupId is immutable
+                      rule: self == oldSelf
                   groupIdRef:
                     description: |-
                       GroupIDRef is a reference to a Group resource to retrieve its ID.
@@ -155,6 +158,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: groupIdRef is immutable
+                      rule: self == oldSelf
                   groupIdSelector:
                     description: |-
                       GroupIDSelector selects a reference to a Group resource to retrieve its ID.

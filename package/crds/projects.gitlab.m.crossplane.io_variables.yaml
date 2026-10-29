@@ -75,6 +75,9 @@ spec:
                       Hidden creates a masked and hidden variable (GitLab 17.4+).
                       Visibility cannot be changed after creation. Recreate the variable explicitly to change it.
                     type: boolean
+                    x-kubernetes-validations:
+                    - message: hidden is immutable
+                      rule: self == oldSelf
                   key:
                     description: |-
                       Key of a variable.
@@ -82,6 +85,9 @@ spec:
                     maxLength: 255
                     pattern: ^[a-zA-Z0-9\_]+$
                     type: string
+                    x-kubernetes-validations:
+                    - message: key is immutable
+                      rule: self == oldSelf
                   masked:
                     description: Masked enables or disables variable masking.
                     type: boolean
@@ -90,6 +96,9 @@ spec:
                       variable on.
                     format: int64
                     type: integer
+                    x-kubernetes-validations:
+                    - message: projectId is immutable
+                      rule: self == oldSelf
                   projectIdRef:
                     description: ProjectIDRef is a reference to a project to retrieve
                       its projectId.
@@ -128,6 +137,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: projectIdRef is immutable
+                      rule: self == oldSelf
                   projectIdSelector:
                     description: ProjectIDSelector selects reference to a project
                       to retrieve its projectId.

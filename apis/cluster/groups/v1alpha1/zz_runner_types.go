@@ -35,13 +35,13 @@ type RunnerParameters struct {
 	// GroupID is the ID of the group to register the runner to.
 	// The runner will be available to execute jobs for projects within this group.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupId is immutable"
 	GroupID *int64 `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a Group resource to retrieve its ID.
 	// This provides a way to reference a group managed by Crossplane.
 	// +optional
-	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="groupIdRef is immutable"
 	GroupIDRef *v2.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects a reference to a Group resource to retrieve its ID.

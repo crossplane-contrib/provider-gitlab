@@ -177,6 +177,9 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-validations:
+                    - message: parentIdRef is immutable
+                      rule: self == oldSelf
                   parentIdSelector:
                     description: ParentIDSelector selects reference to a group to
                       retrieve its parentId.
