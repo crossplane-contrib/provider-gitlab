@@ -392,6 +392,7 @@ func TestObserve(t *testing.T) {
 					MockGetMattermostService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error) {
 						return &gitlab.MattermostService{
 							Service: gitlab.Service{
+								Active:     true,
 								ID:         testID,
 								Title:      testTitle,
 								PushEvents: false,
@@ -432,7 +433,7 @@ func TestObserve(t *testing.T) {
 							ID:                             ptr.To(testID),
 							Title:                          ptr.To(testTitle),
 							Slug:                           ptr.To(""),
-							Active:                         ptr.To(false),
+							Active:                         ptr.To(true),
 							AlertEvents:                    ptr.To(false),
 							CommitEvents:                   ptr.To(false),
 							ConfidentialIssuesEvents:       ptr.To(false),
@@ -464,14 +465,15 @@ func TestObserve(t *testing.T) {
 				},
 			},
 		},
-		"DeletingResource": {
+		"DeletingResourceAlreadyDeactivated": {
 			args: args{
 				mattermostClient: &fake.MockClient{
 					MockGetMattermostService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error) {
 						return &gitlab.MattermostService{
 							Service: gitlab.Service{
-								ID:    testID,
-								Title: testTitle,
+								Active: false,
+								ID:     testID,
+								Title:  testTitle,
 							},
 							Properties: &gitlab.MattermostServiceProperties{
 								WebHook: testWebHook,
@@ -500,6 +502,7 @@ func TestObserve(t *testing.T) {
 					MockGetMattermostService: func(pid any, options ...gitlab.RequestOptionFunc) (*gitlab.MattermostService, *gitlab.Response, error) {
 						return &gitlab.MattermostService{
 							Service: gitlab.Service{
+								Active:     true,
 								ID:         testID,
 								Title:      testTitle,
 								PushEvents: testPushEvents,
@@ -542,7 +545,7 @@ func TestObserve(t *testing.T) {
 							ID:                             ptr.To(testID),
 							Title:                          ptr.To(testTitle),
 							Slug:                           ptr.To(""),
-							Active:                         ptr.To(false),
+							Active:                         ptr.To(true),
 							AlertEvents:                    ptr.To(false),
 							CommitEvents:                   ptr.To(false),
 							ConfidentialIssuesEvents:       ptr.To(false),
