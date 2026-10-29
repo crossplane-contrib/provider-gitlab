@@ -91,11 +91,11 @@ type LicenseObservation struct {
 	// Plan is the name of the license plan.
 	Plan string `json:"plan"`
 	// CreatedAt is the timestamp when the license was created.
-	CreatedAt *metav1.Time `json:"createdAt"`
+	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
 	// StartsAt is the timestamp when the license becomes valid.
-	StartsAt *metav1.Time `json:"startsAt"`
+	StartsAt *metav1.Time `json:"startsAt,omitempty"`
 	// ExpiresAt is the timestamp when the license expires.
-	ExpiresAt *metav1.Time `json:"expiresAt"`
+	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
 	// HistoricalMax represents the maximum number of users once the license has expired.
 	HistoricalMax int64 `json:"historicalMax"`
 	// MaximumUserCount is the maximum number of users allowed by the license.
