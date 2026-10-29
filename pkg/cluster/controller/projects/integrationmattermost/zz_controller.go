@@ -22,7 +22,6 @@ import (
 	"context"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
-	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	v2 "github.com/crossplane/crossplane/apis/v2/core/v2"
@@ -119,11 +118,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotIntegrationMattermost)
 	}
 
-	// If the resource is being deleted, avoid updating status.
-	if meta.WasDeleted(cr) {
-		return managed.ExternalObservation{ResourceExists: false}, nil
-	}
-
 	if cr.Spec.ForProvider.ProjectID == nil {
 		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
 	}
@@ -138,7 +132,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetFailed)
 	}
-	if mattermost == nil || mattermost.Properties == nil {
+	if mattermost == nil || !mattermost.Active || mattermost.Properties == nil {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
