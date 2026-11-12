@@ -2,7 +2,7 @@ module github.com/crossplane-contrib/provider-gitlab/tools
 
 go 1.26.0
 
-toolchain go1.27.3
+toolchain go1.27.4
 
 require (
 	github.com/crossplane/crossplane-tools v0.0.0-20260719180100-659f1dc036c5
